@@ -14,8 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import logo from '@/assets/logo.png';
-
-const DASHBOARD_PREVIEW = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop";
+import dashboardPreview from '@/assets/dashboardpreview.png';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -165,7 +164,7 @@ const Home: React.FC = () => {
           >
             <div className="absolute -inset-10 bg-[#2E5E99]/10 blur-[100px] rounded-full" />
             <Card className="relative overflow-hidden group border-[#2E5E99]/10 bg-white/40">
-              <img src={DASHBOARD_PREVIEW} alt="Dashboard" className="rounded-xl shadow-2xl transition-transform duration-700 group-hover:scale-105" />
+              <img src={dashboardPreview} alt="Dashboard" className="rounded-xl shadow-2xl transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0D2440]/60 to-transparent opacity-60" />
               <div className="absolute bottom-10 left-10 space-y-2">
                 <div className="flex gap-2">
