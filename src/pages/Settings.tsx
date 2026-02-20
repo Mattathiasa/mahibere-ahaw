@@ -1,0 +1,932 @@
+import { SectionCard } from '@/components/ui/SectionCard';
+import { ETHIOPIAN_REGIONS } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { User, Bell, Palette, Globe, Shield, LogOut, Monitor, Download, Trash, RefreshCw, Database, HardDrive, Wifi } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { authService } from '@/services/auth';
+import { userService } from '@/services/users';
+import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useTranslation } from '@/hooks/useTranslation';
+
+const Settings = () => {
+  const navigate = useNavigate();
+  const { user: currentUser, logout } = useAuth();
+  const queryClient = useQueryClient();
+  const { language, toggleLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
+
+  const [profilePicture, setProfilePicture] = useState((currentUser as any)?.profilePicture || '');
+  const [profileData, setProfileData] = useState({
+    fullName: currentUser?.fullName || '',
+    fullNameAmharic: (currentUser as any)?.fullNameAmharic || '',
+    phone: currentUser?.phone || '',
+    dateOfBirth: currentUser?.dateOfBirth ? new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : '',
+    gender: currentUser?.gender || 'Male',
+    region: currentUser?.address?.region || '',
+    zone: currentUser?.address?.zone || '',
+    woreda: currentUser?.address?.woreda || '',
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: true,
+    meetings: true,
+    reports: false,
+    weekly: true,
+    plans: true,
+    finance: true,
+  });
+
+  const [preferences, setPreferences] = useState({
+    compactMode: false,
+    animations: true,
+    dateFormat: 'gregorian',
+    timeZone: 'eat',
+  });
+
+  // Load preferences from localStorage (Keep app preferences like Theme local for now)
+  useEffect(() => {
+    const savedPreferences = localStorage.getItem('preferences');
+    if (savedPreferences) {
+      setPreferences(JSON.parse(savedPreferences));
+    }
+  }, []);
+
+  // Initialize notifications from user profile
+  useEffect(() => {
+    if (currentUser?.notificationPreferences) {
+      setNotifications(currentUser.notificationPreferences);
+    } else {
+      const savedNotifications = localStorage.getItem('notifications');
+      if (savedNotifications) {
+        setNotifications(JSON.parse(savedNotifications));
+      }
+    }
+  }, [currentUser]);
+
+  // Update profile data when user changes
+  useEffect(() => {
+    if (currentUser) {
+      setProfileData({
+        fullName: currentUser.fullName || '',
+        fullNameAmharic: (currentUser as any)?.fullNameAmharic || '',
+        phone: currentUser.phone || '',
+        dateOfBirth: currentUser.dateOfBirth ? new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: currentUser.gender || 'Male',
+        region: currentUser.address?.region || '',
+        zone: currentUser.address?.zone || '',
+        woreda: currentUser.address?.woreda || '',
+      });
+      setProfilePicture((currentUser as any)?.profilePicture || '');
+    }
+  }, [currentUser]);
+
+  const initials = currentUser?.fullName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase() || 'U';
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: any) => userService.updateUser(currentUser?.id || '', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      authService.getCurrentUser(); // Refresh stored user
+      toast.success('Profile updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: any) => authService.changePassword(data),
+    onSuccess: () => {
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Password changed successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to change password');
+    },
+  });
+
+  const handleSaveProfile = () => {
+    const updateData: any = {
+      fullName: profileData.fullName,
+      fullNameAmharic: profileData.fullNameAmharic,
+      phone: profileData.phone,
+      dateOfBirth: profileData.dateOfBirth,
+      gender: profileData.gender,
+      address: {
+        region: profileData.region,
+        zone: profileData.zone,
+        woreda: profileData.woreda,
+      },
+    };
+
+    if (profilePicture && profilePicture !== (currentUser as any)?.profilePicture) {
+      updateData.profilePicture = profilePicture;
+    }
+
+    updateProfileMutation.mutate(updateData);
+  };
+
+  const handleChangePassword = () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    changePasswordMutation.mutate({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+    });
+  };
+
+  const handleSaveNotifications = () => {
+    updateProfileMutation.mutate({
+      notificationPreferences: notifications
+    });
+  };
+
+  const handleSavePreferences = () => {
+    localStorage.setItem('preferences', JSON.stringify(preferences));
+    toast.success('Preferences saved!');
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+      </div>
+
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="language">Language</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="system">System</TabsTrigger>
+        </TabsList>
+
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-6">
+          <SectionCard title="Profile Information" icon={User}>
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20 border-4 border-primary">
+                  {profilePicture && <AvatarImage src={profilePicture} alt={currentUser?.fullName} />}
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{currentUser?.fullName}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upload your profile picture below
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name (English)</Label>
+                  <Input
+                    id="fullName"
+                    value={profileData.fullName}
+                    onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fullNameAmharic">Full Name (Amharic)</Label>
+                  <Input
+                    id="fullNameAmharic"
+                    value={profileData.fullNameAmharic}
+                    onChange={(e) => setProfileData({ ...profileData, fullNameAmharic: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    value={profileData.dateOfBirth}
+                    onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select
+                    value={profileData.gender}
+                    onValueChange={(value) => setProfileData({ ...profileData, gender: value as 'Male' | 'Female' })}
+                  >
+                    <SelectTrigger id="gender">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="region">Region</Label>
+                  <Select
+                    value={profileData.region}
+                    onValueChange={(value) => setProfileData({ ...profileData, region: value })}
+                  >
+                    <SelectTrigger id="region">
+                      <SelectValue placeholder="Select Region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ETHIOPIAN_REGIONS.map((region) => (
+                        <SelectItem key={region} value={region}>
+                          {region}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="zone">Zone</Label>
+                  <Input
+                    id="zone"
+                    value={profileData.zone}
+                    onChange={(e) => setProfileData({ ...profileData, zone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="woreda">Woreda</Label>
+                  <Input
+                    id="woreda"
+                    value={profileData.woreda}
+                    onChange={(e) => setProfileData({ ...profileData, woreda: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="profilePicture">Profile Picture</Label>
+                  <Input
+                    id="profilePicture"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 2 * 1024 * 1024) {
+                          toast.error('File size must be less than 2MB');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setProfilePicture(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-xs text-muted-foreground">Upload JPG, PNG, or GIF. Max size 2MB.</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (currentUser) {
+                      setProfileData({
+                        fullName: currentUser.fullName || '',
+                        fullNameAmharic: (currentUser as any)?.fullNameAmharic || '',
+                        phone: currentUser.phone || '',
+                        dateOfBirth: currentUser.dateOfBirth ? new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : '',
+                        gender: currentUser.gender || 'Male',
+                        region: currentUser.address?.region || '',
+                        zone: currentUser.address?.zone || '',
+                        woreda: currentUser.address?.woreda || '',
+                      });
+                      setProfilePicture((currentUser as any)?.profilePicture || '');
+                    }
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={updateProfileMutation.isPending}
+                >
+                  {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </div>
+          </SectionCard>
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-6">
+          <SectionCard title="Notification Preferences" icon={Bell}>
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold mb-4">General Notifications</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Email Notifications</p>
+                      <p className="text-sm text-muted-foreground">
+                        Receive announcements via email
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.email}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Push Notifications</p>
+                      <p className="text-sm text-muted-foreground">
+                        Get instant updates on your device
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.push}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, push: checked })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <h3 className="font-semibold mb-4">Activity Notifications</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Meeting Reminders</p>
+                      <p className="text-sm text-muted-foreground">
+                        Notify before scheduled meetings
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.meetings}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, meetings: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Report Updates</p>
+                      <p className="text-sm text-muted-foreground">
+                        Notify when reports are commented
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.reports}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, reports: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Plan Notifications</p>
+                      <p className="text-sm text-muted-foreground">
+                        Notify when new plans are created or updated
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.plans}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, plans: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Finance Notifications</p>
+                      <p className="text-sm text-muted-foreground">
+                        Notify about financial transactions and reports
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.finance}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, finance: checked })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <h3 className="font-semibold mb-4">Digest & Summary</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Weekly Summary</p>
+                      <p className="text-sm text-muted-foreground">
+                        Receive weekly activity digest
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notifications.weekly}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, weekly: checked })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Notification Frequency</Label>
+                    <Select defaultValue="immediate">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="immediate">Immediate</SelectItem>
+                        <SelectItem value="hourly">Hourly Digest</SelectItem>
+                        <SelectItem value="daily">Daily Digest</SelectItem>
+                        <SelectItem value="weekly">Weekly Digest</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Quiet Hours</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">From</Label>
+                        <Input type="time" defaultValue="22:00" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">To</Label>
+                        <Input type="time" defaultValue="07:00" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      No notifications will be sent during these hours
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t">
+                <Button onClick={handleSaveNotifications}>
+                  Save Preferences
+                </Button>
+              </div>
+            </div>
+          </SectionCard>
+        </TabsContent>
+
+        {/* Appearance Tab */}
+        <TabsContent value="appearance" className="space-y-6">
+          <SectionCard title="Appearance Settings" icon={Palette}>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>Theme</Label>
+                <Select
+                  value={theme}
+                  onValueChange={(value) => {
+                    if (value === 'light' || value === 'dark') {
+                      if (theme !== value) {
+                        toggleTheme();
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Choose your preferred color theme
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Compact Mode</p>
+                  <p className="text-sm text-muted-foreground">
+                    Show more content with reduced spacing
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.compactMode}
+                  onCheckedChange={(checked) => setPreferences({ ...preferences, compactMode: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Animations</p>
+                  <p className="text-sm text-muted-foreground">
+                    Enable smooth transitions and effects
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.animations}
+                  onCheckedChange={(checked) => setPreferences({ ...preferences, animations: checked })}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4 border-t">
+                <Button onClick={handleSavePreferences}>
+                  Save Preferences
+                </Button>
+              </div>
+            </div>
+          </SectionCard>
+        </TabsContent>
+
+        {/* Language Tab */}
+        <TabsContent value="language" className="space-y-6">
+          <SectionCard title="Language & Region" icon={Globe}>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>Display Language</Label>
+                <Select
+                  value={language}
+                  onValueChange={(value) => {
+                    if (value === 'en' || value === 'am') {
+                      if (language !== value) {
+                        toggleLanguage();
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="am">አማርኛ (Amharic)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Date Format</Label>
+                <Select
+                  value={preferences.dateFormat}
+                  onValueChange={(value) => setPreferences({ ...preferences, dateFormat: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gregorian">Gregorian Calendar</SelectItem>
+                    <SelectItem value="ethiopian">Ethiopian Calendar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Time Zone</Label>
+                <Select
+                  value={preferences.timeZone}
+                  onValueChange={(value) => setPreferences({ ...preferences, timeZone: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="eat">East Africa Time (EAT)</SelectItem>
+                    <SelectItem value="utc">UTC</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t">
+                <Button onClick={handleSavePreferences}>
+                  Save Preferences
+                </Button>
+              </div>
+            </div>
+          </SectionCard>
+        </TabsContent>
+
+        {/* Security Tab */}
+        <TabsContent value="security" className="space-y-6">
+          <SectionCard title="Security Settings" icon={Shield}>
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold mb-4">Change Password</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current">Current Password</Label>
+                    <Input
+                      id="current"
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new">New Password</Label>
+                    <Input
+                      id="new"
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm">Confirm New Password</Label>
+                    <Input
+                      id="confirm"
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={changePasswordMutation.isPending || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                  >
+                    {changePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t">
+                <h3 className="font-semibold mb-4">Session Management</h3>
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">Active Sessions</p>
+                      <p className="text-sm text-muted-foreground">
+                        You are currently logged in on this device
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      View Sessions
+                    </Button>
+                  </div>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">Two-Factor Authentication</p>
+                      <p className="text-sm text-muted-foreground">
+                        Add an extra layer of security to your account
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Enable 2FA
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t">
+                <h3 className="font-semibold mb-4">Account Actions</h3>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium">Log Out</p>
+                    <p className="text-sm text-muted-foreground">
+                      Sign out of your account and return to login page
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    className="ml-4"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log Out
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+        </TabsContent>
+
+        {/* System Tab */}
+        <TabsContent value="system" className="space-y-6">
+          <SectionCard title="System Information" icon={Monitor}>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Application Version</span>
+                    <span className="text-sm text-muted-foreground">v1.0.0</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Last Updated</span>
+                    <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Browser</span>
+                    <span className="text-sm text-muted-foreground">{navigator.userAgent.split(' ')[0]}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Connection Status</span>
+                    <div className="flex items-center gap-2">
+                      <Wifi className="h-4 w-4 text-green-500" />
+                      <span className="text-sm text-green-600">Online</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Storage Used</span>
+                    <span className="text-sm text-muted-foreground">2.4 MB</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Cache Size</span>
+                    <span className="text-sm text-muted-foreground">1.2 MB</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Last Sync</span>
+                    <span className="text-sm text-muted-foreground">{new Date().toLocaleTimeString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Server Status</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-green-600">Healthy</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Data Management" icon={Database}>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Export Data</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Download your data in various formats
+                    </p>
+                    <div className="space-y-2">
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Profile Data (JSON)
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Reports (PDF)
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Finance Data (Excel)
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Cache & Storage</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Manage local data and cache
+                    </p>
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          localStorage.clear();
+                          sessionStorage.clear();
+                          toast.success('Cache cleared successfully');
+                        }}
+                      >
+                        <Trash className="h-4 w-4 mr-2" />
+                        Clear Cache
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          window.location.reload();
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Refresh Application
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <HardDrive className="h-4 w-4 mr-2" />
+                        Optimize Storage
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Advanced Settings" icon={Shield}>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Developer Mode</p>
+                    <p className="text-sm text-muted-foreground">
+                      Enable advanced debugging features
+                    </p>
+                  </div>
+                  <Switch
+                    checked={preferences.compactMode}
+                    onCheckedChange={(checked) => {
+                      setPreferences({ ...preferences, compactMode: checked });
+                      if (checked) {
+                        toast.info('Developer mode enabled');
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Beta Features</p>
+                    <p className="text-sm text-muted-foreground">
+                      Access experimental features (may be unstable)
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Analytics</p>
+                    <p className="text-sm text-muted-foreground">
+                      Help improve the app by sharing usage data
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium text-destructive">Reset All Settings</p>
+                    <p className="text-sm text-muted-foreground">
+                      This will reset all your preferences to default values
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to reset all settings? This action cannot be undone.')) {
+                        localStorage.removeItem('notifications');
+                        localStorage.removeItem('preferences');
+                        setNotifications({
+                          email: true,
+                          push: true,
+                          meetings: true,
+                          reports: false,
+                          weekly: true,
+                        });
+                        setPreferences({
+                          compactMode: false,
+                          animations: true,
+                          dateFormat: 'gregorian',
+                          timeZone: 'eat',
+                        });
+                        toast.success('All settings have been reset to defaults');
+                      }
+                    }}
+                  >
+                    Reset Settings
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Settings;
