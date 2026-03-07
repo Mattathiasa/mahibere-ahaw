@@ -93,7 +93,7 @@ const Home: React.FC = () => {
             </button>
             <Button
               onClick={() => navigate('/login')}
-              className="hidden sm:flex bg-[#2E5E99] hover:bg-[#2E5E99]/90 px-8 py-3 rounded-2xl shadow-xl shadow-[#2E5E99]/20"
+              className="flex bg-[#2E5E99] hover:bg-[#2E5E99]/90 px-4 sm:px-8 py-2 sm:py-3 text-xs sm:text-base rounded-2xl shadow-xl shadow-[#2E5E99]/20"
             >
               {t('login')}
             </Button>
@@ -103,6 +103,42 @@ const Home: React.FC = () => {
           </div>
         </div>
       </motion.nav>
+
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={`fixed inset-0 z-[100] ${theme === 'dark' ? 'bg-[#0D2440]' : 'bg-[#E7F0FA]'} p-6 flex flex-col`}
+          >
+            <div className="flex items-center justify-between mb-12">
+              <div className="flex items-center gap-3">
+                <img src={logo} alt="Mahibere Ahaw" className="h-10 w-10" />
+                <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent">MAHIBERE AHAW</span>
+              </div>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-3 bg-red-500/10 text-red-500 rounded-2xl">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-6">
+              {['home', 'about', 'services', 'contact'].map((section) => (
+                <button
+                  key={section}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    scrollToSection(section);
+                  }}
+                  className={`text-2xl font-black uppercase text-left w-full py-4 border-b border-[#2E5E99]/10 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'} active:scale-95 transition-transform`}
+                >
+                  {t(section as any)}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section */}
       <section ref={heroRef} id="home" className="relative min-h-screen flex items-center justify-center pt-32 pb-20 px-6 overflow-hidden">
