@@ -54,21 +54,21 @@ const Home: React.FC = () => {
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'py-2 backdrop-blur-2xl border-b border-[#2E5E99]/10 shadow-xl' : 'py-6 bg-transparent'
+        className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'py-2 backdrop-blur-2xl border-b border-[#2E5E99]/10 shadow-xl' : 'py-3 sm:py-6 bg-transparent'
           }`}
         style={{
           backgroundColor: scrolled ? (theme === 'dark' ? 'rgba(13, 36, 64, 0.85)' : 'rgba(231, 240, 250, 0.85)') : 'transparent'
         }}
       >
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-12">
+        <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
+          <div className="flex items-center gap-4 sm:gap-12">
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-3 cursor-pointer"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer"
               onClick={() => scrollToSection('home')}
             >
-              <img src={logo} alt="Mahibere Ahaw" className="h-10 w-10 sm:h-12 sm:w-12" />
-              <span className="text-2xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent">MAHIBERE AHAW</span>
+              <img src={logo} alt="Mahibere Ahaw" className="h-8 w-8 sm:h-10 sm:w-10" />
+              <span className="text-base sm:text-xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent">MAHIBERE AHAW</span>
             </motion.div>
 
             <div className="hidden lg:flex items-center gap-8">
@@ -141,16 +141,16 @@ const Home: React.FC = () => {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <section ref={heroRef} id="home" className="relative min-h-screen flex items-center justify-center pt-32 pb-20 px-6 overflow-hidden">
+      <section ref={heroRef} id="home" className="relative min-h-screen flex items-center justify-center pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 overflow-hidden">
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
-          className="container mx-auto relative z-10 grid lg:grid-cols-2 gap-16 items-center"
+          className="container mx-auto relative z-10 grid lg:grid-cols-2 gap-8 sm:gap-16 items-center"
         >
-          <div className="text-left space-y-8">
+          <div className="text-left space-y-5 sm:space-y-8">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2E5E99]/10 border border-[#2E5E99]/20 text-[#2E5E99] text-xs font-bold uppercase tracking-widest"
+              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#2E5E99]/10 border border-[#2E5E99]/20 text-[#2E5E99] text-[10px] sm:text-xs font-bold uppercase tracking-widest"
             >
               <Sparkles className="h-3 w-3" />
               Revolutionizing Ministry
@@ -160,7 +160,7 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-5xl md:text-8xl font-black leading-[1.1] font-ethiopic"
+              className="text-4xl sm:text-5xl md:text-7xl font-black leading-[1.1] font-ethiopic"
             >
               {t('heroTitle')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2E5E99] via-[#7BA4D0] to-[#2E5E99]">
@@ -171,7 +171,7 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className={`text-xl md:text-2xl ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]/80'} max-w-xl font-ethiopic leading-relaxed`}
+              className={`text-base sm:text-xl ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]/80'} max-w-xl font-ethiopic leading-relaxed`}
             >
               {t('heroDescription')}
             </motion.p>
@@ -179,24 +179,13 @@ const Home: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className={`p-4 rounded-2xl bg-[#2E5E99]/5 border-l-4 border-[#2E5E99] max-w-xl`}
-            >
-              <p className="text-sm italic font-medium opacity-80">
-                "{t('missionStatement')}"
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-wrap gap-4"
+              className="flex flex-wrap gap-3 sm:gap-4"
             >
-              <Button size="lg" className="rounded-2xl px-12 py-8 text-xl bg-[#2E5E99] hover:scale-105 transition-transform">
+              <Button size="lg" className="rounded-2xl px-6 sm:px-12 py-4 sm:py-8 text-base sm:text-xl bg-[#2E5E99] hover:scale-105 transition-transform">
                 {t('getStarted')}
               </Button>
-              <Button size="lg" variant="ghost" className={`rounded-2xl px-10 py-8 text-xl border border-[#2E5E99]/20 hover:bg-[#2E5E99]/5 ${theme === 'dark' ? 'text-white' : 'text-[#2E5E99]'}`} onClick={() => scrollToSection('about')}>
+              <Button size="lg" variant="ghost" className={`rounded-2xl px-6 sm:px-10 py-4 sm:py-8 text-base sm:text-xl border border-[#2E5E99]/20 hover:bg-[#2E5E99]/5 ${theme === 'dark' ? 'text-white' : 'text-[#2E5E99]'}`} onClick={() => scrollToSection('about')}>
                 {t('learnMore')}
               </Button>
             </motion.div>
@@ -246,9 +235,9 @@ const Home: React.FC = () => {
       </section>
 
       {/* Dynamic Statistics Section */}
-      <section className="py-24 relative overflow-hidden bg-white/30 backdrop-blur-sm border-y border-[#2E5E99]/5">
+      <section className="py-12 sm:py-24 relative overflow-hidden bg-white/30 backdrop-blur-sm border-y border-[#2E5E99]/5">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
             {[
               { label: t('congregations'), val: '850', icon: MapPin },
               { label: t('adminStaff'), val: '2.4k', icon: Shield },

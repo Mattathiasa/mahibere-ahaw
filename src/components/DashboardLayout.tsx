@@ -249,7 +249,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </div>
 
-          <div className="container max-w-7xl mx-auto p-6 lg:p-12 space-y-8">
+          <div className="container max-w-7xl mx-auto p-4 sm:p-6 lg:p-12 space-y-6 sm:space-y-8">
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
               {children}
             </div>

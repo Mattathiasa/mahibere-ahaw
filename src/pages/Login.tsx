@@ -135,7 +135,7 @@ const Login = () => {
         <Card className={`border-[#2E5E99]/10 shadow-2xl overflow-hidden backdrop-blur-xl ${theme === 'dark' ? 'bg-[#0D2440]/60' : 'bg-white/70'}`}>
           <div className={`h-2 w-full bg-gradient-to-r from-[#2E5E99] via-[#7BA4D0] to-[#2E5E99]`} />
 
-          <CardHeader className="space-y-6 text-center pt-10 pb-2">
+          <CardHeader className="space-y-4 text-center pt-6 sm:pt-10 pb-2">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -144,7 +144,7 @@ const Login = () => {
             >
               <div className="relative group">
                 <div className="absolute -inset-4 bg-[#2E5E99]/20 rounded-full blur-xl group-hover:bg-[#2E5E99]/30 transition-all duration-500" />
-                <img src={logo} alt="Ahaw Logo" className="h-24 w-24 relative z-10 drop-shadow-2xl" />
+                <img src={logo} alt="Ahaw Logo" className="h-16 w-16 sm:h-24 sm:w-24 relative z-10 drop-shadow-2xl" />
               </div>
             </motion.div>
 
@@ -158,7 +158,7 @@ const Login = () => {
                   <Sparkles className="h-3 w-3" />
                   Divine Access
                 </div>
-                <CardTitle className={`text-4xl font-black font-ethiopic tracking-tight ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                <CardTitle className={`text-2xl sm:text-4xl font-black font-ethiopic tracking-tight ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
                   Mahibere Ahaw Login
                 </CardTitle>
               </motion.div>
@@ -168,7 +168,7 @@ const Login = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="p-8 pt-6">
+          <CardContent className="px-5 sm:p-8 pt-4 sm:pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <motion.div

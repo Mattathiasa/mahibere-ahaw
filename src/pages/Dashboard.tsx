@@ -79,7 +79,7 @@ const Dashboard = () => {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative group p-8 rounded-[2.5rem] bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl overflow-hidden"
+        className="relative group p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#2E5E99]/5 rounded-full -mr-64 -mt-64 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between">
@@ -89,7 +89,7 @@ const Dashboard = () => {
               <UserCircle className="h-4 w-4" />
               Member Profile
             </div>
-            <h1 className="text-4xl lg:text-5xl font-black tracking-tight text-[#0D2440] dark:text-white font-ethiopic leading-tight">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2440] dark:text-white font-ethiopic leading-tight">
               {currentUser?.fullNameEnglish || currentUser?.fullName || 'Church Member'}
               {currentUser?.fullNameAmharic && (
                 <span className="block text-2xl mt-2 text-[#2E5E99]/80 font-ethiopic">
@@ -166,7 +166,7 @@ const Dashboard = () => {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {stats.map((stat, index) => (
           <motion.div
             key={index}
