@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, Users, Flag, Sparkles } from 'lucide-react';
-import { api } from '@/services/api';
+import { strategicPlanService } from '@/services/strategicPlan';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,10 +11,7 @@ const StrategicPlan = () => {
     const { t } = useTranslation();
     const { data: goals, isLoading } = useQuery({
         queryKey: ['strategic-goals'],
-        queryFn: async () => {
-            const response = await api.get('/strategic-plans');
-            return response.data;
-        },
+        queryFn: () => strategicPlanService.getAllGoals(),
     });
 
     // Mock data if no backend data yet

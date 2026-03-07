@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface MemberWizardProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
+  initialData?: any;
 }
 
 const ministryOptions = [
@@ -46,28 +47,28 @@ const hierarchyLevels = [
   'HiyawanMahderat'
 ];
 
-export const MemberWizard = ({ onClose, onSubmit }: MemberWizardProps) => {
+export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardProps) => {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    fullNameEnglish: '',
-    fullNameAmharic: '',
-    username: '',
+    fullNameEnglish: initialData?.fullNameEnglish || initialData?.fullName || '',
+    fullNameAmharic: initialData?.fullNameAmharic || '',
+    username: initialData?.username || '',
     password: '',
-    email: '',
-    phoneNumber: '',
-    dateOfBirth: '',
-    gender: 'Male',
-    hierarchyLevel: 'Atbiya',
-    ministryType: [] as string[],
-    churchRoles: [] as string[],
-    workSchool: '',
-    maritalStatus: 'Single',
-    hasChildren: false,
-    childrenCount: 0,
-    region: '',
-    zone: '',
-    woreda: '',
+    email: initialData?.email || '',
+    phoneNumber: initialData?.phoneNumber || initialData?.phone || '',
+    dateOfBirth: initialData?.dateOfBirth || '',
+    gender: initialData?.gender || 'Male',
+    hierarchyLevel: initialData?.hierarchyLevel || 'Atbiya',
+    ministryType: initialData?.ministryType || [],
+    churchRoles: initialData?.churchRoles || [],
+    workSchool: initialData?.workSchool || initialData?.work || '',
+    maritalStatus: initialData?.maritalStatus || 'Single',
+    hasChildren: initialData?.hasChildren || false,
+    childrenCount: initialData?.childrenCount || initialData?.numberOfChildren || 0,
+    region: initialData?.region || initialData?.address?.region || '',
+    zone: initialData?.zone || initialData?.address?.zone || '',
+    woreda: initialData?.woreda || initialData?.address?.woreda || '',
   });
 
   const handleToggle = (field: 'ministryType' | 'churchRoles', value: string) => {
@@ -84,17 +85,30 @@ export const MemberWizard = ({ onClose, onSubmit }: MemberWizardProps) => {
     onClose();
   };
 
-  const steps = [
+  // If editing, we can skip the credentials step (Step 2)
+  const baseSteps = [
     { number: 1, title: 'Identity', icon: User },
-    { number: 2, title: 'Credentials', icon: Shield },
+    ...(initialData ? [] : [{ number: 2, title: 'Credentials', icon: Shield }]),
     { number: 3, title: 'Status', icon: Heart },
     { number: 4, title: 'Location', icon: MapPin },
     { number: 5, title: 'Service', icon: Briefcase },
     { number: 6, title: 'Review', icon: Check },
   ];
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, steps.length));
-  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+  // Adjust numbers for the UI
+  const steps = baseSteps.map((s, i) => ({ ...s, displayOrder: i + 1 }));
+
+  const nextStep = () => setStep(prev => {
+    const currentIndex = steps.findIndex(s => s.number === prev);
+    if (currentIndex < steps.length - 1) return steps[currentIndex + 1].number;
+    return prev;
+  });
+
+  const prevStep = () => setStep(prev => {
+    const currentIndex = steps.findIndex(s => s.number === prev);
+    if (currentIndex > 0) return steps[currentIndex - 1].number;
+    return prev;
+  });
 
   return (
     <div className="space-y-8 p-1">
@@ -403,8 +417,8 @@ export const MemberWizard = ({ onClose, onSubmit }: MemberWizardProps) => {
                         key={role}
                         onClick={() => handleToggle('churchRoles', role)}
                         className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-3 ${formData.churchRoles.includes(role)
-                            ? 'bg-[#2E5E99] border-[#2E5E99] text-white shadow-lg'
-                            : 'bg-white border-slate-100 hover:border-slate-300'
+                          ? 'bg-[#2E5E99] border-[#2E5E99] text-white shadow-lg'
+                          : 'bg-white border-slate-100 hover:border-slate-300'
                           }`}
                       >
                         <Shield className={`h-4 w-4 ${formData.churchRoles.includes(role) ? 'text-white' : 'text-[#2E5E99]'}`} />
@@ -422,8 +436,8 @@ export const MemberWizard = ({ onClose, onSubmit }: MemberWizardProps) => {
                         key={ministry}
                         onClick={() => handleToggle('ministryType', ministry)}
                         className={`px-6 py-3 rounded-full border-2 cursor-pointer transition-all flex items-center gap-2 ${formData.ministryType.includes(ministry)
-                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg'
-                            : 'bg-white border-slate-100 hover:border-slate-300'
+                          ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg'
+                          : 'bg-white border-slate-100 hover:border-slate-300'
                           }`}
                       >
                         <span className="text-[10px] font-bold uppercase tracking-widest italic">{ministry}</span>
@@ -500,9 +514,9 @@ export const MemberWizard = ({ onClose, onSubmit }: MemberWizardProps) => {
         </Button>
         <Button
           className="h-14 px-12 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-[#2E5E99]/20"
-          onClick={step === steps.length ? handleSubmit : nextStep}
+          onClick={step === steps[steps.length - 1].number ? handleSubmit : nextStep}
         >
-          {step === steps.length ? 'Secure Profile' : 'Continue'}
+          {step === steps[steps.length - 1].number ? 'Secure Profile' : 'Continue'}
         </Button>
       </div>
     </div>

@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Info, Video, FileText, MessageCircle, Mic2 } from 'lucide-react';
-import { api } from '@/services/api';
+import { teachingService } from '@/services/teachings';
 import { TeachingServiceType, TeachingStatus } from '@/types';
 
 interface CreateTeachingDialogProps {
@@ -104,14 +104,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
 
     const createMutation = useMutation({
         mutationFn: async (data: typeof formData) => {
-            // In a real app, we'd handle authorId on the server from the token
-            // For now we might need to send it if the schema requires it and server doesn't auto-add
-            const payload = {
-                ...data,
-                authorId: 'current-user-id' // Server should ideally set this from req.user
-            };
-            const response = await api.post('/teachings', payload);
-            return response.data;
+            return teachingService.createTeaching(data as any);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['teachings'] });

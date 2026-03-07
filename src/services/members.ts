@@ -116,4 +116,27 @@ export const memberService = {
     const snapshot = await getDocs(collection(db, 'users'));
     return snapshot.size;
   },
+
+  async updateMember(id: string, memberData: any) {
+    const docRef = doc(db, 'users', id);
+    const data = {
+      ...memberData,
+      updatedAt: serverTimestamp(),
+    };
+    // Don't update username or password here for simplicity
+    delete data.password;
+    delete data.username;
+
+    await setDoc(docRef, data, { merge: true });
+    return { id, ...data };
+  },
+
+  async deleteMember(id: string) {
+    const docRef = doc(db, 'users', id);
+    // In a real app, we might want to also delete the Firebase Auth user,
+    // but that usually requires admin privileges or a Cloud Function.
+    // For now, we'll just remove them from Firestore.
+    const { deleteDoc } = await import('firebase/firestore');
+    await deleteDoc(docRef);
+  },
 };

@@ -28,6 +28,9 @@ const Members = () => {
   const [filterHierarchy, setFilterHierarchy] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const permissions = useRolePermissions();
 
   const { data: membersData, isLoading } = useQuery({
@@ -42,8 +45,33 @@ const Members = () => {
       toast.success(t('memberAddedSuccess'));
       setIsWizardOpen(false);
     },
-    onError: () => {
-      toast.error(t('memberAddedError'));
+    onError: (error: any) => {
+      toast.error(error.message || t('memberAddedError'));
+    }
+  });
+
+  const updateMemberMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: any }) => memberService.updateMember(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success('Member profile updated');
+      setIsWizardOpen(false);
+      setSelectedMember(null);
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Update failed');
+    }
+  });
+
+  const deleteMemberMutation = useMutation({
+    mutationFn: (id: string) => memberService.deleteMember(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success('Member removed');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Delete failed');
     }
   });
 
@@ -136,7 +164,13 @@ const Members = () => {
           )}
 
           {permissions.canAddMembers && (
-            <Dialog open={isWizardOpen} onOpenChange={setIsWizardOpen}>
+            <Dialog open={isWizardOpen} onOpenChange={(open) => {
+              setIsWizardOpen(open);
+              if (!open) {
+                setSelectedMember(null);
+                setIsEditing(false);
+              }
+            }}>
               <DialogTrigger asChild>
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -154,17 +188,118 @@ const Members = () => {
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] border-none bg-white/90 backdrop-blur-2xl p-8">
                 <DialogHeader>
-                  <DialogTitle className="hidden">Member Enrollment</DialogTitle>
+                  <DialogTitle className="hidden">{isEditing ? 'Edit Profile' : 'Member Enrollment'}</DialogTitle>
                 </DialogHeader>
                 <MemberWizard
-                  onClose={() => setIsWizardOpen(false)}
-                  onSubmit={(data) => createMemberMutation.mutate(data)}
+                  initialData={selectedMember}
+                  onClose={() => {
+                    setIsWizardOpen(false);
+                    setSelectedMember(null);
+                    setIsEditing(false);
+                  }}
+                  onSubmit={(data) => {
+                    if (isEditing && selectedMember?.id) {
+                      updateMemberMutation.mutate({ id: selectedMember.id, data });
+                    } else {
+                      createMemberMutation.mutate(data);
+                    }
+                  }}
                 />
               </DialogContent>
             </Dialog>
           )}
         </div>
       </div>
+
+      {/* Member Details View Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-[3rem] border-none bg-white/95 backdrop-blur-2xl p-10 shadow-2xl">
+          {selectedMember && (
+            <div className="space-y-10">
+              <div className="flex flex-col items-center text-center gap-6">
+                <Avatar className="h-40 w-40 rounded-[3rem] border-8 border-white shadow-2xl">
+                  {selectedMember.profilePicture && (
+                    <AvatarImage src={selectedMember.profilePicture} className="object-cover" />
+                  )}
+                  <AvatarFallback className="bg-gradient-to-br from-[#2E5E99] to-[#0D2440] text-5xl text-white font-black">
+                    {(selectedMember.fullNameEnglish || selectedMember.fullName || 'U').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-2">
+                  <h2 className="text-4xl font-black italic text-[#0D2440] tracking-tighter">
+                    {selectedMember.fullNameEnglish || selectedMember.fullName}
+                  </h2>
+                  <p className="text-xl font-bold text-[#2E5E99] font-ethiopic">
+                    {selectedMember.fullNameAmharic}
+                  </p>
+                  <Badge className="bg-[#2E5E99]/10 text-[#2E5E99] border-none px-6 py-2 rounded-2xl text-xs font-black uppercase tracking-widest mt-4">
+                    {selectedMember.hierarchyLevel} Level Soul
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-10 border-t border-[#2E5E99]/10">
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Personal Contact</p>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 text-slate-700 font-bold italic">
+                        <Phone className="h-5 w-5 text-[#2E5E99]" />
+                        {selectedMember.phone || 'No phone'}
+                      </div>
+                      <div className="flex items-center gap-4 text-slate-700 font-bold italic line-clamp-1">
+                        <Search className="h-5 w-5 text-[#2E5E99]" />
+                        {selectedMember.email || selectedMember.username || 'No email'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Jurisdiction</p>
+                    <div className="flex items-center gap-4 text-slate-700 font-bold italic">
+                      <MapPin className="h-5 w-5 text-[#2E5E99]" />
+                      {selectedMember.address?.region}, {selectedMember.address?.zone}, {selectedMember.address?.woreda}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Ministry Roles</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedMember.churchRoles?.map((r: string) => (
+                        <Badge key={r} className="bg-[#2E5E99] text-white border-none rounded-xl text-[10px] font-black uppercase px-4 py-1.5 shadow-lg shadow-[#2E5E99]/20">
+                          {r}
+                        </Badge>
+                      )) || 'General Member'}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Ministry Teams</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedMember.ministryType?.map((m: string) => (
+                        <Badge key={m} className="bg-emerald-500 text-white border-none rounded-xl text-[10px] font-black uppercase px-4 py-1.5 shadow-lg shadow-emerald-500/20">
+                          {m}
+                        </Badge>
+                      )) || 'None'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-10 border-t border-[#2E5E99]/10">
+                <Button
+                  onClick={() => setIsViewOpen(false)}
+                  className="h-14 px-12 rounded-2xl bg-[#0D2440] text-white font-black uppercase tracking-widest hover:bg-[#1a3a5f] shadow-xl"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Filters and Search - Premium Glass Toolbar */}
       <motion.div
@@ -305,19 +440,44 @@ const Members = () => {
                       </div>
 
                       <div className="flex items-center justify-between gap-2 pt-4 border-t border-white/20">
-                        <div className="flex -space-x-2">
-                          <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-white dark:border-slate-900" />
-                          <div className="h-6 w-6 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-900" />
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedMember(member);
+                              setIsViewOpen(true);
+                            }}
+                            className="h-10 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-[#2E5E99] hover:bg-[#2E5E99]/5"
+                          >
+                            Details
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedMember(member);
+                              setIsEditing(true);
+                              setIsWizardOpen(true);
+                            }}
+                            className="h-10 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-[#2E5E99] hover:bg-[#2E5E99]/5"
+                          >
+                            Edit
+                          </Button>
                         </div>
-                        <div className="flex gap-1.5">
-                          <Badge variant="outline" className="rounded-lg bg-green-500/10 text-green-600 border-none text-[8px] font-black uppercase tracking-tighter">
-                            Verified
-                          </Badge>
-                          {member.gender && (
-                            <Badge variant="outline" className="rounded-lg bg-[#2E5E99]/10 text-[#2E5E99] border-none text-[8px] font-black uppercase">
-                              {member.gender}
-                            </Badge>
-                          )}
+                        <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (window.confirm(`Archive ${member.fullName}?`)) {
+                                deleteMemberMutation.mutate(member.id);
+                              }
+                            }}
+                            className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:bg-rose-500/10"
+                          >
+                            <Download className="h-4 w-4 rotate-180" />
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

@@ -12,12 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Loader2, Globe, Send, FileText, MapPin, Users, Droplets, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '@/services/api';
+import { missionaryService } from '@/services/missionary';
 
 const Missionary = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState('applications');
+    const [activeTab, setActiveTab] = useState('application');
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
     // Form State
@@ -37,33 +37,25 @@ const Missionary = () => {
 
     // Fetch Applications
     const { data: applications, isLoading: isLoadingApps } = useQuery({
-        queryKey: ['missionary-applications'],
-        queryFn: async () => {
-            const response = await api.get('/missionaries/applications');
-            return response.data;
-        },
+        queryKey: ['missionary-applications', user?.id],
+        queryFn: () => missionaryService.getAllApplications(user?.id),
+        enabled: !!user?.id,
     });
 
     // Fetch Reports
     const { data: reports, isLoading: isLoadingReports } = useQuery({
         queryKey: ['missionary-reports'],
-        queryFn: async () => {
-            const response = await api.get('/missionaries/reports');
-            return response.data;
-        },
+        queryFn: () => missionaryService.getAllReports(),
     });
 
     // Create Application Mutation
     const createApplicationMutation = useMutation({
-        mutationFn: async (data: any) => {
-            const response = await api.post('/missionaries/applications', {
-                ...data,
-                userId: user?.id,
-                fullName: user?.fullName,
-                phoneNumber: user?.phone || 'N/A', // Fallback if phone not directly on user object
-            });
-            return response.data;
-        },
+        mutationFn: (data: any) => missionaryService.createApplication({
+            ...data,
+            userId: user?.id!,
+            fullName: user?.fullName || 'Anonymous',
+            phoneNumber: user?.phone || 'N/A',
+        }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['missionary-applications'] });
             toast.success('Application submitted successfully!');
@@ -76,21 +68,17 @@ const Missionary = () => {
 
     // Create Report Mutation
     const createReportMutation = useMutation({
-        mutationFn: async (data: any) => {
-            const payload = {
-                title: data.title,
-                location: data.location,
-                content: data.content,
-                stats: {
-                    peopleReached: parseInt(data.peopleReached.toString()),
-                    baptized: parseInt(data.baptized.toString()),
-                },
-                missionaryId: user?.id,
-                date: new Date(),
-            };
-            const response = await api.post('/missionaries/reports', payload);
-            return response.data;
-        },
+        mutationFn: (data: any) => missionaryService.createReport({
+            title: data.title,
+            location: data.location,
+            content: data.content,
+            stats: {
+                peopleReached: parseInt(data.peopleReached.toString()) || 0,
+                baptized: parseInt(data.baptized.toString()) || 0,
+            },
+            missionaryId: user?.id!,
+            date: new Date().toISOString(),
+        }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['missionary-reports'] });
             toast.success('Field report submitted successfully!');

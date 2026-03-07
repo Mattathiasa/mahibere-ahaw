@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Calendar, User, Mic2, Tag, Plus, ArrowRight, Clock } from 'lucide-react';
-import { api } from '@/services/api';
+import { teachingService } from '@/services/teachings';
 import { TeachingServiceType, TeachingStatus } from '@/types';
 import { CreateTeachingDialog } from '@/components/CreateTeachingDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -17,10 +17,7 @@ const Teaching = () => {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const { data: teachings, isLoading } = useQuery({
         queryKey: ['teachings'],
-        queryFn: async () => {
-            const response = await api.get('/teachings');
-            return response.data;
-        },
+        queryFn: () => teachingService.getAllTeachings(),
     });
 
     const getStatusColor = (status: TeachingStatus) => {
