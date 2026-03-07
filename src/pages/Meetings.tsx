@@ -59,11 +59,17 @@ const Meetings = () => {
     },
   });
 
-  const meetings = meetingsData?.meetings || [];
+  const meetings = (meetingsData as any[]) || [];
 
   // Separate meetings into upcoming and past
-  const upcomingMeetings = meetings.filter((m: any) => isFuture(new Date(m.scheduledDate)) || isToday(new Date(m.scheduledDate)));
-  const pastMeetings = meetings.filter((m: any) => isPast(new Date(m.scheduledDate)) && !isToday(new Date(m.scheduledDate)));
+  const upcomingMeetings = meetings.filter((m: any) => {
+    const d = new Date(m.scheduledDate);
+    return isFuture(d) || isToday(d);
+  });
+  const pastMeetings = meetings.filter((m: any) => {
+    const d = new Date(m.scheduledDate);
+    return isPast(d) && !isToday(d);
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

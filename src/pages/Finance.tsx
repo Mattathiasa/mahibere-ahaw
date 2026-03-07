@@ -426,7 +426,7 @@ export default function Finance() {
         onSubmit={(data) => {
           createFinancialReport(data).then(() => {
             toast.success('Report generated successfully!');
-            setShowReportDialog(true);
+            setShowReportDialog(false);
             loadData();
           });
         }}
