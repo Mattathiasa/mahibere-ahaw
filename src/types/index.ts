@@ -7,7 +7,25 @@ export interface User {
   role: string;
   firstName?: string;
   lastName?: string;
+  fullName?: string;
+  fullNameEnglish?: string;
+  fullNameAmharic?: string;
   phone?: string;
+  dateOfBirth?: string;
+  hierarchyLevel?: string;
+  ministryType?: string[];
+  churchRoles?: string[];
+  workSchool?: string;
+  maritalStatus?: 'Single' | 'Married' | 'Divorced' | 'Widowed';
+  hasChildren?: boolean;
+  childrenCount?: number;
+  gender?: 'Male' | 'Female' | 'Other';
+  address?: {
+    region?: string;
+    zone?: string;
+    woreda?: string;
+    city?: string;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -34,7 +52,7 @@ export interface Notification {
 
 export interface FinanceTransaction {
   id: string;
-  type: 'income' | 'expense';
+  type: string; // Using string to allow more types like Collection, Deposit, Tithe, etc.
   amount: number;
   category: string;
   description: string;
@@ -44,7 +62,7 @@ export interface FinanceTransaction {
 }
 
 export interface FinanceTransactionInput {
-  type: 'income' | 'expense';
+  type: string;
   amount: number;
   category: string;
   description: string;
@@ -55,12 +73,18 @@ export interface FinanceTransactionInput {
 
 export interface MonthlyBudget {
   id: string;
-  month: string;
+  month: any; // Allow number or name
   year: number;
-  category: string;
-  allocated: number;
-  spent: number;
-  remaining: number;
+  category?: string;
+  plannedIncome: number;
+  plannedExpenses: number;
+  actualIncome?: number;
+  actualExpenses?: number;
+  status?: string;
+  attachments?: string[];
+  allocated?: number;
+  spent?: number;
+  remaining?: number;
 }
 
 export interface MonthlyBudgetInput {
@@ -75,10 +99,18 @@ export interface MonthlyBudgetInput {
 export interface FinancialReport {
   id: string;
   title: string;
+  titleAmharic?: string;
   period: string;
+  reportType?: string;
+  startDate: string;
+  endDate: string;
   totalIncome: number;
   totalExpenses: number;
-  balance: number;
+  totalTithes: number;
+  totalOfferings: number;
+  remainder: number;
+  recipientInfo?: string;
+  balance?: number;
   createdAt: string;
   createdBy: string;
 }
@@ -100,10 +132,12 @@ export enum TeachingServiceType {
 }
 
 export enum TeachingStatus {
-  DRAFT = 'DRAFT',
-  SCHEDULED = 'SCHEDULED',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
+  DRAFT = 'Draft',
+  PUBLISHED = 'Published',
+  ARCHIVED = 'Archived',
+  SCHEDULED = 'Scheduled',
+  COMPLETED = 'Completed',
+  CANCELLED = 'Cancelled',
 }
 
 // Ethiopian regions constant

@@ -12,6 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
+import { PageHeader } from '@/components/ui/PageHeader';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/hooks/useAuth';
+
 const Announcements = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -20,6 +24,7 @@ const Announcements = () => {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<any>(null);
   const [formData, setFormData] = useState({ title: '', content: '', expiresAt: '' });
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: announcementsData, isLoading } = useQuery({
     queryKey: ['announcements'],
@@ -27,7 +32,7 @@ const Announcements = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { title: string; content: string; expiresAt?: string }) => announcementService.createAnnouncement(data),
+    mutationFn: (data: any) => announcementService.createAnnouncement(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -36,7 +41,7 @@ const Announcements = () => {
       setFormData({ title: '', content: '', expiresAt: '' });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create announcement');
+      toast.error(error.message || 'Failed to create announcement');
     },
   });
 
@@ -51,7 +56,7 @@ const Announcements = () => {
       setFormData({ title: '', content: '', expiresAt: '' });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update announcement');
+      toast.error(error.message || 'Failed to update announcement');
     },
   });
 
@@ -65,7 +70,7 @@ const Announcements = () => {
       setSelectedAnnouncement(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete announcement');
+      toast.error(error.message || 'Failed to delete announcement');
     },
   });
 
@@ -76,19 +81,24 @@ const Announcements = () => {
       announcement.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const { user } = useAuth();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const submitData: any = {
       title: formData.title,
       content: formData.content,
+      authorId: user?.id,
+      authorName: user?.fullName || user?.username,
+      authorHierarchyLevel: user?.hierarchyLevel || 'Atbiya',
     };
-    
+
     // Only include expiresAt if it has a value
     if (formData.expiresAt && formData.expiresAt.trim() !== '') {
       // Convert datetime-local format to ISO string
       submitData.expiresAt = new Date(formData.expiresAt).toISOString();
     }
-    
+
     createMutation.mutate(submitData);
   };
 
@@ -97,8 +107,8 @@ const Announcements = () => {
     setFormData({
       title: announcement.title,
       content: announcement.content,
-      expiresAt: announcement.expiresAt 
-        ? new Date(announcement.expiresAt).toISOString().slice(0, 16) 
+      expiresAt: announcement.expiresAt
+        ? new Date(announcement.expiresAt).toISOString().slice(0, 16)
         : '',
     });
     setShowEditDialog(true);
@@ -112,11 +122,11 @@ const Announcements = () => {
       title: formData.title,
       content: formData.content,
     };
-    
+
     if (formData.expiresAt && formData.expiresAt.trim() !== '') {
       submitData.expiresAt = new Date(formData.expiresAt).toISOString();
     }
-    
+
     updateMutation.mutate({ id: selectedAnnouncement.id, data: submitData });
   };
 
@@ -135,85 +145,84 @@ const Announcements = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Announcements</h1>
-          <p className="text-muted-foreground mt-1">Church-wide announcements and updates</p>
-        </div>
+        <PageHeader title={t('announcements')} description={t('latestChurchUpdates')} />
         <LoadingSkeleton type="card" count={3} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Announcements</h1>
-          <p className="text-muted-foreground mt-1">
-            Church-wide announcements and updates
-          </p>
+    <div className="space-y-8 animate-in fade-in duration-700 ease-out pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex-1">
+          <PageHeader
+            title={t('announcements')}
+            description={t('latestChurchUpdates')}
+            badge="Church Broadcast"
+          />
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              New Announcement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Announcement</DialogTitle>
-              <DialogDescription>
-                Share important updates with the church community
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Enter announcement title"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content">Content *</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Enter announcement content"
-                  rows={6}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expiresAt">Expiration Date (Optional)</Label>
-                <Input
-                  id="expiresAt"
-                  type="datetime-local"
-                  value={formData.expiresAt}
-                  onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                  min={new Date().toISOString().slice(0, 16)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  When set, this announcement will automatically hide after the expiration date
-                </p>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create Announcement'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex shrink-0">
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto px-8 py-6 rounded-2xl bg-[#2E5E99] hover:scale-105 transition-all shadow-xl shadow-[#2E5E99]/20 font-bold tracking-wide">
+                <Plus className="mr-2 h-5 w-5" />
+                {t('newAnnouncement')}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl rounded-[2.5rem] bg-white/90 backdrop-blur-2xl border-[#2E5E99]/10">
+              <DialogHeader>
+                <DialogTitle className="text-3xl font-black text-[#0D2440] font-ethiopic">{t('newAnnouncement')}</DialogTitle>
+                <DialogDescription className="text-lg">
+                  Share important updates with the church community
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-black uppercase tracking-widest text-[#2E5E99]">{t('title')} *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Enter announcement title"
+                    className="rounded-xl border-[#2E5E99]/10 focus:border-[#2E5E99] bg-white/50 h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="content" className="text-sm font-black uppercase tracking-widest text-[#2E5E99]">{t('description')} *</Label>
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="Enter announcement content"
+                    rows={6}
+                    className="rounded-xl border-[#2E5E99]/10 focus:border-[#2E5E99] bg-white/50"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="expiresAt" className="text-sm font-black uppercase tracking-widest text-[#2E5E99]">Expiration Date (Optional)</Label>
+                  <Input
+                    id="expiresAt"
+                    type="datetime-local"
+                    value={formData.expiresAt}
+                    onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                    min={new Date().toISOString().slice(0, 16)}
+                    className="rounded-xl border-[#2E5E99]/10 focus:border-[#2E5E99] bg-white/50 h-12"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl px-8 h-12 font-bold">
+                    {t('cancel')}
+                  </Button>
+                  <Button type="submit" disabled={createMutation.isPending} className="rounded-xl px-10 h-12 bg-[#2E5E99] font-bold">
+                    {createMutation.isPending ? 'Creating...' : t('submit')}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search */}
@@ -231,8 +240,8 @@ const Announcements = () => {
       <div className="space-y-4">
         {filteredAnnouncements.length > 0 ? (
           filteredAnnouncements.map((announcement) => (
-            <AnnouncementCard 
-              key={announcement.id} 
+            <AnnouncementCard
+              key={announcement.id}
               announcement={announcement}
               onEdit={handleEdit}
               onDelete={handleDelete}
@@ -309,8 +318,8 @@ const Announcements = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete} 
+            <AlertDialogAction
+              onClick={confirmDelete}
               disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

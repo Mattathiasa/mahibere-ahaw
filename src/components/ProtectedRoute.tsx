@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { authService } from '../services/auth';
-import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,35 +7,9 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
-  const [isValidating, setIsValidating] = useState(true);
-  const [isValid, setIsValid] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    const validateAuth = async () => {
-      // Check if token exists
-      if (!authService.isAuthenticated()) {
-        setIsValid(false);
-        setIsValidating(false);
-        return;
-      }
-
-      try {
-        // Validate token by fetching current user
-        await authService.getCurrentUser();
-        setIsValid(true);
-      } catch (error) {
-        // Token is invalid, clear auth
-        authService.clearAuth();
-        setIsValid(false);
-      } finally {
-        setIsValidating(false);
-      }
-    };
-
-    validateAuth();
-  }, [location.pathname]);
-
-  if (isValidating) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -47,7 +20,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!isValid) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 

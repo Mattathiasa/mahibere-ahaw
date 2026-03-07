@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, DollarSign, TrendingUp, TrendingDown, FileText } from 'lucide-react';
+import { Plus, DollarSign, TrendingUp, TrendingDown, FileText, Heart, Sparkles, Clock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,11 +9,15 @@ import { FinanceTransaction, MonthlyBudget, FinancialReport } from '@/types';
 import { CreateTransactionDialog } from '@/components/CreateTransactionDialog';
 import { CreateBudgetDialog } from '@/components/CreateBudgetDialog';
 import { CreateFinancialReportDialog } from '@/components/CreateFinancialReportDialog';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { createTransaction, createBudget, createFinancialReport } from '@/services/finance';
 import { toast } from 'sonner';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 export default function Finance() {
   const { t } = useTranslation();
@@ -49,307 +53,384 @@ export default function Finance() {
   };
 
   const calculateTotals = () => {
+    const incomeTypes = ['Income', 'Tithe', 'Offering', 'Donation', 'Collection', 'Asrat', 'YefikirSetota', 'Deposit'];
+
     const totalIncome = transactions
-      .filter(t => ['Income', 'Collection', 'Deposit'].includes(t.type))
+      .filter(t => incomeTypes.includes(t.type))
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // Calculate totals
-    const income = transactions.filter((t: any) => t.type === 'Income' || t.type === 'Tithe' || t.type === 'Offering' || t.type === 'Donation' || t.type === 'Collection' || t.type === 'Asrat' || t.type === 'YefikirSetota').reduce((acc: number, curr: any) => acc + curr.amount, 0);
-    const expenses = transactions.filter((t: any) => t.type === 'Expense').reduce((acc: number, curr: any) => acc + curr.amount, 0);
-    const remainder = income - expenses;
-
-    const asratTotal = transactions.filter((t: any) => t.type === 'Asrat').reduce((acc: number, curr: any) => acc + curr.amount, 0);
-    const yefikirSetotaTotal = transactions.filter((t: any) => t.type === 'YefikirSetota').reduce((acc: number, curr: any) => acc + curr.amount, 0);
     const totalExpenses = transactions
       .filter(t => t.type === 'Expense')
       .reduce((sum, t) => sum + t.amount, 0);
 
     const totalTithes = transactions
-      .filter(t => t.type === 'Tithe')
+      .filter(t => t.type === 'Tithe' || t.type === 'Asrat')
       .reduce((sum, t) => sum + t.amount, 0);
 
     const totalOfferings = transactions
-      .filter(t => ['Offering', 'Donation'].includes(t.type))
+      .filter(t => ['Offering', 'Donation', 'YefikirSetota'].includes(t.type))
       .reduce((sum, t) => sum + t.amount, 0);
 
-    return { totalIncome, totalExpenses, totalTithes, totalOfferings, asratTotal, yefikirSetotaTotal };
+    return { totalIncome, totalExpenses, totalTithes, totalOfferings };
   };
 
   const totals = calculateTotals();
   const remainder = totals.totalIncome - totals.totalExpenses;
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <PageHeader title={t('finance')} description={t('financeHeaderDesc')} />
+        <LoadingSkeleton type="card" count={4} />
+      </div>
+    );
   }
 
+  const { totalIncome, totalExpenses, totalTithes } = totals;
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">{t('financeManagement')}</h1>
-          <p className="text-muted-foreground">{t('financeDescription')}</p>
+    <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <PageHeader
+          title={t('finance')}
+          description={t('financeHeaderDesc')}
+          badge="Divine Stewardship"
+        />
+
+        <div className="flex flex-wrap gap-4">
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+            <Button
+              onClick={() => setShowTransactionDialog(true)}
+              className="h-16 px-8 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20 transition-all duration-300 hover:scale-105 group overflow-hidden relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <Plus className="mr-3 h-6 w-6" />
+              {t('addTransaction')}
+            </Button>
+          </motion.div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totals.totalIncome.toLocaleString()} Birr</div>
-            <div className="text-2xl font-bold">
-              {(totals.totalTithes + totals.totalOfferings).toLocaleString()} Birr
-            </div>
-          </CardContent>
-        </Card>
+      {/* Summary Cards - Glassy & Vibrant */}
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        {[
+          { title: t('totalIncome'), amount: totalIncome, icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+          { title: t('totalExpenses'), amount: totalExpenses, icon: TrendingDown, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
+          { title: t('remainder'), amount: remainder, icon: DollarSign, color: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
+          { title: t('tithe'), amount: totalTithes, icon: Heart, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+          >
+            <Card className={cn("relative overflow-hidden group rounded-[2.5rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2", stat.border)}>
+              <div className={cn("absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10 group-hover:scale-150 transition-transform duration-700", stat.bg)} />
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0D2440]/40 dark:text-white/40">{stat.title}</CardTitle>
+                <div className={cn("p-2 rounded-xl", stat.bg)}>
+                  <stat.icon className={cn("h-5 w-5", stat.color)} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black tracking-tighter text-[#0D2440] dark:text-white leading-none">
+                  {stat.amount.toLocaleString()}
+                  <span className="text-xs font-bold opacity-30 ml-2 tracking-widest uppercase">ETB</span>
+                </div>
+                <div className={cn("mt-4 flex items-center text-[10px] font-black uppercase tracking-widest opacity-60", stat.color)}>
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Divinely Accounted
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Tabs for different sections */}
-      <Tabs defaultValue="transactions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="budgets">Monthly Budgets</TabsTrigger>
-          <TabsTrigger value="reports">Financial Reports</TabsTrigger>
+      {/* Tabs with Premium Design */}
+      <Tabs defaultValue="transactions" className="space-y-12">
+        <TabsList className="bg-white/40 dark:bg-black/20 p-2 rounded-[2rem] border-2 border-white/60 dark:border-white/10 backdrop-blur-3xl h-20 shadow-2xl overflow-x-auto max-w-full inline-flex">
+          <TabsTrigger value="transactions" className="rounded-2xl px-12 h-16 data-[state=active]:bg-[#2E5E99] data-[state=active]:text-white data-[state=active]:shadow-2xl transition-all font-black uppercase tracking-widest text-[11px] italic">
+            {t('transactions')}
+          </TabsTrigger>
+          <TabsTrigger value="budgets" className="rounded-2xl px-12 h-16 data-[state=active]:bg-[#2E5E99] data-[state=active]:text-white data-[state=active]:shadow-2xl transition-all font-black uppercase tracking-widest text-[11px] italic">
+            {t('monthlyBudgets')}
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="rounded-2xl px-12 h-16 data-[state=active]:bg-[#2E5E99] data-[state=active]:text-white data-[state=active]:shadow-2xl transition-all font-black uppercase tracking-widest text-[11px] italic">
+            {t('financialReports')}
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="transactions" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Recent Transactions</h2>
-            <Button onClick={() => setShowTransactionDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Transaction
+        <TabsContent value="transactions" className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="grid gap-6">
+            <AnimatePresence>
+              {transactions.slice(0, 20).map((transaction, i) => {
+                const isIncome = ['Income', 'Tithe', 'Offering', 'Donation', 'Collection', 'Asrat', 'YefikirSetota', 'Deposit'].includes(transaction.type);
+                return (
+                  <motion.div
+                    key={transaction.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <Card className="group relative overflow-hidden rounded-[2rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/60 dark:border-white/10 hover:shadow-2xl transition-all duration-500 border-2 hover:border-[#2E5E99]/20">
+                      <CardContent className="p-8 flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                          <div className={cn("p-5 rounded-[1.5rem] shadow-inner", isIncome ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500')}>
+                            {isIncome ? <TrendingUp className="h-8 w-8" /> : <TrendingDown className="h-8 w-8" />}
+                          </div>
+                          <div>
+                            <p className="font-black text-[#0D2440] dark:text-white text-xl tracking-tight leading-tight">{transaction.description}</p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <Badge variant="outline" className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/50 dark:bg-black/20 border-none px-3 py-1 text-[#2E5E99] rounded-full">
+                                {transaction.type}
+                              </Badge>
+                              <span className="text-[10px] font-black text-[#0D2440]/30 dark:text-white/30 uppercase tracking-widest">
+                                {new Date(transaction.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={cn("text-3xl font-black tracking-tighter leading-none", isIncome ? 'text-emerald-500' : 'text-rose-500')}>
+                            {isIncome ? '+' : '-'}{transaction.amount.toLocaleString()}
+                            <span className="text-xs font-bold opacity-40 ml-2">ETB</span>
+                          </p>
+                          {transaction.category && (
+                            <p className="mt-2 text-[10px] font-black text-[#0D2440]/40 dark:text-white/40 uppercase tracking-[0.3em]">
+                              {transaction.category}
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="budgets" className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="flex justify-between items-center px-4">
+            <h3 className="text-2xl font-black tracking-tight italic opacity-60">Divine Stewardship Plans</h3>
+            <Button
+              onClick={() => setShowBudgetDialog(true)}
+              className="h-14 px-8 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all duration-300"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              {t('createBudget')}
             </Button>
           </div>
 
-          <CreateTransactionDialog
-            open={showTransactionDialog}
-            onOpenChange={setShowTransactionDialog}
-            onSubmit={async (data) => {
-              try {
-                await createTransaction(data);
-                toast.success('Transaction added successfully!');
-                loadData();
-                setShowTransactionDialog(false);
-              } catch (error: any) {
-                toast.error(error.response?.data?.message || 'Failed to add transaction');
-              }
-            }}
-          />
+          <Card className="rounded-[3rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border-white/60 dark:border-white/10 shadow-3xl overflow-hidden border-2">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-white/60 dark:bg-black/30 backdrop-blur-3xl">
+                  <TableRow className="hover:bg-transparent border-white/20">
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8 px-10 text-[#2E5E99]">Month/Year</TableHead>
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8">Planned Inc</TableHead>
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8">Actual Inc</TableHead>
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8 text-center">Variance</TableHead>
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8">Planned Exp</TableHead>
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8">Actual Exp</TableHead>
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8">Remainder</TableHead>
+                    <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] py-8 text-right px-10">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {budgets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-40">
+                        <div className="flex flex-col items-center opacity-10">
+                          <FileText className="h-32 w-32 mb-4" />
+                          <p className="font-black text-3xl tracking-[0.2em] uppercase">Nulla Tabula</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    budgets.map((budget: any) => {
+                      const budgetMonth = budget.month;
+                      const budgetYear = budget.year;
 
-          <CreateBudgetDialog
-            open={showBudgetDialog}
-            onOpenChange={setShowBudgetDialog}
-            onSubmit={async (data) => {
-              try {
-                await createBudget(data);
-                toast.success('Budget created successfully!');
-                loadData();
-                setShowBudgetDialog(false);
-              } catch (error: any) {
-                toast.error(error.response?.data?.message || 'Failed to create budget');
-              }
-            }}
-          />
+                      const monthTransactions = transactions.filter((t: any) => {
+                        const tDate = new Date(t.date);
+                        return tDate.getMonth() + 1 === budgetMonth && tDate.getFullYear() === budgetYear;
+                      });
 
-          <CreateFinancialReportDialog
-            open={showReportDialog}
-            onOpenChange={setShowReportDialog}
-            onSubmit={async (data) => {
-              try {
-                await createFinancialReport(data);
-                toast.success('Financial report generated successfully!');
-                loadData();
-                setShowReportDialog(false);
-              } catch (error: any) {
-                toast.error(error.response?.data?.message || 'Failed to generate report');
-              }
-            }}
-          />
+                      const actualIncome = monthTransactions
+                        .filter((t: any) => ['Income', 'Tithe', 'Offering', 'Donation', 'Collection', 'Asrat', 'YefikirSetota', 'Deposit'].includes(t.type))
+                        .reduce((acc: number, curr: any) => acc + curr.amount, 0);
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                {transactions.slice(0, 10).map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <p className="font-medium">{transaction.description}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {transaction.type} • {new Date(transaction.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className={`font-bold ${['Income', 'Collection', 'Deposit'].includes(transaction.type)
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                      }`}>
-                      {['Income', 'Collection', 'Deposit'].includes(transaction.type) ? '+' : '-'}
-                      {transaction.amount.toLocaleString()} Birr
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
+                      const actualExpenses = monthTransactions
+                        .filter((t: any) => t.type === 'Expense')
+                        .reduce((acc: number, curr: any) => acc + curr.amount, 0);
+
+                      const incVariance = actualIncome - budget.plannedIncome;
+                      const netRemainder = actualIncome - actualExpenses;
+
+                      return (
+                        <TableRow key={budget.id} className="hover:bg-white/60 dark:hover:bg-white/5 transition-all border-white/10 group">
+                          <TableCell className="font-black text-lg px-10 py-8 italic tracking-tight group-hover:text-[#2E5E99] transition-colors">
+                            {new Date(budget.year, budget.month - 1).toLocaleString('default', { month: 'long' })} {budget.year}
+                          </TableCell>
+                          <TableCell className="font-bold text-sm opacity-60 italic">ETB {budget.plannedIncome.toLocaleString()}</TableCell>
+                          <TableCell className="font-black text-xl text-[#2E5E99] tracking-tighter italic">ETB {actualIncome.toLocaleString()}</TableCell>
+                          <TableCell className="text-center">
+                            <div className={cn("inline-flex items-center px-4 py-1.5 rounded-2xl font-black text-[11px] tracking-tight border-2 shadow-lg", incVariance >= 0 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20')}>
+                              {incVariance >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                              {incVariance >= 0 ? '+' : ''}{incVariance.toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-bold text-sm opacity-60 italic">ETB {budget.plannedExpenses.toLocaleString()}</TableCell>
+                          <TableCell className="font-black text-xl text-amber-600 tracking-tighter italic">ETB {actualExpenses.toLocaleString()}</TableCell>
+                          <TableCell className={cn("font-black text-xl tracking-tighter italic", netRemainder >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
+                            ETB {netRemainder.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right px-10">
+                            <Badge className={cn("px-6 py-2 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl",
+                              budget.status === 'Approved' ? 'bg-emerald-500 shadow-emerald-500/20' :
+                                budget.status === 'Rejected' ? 'bg-rose-500 shadow-rose-500/20' :
+                                  'bg-amber-500 shadow-amber-500/20'
+                            )}>
+                              {budget.status || 'Draft'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
         </TabsContent>
 
-        <TabsContent value="budgets" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Monthly Budgets</h2>
-            <Button onClick={() => setShowBudgetDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Create Budget
-            </Button>
-          </div>
-
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Month/Year</TableHead>
-                  <TableHead>Planned Income</TableHead>
-                  <TableHead>Actual Income</TableHead>
-                  <TableHead>Variance (Inc)</TableHead>
-                  <TableHead>Planned Expense</TableHead>
-                  <TableHead>Actual Expense</TableHead>
-                  <TableHead>Variance (Exp)</TableHead>
-                  <TableHead>Net Remainder</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Attachments</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {budgets.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                      No budget plans found. Create one to get started.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  budgets.map((budget: any) => {
-                    // Calculate actuals based on transactions for this month (this is a simplified logic)
-                    // In a real app, this would be computed on the backend or more robustly here
-                    const budgetMonth = budget.month;
-                    const budgetYear = budget.year;
-
-                    const monthTransactions = transactions.filter((t: any) => {
-                      const tDate = new Date(t.date);
-                      return tDate.getMonth() + 1 === budgetMonth && tDate.getFullYear() === budgetYear;
-                    });
-
-                    const actualIncome = monthTransactions
-                      .filter((t: any) => ['Income', 'Tithe', 'Offering', 'Donation', 'Collection', 'Asrat', 'YefikirSetota', 'Deposit'].includes(t.type))
-                      .reduce((acc: number, curr: any) => acc + curr.amount, 0);
-
-                    const actualExpenses = monthTransactions
-                      .filter((t: any) => t.type === 'Expense')
-                      .reduce((acc: number, curr: any) => acc + curr.amount, 0);
-
-                    const incVariance = actualIncome - budget.plannedIncome;
-                    const expVariance = budget.plannedExpenses - actualExpenses; // Positive if under budget
-                    const netRemainder = actualIncome - actualExpenses;
-
-                    return (
-                      <TableRow key={budget.id}>
-                        <TableCell>{new Date(budget.year, budget.month - 1).toLocaleString('default', { month: 'long' })} {budget.year}</TableCell>
-                        <TableCell>ETB {budget.plannedIncome.toLocaleString()}</TableCell>
-                        <TableCell>ETB {actualIncome.toLocaleString()}</TableCell>
-                        <TableCell className={incVariance >= 0 ? 'text-green-600' : 'text-red-600'}>
-                          {incVariance >= 0 ? '+' : ''}{incVariance.toLocaleString()}
-                        </TableCell>
-                        <TableCell>ETB {budget.plannedExpenses.toLocaleString()}</TableCell>
-                        <TableCell>ETB {actualExpenses.toLocaleString()}</TableCell>
-                        <TableCell className={expVariance >= 0 ? 'text-green-600' : 'text-red-600'}>
-                          {expVariance >= 0 ? '+' : ''}{expVariance.toLocaleString()}
-                        </TableCell>
-                        <TableCell className={netRemainder >= 0 ? 'text-green-600' : 'text-red-600 font-bold'}>
-                          ETB {netRemainder.toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={budget.status === 'Approved' ? 'default' : budget.status === 'Rejected' ? 'destructive' : 'secondary'}>
-                            {budget.status || 'Draft'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {budget.attachments && budget.attachments.length > 0 ? (
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                          ) : '-'}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Financial Reports</h2>
-            <Button onClick={() => setShowReportDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+        <TabsContent value="reports" className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="flex justify-between items-center px-4">
+            <h3 className="text-2xl font-black tracking-tight italic opacity-60">Financial Sovereignty Reports</h3>
+            <Button
+              onClick={() => setShowReportDialog(true)}
+              className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all duration-300"
+            >
+              <Plus className="mr-2 h-5 w-5" />
               Generate Report
             </Button>
           </div>
 
-          <div className="grid gap-4">
-            {reports.map((report) => (
-              <Card key={report.id}>
-                <CardHeader>
-                  <CardTitle>{report.title}</CardTitle>
-                  <CardDescription>
-                    {report.titleAmharic} • {report.reportType} Report
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Period:</span>
-                        <span className="font-medium">
-                          {new Date(report.startDate).toLocaleDateString()} - {new Date(report.endDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Total Income:</span>
-                        <span className="font-medium text-green-600">{report.totalIncome.toLocaleString()} Birr</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Total Expenses:</span>
-                        <span className="font-medium text-red-600">{report.totalExpenses.toLocaleString()} Birr</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Tithes (አስራት):</span>
-                        <span className="font-medium">{report.totalTithes.toLocaleString()} Birr</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Offerings:</span>
-                        <span className="font-medium">{report.totalOfferings.toLocaleString()} Birr</span>
-                      </div>
-                      <div className="flex justify-between pt-2 border-t">
-                        <span className="text-sm font-semibold">Remainder:</span>
-                        <span className={`font-bold ${report.remainder >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {report.remainder.toLocaleString()} Birr
-                        </span>
-                      </div>
-                    </div>
+          <div className="grid gap-10 lg:grid-cols-2">
+            {reports.map((report, i) => (
+              <motion.div
+                key={report.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card className="group relative overflow-hidden rounded-[3.5rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl border-white/60 dark:border-white/10 shadow-3xl hover:shadow-indigo-500/10 transition-all duration-700 border-2">
+                  <div className="absolute top-0 right-0 p-12 opacity-5 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
+                    <Sparkles className="h-40 w-40" />
                   </div>
-                  {report.recipientInfo && (
-                    <div className="mt-4 pt-4 border-t">
-                      <p className="text-sm text-muted-foreground">To: {report.recipientInfo}</p>
+                  <CardHeader className="p-10 border-b border-white/20">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <CardTitle className="text-3xl font-black text-[#0D2440] dark:text-white tracking-tight italic leading-tight">
+                          {report.title}
+                        </CardTitle>
+                        <CardDescription className="font-black text-[11px] uppercase tracking-[0.3em] text-[#2E5E99]">
+                          {report.titleAmharic} • {report.reportType}
+                        </CardDescription>
+                      </div>
+                      <Badge className="bg-indigo-500 text-white font-black uppercase text-[11px] tracking-[0.2em] px-4 py-2 rounded-2xl shadow-xl">
+                        {new Date(report.createdAt).getFullYear()}
+                      </Badge>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="p-10 space-y-10">
+                    <div className="grid gap-8 sm:grid-cols-2">
+                      <div className="space-y-6">
+                        <div className="bg-white/40 dark:bg-slate-800/40 p-6 rounded-[2rem] border-2 border-emerald-500/20 shadow-inner">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{t('totalIncome')}</p>
+                          <p className="text-3xl font-black text-emerald-500 tracking-tighter italic">{report.totalIncome.toLocaleString()} <span className="text-[10px]">ETB</span></p>
+                        </div>
+                        <div className="bg-white/40 dark:bg-slate-800/40 p-6 rounded-[2rem] border-2 border-rose-500/20 shadow-inner">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{t('totalExpenses')}</p>
+                          <p className="text-3xl font-black text-rose-500 tracking-tighter italic">{report.totalExpenses.toLocaleString()} <span className="text-[10px]">ETB</span></p>
+                        </div>
+                      </div>
+                      <div className="space-y-6">
+                        <div className="bg-[#0D2440] p-8 rounded-[2.5rem] text-white shadow-2xl shadow-[#0D2440]/20 relative overflow-hidden group/mini">
+                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent opacity-0 group-hover/mini:opacity-100 transition-opacity duration-500" />
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">{t('remainder')}</p>
+                          <p className="text-4xl font-black tracking-tighter italic">{report.remainder.toLocaleString()} <span className="text-xs">ETB</span></p>
+                          <div className="absolute top-4 right-4 text-emerald-500 animate-pulse">
+                            <TrendingUp className="h-6 w-6" />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 px-4">
+                          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
+                            <Clock className="h-4 w-4" />
+                          </div>
+                          <span className="text-[10px] font-black text-[#0D2440]/60 dark:text-white/40 uppercase tracking-[0.2em] italic">
+                            {new Date(report.startDate).toLocaleDateString()} - {new Date(report.endDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {report.recipientInfo && (
+                      <div className="pt-8 border-t border-white/20 flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-[#0D2440]/5 dark:bg-white/5 text-[#2E5E99]">
+                          <User className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Authenticated For</p>
+                          <p className="text-sm font-black text-[#0D2440] dark:text-white italic">{report.recipientInfo}</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </TabsContent>
-      </Tabs >
-    </div >
+      </Tabs>
+
+      <CreateTransactionDialog
+        open={showTransactionDialog}
+        onOpenChange={setShowTransactionDialog}
+        onSubmit={(data) => {
+          createTransaction(data).then(() => {
+            toast.success('Transaction secured!');
+            setShowTransactionDialog(false);
+            loadData();
+          });
+        }}
+      />
+
+      <CreateBudgetDialog
+        open={showBudgetDialog}
+        onOpenChange={setShowBudgetDialog}
+        onSubmit={(data) => {
+          createBudget(data).then(() => {
+            toast.success('Budget plan established!');
+            setShowBudgetDialog(false);
+            loadData();
+          });
+        }}
+      />
+
+      <CreateFinancialReportDialog
+        open={showReportDialog}
+        onOpenChange={setShowReportDialog}
+        onSubmit={(data) => {
+          createFinancialReport(data).then(() => {
+            toast.success('Report generated successfully!');
+            setShowReportDialog(true);
+            loadData();
+          });
+        }}
+      />
+    </div>
   );
 }

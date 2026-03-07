@@ -3,12 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Calendar, User, Mic2, Tag } from 'lucide-react';
+import { BookOpen, Calendar, User, Mic2, Tag, Plus, ArrowRight, Clock } from 'lucide-react';
 import { api } from '@/services/api';
 import { TeachingServiceType, TeachingStatus } from '@/types';
 import { CreateTeachingDialog } from '@/components/CreateTeachingDialog';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { useTranslation } from '@/hooks/useTranslation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Teaching = () => {
+    const { t } = useTranslation();
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const { data: teachings, isLoading } = useQuery({
         queryKey: ['teachings'],
@@ -20,98 +25,108 @@ const Teaching = () => {
 
     const getStatusColor = (status: TeachingStatus) => {
         switch (status) {
-            case 'Published': return 'bg-green-500/15 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900';
-            case 'Draft': return 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900';
-            case 'Archived': return 'bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-900';
-            default: return '';
+            case 'Published': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+            case 'Draft': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+            case 'Archived': return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+            default: return 'bg-[#2E5E99]/10 text-[#2E5E99] border-[#2E5E99]/20';
         }
     };
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground">Teachings & Articles</h1>
-                    <p className="text-muted-foreground mt-1">Educational resources and spiritual guidance</p>
-                </div>
-                {/* Only admins would see this in real implementation */}
-                <Button onClick={() => setIsCreateDialogOpen(true)}>Create New Teaching</Button>
+        <div className="space-y-12 animate-in fade-in duration-700 ease-out pb-20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <PageHeader
+                    title={t('teachings')}
+                    description={t('teachingsHeaderDesc')}
+                    badge="Wisdom & Grace"
+                />
+                <Button
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    className="h-14 px-8 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black shadow-xl shadow-[#2E5E99]/20 active:scale-95 transition-all gap-2"
+                >
+                    <Plus className="h-6 w-6" />
+                    {t('create')}
+                </Button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {isLoading ? (
-                    <div>Loading...</div>
+                    <LoadingSkeleton type="card" count={6} />
                 ) : teachings && teachings.length > 0 ? (
-                    teachings.map((teaching: any) => (
-                        <Card key={teaching._id} className="hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col h-full">
-                            {teaching.featuredImage && (
-                                <div className="h-48 w-full overflow-hidden rounded-t-lg bg-muted">
-                                    <img
-                                        src={teaching.featuredImage}
-                                        alt={teaching.title}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                </div>
-                            )}
-                            <CardHeader className="flex-1">
-                                <div className="flex justify-between items-start mb-3 gap-2">
-                                    <div className="flex flex-wrap gap-2">
-                                        <Badge variant="secondary" className="font-normal text-xs">
-                                            {teaching.serviceType}
-                                        </Badge>
-                                        <Badge variant="outline" className={`${getStatusColor(teaching.status)} border-0 font-medium text-xs`}>
-                                            {teaching.status}
+                    <AnimatePresence>
+                        {teachings.map((teaching: any, i: number) => (
+                            <motion.div
+                                key={teaching._id}
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.1 }}
+                            >
+                                <Card className="group relative rounded-[2.5rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/60 dark:border-white/10 overflow-hidden hover:shadow-2xl hover:shadow-[#2E5E99]/10 transition-all duration-500 flex flex-col h-full border-2 hover:border-[#2E5E99]/30">
+                                    <div className="relative h-64 w-full overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10 opacity-60" />
+                                        <img
+                                            src={teaching.featuredImage || 'https://images.unsplash.com/photo-1544427928-c49cdfb81949?auto=format&fit=crop&q=80'}
+                                            alt={teaching.title}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        <Badge className={`absolute top-6 left-6 z-20 h-8 px-4 font-black uppercase tracking-widest bg-white/90 text-[#0D2440] border-none backdrop-blur-md`}>
+                                            {t(teaching.serviceType?.toLowerCase() as any)}
                                         </Badge>
                                     </div>
-                                    <span className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
-                                        {new Date(teaching.dateDelivered).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <CardTitle className="line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-                                    {teaching.title}
-                                </CardTitle>
-                                {teaching.series && (
-                                    <p className="text-sm font-medium text-primary/80 mt-1">
-                                        Series: {teaching.series} {teaching.seriesPart && `(${teaching.seriesPart})`}
-                                    </p>
-                                )}
-                                <CardDescription className="line-clamp-3 mt-2">
-                                    {teaching.shortDescription}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="py-2">
-                                <div className="flex flex-wrap gap-1 mb-2">
-                                    {teaching.tags?.slice(0, 3).map((tag: string) => (
-                                        <span key={tag} className="text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded text-muted-foreground flex items-center">
-                                            <Tag className="h-2 w-2 mr-1" />{tag}
-                                        </span>
-                                    ))}
-                                    {teaching.tags?.length > 3 && (
-                                        <span className="text-[10px] bg-secondary/50 px-1.5 py-0.5 rounded text-muted-foreground">
-                                            +{teaching.tags.length - 3}
-                                        </span>
-                                    )}
-                                </div>
-                            </CardContent>
-                            <CardFooter className="pt-4 border-t bg-muted/5 mt-auto">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground w-full">
-                                    <Mic2 className="h-3 w-3" />
-                                    <span className="truncate flex-1 font-medium">{teaching.speaker}</span>
-                                    {teaching.mediaType && (
-                                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 uppercase">
-                                            {teaching.mediaType}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </CardFooter>
-                        </Card>
-                    ))
+
+                                    <CardHeader className="relative z-20 -mt-12 mx-6 rounded-[2rem] bg-white/80 dark:bg-slate-800/80 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-xl p-6 group-hover:-translate-y-2 transition-transform duration-500">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <Badge variant="outline" className={`${getStatusColor(teaching.status)} font-black uppercase tracking-tighter text-[10px] px-3 py-1 rounded-full border-2`}>
+                                                {teaching.status}
+                                            </Badge>
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-[#2E5E99]/60">
+                                                <Clock className="h-4 w-4" />
+                                                {new Date(teaching.dateDelivered).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                        <CardTitle className="text-2xl font-black text-[#0D2440] dark:text-white leading-tight mb-2 tracking-tight group-hover:text-[#2E5E99] transition-colors">
+                                            {teaching.title}
+                                        </CardTitle>
+                                        <CardDescription className="line-clamp-2 font-semibold text-[#0D2440]/60 dark:text-white/40">
+                                            {teaching.shortDescription}
+                                        </CardDescription>
+                                    </CardHeader>
+
+                                    <CardContent className="px-8 pb-8 flex-1 flex flex-col justify-between mt-4">
+                                        <div className="flex flex-wrap gap-2 mb-6">
+                                            {teaching.tags?.slice(0, 3).map((tag: string) => (
+                                                <span key={tag} className="text-[10px] font-black uppercase tracking-widest bg-[#2E5E99]/5 text-[#2E5E99] px-3 py-1 rounded-full border border-[#2E5E99]/10">
+                                                    #{tag}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-6 border-t border-[#2E5E99]/10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center text-white shadow-lg">
+                                                    <User className="h-5 w-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">{t('speaker')}</p>
+                                                    <p className="text-sm font-black text-[#0D2440] dark:text-white">{teaching.speaker}</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="rounded-full hover:bg-[#2E5E99] hover:text-white transition-all shadow-md group-hover:translate-x-1">
+                                                <ArrowRight className="h-5 w-5" />
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 ) : (
-                    <div className="col-span-full text-center py-16 text-muted-foreground bg-muted/10 rounded-xl border border-dashed">
-                        <BookOpen className="mx-auto h-12 w-12 opacity-20 mb-4" />
-                        <h3 className="text-lg font-medium mb-1">No teachings found</h3>
-                        <p className="text-sm opacity-70">Check back later for new content.</p>
+                    <div className="col-span-full py-32 flex flex-col items-center justify-center rounded-[3rem] bg-white/20 dark:bg-black/20 backdrop-blur-md border border-dashed border-[#2E5E99]/30">
+                        <div className="p-8 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] mb-8 animate-pulse">
+                            <BookOpen className="h-16 w-16" />
+                        </div>
+                        <h3 className="text-3xl font-black text-[#0D2440] dark:text-white tracking-tighter mb-4 italic">No teachings found</h3>
+                        <p className="text-xl font-bold text-[#2E5E99]/60 max-w-md text-center">We are currently preparing sacred wisdom for the community. Please check back soon.</p>
                     </div>
                 )}
             </div>

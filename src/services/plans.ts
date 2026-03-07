@@ -1,4 +1,18 @@
-import { api } from './api';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  arrayUnion
+} from 'firebase/firestore';
 
 export interface CreatePlanData {
   name: string;
@@ -14,33 +28,51 @@ export interface UpdatePlanData {
 
 export const planService = {
   async getAllPlans(timeframe?: string) {
-    const params = timeframe ? { timeframe } : {};
-    const response = await api.get('/api/plans', { params });
-    return response.data;
+    const plansCol = collection(db, 'plans');
+    let q = query(plansCol, orderBy('createdAt', 'desc'));
+
+    if (timeframe) {
+      q = query(plansCol, where('timeframe', '==', timeframe), orderBy('createdAt', 'desc'));
+    }
+
+    const snapshot = await getDocs(q);
+    return { plans: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
   },
 
   async getPlanById(id: string) {
-    const response = await api.get(`/api/plans/${id}`);
-    return response.data;
+    const docRef = doc(db, 'plans', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+    throw new Error('Plan not found');
   },
 
   async createPlan(data: CreatePlanData) {
-    const response = await api.post('/api/plans', data);
-    return response.data;
+    const docRef = await addDoc(collection(db, 'plans'), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return { id: docRef.id, ...data };
   },
 
   async updatePlan(id: string, data: UpdatePlanData) {
-    const response = await api.put(`/api/plans/${id}`, data);
-    return response.data;
+    const docRef = doc(db, 'plans', id);
+    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
   },
 
   async deletePlan(id: string) {
-    const response = await api.delete(`/api/plans/${id}`);
-    return response.data;
+    await deleteDoc(doc(db, 'plans', id));
   },
 
-  async addComment(planId: string, data: { content: string }) {
-    const response = await api.post(`/api/plans/${planId}/comments`, data);
-    return response.data;
+  async addComment(planId: string, data: { content: string, userId: string }) {
+    const docRef = doc(db, 'plans', planId);
+    await updateDoc(docRef, {
+      comments: arrayUnion({
+        ...data,
+        createdAt: new Date().toISOString()
+      })
+    });
   },
 };

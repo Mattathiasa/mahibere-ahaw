@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Clock, User, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
+import { toDate } from '@/lib/date-utils';
 
 interface AnnouncementCardProps {
   announcement: {
@@ -13,23 +14,24 @@ interface AnnouncementCardProps {
     authorId: string;
     authorName: string;
     authorHierarchyLevel: string;
-    createdAt: string | Date;
-    expiresAt?: string | Date;
+    createdAt: any;
+    expiresAt?: any;
   };
   onEdit?: (announcement: any) => void;
   onDelete?: (id: string) => void;
+  className?: string;
 }
 
-const AnnouncementCard = ({ announcement, onEdit, onDelete }: AnnouncementCardProps) => {
+const AnnouncementCard = ({ announcement, onEdit, onDelete, className }: AnnouncementCardProps) => {
   const { user } = useAuth();
-  const isExpiringSoon = announcement.expiresAt 
-    ? new Date(announcement.expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000 
+  const isExpiringSoon = announcement.expiresAt
+    ? toDate(announcement.expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000
     : false;
-  
+
   const isAuthor = user?.id === announcement.authorId;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow ${className}`}>
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-xl leading-tight">{announcement.title}</CardTitle>
@@ -71,12 +73,12 @@ const AnnouncementCard = ({ announcement, onEdit, onDelete }: AnnouncementCardPr
           </div>
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            <span>{formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}</span>
+            <span>{formatDistanceToNow(toDate(announcement.createdAt), { addSuffix: true })}</span>
           </div>
           {announcement.expiresAt && (
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              <span>Expires: {format(new Date(announcement.expiresAt), 'MMM d, yyyy')}</span>
+              <span>Expires: {format(toDate(announcement.expiresAt), 'MMM d, yyyy')}</span>
             </div>
           )}
         </div>

@@ -1,4 +1,17 @@
-import { api } from './api';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp
+} from 'firebase/firestore';
 
 export interface CreateAnnouncementData {
   title: string;
@@ -8,37 +21,52 @@ export interface CreateAnnouncementData {
 
 export const announcementService = {
   async getAnnouncements() {
-    const response = await api.get('/api/announcements');
-    return response.data;
+    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return { announcements: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)) };
   },
 
   async getAnnouncementById(id: string) {
-    const response = await api.get(`/api/announcements/${id}`);
-    return response.data;
+    const docRef = doc(db, 'announcements', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+    throw new Error('Announcement not found');
   },
 
   async createAnnouncement(data: CreateAnnouncementData) {
-    const response = await api.post('/api/announcements', data);
-    return response.data;
+    const docRef = await addDoc(collection(db, 'announcements'), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return { id: docRef.id, ...data };
   },
 
   async getActiveAnnouncements() {
-    const response = await api.get('/api/announcements/active');
-    return response.data;
+    const now = new Date().toISOString();
+    const q = query(
+      collection(db, 'announcements'),
+      where('expiresAt', '>', now),
+      orderBy('expiresAt', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
   async markAsRead(id: string) {
-    const response = await api.put(`/api/announcements/${id}/read`);
-    return response.data;
+    // This usually depends on the user, for simplicity we update a status or do nothing in a global feed
+    const docRef = doc(db, 'announcements', id);
+    await updateDoc(docRef, { read: true });
   },
 
   async updateAnnouncement(id: string, data: CreateAnnouncementData) {
-    const response = await api.put(`/api/announcements/${id}`, data);
-    return response.data;
+    const docRef = doc(db, 'announcements', id);
+    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
   },
 
   async deleteAnnouncement(id: string) {
-    const response = await api.delete(`/api/announcements/${id}`);
-    return response.data;
+    await deleteDoc(doc(db, 'announcements', id));
   },
 };

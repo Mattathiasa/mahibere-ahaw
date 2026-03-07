@@ -12,6 +12,7 @@ interface StatCardProps {
   };
   color?: string;
   bgColor?: string;
+  className?: string;
 }
 
 export const StatCard = ({
@@ -21,9 +22,10 @@ export const StatCard = ({
   trend,
   color = 'text-primary',
   bgColor = 'bg-primary/10',
+  className,
 }: StatCardProps) => {
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 animate-scale-in border-[#2E5E99]/10 bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-sm group overflow-hidden relative">
+    <Card className={`hover:shadow-xl transition-all duration-300 animate-scale-in border-[#2E5E99]/10 bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-sm group overflow-hidden relative ${className}`}>
       <div className="absolute top-0 right-0 w-24 h-24 bg-[#2E5E99]/5 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-500" />
 
       <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">

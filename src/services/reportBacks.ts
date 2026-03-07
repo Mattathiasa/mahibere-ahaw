@@ -1,4 +1,16 @@
-import { api } from './api';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  addDoc,
+  updateDoc,
+  query,
+  orderBy,
+  serverTimestamp,
+  arrayUnion
+} from 'firebase/firestore';
 
 export interface CreateReportBackData {
   planId: string;
@@ -7,26 +19,40 @@ export interface CreateReportBackData {
 
 export interface AddReportBackCommentData {
   content: string;
+  authorName?: string;
 }
 
 export const reportBackService = {
   async getAllReportBacks() {
-    const response = await api.get('/api/report-backs');
-    return response.data;
+    const q = query(collection(db, 'report_backs'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
   async getReportBackById(id: string) {
-    const response = await api.get(`/api/report-backs/${id}`);
-    return response.data;
+    const docSnap = await getDoc(doc(db, 'report_backs', id));
+    if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
+    throw new Error('Report back not found');
   },
 
   async createReportBack(data: CreateReportBackData) {
-    const response = await api.post('/api/report-backs', data);
-    return response.data;
+    const docRef = await addDoc(collection(db, 'report_backs'), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      comments: []
+    });
+    return { id: docRef.id, ...data };
   },
 
   async addComment(reportBackId: string, data: AddReportBackCommentData) {
-    const response = await api.post(`/api/report-backs/${reportBackId}/comments`, data);
-    return response.data;
+    const docRef = doc(db, 'report_backs', reportBackId);
+    await updateDoc(docRef, {
+      comments: arrayUnion({
+        id: Math.random().toString(36).substr(2, 9),
+        ...data,
+        createdAt: new Date().toISOString()
+      })
+    });
   },
 };

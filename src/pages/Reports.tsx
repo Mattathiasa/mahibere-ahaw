@@ -1,26 +1,30 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Plus, Calendar, MessageSquare, ChevronDown, ChevronUp, Paperclip } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { useTranslation } from '@/hooks/useTranslation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Sparkles, Clock, User, CheckCircle2, AlertCircle, Info, Plus, FileText, MessageSquare, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reportService } from '@/services/reports';
 import { planService } from '@/services/plans';
-import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileUpload } from '@/components/ui/file-upload';
-import { RecipientSelector } from '@/components/ui/recipient-selector';
 import { toast } from 'sonner';
-import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { formatDistanceToNow } from 'date-fns';
+import { toDate } from '@/lib/date-utils';
+import { useAuth } from '@/hooks/useAuth';
 
 const Reports = () => {
   const permissions = useRolePermissions();
+  const { t } = useTranslation();
   const [expandedReports, setExpandedReports] = useState<string[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
@@ -35,6 +39,7 @@ const Reports = () => {
     attachments: [] as string[],
     recipients: [] as string[],
   });
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: reportsData, isLoading: isLoadingReports } = useQuery({
@@ -47,8 +52,20 @@ const Reports = () => {
     queryFn: () => planService.getAllPlans(),
   });
 
+  const reports = reportsData?.reports || [];
+  const plans = plansData?.plans || [];
+
   const createMutation = useMutation({
-    mutationFn: (data: any) => reportService.createReport(data),
+    mutationFn: (data: any) => {
+      const selectedPlan = plans.find((p: any) => p.id === data.planId);
+      return reportService.createReport({
+        ...data,
+        planName: selectedPlan?.name || 'Unknown Plan',
+        authorId: user?.id,
+        authorName: user?.fullName || user?.username,
+        authorHierarchyLevel: user?.hierarchyLevel || 'Atbiya',
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -65,13 +82,16 @@ const Reports = () => {
       });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create report');
+      toast.error(error.message || 'Failed to create report');
     },
   });
 
   const commentMutation = useMutation({
     mutationFn: ({ reportId, content }: { reportId: string; content: string }) =>
-      reportService.addComment(reportId, { content }),
+      reportService.addComment(reportId, {
+        content,
+        authorName: user?.fullName || user?.username || 'Anonymous'
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       toast.success('Comment added successfully!');
@@ -111,9 +131,6 @@ const Reports = () => {
     commentMutation.mutate({ reportId: selectedReportId, content: commentContent });
   };
 
-  const reports = reportsData?.reports || [];
-  const plans = plansData?.plans || [];
-
   const optionColors = {
     Memriya: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     Kifil: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -129,324 +146,317 @@ const Reports = () => {
   if (isLoadingReports) {
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Reports</h1>
-          <p className="text-muted-foreground mt-1">Track progress and results of church activities</p>
-        </div>
+        <PageHeader title={t('reports')} description={t('monitoringHeaderDesc')} />
         <LoadingSkeleton type="card" count={3} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Reports</h1>
-          <p className="text-muted-foreground mt-1">
-            Track progress and results of church activities
-          </p>
-        </div>
+    <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <PageHeader
+          title={t('reports')}
+          description={t('monitoringHeaderDesc')}
+          badge="Performance Tracking"
+        />
+
         {permissions.canCreateReport && (
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                New Report
-              </Button>
-            </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Report</DialogTitle>
-              <DialogDescription>
-                Submit a progress report for a ministry plan
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="planId">Select Plan *</Label>
-                <Select
-                  value={formData.planId}
-                  onValueChange={(value) => setFormData({ ...formData, planId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {plans.map((plan: any) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name} ({plan.timeframe})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="option">Report Type *</Label>
-                <Select
-                  value={formData.option}
-                  onValueChange={(value: 'Memriya' | 'Kifil' | 'Zerf') =>
-                    setFormData({ ...formData, option: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select report type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Memriya">Memriya</SelectItem>
-                    <SelectItem value="Kifil">Kifil</SelectItem>
-                    <SelectItem value="Zerf">Zerf</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="timeframe">Time Period *</Label>
-                <Select
-                  value={formData.timeframe}
-                  onValueChange={(value: 'Weekly' | 'Monthly' | 'Annually') =>
-                    setFormData({ ...formData, timeframe: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select time period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Weekly">Weekly</SelectItem>
-                    <SelectItem value="Monthly">Monthly</SelectItem>
-                    <SelectItem value="Annually">Annually</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="workDone">Work Done *</Label>
-                <Textarea
-                  id="workDone"
-                  value={formData.workDone}
-                  onChange={(e) => setFormData({ ...formData, workDone: e.target.value })}
-                  placeholder="Describe the work that was completed"
-                  rows={4}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="result">Result *</Label>
-                <Textarea
-                  id="result"
-                  value={formData.result}
-                  onChange={(e) => setFormData({ ...formData, result: e.target.value })}
-                  placeholder="Describe the outcomes and results"
-                  rows={4}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Attachments (Optional)</Label>
-                <p className="text-sm text-muted-foreground">Attach supporting documents for "to whom it may concern"</p>
-                <FileUpload
-                  value={formData.attachments}
-                  onChange={(files) => setFormData({ ...formData, attachments: files })}
-                  maxFiles={5}
-                  maxSize={10}
-                />
-              </div>
-              <div className="space-y-2">
-                <RecipientSelector
-                  label="Send to (Optional)"
-                  placeholder="Select Memriyas to send this report to..."
-                  hierarchyLevel="Memriya"
-                  value={formData.recipients}
-                  onChange={(recipients) => setFormData({ ...formData, recipients })}
-                  maxRecipients={5}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button className="h-16 px-10 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20 transition-all duration-300 hover:scale-105 group overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  <Plus className="mr-3 h-6 w-6" />
+                  {t('newReport')}
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create Report'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-[3rem] bg-white/95 backdrop-blur-2xl border-white/40 shadow-2xl">
+                <DialogHeader className="p-4">
+                  <DialogTitle className="text-3xl font-black text-[#0D2440] tracking-tight italic">{t('newReport')}</DialogTitle>
+                  <DialogDescription className="text-lg font-bold text-slate-500">
+                    Establish a record of divine progress
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-8 p-4">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('selectPlan')}</Label>
+                      <Select
+                        value={formData.planId}
+                        onValueChange={(value) => setFormData({ ...formData, planId: value })}
+                      >
+                        <SelectTrigger className="h-14 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
+                          <SelectValue placeholder="Select target plan" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          {plans.map((plan: any) => (
+                            <SelectItem key={plan.id} value={plan.id} className="rounded-xl font-bold">
+                              {plan.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('type')}</Label>
+                      <Select
+                        value={formData.option}
+                        onValueChange={(value: any) => setFormData({ ...formData, option: value })}
+                      >
+                        <SelectTrigger className="h-14 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
+                          <SelectValue placeholder="Select entity type" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          <SelectItem value="Memriya" className="rounded-xl font-bold italic">Memriya</SelectItem>
+                          <SelectItem value="Kifil" className="rounded-xl font-bold italic">Kifil</SelectItem>
+                          <SelectItem value="Zerf" className="rounded-xl font-bold italic">Zerf</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('workDone')}</Label>
+                    <Textarea
+                      value={formData.workDone}
+                      onChange={(e) => setFormData({ ...formData, workDone: e.target.value })}
+                      placeholder="Detail the activities completed..."
+                      className="min-h-[120px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('results')}</Label>
+                    <Textarea
+                      value={formData.result}
+                      onChange={(e) => setFormData({ ...formData, result: e.target.value })}
+                      placeholder="Quantify the results and impact..."
+                      className="min-h-[120px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowCreateDialog(false)}
+                      className="h-14 px-8 rounded-xl font-black text-slate-500 hover:text-rose-500 transition-colors"
+                    >
+                      {t('cancel')}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={createMutation.isPending}
+                      className="h-14 px-12 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20"
+                    >
+                      {createMutation.isPending ? 'Committing...' : t('submit')}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </motion.div>
         )}
       </div>
 
-      {/* Comment Dialog */}
+      <div className="grid gap-8">
+        <AnimatePresence mode="popLayout">
+          {reports.length > 0 ? (
+            reports.map((report: any, i: number) => (
+              <motion.div
+                key={report.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Card className="group overflow-hidden rounded-[3rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/60 dark:border-white/10 shadow-2xl hover:shadow-[#2E5E99]/10 transition-all duration-500">
+                  <div className="flex flex-col lg:flex-row">
+                    {/* Report Sidebar - Status Tracker */}
+                    <div className="lg:w-80 p-10 bg-slate-50/50 dark:bg-slate-800/20 border-r border-white/20">
+                      <div className="space-y-6">
+                        <div className="h-16 w-16 rounded-2xl bg-[#2E5E99]/10 flex items-center justify-center text-[#2E5E99]">
+                          <FileText className="h-8 w-8" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">Submission Type</p>
+                          <Badge className={cn("px-4 py-1.5 rounded-full font-black uppercase text-[10px] tracking-widest", optionColors[report.option as keyof typeof optionColors])}>
+                            {report.option}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">Registry Date</p>
+                          <div className="flex items-center gap-2 text-[#0D2440] dark:text-white font-bold">
+                            <Calendar className="h-4 w-4 opacity-40" />
+                            <span className="text-sm">
+                              {toDate(report.submittedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="pt-6">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60 mb-3">Timeframe</p>
+                          <div className={cn("inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs shadow-inner", timeframeColors[report.timeframe as keyof typeof timeframeColors])}>
+                            <Clock className="h-3.5 w-3.5" />
+                            {report.timeframe}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 p-10 lg:p-12 space-y-10">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-2">
+                          <h3 className="text-3xl font-black text-[#0D2440] dark:text-white tracking-tight italic">
+                            {report.planName}
+                          </h3>
+                          <p className="font-bold text-[#0D2440]/40 dark:text-white/40 flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-[#2E5E99]" />
+                            Ref: {report.id.slice(-8).toUpperCase()}
+                          </p>
+                        </div>
+                        <div className="bg-green-500/10 text-green-600 px-6 py-2 rounded-2xl flex items-center gap-2">
+                          <CheckCircle2 className="h-5 w-5" />
+                          <span className="font-black uppercase tracking-[0.2em] text-[10px]">Verified</span>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-12 lg:grid-cols-2">
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-8 bg-[#2E5E99] rounded-full" />
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('workDone')}</h4>
+                          </div>
+                          <p className="text-lg font-medium leading-relaxed italic text-slate-700 dark:text-slate-300 bg-white/30 dark:bg-black/10 p-6 rounded-[2rem] border border-white/20">
+                            {report.workDone}
+                          </p>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-8 bg-green-500 rounded-full" />
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('results')}</h4>
+                          </div>
+                          <p className="text-lg font-medium leading-relaxed italic text-slate-700 dark:text-slate-300 bg-white/30 dark:bg-black/10 p-6 rounded-[2rem] border border-white/20">
+                            {report.result}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Feedback & Engagement Section */}
+                      <div className="pt-10 border-t border-white/20">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-5 w-5 text-[#2E5E99]/60" />
+                            <span className="font-black text-xs uppercase tracking-widest opacity-40">
+                              {report.comments?.length || 0} Professional Feedback{report.comments?.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleAddComment(report.id)}
+                            className="h-12 px-8 rounded-xl border-dashed border-2 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 font-black text-xs uppercase tracking-widest"
+                          >
+                            {t('addComment')}
+                          </Button>
+                        </div>
+
+                        <AnimatePresence mode="popLayout">
+                          {report.comments?.length > 0 && (
+                            <div className="mt-8 space-y-4">
+                              {report.comments.map((comment: any, ci: number) => (
+                                <motion.div
+                                  key={comment.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: ci * 0.1 }}
+                                  className="flex gap-4 group"
+                                >
+                                  <Avatar className="h-12 w-12 border-2 border-white/60 dark:border-black/20 shadow-xl group-hover:scale-110 transition-transform">
+                                    <AvatarFallback className="font-black bg-gradient-to-br from-[#2E5E99] to-[#0D2440] text-white">
+                                      {comment.authorName?.[0]}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 bg-white/20 dark:bg-white/5 p-6 rounded-3xl rounded-tl-none border border-white/20 relative">
+                                    <div className="flex justify-between items-start mb-2">
+                                      <p className="font-black tracking-tight flex items-center gap-2">
+                                        <User className="h-3.5 w-3.5 opacity-40" />
+                                        {comment.authorName}
+                                      </p>
+                                      <span className="text-[10px] font-black uppercase tracking-widest opacity-30">
+                                        {formatDistanceToNow(toDate(comment.createdAt), { addSuffix: true })}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm font-medium italic opacity-70 leading-relaxed">{comment.content}</p>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-40 bg-white/20 dark:bg-black/10 rounded-[4rem] border-2 border-dashed border-white/20"
+            >
+              <AlertCircle className="h-24 w-24 text-[#2E5E99]/20 mb-6" />
+              <p className="text-2xl font-black text-[#0D2440]/20 dark:text-white/20 uppercase tracking-[0.3em]">Archives Empty</p>
+              <p className="font-bold text-muted-foreground mt-2 italic">Begin your ministry documentation journey above</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Comment Submission Dialog */}
       <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-[3rem] bg-white/95 backdrop-blur-2xl border-white/40 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Add Comment</DialogTitle>
-            <DialogDescription>
-              Share your feedback or thoughts on this report
-            </DialogDescription>
+            <DialogTitle className="text-2xl font-black tracking-tight italic">Contribute Insights</DialogTitle>
+            <DialogDescription className="font-bold text-slate-500">Provide professional guidance or acknowledgment</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCommentSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="comment">Comment *</Label>
-              <Textarea
-                id="comment"
-                value={commentContent}
-                onChange={(e) => setCommentContent(e.target.value)}
-                placeholder="Enter your comment"
-                rows={4}
-                required
-              />
-            </div>
-            <div className="flex justify-end gap-2">
+          <form onSubmit={handleCommentSubmit} className="space-y-6 pt-4">
+            <Textarea
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              placeholder="Enter your feedback or guidance..."
+              className="min-h-[150px] rounded-3xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all p-6"
+              required
+            />
+            <div className="flex justify-end gap-4">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => {
                   setShowCommentDialog(false);
                   setCommentContent('');
                 }}
+                className="h-14 px-8 rounded-xl font-black"
               >
-                Cancel
+                Discard
               </Button>
-              <Button type="submit" disabled={commentMutation.isPending}>
-                {commentMutation.isPending ? 'Adding...' : 'Add Comment'}
+              <Button
+                type="submit"
+                disabled={commentMutation.isPending}
+                className="h-14 px-12 rounded-2xl bg-[#2E5E99] font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20"
+              >
+                {commentMutation.isPending ? 'Publishing...' : 'Add Insight'}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Reports List */}
-      <div className="space-y-4">
-        {reports.length > 0 ? (
-          reports.map((report: any) => {
-            const isExpanded = expandedReports.includes(report.id);
-
-            return (
-              <Card key={report.id} className="hover:shadow-lg transition-shadow">
-                <Collapsible open={isExpanded} onOpenChange={() => toggleReport(report.id)}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <CardTitle className="text-xl">{report.planName}</CardTitle>
-                          <Badge className={optionColors[report.option as keyof typeof optionColors]}>
-                            {report.option}
-                          </Badge>
-                          <Badge className={timeframeColors[report.timeframe as keyof typeof timeframeColors]} variant="secondary">
-                            {report.timeframe}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {formatDistanceToNow(new Date(report.submittedAt), { addSuffix: true })}
-                          </span>
-                        </div>
-                      </div>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </CollapsibleTrigger>
-                    </div>
-                  </CardHeader>
-
-                  <CollapsibleContent>
-                    <CardContent className="space-y-6">
-                      <div>
-                        <h3 className="font-semibold text-sm text-muted-foreground mb-2">
-                          Work Done
-                        </h3>
-                        <p className="text-foreground leading-relaxed">{report.workDone}</p>
-                      </div>
-
-                      <div>
-                        <h3 className="font-semibold text-sm text-muted-foreground mb-2">
-                          Result
-                        </h3>
-                        <p className="text-foreground leading-relaxed">{report.result}</p>
-                      </div>
-
-                      {/* Attachments Section */}
-                      {report.attachments && report.attachments.length > 0 && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-3">
-                            <Paperclip className="h-4 w-4 text-muted-foreground" />
-                            <h3 className="font-semibold text-sm text-muted-foreground">
-                              Attachments ({report.attachments.length})
-                            </h3>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {report.attachments.length} document{report.attachments.length > 1 ? 's' : ''} attached
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Comments Section */}
-                      {report.comments && report.comments.length > 0 && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-3">
-                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                            <h3 className="font-semibold text-sm text-muted-foreground">
-                              Comments ({report.comments.length})
-                            </h3>
-                          </div>
-                          <div className="space-y-4">
-                            {report.comments.map((comment: any) => (
-                              <div key={comment.id} className="flex gap-3">
-                                <Avatar className="h-8 w-8 border border-border">
-                                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                    {comment.authorName
-                                      .split(' ')
-                                      .map((n: string) => n[0])
-                                      .join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-sm">
-                                      {comment.authorName}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {formatDistanceToNow(new Date(comment.createdAt), {
-                                        addSuffix: true,
-                                      })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-foreground">{comment.content}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleAddComment(report.id)}
-                        >
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Add Comment
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            );
-          })
-        ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            No reports found. Create your first report to get started.
-          </div>
-        )}
-      </div>
     </div>
   );
 };

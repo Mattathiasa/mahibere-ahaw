@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Phone, Users, FileText, BarChart3, ChevronDown, Sun, Moon,
   Languages, Mail, MapPin, CheckCircle2, Sparkles, Menu, X,
-  ArrowRight, Heart, Calendar, MessageSquare, Bell, Shield
+  ArrowRight, Heart, Calendar, MessageSquare, Bell, Shield, Youtube
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Button } from './home-components/Button';
@@ -128,7 +128,6 @@ const Home: React.FC = () => {
             >
               {t('heroTitle')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2E5E99] via-[#7BA4D0] to-[#2E5E99]">
-            
               </span>
             </motion.h1>
 
@@ -144,13 +143,24 @@ const Home: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className={`p-4 rounded-2xl bg-[#2E5E99]/5 border-l-4 border-[#2E5E99] max-w-xl`}
+            >
+              <p className="text-sm italic font-medium opacity-80">
+                "{t('missionStatement')}"
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="flex flex-wrap gap-4"
             >
               <Button size="lg" className="rounded-2xl px-12 py-8 text-xl bg-[#2E5E99] hover:scale-105 transition-transform">
                 {t('getStarted')}
               </Button>
-              <Button size="lg" variant="ghost" className={`rounded-2xl px-10 py-8 text-xl border border-[#2E5E99]/20 hover:bg-[#2E5E99]/5 ${theme === 'dark' ? 'text-white' : 'text-[#2E5E99]'}`}>
+              <Button size="lg" variant="ghost" className={`rounded-2xl px-10 py-8 text-xl border border-[#2E5E99]/20 hover:bg-[#2E5E99]/5 ${theme === 'dark' ? 'text-white' : 'text-[#2E5E99]'}`} onClick={() => scrollToSection('about')}>
                 {t('learnMore')}
               </Button>
             </motion.div>
@@ -182,7 +192,7 @@ const Home: React.FC = () => {
               className="absolute -top-10 -right-10 bg-white/80 backdrop-blur-2xl p-6 rounded-3xl border border-[#2E5E99]/10 shadow-2xl"
             >
               <Users className="h-8 w-8 text-[#2E5E99] mb-2" />
-              <div className="text-xl font-bold text-[#0D2440]">12.5k</div>
+              <div className="text-xl font-bold text-[#0D2440]">12.5k+</div>
               <div className="text-[10px] uppercase tracking-tighter opacity-50 text-[#2E5E99]">{t('activeSouls')}</div>
             </motion.div>
 
@@ -243,9 +253,9 @@ const Home: React.FC = () => {
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { title: t('membersTitle'), desc: t('membersDesc'), icon: Users, color: 'from-[#2E5E99] to-[#7BA4D0]' },
-              { title: t('planningTitle'), desc: t('planningDesc'), icon: Calendar, color: 'from-[#7BA4D0] to-[#2E5E99]' },
-              { title: t('reportsTitle'), desc: t('reportsDesc'), icon: BarChart3, color: 'from-[#2E5E99] to-[#0D2440]' },
+              { id: 'members', title: t('membersTitle'), desc: t('membersDesc'), icon: Users, color: 'from-[#2E5E99] to-[#7BA4D0]' },
+              { id: 'planning', title: t('planningTitle'), desc: t('planningHomeDesc'), icon: Calendar, color: 'from-[#7BA4D0] to-[#2E5E99]' },
+              { id: 'reports', title: t('reportsTitle'), desc: t('reportsHomeDesc'), icon: BarChart3, color: 'from-[#2E5E99] to-[#0D2440]' },
             ].map((f, i) => (
               <motion.div
                 key={i}
@@ -260,13 +270,70 @@ const Home: React.FC = () => {
                   </div>
                   <h3 className="text-3xl font-bold mb-4 font-ethiopic text-[#0D2440]">{f.title}</h3>
                   <p className="text-lg text-[#0D2440]/70 font-ethiopic leading-relaxed mb-8">{f.desc}</p>
-                  <div className="flex items-center gap-2 text-[#2E5E99] font-bold group/btn cursor-pointer">
+                  <div
+                    className="flex items-center gap-2 text-[#2E5E99] font-bold group/btn cursor-pointer"
+                    onClick={() => navigate(`/features#${f.id}`)}
+                  >
                     {t('learnMoreLink')}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-2" />
                   </div>
                 </Card>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Giving / Support Section */}
+      <section id="about" className="py-32 relative bg-[#2E5E99]/5 backdrop-blur-md">
+        <div className="container mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            <div className="space-y-8">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20"
+              >
+                <Heart className="h-3 w-3" />
+                Ministerial Support
+              </motion.div>
+              <h2 className="text-5xl font-black font-ethiopic text-[#0D2440]">{t('supportMinistry')}</h2>
+              <p className="text-xl text-[#0D2440]/70 font-ethiopic leading-relaxed">
+                {t('supportMinistryDesc')}
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                {[
+                  { name: t('bankCBE'), acc: '1000002580978' },
+                  { name: t('bankBerhan'), acc: '2500600031780' },
+                  { name: t('bankAbyssinia'), acc: '16356077' },
+                  { name: t('bankAwash'), acc: '01303228078700' },
+                  { name: t('bankOromia'), acc: '1035222' },
+                  { name: t('bankNib'), acc: '7000012443035' },
+                ].map((bank, i) => (
+                  <motion.div
+                    key={i}
+                    whileHover={{ scale: 1.02 }}
+                    className="p-4 rounded-2xl bg-white border border-[#2E5E99]/10 shadow-sm transition-all"
+                  >
+                    <p className="text-[10px] font-black uppercase tracking-wider text-[#2E5E99] mb-1">{bank.name}</p>
+                    <p className="text-lg font-bold text-[#0D2440] font-mono">{bank.acc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -inset-10 bg-[#2E5E99]/20 blur-[100px] rounded-full" />
+              <div className="relative p-12 rounded-[3rem] bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] shadow-2xl overflow-hidden hover:rotate-2 transition-transform duration-700">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
+                <Heart className="h-20 w-20 text-white/40 mb-8" />
+                <h3 className="text-4xl font-black text-white mb-6 font-ethiopic">{t('missionTitle')}</h3>
+                <p className="text-2xl text-white/90 font-ethiopic leading-relaxed font-bold">
+                  "{t('missionStatement')}"
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -284,7 +351,13 @@ const Home: React.FC = () => {
                 {t('footerDescription')}
               </p>
               <div className="flex gap-4">
-                {[MessageSquare, Bell, Heart, Mail].map((Icon, i) => (
+                <a href="https://www.youtube.com/@Meleket%E1%88%98%E1%88%88%E1%8A%A8%E1%89%B5" target="_blank" rel="noopener noreferrer" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#FF0000] hover:text-white transition-all duration-300 group">
+                  <Youtube className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
+                </a>
+                <a href="mailto:meleketeahew@gmail.com" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
+                  <Mail className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
+                </a>
+                {[MessageSquare, Bell].map((Icon, i) => (
                   <button key={i} className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
                     <Icon className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
                   </button>
@@ -315,6 +388,7 @@ const Home: React.FC = () => {
                   <input type="text" placeholder={t('emailPlaceholder')} className="w-full bg-[#2E5E99]/5 border border-[#2E5E99]/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-[#2E5E99]" />
                   <Button className="rounded-2xl p-4 bg-[#2E5E99]"><ArrowRight /></Button>
                 </div>
+                <p className="text-[10px] opacity-40 uppercase font-black tracking-widest">Email: meleketeahew@gmail.com</p>
               </div>
             </div>
           </div>

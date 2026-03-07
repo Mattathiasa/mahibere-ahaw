@@ -1,4 +1,16 @@
-import { api } from './api';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  serverTimestamp
+} from 'firebase/firestore';
 
 export interface CreateMeetingData {
   title: string;
@@ -14,27 +26,34 @@ export interface UpdateMeetingData {
 
 export const meetingService = {
   async getAllMeetings() {
-    const response = await api.get('/api/meetings');
-    return response.data;
+    const q = query(collection(db, 'meetings'), orderBy('scheduledDate', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
   async getMeetingById(id: string) {
-    const response = await api.get(`/api/meetings/${id}`);
-    return response.data;
+    const docSnap = await getDoc(doc(db, 'meetings', id));
+    if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
+    throw new Error('Meeting not found');
   },
 
   async createMeeting(data: CreateMeetingData) {
-    const response = await api.post('/api/meetings', data);
-    return response.data;
+    const docRef = await addDoc(collection(db, 'meetings'), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return { id: docRef.id, ...data };
   },
 
   async updateMeeting(id: string, data: UpdateMeetingData) {
-    const response = await api.put(`/api/meetings/${id}`, data);
-    return response.data;
+    const docRef = doc(db, 'meetings', id);
+    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    const updated = await getDoc(docRef);
+    return { id: updated.id, ...updated.data() };
   },
 
   async deleteMeeting(id: string) {
-    const response = await api.delete(`/api/meetings/${id}`);
-    return response.data;
+    await deleteDoc(doc(db, 'meetings', id));
   },
 };

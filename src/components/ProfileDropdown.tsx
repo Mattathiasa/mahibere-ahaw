@@ -19,8 +19,10 @@ export const ProfileDropdown = () => {
 
   if (!user) return null;
 
-  const initials = user.fullName
+  const fullName = user.fullName || 'Church Member';
+  const initials = fullName
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .toUpperCase();
@@ -29,7 +31,7 @@ export const ProfileDropdown = () => {
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:outline-none">
         <Avatar className="h-9 w-9 border-2 border-primary cursor-pointer hover:opacity-80 transition-opacity">
-          {(user as any).profilePicture && <AvatarImage src={(user as any).profilePicture} alt={user.fullName} />}
+          {(user as any).profilePicture && <AvatarImage src={(user as any).profilePicture} alt={fullName} />}
           <AvatarFallback className="bg-primary text-primary-foreground text-sm">
             {initials}
           </AvatarFallback>
@@ -38,9 +40,9 @@ export const ProfileDropdown = () => {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-semibold">{user.fullName}</p>
-            <p className="text-xs text-muted-foreground">{user.phone}</p>
-            <p className="text-xs text-primary">{user.hierarchyLevel}</p>
+            <p className="text-sm font-semibold">{fullName}</p>
+            <p className="text-xs text-muted-foreground">{user.phone || 'No phone'}</p>
+            <p className="text-xs text-primary">{user.hierarchyLevel || 'Member'}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

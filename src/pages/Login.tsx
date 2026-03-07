@@ -177,13 +177,13 @@ const Login = () => {
                   transition={{ delay: 0.4 }}
                   className="space-y-2"
                 >
-                  <Label htmlFor="username" className={`text-xs uppercase font-bold tracking-widest ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>Username</Label>
+                  <Label htmlFor="username" className={`text-xs uppercase font-bold tracking-widest ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>Username or Email</Label>
                   <div className="relative group">
                     <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground group-focus-within:text-[#2E5E99] transition-colors" />
                     <Input
                       id="username"
                       type="text"
-                      placeholder="admin"
+                      placeholder="Username or Email"
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                       required
@@ -247,10 +247,9 @@ const Login = () => {
                 transition={{ delay: 0.7 }}
                 className={`text-center text-xs space-y-2 p-4 rounded-xl border border-dashed border-[#2E5E99]/20 ${theme === 'dark' ? 'bg-[#2E5E99]/5 text-white/40' : 'bg-[#E7F0FA] text-[#0D2440]/50'}`}
               >
-                <p className="font-bold uppercase tracking-widest mb-2">Test Environment Access</p>
+                <p className="font-bold uppercase tracking-widest mb-2">Authentication</p>
                 <div className="flex justify-center gap-4 font-mono">
-                  <span>admin / password123</span>
-                  <span>memriya1 / password123</span>
+                  <span>Sign in with your Firebase credentials</span>
                 </div>
               </motion.div>
             </form>

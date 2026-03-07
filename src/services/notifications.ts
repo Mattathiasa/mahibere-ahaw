@@ -1,43 +1,70 @@
-import { api } from './api';
-import { Notification } from '@/types';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  writeBatch
+} from 'firebase/firestore';
 
 export const notificationService = {
-  // Get notifications for current user
   async getNotifications(options?: {
+    userId: string;
     status?: 'unread' | 'read' | 'archived';
-    limit?: number;
-    skip?: number;
+    limitCount?: number;
   }) {
-    const params = new URLSearchParams();
-    if (options?.status) params.append('status', options.status);
-    if (options?.limit) params.append('limit', options.limit.toString());
-    if (options?.skip) params.append('skip', options.skip.toString());
+    const notificationsCol = collection(db, 'notifications');
+    let q = query(notificationsCol, where('userId', '==', options?.userId || 'system'), orderBy('createdAt', 'desc'));
 
-    const response = await api.get(`/notifications?${params.toString()}`);
-    return response.data;
+    if (options?.status) {
+      q = query(q, where('status', '==', options.status));
+    }
+
+    if (options?.limitCount) {
+      q = query(q, limit(options.limitCount));
+    }
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
-  // Get unread notification count
-  async getUnreadCount() {
-    const response = await api.get('/notifications/unread-count');
-    return response.data.count;
+  async getUnreadCount(userId: string) {
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      where('status', '==', 'unread')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.size;
   },
 
-  // Mark notification as read
   async markAsRead(notificationId: string) {
-    const response = await api.put(`/notifications/${notificationId}/read`);
-    return response.data;
+    const docRef = doc(db, 'notifications', notificationId);
+    await updateDoc(docRef, { status: 'read' });
   },
 
-  // Mark all notifications as read
-  async markAllAsRead() {
-    const response = await api.put('/notifications/mark-all-read');
-    return response.data;
+  async markAllAsRead(userId: string) {
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      where('status', '==', 'unread')
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, { status: 'read' });
+    });
+    await batch.commit();
   },
 
-  // Delete notification
   async deleteNotification(notificationId: string) {
-    const response = await api.delete(`/notifications/${notificationId}`);
-    return response.data;
+    await deleteDoc(doc(db, 'notifications', notificationId));
   },
 };

@@ -10,6 +10,7 @@ import { notificationService } from '@/services/notifications';
 import { Notification } from '@/types';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
+import { toDate } from '@/lib/date-utils';
 
 export default function Notifications() {
   const { t, language } = useTranslation();
@@ -143,9 +144,8 @@ export default function Notifications() {
               {notifications.map((notification: Notification) => (
                 <Card
                   key={notification.id}
-                  className={`transition-all hover:shadow-md ${
-                    notification.status === 'unread' ? 'border-l-4 border-l-primary bg-primary/5' : ''
-                  }`}
+                  className={`transition-all hover:shadow-md ${notification.status === 'unread' ? 'border-l-4 border-l-primary bg-primary/5' : ''
+                    }`}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-4">
@@ -160,7 +160,7 @@ export default function Notifications() {
                           </p>
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                             <span>From: {notification.senderName}</span>
-                            <span>{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}</span>
+                            <span>{formatDistanceToNow(toDate(notification.createdAt), { addSuffix: true })}</span>
                           </div>
                         </div>
                       </div>

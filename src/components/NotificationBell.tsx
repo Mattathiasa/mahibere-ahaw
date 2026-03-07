@@ -17,24 +17,29 @@ import { Notification } from '@/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/hooks/useAuth';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toDate } from '@/lib/date-utils';
 
 export function NotificationBell() {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
   // Get unread count
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['notifications', 'unread-count'],
-    queryFn: () => notificationService.getUnreadCount(),
+    queryKey: ['notifications', 'unread-count', user?.id],
+    queryFn: () => notificationService.getUnreadCount(user?.id || 'system'),
     refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: !!user,
   });
 
   // Get notifications
   const { data: notificationsData, isLoading } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: () => notificationService.getNotifications({ limit: 20 }),
-    enabled: isOpen,
+    queryKey: ['notifications', user?.id],
+    queryFn: () => notificationService.getNotifications({ userId: user?.id || 'system', limitCount: 20 }),
+    enabled: isOpen && !!user,
   });
 
   // Mark as read mutation
@@ -48,10 +53,10 @@ export function NotificationBell() {
 
   // Mark all as read mutation
   const markAllAsReadMutation = useMutation({
-    mutationFn: () => notificationService.markAllAsRead(),
+    mutationFn: () => notificationService.markAllAsRead(user?.id || 'system'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count', user?.id] });
       toast.success(t('allNotificationsRead'));
     },
   });
@@ -66,7 +71,7 @@ export function NotificationBell() {
     },
   });
 
-  const notifications = notificationsData?.notifications || [];
+  const notifications = notificationsData || [];
 
   const handleMarkAsRead = (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,8 +93,8 @@ export function NotificationBell() {
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -127,11 +132,10 @@ export function NotificationBell() {
               {notifications.map((notification: Notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 hover:bg-muted/50 cursor-pointer border-l-2 ${
-                    notification.status === 'unread'
-                      ? 'border-l-primary bg-primary/5'
-                      : 'border-l-transparent'
-                  }`}
+                  className={`p-3 hover:bg-muted/50 cursor-pointer border-l-2 ${notification.status === 'unread'
+                    ? 'border-l-primary bg-primary/5'
+                    : 'border-l-transparent'
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 space-y-1">
@@ -142,7 +146,7 @@ export function NotificationBell() {
                         {language === 'am' ? notification.messageAmharic : notification.message}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(toDate(notification.createdAt), { addSuffix: true })}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">

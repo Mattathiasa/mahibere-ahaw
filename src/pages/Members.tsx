@@ -12,12 +12,22 @@ import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useQuery } from '@tanstack/react-query';
 import { memberService } from '@/services/members';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { useTranslation } from '@/hooks/useTranslation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { MemberWizard } from '@/components/MemberWizard';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 
 const Members = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterGender, setFilterGender] = useState<string>('all');
   const [filterHierarchy, setFilterHierarchy] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name');
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const permissions = useRolePermissions();
 
   const { data: membersData, isLoading } = useQuery({
@@ -25,12 +35,24 @@ const Members = () => {
     queryFn: () => memberService.getAllMembers(),
   });
 
+  const createMemberMutation = useMutation({
+    mutationFn: (data: any) => memberService.createMember(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success(t('memberAddedSuccess'));
+      setIsWizardOpen(false);
+    },
+    onError: () => {
+      toast.error(t('memberAddedError'));
+    }
+  });
+
   const members = membersData?.users || [];
 
   // All possible hierarchy levels in order
   const hierarchyLevels = [
     'Sinodos',
-    'KuamiSinodos', 
+    'KuamiSinodos',
     'Memriya',
     'Zone',
     'Atbiya',
@@ -40,13 +62,16 @@ const Members = () => {
 
   // Filter members
   const filteredMembers = members.filter((member: any) => {
+    const nameEn = member.fullNameEnglish || member.fullName || '';
+    const nameAm = member.fullNameAmharic || '';
     const matchesSearch =
-      member.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      nameAm.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (member.phone && member.phone.toLowerCase().includes(searchQuery.toLowerCase())) ||
       member.hierarchyLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (member.address?.region && member.address.region.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (member.address?.zone && member.address.zone.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const matchesGender = filterGender === 'all' || member.gender === filterGender;
     const matchesHierarchy = filterHierarchy === 'all' || member.hierarchyLevel === filterHierarchy;
 
@@ -57,7 +82,7 @@ const Members = () => {
   const sortedMembers = [...filteredMembers].sort((a: any, b: any) => {
     switch (sortBy) {
       case 'name':
-        return a.fullName.localeCompare(b.fullName);
+        return (a.fullNameEnglish || a.fullName || '').localeCompare(b.fullNameEnglish || b.fullName || '');
       case 'hierarchy':
         const hierarchyOrder = ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel', 'HiyawanMahderat'];
         return hierarchyOrder.indexOf(a.hierarchyLevel) - hierarchyOrder.indexOf(b.hierarchyLevel);
@@ -74,153 +99,244 @@ const Members = () => {
     toast.info('Export functionality coming soon');
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <PageHeader title={t('members')} description={t('membersHeaderDesc')} />
+        <LoadingSkeleton type="card" count={6} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Members</h1>
-          <p className="text-muted-foreground mt-1">
-            View and manage church members ({sortedMembers.length} total)
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <PageHeader
+          title={t('members')}
+          description={t('membersHeaderDesc')}
+          badge={`${sortedMembers.length} ${t('activeSouls')}`}
+        />
+
+        <div className="flex gap-4">
           {permissions.canExportData && (
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                className="h-14 px-8 rounded-2xl border-[#2E5E99]/20 text-[#2E5E99] font-black uppercase tracking-widest hover:bg-[#2E5E99] hover:text-white transition-all duration-300 shadow-xl shadow-[#2E5E99]/5 bg-white/40 backdrop-blur-xl group overflow-hidden relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                <Download className="mr-3 h-5 w-5" />
+                {t('export')}
+              </Button>
+            </motion.div>
+          )}
+
+          {permissions.canAddMembers && (
+            <Dialog open={isWizardOpen} onOpenChange={setIsWizardOpen}>
+              <DialogTrigger asChild>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <Button
+                    className="h-14 px-8 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20 transition-all duration-300 hover:scale-105 group overflow-hidden relative"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    <Plus className="mr-3 h-6 w-6" />
+                    {t('addMember')}
+                  </Button>
+                </motion.div>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] border-none bg-white/90 backdrop-blur-2xl p-8">
+                <DialogHeader>
+                  <DialogTitle className="hidden">Member Enrollment</DialogTitle>
+                </DialogHeader>
+                <MemberWizard
+                  onClose={() => setIsWizardOpen(false)}
+                  onSubmit={(data) => createMemberMutation.mutate(data)}
+                />
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>
 
-      {/* Filters and Sort */}
-      <div className="flex flex-col gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search members by name, phone, role, region, or zone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Sort by Name</SelectItem>
-              <SelectItem value="hierarchy">Sort by Hierarchy</SelectItem>
-              <SelectItem value="region">Sort by Region</SelectItem>
-              <SelectItem value="zone">Sort by Zone</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterGender} onValueChange={setFilterGender}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <Filter className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Genders</SelectItem>
-              <SelectItem value="Male">Male</SelectItem>
-              <SelectItem value="Female">Female</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterHierarchy} onValueChange={setFilterHierarchy}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Hierarchy Level" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Levels</SelectItem>
-              {hierarchyLevels.map((level: any) => (
-                <SelectItem key={level} value={level}>
-                  {level}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Members Grid */}
-      {isLoading ? (
-        <LoadingSkeleton type="card" count={6} />
-      ) : sortedMembers.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedMembers.map((member: any) => {
-            const initials = member.fullName
-              .split(' ')
-              .map((n: string) => n[0])
-              .join('')
-              .toUpperCase();
-
-            return (
-              <Card key={member.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-12 w-12 border-2 border-primary">
-                      {member.profilePicture && <AvatarImage src={member.profilePicture} alt={member.fullName} />}
-                      <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg truncate">{member.fullName}</CardTitle>
-                      {member.fullNameAmharic && (
-                        <p className="text-sm text-muted-foreground truncate">{member.fullNameAmharic}</p>
-                      )}
-                      <Badge variant="outline" className="mt-1">
-                        {member.hierarchyLevel}
-                      </Badge>
-                    </div>
+      {/* Filters and Search - Premium Glass Toolbar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="group relative p-8 rounded-[3rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-2xl hover:shadow-[#2E5E99]/10 transition-all duration-500"
+      >
+        <div className="flex flex-col gap-8">
+          <div className="relative group/search">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#2E5E99]/50 group-focus-within/search:text-[#2E5E99] transition-colors" />
+            <Input
+              placeholder={t('search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-16 h-16 rounded-[2rem] border-none bg-white/60 dark:bg-black/20 text-xl font-medium tracking-tight italic placeholder:text-slate-400 focus:ring-2 ring-[#2E5E99] transition-all"
+            />
+          </div>
+          <div className="flex flex-wrap gap-6">
+            <div className="flex-1 min-w-[240px]">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">Orientation</p>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
+                  <SelectValue placeholder={t('sortBy')} />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-white/40 backdrop-blur-xl">
+                  <SelectItem value="name" className="rounded-xl font-bold italic">{t('sortByName')}</SelectItem>
+                  <SelectItem value="hierarchy" className="rounded-xl font-bold italic">{t('sortByHierarchy')}</SelectItem>
+                  <SelectItem value="region" className="rounded-xl font-bold italic">{t('sortByRegion')}</SelectItem>
+                  <SelectItem value="zone" className="rounded-xl font-bold italic">{t('sortByZone')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[240px]">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">Spectrum</p>
+              <Select value={filterGender} onValueChange={setFilterGender}>
+                <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 opacity-50" />
+                    <SelectValue placeholder="Gender" />
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-white/40 backdrop-blur-xl">
+                  <SelectItem value="all" className="rounded-xl font-bold italic">{t('allGenders')}</SelectItem>
+                  <SelectItem value="Male" className="rounded-xl font-bold italic">{t('male')}</SelectItem>
+                  <SelectItem value="Female" className="rounded-xl font-bold italic">{t('female')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[280px]">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">Jurisdiction</p>
+              <Select value={filterHierarchy} onValueChange={setFilterHierarchy}>
+                <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
+                  <SelectValue placeholder="Hierarchy Level" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-white/40 backdrop-blur-xl max-h-[300px]">
+                  <SelectItem value="all" className="rounded-xl font-bold italic">{t('allLevels')}</SelectItem>
+                  {hierarchyLevels.map((level: any) => (
+                    <SelectItem key={level} value={level} className="rounded-xl font-bold italic">
+                      {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
-                  {member.phone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-4 w-4 flex-shrink-0" />
-                      <span>{member.phone}</span>
-                    </div>
-                  )}
-                  {member.address && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">
-                        {member.address.woreda && `${member.address.woreda}, `}
-                        {member.address.zone && `${member.address.zone}, `}
-                        {member.address.region}
-                      </span>
-                    </div>
-                  )}
-                  {member.ministryType && (
-                    <div className="pt-2">
-                      <p className="text-xs text-muted-foreground mb-2">Ministry:</p>
-                      <Badge variant="secondary" className="text-xs">
-                        {member.ministryType}
-                      </Badge>
-                    </div>
-                  )}
-                  {member.gender && (
-                    <div className="pt-2">
-                      <Badge variant="outline" className="text-xs">
-                        {member.gender}
-                      </Badge>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+      {/* Members Grid - High Fidelity Cards */}
+      {sortedMembers.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <AnimatePresence mode="popLayout">
+            {sortedMembers.map((member: any, index: number) => {
+              const initials = member.fullName
+                .split(' ')
+                .map((n: string) => n[0])
+                .join('')
+                .toUpperCase();
+
+              return (
+                <motion.div
+                  key={member.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.5, delay: index * 0.03 }}
+                >
+                  <Card className="group relative h-full flex flex-col rounded-[3rem] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/60 dark:border-white/10 hover:shadow-[0_32px_64px_-16px_rgba(46,94,153,0.15)] transition-all duration-700 overflow-hidden border-2 hover:border-[#2E5E99]/20">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#204a7c] to-[#2E5E99] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <CardHeader className="p-8 pb-4">
+                      <div className="flex flex-col items-center text-center gap-6">
+                        <div className="relative">
+                          <div className="absolute -inset-2 bg-gradient-to-br from-[#2E5E99] to-[#0D2440] rounded-[2rem] blur opacity-0 group-hover:opacity-20 transition-opacity duration-700" />
+                          <Avatar className="h-28 w-28 rounded-[2rem] border-4 border-white dark:border-slate-800 shadow-2xl relative transition-transform duration-700 group-hover:scale-105 group-hover:rotate-2">
+                            {member.profilePicture && <AvatarImage src={member.profilePicture} alt={member.fullName} className="object-cover" />}
+                            <AvatarFallback className="bg-gradient-to-br from-[#2E5E99] to-[#0D2440] text-white text-3xl font-black">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div className="space-y-2">
+                          <CardTitle className="text-2xl font-black text-[#0D2440] dark:text-white tracking-tight italic line-clamp-1">
+                            {member.fullNameEnglish || member.fullName}
+                          </CardTitle>
+                          {member.fullNameAmharic && (
+                            <p className="text-sm font-black font-ethiopic text-[#2E5E99] dark:text-blue-300 opacity-80 line-clamp-1">
+                              {member.fullNameAmharic}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-8 pt-0 flex-1 flex flex-col justify-between space-y-8">
+                      <div className="space-y-3">
+                        <Badge className="w-full justify-center bg-[#2E5E99]/5 dark:bg-[#2E5E99]/10 text-[#2E5E99] dark:text-blue-300 border-none rounded-2xl py-2 px-4 text-[10px] font-black uppercase tracking-[0.2em] shadow-inner font-ethiopic italic">
+                          {member.hierarchyLevel}
+                        </Badge>
+
+                        <div className="space-y-2">
+                          {member.phone && (
+                            <div className="flex items-center gap-4 text-xs font-black text-[#0D2440]/60 dark:text-white/60 bg-white/40 dark:bg-black/20 p-3 rounded-2xl border border-white/20 transition-all group-hover:bg-[#2E5E99]/5">
+                              <Phone className="h-4 w-4 text-[#2E5E99]/60" />
+                              <span className="tracking-widest">{member.phone}</span>
+                            </div>
+                          )}
+                          {(member.address?.region || member.address?.zone) && (
+                            <div className="flex items-center gap-4 text-xs font-black text-[#0D2440]/60 dark:text-white/60 bg-white/40 dark:bg-black/20 p-3 rounded-2xl border border-white/20">
+                              <MapPin className="h-4 w-4 text-[#2E5E99]/60" />
+                              <span className="truncate tracking-wide">
+                                {member.address.zone || member.address.region}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-4 border-t border-white/20">
+                        <div className="flex -space-x-2">
+                          <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-white dark:border-slate-900" />
+                          <div className="h-6 w-6 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-900" />
+                        </div>
+                        <div className="flex gap-1.5">
+                          <Badge variant="outline" className="rounded-lg bg-green-500/10 text-green-600 border-none text-[8px] font-black uppercase tracking-tighter">
+                            Verified
+                          </Badge>
+                          {member.gender && (
+                            <Badge variant="outline" className="rounded-lg bg-[#2E5E99]/10 text-[#2E5E99] border-none text-[8px] font-black uppercase">
+                              {member.gender}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       ) : (
-        <EmptyState
-          icon={Users}
-          title="No members found"
-          description="Try adjusting your search or filters to find members."
-        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-40 bg-white/20 dark:bg-black/10 rounded-[4rem] border-2 border-dashed border-white/20"
+        >
+          <Users className="h-24 w-24 text-[#2E5E99]/20 mb-6" />
+          <p className="text-2xl font-black text-[#0D2440]/20 dark:text-white/20 uppercase tracking-[0.3em]">{t('noMembersFound')}</p>
+          <p className="font-bold text-muted-foreground mt-2 italic">{t('memberSearchDesc')}</p>
+        </motion.div>
       )}
     </div>
   );

@@ -15,14 +15,14 @@ export const translations = {
     settings: 'Settings',
     logout: 'Log Out',
     loggingOut: 'Logging out...',
-    
+
     // Common
     search: 'Search...',
     profile: 'Profile',
     helpSupport: 'Help & Support',
     collapse: 'Collapse',
     expand: 'Expand',
-    
+
     // Dashboard
     welcome: 'Welcome',
     overview: 'Overview',
@@ -32,6 +32,7 @@ export const translations = {
     activeAnnouncements: 'Active Announcements',
     pendingReports: 'Pending Reports',
     upcomingMeetings: 'Upcoming Meetings',
+    pastMeetings: 'Past Meetings',
     recentAnnouncements: 'Recent Announcements',
     recentReports: 'Recent Reports',
     viewAll: 'View All',
@@ -43,8 +44,23 @@ export const translations = {
     trackMinistryProgress: 'Track ministry progress',
     viewMembers: 'View Members',
     manageChurchMembers: 'Manage church members',
-    latestChurchUpdates: 'Latest church updates',
-    
+    latestChurchUpdates: 'Latest Church-wide announcements and spiritual updates',
+    planningHeaderDesc: 'Strategic activities and ministry roadmaps',
+    monitoringHeaderDesc: 'Track progress and divine results of church activities',
+    membersHeaderDesc: 'View and manage the diverse community of the church',
+    meetingsHeaderDesc: 'Leadership meetings, council sessions, and spiritual gatherings',
+    financeHeaderDesc: 'Divine stewardship and transparent financial management of the church',
+    hierarchyHeaderDesc: 'Visual organizational structure from the Holy Sinodos to local Atbiya churches',
+    higeDenbHeaderDesc: 'Sacred laws, church regulations, and spiritual governance guidelines',
+    churchRulesHeaderDesc: 'Canonical laws and administrative standards of the church',
+    importantNotice: 'Important Notice',
+    organizationalUnity: 'Organizational Unity',
+    teachingsHeaderDesc: 'Sacred wisdom, educational resources, and spiritual guidance',
+    strategicPlanHeaderDesc: 'Long-term divine vision and strategic growth path of the ministry',
+    documentsHeaderDesc: 'Central repository for official church documents and resources',
+    partnerHeaderDesc: 'Collaborating with divine partners for the glory of God',
+    volunteerHeaderDesc: 'Serve the Lord with gladness through various ministry opportunities',
+
     // Notifications
     notifications: 'Notifications',
     markAllRead: 'Mark all read',
@@ -53,14 +69,14 @@ export const translations = {
     viewAllNotifications: 'View all notifications',
     notificationDeleted: 'Notification deleted',
     allNotificationsRead: 'All notifications marked as read',
-    
+
     // Recipients
     recipients: 'Recipients',
     sendTo: 'Send to',
     selectRecipients: 'Select recipients...',
     maxRecipientsAllowed: 'Maximum recipients allowed',
     selectUpToRecipients: 'Select up to recipients to send this document to',
-    
+
     // Settings
     settingsPage: 'Settings',
     profileTab: 'Profile',
@@ -81,7 +97,7 @@ export const translations = {
     savePreferences: 'Save Preferences',
     cancelChanges: 'Cancel',
     resetSettings: 'Reset Settings',
-    
+
     // Announcements
     newAnnouncement: 'New Announcement',
     title: 'Title',
@@ -90,18 +106,22 @@ export const translations = {
     high: 'High',
     medium: 'Medium',
     low: 'Low',
-    
+
     // Plans
     newPlan: 'New Plan',
     planName: 'Plan Name',
     startDate: 'Start Date',
     endDate: 'End Date',
     status: 'Status',
-    
+
     // Reports
     newReport: 'New Report',
     reportTitle: 'Report Title',
-    
+    selectPlan: 'Select Plan',
+    workDone: 'Work Done',
+    results: 'Results',
+    addComment: 'Add Comment',
+
     // Members
     addMember: 'Add Member',
     fullName: 'Full Name',
@@ -118,18 +138,36 @@ export const translations = {
     selectAtbiyaFirst: 'Select Atbiya first',
     createEntity: 'Create Entity',
     createOrganizationalEntity: 'Create Organizational Entity',
+    allGenders: 'All Genders',
+    male: 'Male',
+    female: 'Female',
+    allLevels: 'All Levels',
+    sortBy: 'Sort by',
+    sortByName: 'Sort by Name',
+    annually: 'Annually',
+    monthly: 'Monthly',
+    weekly: 'Weekly',
+    type: 'Type',
+    planningLegend: 'Strategic activates and ministry roadmaps',
+    sortByHierarchy: 'Sort by Hierarchy',
+    sortByRegion: 'Sort by Region',
+    sortByZone: 'Sort by Zone',
+    memberAddedSuccess: 'Member secured successfully!',
+    memberAddedError: 'Failed to secure member profile.',
+    noMembersFound: 'No members found',
+    memberSearchDesc: 'Try adjusting your search or filters to find members.',
     entityType: 'Entity Type',
     parentEntity: 'Parent Entity',
     zone: 'Zone',
     enkesekaseMaikel: 'Enkesekase Maikel',
-    
+
     // Meetings
     scheduleMeeting: 'Schedule Meeting',
     meetingTitle: 'Meeting Title',
     date: 'Date',
     time: 'Time',
     location: 'Location',
-    
+
     // Actions
     save: 'Save',
     cancel: 'Cancel',
@@ -139,7 +177,25 @@ export const translations = {
     create: 'Create',
     update: 'Update',
     view: 'View',
-    
+    viewDetails: 'View Details',
+    memriyaDocuments: 'Memriya Documents',
+    addContent: 'Add Content',
+    uploadFiles: 'Upload Files',
+    clickToUpload: 'Click to upload files',
+    anyFileTypeSupported: 'Any file type supported',
+    searchDocuments: 'Search documents...',
+    speaker: 'Speaker',
+    teachings: 'Teachings & Articles',
+    strategicPlan: 'Strategic Plan',
+    partner: 'Partners',
+    volunteer: 'Volunteers',
+    documents: 'Documents',
+    targetYear: 'Target Year',
+    progressToDate: 'Progress to date',
+    current: 'Current',
+    target: 'Target',
+    export: 'Export',
+
     // Security Settings
     changePassword: 'Change Password',
     currentPassword: 'Current Password',
@@ -150,14 +206,14 @@ export const translations = {
     dangerZone: 'Danger Zone',
     deleteAccount: 'Delete Account',
     accountActions: 'Account Actions',
-    
+
     // Tooltips
     switchToDark: 'Switch to dark mode',
     switchToLight: 'Switch to light mode',
     switchToAmharic: 'Switch to Amharic',
     switchToEnglish: 'Switch to English',
     languageToggle: 'AM',
-    
+
     // Home page
     home: 'Home',
     about: 'About',
@@ -174,10 +230,10 @@ export const translations = {
     membersTitle: 'Member Management',
     membersDesc: 'Easily manage church members',
     planningTitle: 'Planning Management',
-    planningDesc: 'Manage monthly and annual plans',
+    planningHomeDesc: 'Manage monthly and annual plans',
     reportsTitle: 'Report Management',
-    reportsDesc: 'Submit and track reports easily',
-    
+    reportsHomeDesc: 'Submit and track reports easily',
+
     // Home page - Footer
     footerDescription: 'Integrating ancient spiritual values with the precision of modern engineering. Join the movement of digital discipleship.',
     platform: 'Platform',
@@ -195,7 +251,7 @@ export const translations = {
     copyrightText: '© 2025 Mahibere Ahaw Ecosystem. All rights reserved.',
     privacyArchitecture: 'Privacy Architecture',
     termsOfFaith: 'Terms of Faith',
-    
+
     // Home page - Stats
     congregations: 'Congregations',
     adminStaff: 'Admin Staff',
@@ -205,7 +261,20 @@ export const translations = {
     serviceUptime: 'Service Uptime',
     exploreEcosystem: 'Explore Ecosystem',
     learnMoreLink: 'LEARN MORE',
-    
+
+    // Support & Donations
+    supportMinistry: 'Support our Ministry',
+    supportMinistryDesc: 'If you would like to support our service, you can use the following bank accounts:',
+    bankCBE: 'Commercial Bank of Ethiopia (CBE)',
+    bankBerhan: 'Berhan Bank',
+    bankAbyssinia: 'Bank of Abyssinia',
+    bankAwash: 'Awash Bank',
+    bankOromia: 'Oromia International Bank',
+    bankNib: 'Nib International Bank',
+    missionTitle: 'Our Mission',
+    missionStatement: 'It is a spiritual reformation ministry dedicated to proclaiming the Holy Gospel of our Lord Jesus Christ to all people.',
+    selection: 'Selection',
+
     // Finance
     financeManagement: 'Finance Management',
     financeDescription: 'Manage church finances, budgets, and reports',
@@ -234,7 +303,6 @@ export const translations = {
     actualIncome: 'Actual Income',
     actualExpenses: 'Actual Expenses',
     reportType: 'Report Type',
-    monthly: 'Monthly',
     quarterly: 'Quarterly',
     annual: 'Annual',
     custom: 'Custom',
@@ -267,14 +335,14 @@ export const translations = {
     settings: 'ቅንብሮች',
     logout: 'ውጣ',
     loggingOut: 'በመውጣት ላይ...',
-    
+
     // Common
     search: 'ፈልግ...',
     profile: 'መገለጫ',
     helpSupport: 'እገዛ እና ድጋፍ',
     collapse: 'ሰብስብ',
     expand: 'ዘርጋ',
-    
+
     // Dashboard
     welcome: 'እንኳን ደህና መጡ',
     overview: 'አጠቃላይ እይታ',
@@ -284,6 +352,7 @@ export const translations = {
     activeAnnouncements: 'ንቁ ማስታወቂያዎች',
     pendingReports: 'በመጠባበቅ ላይ ያሉ ሪፖርቶች',
     upcomingMeetings: 'መጪ ስብሰባዎች',
+    pastMeetings: 'ያለፉ ስብሰባዎች',
     recentAnnouncements: 'የቅርብ ጊዜ ማስታወቂያዎች',
     recentReports: 'የቅርብ ጊዜ ሪፖርቶች',
     viewAll: 'ሁሉንም ይመልከቱ',
@@ -295,8 +364,23 @@ export const translations = {
     trackMinistryProgress: 'የአገልግሎት እድገት ይከታተሉ',
     viewMembers: 'አባላትን ይመልከቱ',
     manageChurchMembers: 'የቤተክርስቲያን አባላትን ያስተዳድሩ',
-    latestChurchUpdates: 'የቅርብ ጊዜ የቤተክርስቲያን ዜናዎች',
-    
+    latestChurchUpdates: 'የቅርብ ጊዜ የቤተክርስቲያን ማስታወቂያዎች እና መንፈሳዊ ወቅታዊ ሁኔታዎች',
+    planningHeaderDesc: 'ስልታዊ ተግባራት እና የአገልግሎት ፍኖተ ካርታዎች',
+    monitoringHeaderDesc: 'የቤተክርስቲያን ተግባራትን ሂደት እና መለኮታዊ ውጤቶችን ይከታተሉ',
+    membersHeaderDesc: 'የቤተክርስቲያኑን ልዩ ልዩ ማህበረሰብ ይመልከቱ እና ያስተዳድሩ',
+    meetingsHeaderDesc: 'የአመራር ስብሰባዎች፣ የምክር ቤት ክፍለ ጊዜዎች እና መንፈሳዊ ስብሰባዎች',
+    financeHeaderDesc: 'መለኮታዊ መጋቢነት እና የቤተክርስቲያኑ ግልጽ የፋይናንስ አስተዳደር',
+    hierarchyHeaderDesc: 'ከቅዱስ ሲኖዶስ እስከ አጥቢያ አብያተ ክርስቲያናት ያለው ድርጅታዊ መዋቅር',
+    higeDenbHeaderDesc: 'ቅዱሳን ሕጎች፣ የቤተክርስቲያን ደንቦች እና መንፈሳዊ የአስተዳደር መመሪያዎች',
+    churchRulesHeaderDesc: 'የቤተክርስቲያኑ ቀኖናዊ ሕጎች እና አስተዳደራዊ ደረጃዎች',
+    importantNotice: 'አስፈላጊ ማስታወቂያ',
+    organizationalUnity: 'ድርጅታዊ አንድነት',
+    teachingsHeaderDesc: 'ቅዱስ ጥበብ፣ የትምህርት መርጃዎች እና መንፈሳዊ መመሪያዎች',
+    strategicPlanHeaderDesc: 'የሚኒስቴሩ የረጅም ጊዜ መለኮታዊ ራዕይ እና ስልታዊ የዕድገት መንገድ',
+    documentsHeaderDesc: 'ለኦፊሴላዊ የቤተክርስቲያን ሰነዶች እና ግብዓቶች ማዕከላዊ ማከማቻ',
+    partnerHeaderDesc: 'ለእግዚአብሔር ክብር ከመለኮታዊ አጋሮች ጋር መተባበር',
+    volunteerHeaderDesc: 'በተለያዩ የአገልግሎት ዕድሎች ጌታን በደስታ ያገልግሉ',
+
     // Notifications
     notifications: 'ማሳወቂያዎች',
     markAllRead: 'ሁሉንም እንደተነበበ ምልክት አድርግ',
@@ -305,14 +389,35 @@ export const translations = {
     viewAllNotifications: 'ሁሉንም ማሳወቂያዎች ይመልከቱ',
     notificationDeleted: 'ማሳወቂያ ተሰርዟል',
     allNotificationsRead: 'ሁሉም ማሳወቂያዎች እንደተነበቡ ተመልክተዋል',
-    
+
     // Recipients
     recipients: 'ተቀባዮች',
     sendTo: 'ላክ ወደ',
     selectRecipients: 'ተቀባዮችን ይምረጡ...',
     maxRecipientsAllowed: 'ከፍተኛ ተቀባዮች ተፈቅደዋል',
     selectUpToRecipients: 'ይህንን ሰነድ ለመላክ እስከ ተቀባዮች ይምረጡ',
-    
+
+    // Settings
+    settingsPage: 'ቅንብሮች',
+    profileTab: 'መገለጫ',
+    notificationsTab: 'ማሳወቂያዎች',
+    appearanceTab: 'መልክ',
+    languageTab: 'ቋንቋ',
+    securityTab: 'ደህንነት',
+    systemTab: 'ስርዓት',
+    profileInformation: 'የመገለጫ መረጃ',
+    notificationPreferences: 'የማሳወቂያ ምርጫዎች',
+    appearanceSettings: 'የመልክ ቅንብሮች',
+    languageRegion: 'ቋንቋ እና ክልል',
+    securitySettings: 'የደህንነት ቅንብሮች',
+    systemInformation: 'የስርዓት መረጃ',
+    dataManagement: 'የውሂብ አስተዳደር',
+    advancedSettings: 'የላቁ ቅንብሮች',
+    saveChanges: 'ለውጦችን አስቀምጥ',
+    savePreferences: 'ምርጫዎችን አስቀምጥ',
+    cancelChanges: 'ሰርዝ',
+    resetSettings: 'ቅንብሮችን ዳግም አስጀምር',
+
     // Announcements
     newAnnouncement: 'አዲስ ማስታወቂያ',
     title: 'ርዕስ',
@@ -321,18 +426,22 @@ export const translations = {
     high: 'ከፍተኛ',
     medium: 'መካከለኛ',
     low: 'ዝቅተኛ',
-    
+
     // Plans
     newPlan: 'አዲስ እቅድ',
     planName: 'የእቅድ ስም',
     startDate: 'የመጀመሪያ ቀን',
     endDate: 'የመጨረሻ ቀን',
     status: 'ሁኔታ',
-    
+
     // Reports
     newReport: 'አዲስ ሪፖርት',
     reportTitle: 'የሪፖርት ርዕስ',
-    
+    selectPlan: 'ዕቅድ ይምረጡ',
+    workDone: 'የተከናወነ ተግባር',
+    results: 'ውጤቶች',
+    addComment: 'አስተያየት ይጨምሩ',
+
     // Members
     addMember: 'አባል ጨምር',
     fullName: 'ሙሉ ስም',
@@ -349,18 +458,35 @@ export const translations = {
     selectAtbiyaFirst: 'መጀመሪያ አትብያ ይምረጡ',
     createEntity: 'አካል ፍጠር',
     createOrganizationalEntity: 'ድርጅታዊ አካል ፍጠር',
+    allGenders: 'ሁሉም ጾታዎች',
+    male: 'ወንድ',
+    female: 'ሴት',
+    allLevels: 'ሁሉም ደረጃዎች',
+    sortBy: 'በ... ደርድር',
+    sortByName: 'በስም ደርድር',
+    annually: 'ዓመታዊ',
+    type: 'ዓይነት',
+    planningLegend: 'ስትራቴጂካዊ ተግባራት እና የአገልግሎት ፍኖተ ካርታዎች',
+    sortByHierarchy: 'በተዋረድ ደርድር',
+    sortByRegion: 'በክልል ደርድር',
+    sortByZone: 'በዞን ደርድር',
+    memberAddedSuccess: 'አባል በተሳካ ሁኔታ ተመዝግቧል!',
+    memberAddedError: 'የአባል መገለጫን ማስጠበቅ አልተቻለም።',
+    activeMembers: 'ንቁ አባላት',
+    noMembersFound: 'ምንም አባላት አልተገኘም',
+    memberSearchDesc: 'ለመፈለግ ፍለጋዎን ወይም ማጣሪያዎን ያስተካክሉ።',
     entityType: 'የአካል ዓይነት',
     parentEntity: 'ወላጅ አካል',
     zone: 'ዞን',
     enkesekaseMaikel: 'እንቀሰቃሴ ማዕከል',
-    
+
     // Meetings
     scheduleMeeting: 'ስብሰባ መርሐግብር',
     meetingTitle: 'የስብሰባ ርዕስ',
     date: 'ቀን',
     time: 'ሰዓት',
     location: 'ቦታ',
-    
+
     // Actions
     save: 'አስቀምጥ',
     cancel: 'ሰርዝ',
@@ -370,7 +496,25 @@ export const translations = {
     create: 'ፍጠር',
     update: 'አዘምን',
     view: 'ይመልከቱ',
-    
+    viewDetails: 'ዝርዝሮችን ይመልከቱ',
+    memriyaDocuments: 'የመምሪያ ሰነዶች',
+    addContent: 'ይዘት ይጨምሩ',
+    uploadFiles: 'ፋይሎችን ይስቀሉ',
+    clickToUpload: 'ፋይሎችን ለመስቀል እዚህ ይጫኑ',
+    anyFileTypeSupported: 'ማንኛውም ዓይነት ፋይል ይደገፋል',
+    searchDocuments: 'ሰነዶችን ይፈልጉ...',
+    speaker: 'ተናጋሪ',
+    teachings: 'ትምህርቶች እና ጽሑፎች',
+    strategicPlan: 'ስትራቴጂካዊ ዕቅድ',
+    partner: 'አጋሮች',
+    volunteer: 'ፈቃደኛ ሠራተኞች',
+    documents: 'ሰነዶች',
+    targetYear: 'የታለመበት ዓመት',
+    progressToDate: 'እስከ ዛሬ ያለው ሂደት',
+    current: 'የአሁኑ',
+    target: 'ዒላማ',
+    export: 'ላክ (Export)',
+
     // Security Settings
     changePassword: 'የይለፍ ቃል ቀይር',
     currentPassword: 'የአሁኑ የይለፍ ቃል',
@@ -381,14 +525,14 @@ export const translations = {
     dangerZone: 'የአደጋ ዞን',
     deleteAccount: 'መለያ ሰርዝ',
     accountActions: 'የመለያ እርምጃዎች',
-    
+
     // Tooltips
     switchToDark: 'ወደ ጨለማ ሁነታ ቀይር',
     switchToLight: 'ወደ ብርሃን ሁነታ ቀይር',
     switchToAmharic: 'ወደ አማርኛ ቀይር',
     switchToEnglish: 'ወደ እንግሊዝኛ ቀይር',
     languageToggle: 'EN',
-    
+
     // Home page
     home: 'ዋና ገፅ',
     about: 'ስለ እኛ',
@@ -405,10 +549,10 @@ export const translations = {
     membersTitle: 'የአባላት አስተዳደር',
     membersDesc: 'የቤተክርስቲያን አባላትን በቀላሉ ያስተዳድሩ',
     planningTitle: 'ዕቅድ አስተዳደር',
-    planningDesc: 'የወርሃዊ እና የዓመታዊ እቅዶችን ያስተዳድሩ',
+    planningHomeDesc: 'የወርሃዊ እና የዓመታዊ እቅዶችን ያስተዳድሩ',
     reportsTitle: 'የሪፖርት አቅራቢያ',
-    reportsDesc: 'ሪፖርቶችን በቀላሉ ያቅርቡ እና ይከታተሉ',
-    
+    reportsHomeDesc: 'ሪፖርቶችን በቀላሉ ያቅርቡ እና ይከታተሉ',
+
     // Home page - Footer
     footerDescription: 'የጥንታዊ መንፈሳዊ እሴቶችን ከዘመናዊ ምህንድስና ትክክለኛነት ጋር በማዋሃድ። የዲጂታል ደቀ መዝሙርነት እንቅስቃሴን ይቀላቀሉ።',
     platform: 'መድረክ',
@@ -426,7 +570,7 @@ export const translations = {
     copyrightText: '© 2025 ማኅበረ አኀው ስነ-ምህዳር። ሁሉም መብቶች የተጠበቁ ናቸው።',
     privacyArchitecture: 'የግላዊነት አርክቴክቸር',
     termsOfFaith: 'የእምነት ውሎች',
-    
+
     // Home page - Stats
     congregations: 'ጉባኤዎች',
     adminStaff: 'የአስተዳደር ሰራተኞች',
@@ -436,7 +580,20 @@ export const translations = {
     serviceUptime: 'የአገልግሎት ጊዜ',
     exploreEcosystem: 'ስነ-ምህዳርን ያስሱ',
     learnMoreLink: 'ተጨማሪ ይመልከቱ',
-    
+
+    // Support & Donations
+    supportMinistry: 'አገልግሎታችንን ይደግፉ',
+    supportMinistryDesc: 'አገልግሎታችንን መደገፍ ከፈለጉ የሚከተሉትን የባንክ አካውንቶች መጠቀም ይችላሉ፡',
+    bankCBE: 'የኢትዮጵያ ንግድ ባንክ (CBE)',
+    bankBerhan: 'ብርሃን ባንክ',
+    bankAbyssinia: 'አቢሲኒያ ባንክ',
+    bankAwash: 'አዋሽ ባንክ',
+    bankOromia: 'ኦሮሚያ ኢንተርናሽናል ባንክ',
+    bankNib: 'ንብ ኢንተርናሽናል ባንክ',
+    missionTitle: 'ተልዕኮዋችን',
+    missionStatement: 'ለሰው ሁሉ የጌታችን የኢየሱስ ክርስቶስን ቅዱስ ወንጌል ለመስበክ የተቋቋመ የመንፈሳዊ ተሀድሶ አገልግሎት ነው።',
+    selection: 'ምርጫ',
+
     // Finance
     financeManagement: 'የገንዘብ አስተዳደር',
     financeDescription: 'የቤተክርስቲያን ገንዘብ፣ በጀት እና ሪፖርቶችን ያስተዳድሩ',
@@ -465,7 +622,6 @@ export const translations = {
     actualIncome: 'ትክክለኛ ገቢ',
     actualExpenses: 'ትክክለኛ ወጪ',
     reportType: 'የሪፖርት ዓይነት',
-    monthly: 'ወርሃዊ',
     quarterly: 'ሩብ ዓመታዊ',
     annual: 'ዓመታዊ',
     custom: 'ብጁ',

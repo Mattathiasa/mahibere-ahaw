@@ -2,15 +2,20 @@ import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Folder, FolderOpen, FileText, Download, Trash2, Search, ChevronRight, FolderPlus, ArrowLeft, Upload, Loader2 } from 'lucide-react';
+import { Folder, FolderOpen, FileText, Download, Trash2, Search, ChevronRight, FolderPlus, ArrowLeft, Upload, Loader2, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { documentService, Document } from '@/services/documents';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { useTranslation } from '@/hooks/useTranslation';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const MemriyaDocuments = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = useState('');
