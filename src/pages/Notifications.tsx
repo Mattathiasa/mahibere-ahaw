@@ -98,7 +98,7 @@ export default function Notifications() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">{t('notifications')}</h1>
-          <p className="text-muted-foreground">Stay updated with church activities</p>
+          <p className="text-muted-foreground">{t('stayUpdated')}</p>
         </div>
         <div className="flex items-center justify-center h-64">
           <div className="text-muted-foreground">{t('loadingNotifications')}</div>
@@ -112,7 +112,7 @@ export default function Notifications() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{t('notifications')}</h1>
-          <p className="text-muted-foreground">Stay updated with church activities</p>
+          <p className="text-muted-foreground">{t('stayUpdated')}</p>
         </div>
         {unreadCount > 0 && (
           <Button onClick={handleMarkAllAsRead} disabled={markAllAsReadMutation.isPending}>
@@ -124,11 +124,11 @@ export default function Notifications() {
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="all">{t('all')}</TabsTrigger>
           <TabsTrigger value="unread">
-            Unread {unreadCount > 0 && <Badge className="ml-2">{unreadCount}</Badge>}
+            {t('unread')} {unreadCount > 0 && <Badge className="ml-2">{unreadCount}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="read">Read</TabsTrigger>
+          <TabsTrigger value="read">{t('read')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
@@ -159,14 +159,14 @@ export default function Notifications() {
                             {language === 'am' ? notification.messageAmharic : notification.message}
                           </p>
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            <span>From: {notification.senderName}</span>
+                            <span>{t('from')}: {notification.senderName}</span>
                             <span>{formatDistanceToNow(toDate(notification.createdAt), { addSuffix: true })}</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {notification.status === 'unread' && (
-                          <Badge variant="secondary">New</Badge>
+                          <Badge variant="secondary">{t('new')}</Badge>
                         )}
                         <div className="flex gap-1">
                           {notification.status === 'unread' && (

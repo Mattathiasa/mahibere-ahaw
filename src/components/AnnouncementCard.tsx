@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Clock, User, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { toDate } from '@/lib/date-utils';
 
 interface AnnouncementCardProps {
@@ -24,6 +25,7 @@ interface AnnouncementCardProps {
 
 const AnnouncementCard = ({ announcement, onEdit, onDelete, className }: AnnouncementCardProps) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isExpiringSoon = announcement.expiresAt
     ? toDate(announcement.expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000
     : false;
@@ -38,7 +40,7 @@ const AnnouncementCard = ({ announcement, onEdit, onDelete, className }: Announc
           <div className="flex items-center gap-2">
             {isExpiringSoon && (
               <Badge variant="destructive" className="text-xs">
-                Expiring Soon
+                {t('expiringSoon')}
               </Badge>
             )}
             {isAuthor && onEdit && onDelete && (
@@ -78,7 +80,7 @@ const AnnouncementCard = ({ announcement, onEdit, onDelete, className }: Announc
           {announcement.expiresAt && (
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              <span>Expires: {format(toDate(announcement.expiresAt), 'MMM d, yyyy')}</span>
+            <span>Expires: {format(toDate(announcement.expiresAt), 'MMM d, yyyy')}</span>
             </div>
           )}
         </div>

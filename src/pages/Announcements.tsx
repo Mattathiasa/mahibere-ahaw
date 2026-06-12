@@ -201,7 +201,7 @@ const Announcements = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="expiresAt" className="text-sm font-black uppercase tracking-widest text-[#2E5E99]">Expiration Date (Optional)</Label>
+                  <Label htmlFor="expiresAt" className="text-sm font-black uppercase tracking-widest text-[#2E5E99]">{t('expirationDate')}</Label>
                   <Input
                     id="expiresAt"
                     type="datetime-local"
@@ -229,7 +229,7 @@ const Announcements = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search announcements..."
+          placeholder={t('searchAnnouncements')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -249,81 +249,54 @@ const Announcements = () => {
           ))
         ) : (
           <div className="text-center py-12 text-muted-foreground">
-            No announcements found matching your search.
+            {t('noAnnouncementsSearch')}
           </div>
         )}
       </div>
 
-      {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Announcement</DialogTitle>
+            <DialogTitle>{t('editAnnouncement')}</DialogTitle>
             <DialogDescription>
-              Update your announcement details
+              {t('updateAnnouncementDesc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-title">Title *</Label>
-              <Input
-                id="edit-title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter announcement title"
-                required
-              />
+              <Label htmlFor="edit-title">{t('title')} *</Label>
+              <Input id="edit-title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter announcement title" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-content">Content *</Label>
-              <Textarea
-                id="edit-content"
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Enter announcement content"
-                rows={6}
-                required
-              />
+              <Label htmlFor="edit-content">{t('description')} *</Label>
+              <Textarea id="edit-content" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} placeholder="Enter announcement content" rows={6} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-expiresAt">Expiration Date (Optional)</Label>
-              <Input
-                id="edit-expiresAt"
-                type="datetime-local"
-                value={formData.expiresAt}
-                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                min={new Date().toISOString().slice(0, 16)}
-              />
+              <Label htmlFor="edit-expiresAt">{t('expirationDate')}</Label>
+              <Input id="edit-expiresAt" type="datetime-local" value={formData.expiresAt} onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })} min={new Date().toISOString().slice(0, 16)} />
             </div>
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
-                Cancel
-              </Button>
+              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>{t('cancel')}</Button>
               <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'Updating...' : 'Update Announcement'}
+                {updateMutation.isPending ? t('updating') : t('updateAnnouncement')}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteAnnouncement')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the announcement "{selectedAnnouncement?.title}". This action cannot be undone.
+              {t('deleteAnnouncementConfirm')} "{selectedAnnouncement?.title}". {t('cannotUndo')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteMutation.isPending ? t('loading') : t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -35,7 +35,8 @@ export interface CreateUserData {
 export const userService = {
   async getAllUsers() {
     const querySnapshot = await getDocs(collection(db, 'users'));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const users = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return { users };
   },
 
   async createUser(userData: any) {
@@ -45,7 +46,11 @@ export const userService = {
     try {
       const username = userData.username || `user${Date.now()}`;
       const email = userData.email || `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
-      const password = userData.password || 'password123';
+      const password = userData.password;
+      
+      if (!password) {
+        throw new Error('Password is required');
+      }
 
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       const id = userCredential.user.uid;
@@ -100,5 +105,22 @@ export const userService = {
 
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  async getAuditLogs(limit: number = 10) {
+    // Audit logs collection — returns an empty list if it doesn't exist yet
+    try {
+      const { query: fsQuery, orderBy: fsOrderBy, limit: fsLimit } = await import('firebase/firestore');
+      const q = fsQuery(
+        collection(db, 'audit_logs'),
+        fsOrderBy('createdAt', 'desc'),
+        fsLimit(limit)
+      );
+      const snapshot = await getDocs(q);
+      const logs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      return { logs };
+    } catch {
+      return { logs: [] };
+    }
   },
 };

@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, LucideIcon } from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface PageHeaderProps {
@@ -12,7 +11,6 @@ interface PageHeaderProps {
 }
 
 export const PageHeader = ({ title, description, badge = 'Divine Stewardship' }: PageHeaderProps) => {
-    const { t } = useTranslation();
     const { theme } = useTheme();
 
     return (

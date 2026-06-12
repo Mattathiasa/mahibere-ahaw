@@ -13,6 +13,9 @@ export interface User {
   phone?: string;
   dateOfBirth?: string;
   hierarchyLevel?: string;
+  hierarchyEntityId?: string;
+  atbiyaId?: string;
+  mahderatId?: string;
   ministryType?: string[];
   churchRoles?: string[];
   workSchool?: string;
@@ -139,6 +142,24 @@ export enum TeachingStatus {
   COMPLETED = 'Completed',
   CANCELLED = 'Cancelled',
 }
+
+export type HierarchyLevel = 
+  | 'Sinodos' 
+  | 'KuamiSinodos' 
+  | 'Memriya' 
+  | 'Zone' 
+  | 'Atbiya' 
+  | 'EnkesekaseMaikel' 
+  | 'HiyawanMahderat';
+
+export type MinistryType = 
+  | 'Sunday School'
+  | 'Youth Ministry'
+  | 'Women Ministry'
+  | 'Choir'
+  | 'Deacon Service'
+  | 'Prayer Team'
+  | 'Media Ministry';
 
 // Ethiopian regions constant
 export const ETHIOPIAN_REGIONS = [

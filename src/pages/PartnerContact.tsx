@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Handshake } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '@/services/api';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const PartnerContact = () => {
     const [formData, setFormData] = useState({
@@ -21,8 +22,11 @@ const PartnerContact = () => {
 
     const submitMutation = useMutation({
         mutationFn: async (data: any) => {
-            const response = await api.post('/partners', data);
-            return response.data;
+            const docRef = await addDoc(collection(db, 'partner_contacts'), {
+                ...data,
+                createdAt: serverTimestamp(),
+            });
+            return docRef.id;
         },
         onSuccess: () => {
             toast.success('Request submitted successfully!');

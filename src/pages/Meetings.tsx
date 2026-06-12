@@ -156,43 +156,21 @@ const Meetings = () => {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Meeting Title *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Enter meeting title"
-                      required
-                    />
+                    <Label htmlFor="title">{t('meetingTitle')} *</Label>
+                    <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter meeting title" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="scheduledDate">Date & Time *</Label>
-                    <Input
-                      id="scheduledDate"
-                      type="datetime-local"
-                      value={formData.scheduledDate}
-                      onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                      min={new Date().toISOString().slice(0, 16)}
-                      required
-                    />
+                    <Label htmlFor="scheduledDate">{t('dateTime')} *</Label>
+                    <Input id="scheduledDate" type="datetime-local" value={formData.scheduledDate} onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })} min={new Date().toISOString().slice(0, 16)} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description *</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Enter meeting description and agenda"
-                      rows={6}
-                      required
-                    />
+                    <Label htmlFor="description">{t('description')} *</Label>
+                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter meeting description and agenda" rows={6} required />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                      Cancel
-                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>{t('cancel')}</Button>
                     <Button type="submit" disabled={createMutation.isPending}>
-                      {createMutation.isPending ? 'Scheduling...' : 'Schedule Meeting'}
+                      {createMutation.isPending ? t('scheduling') : t('scheduleMeeting')}
                     </Button>
                   </div>
                 </form>
@@ -252,7 +230,7 @@ const Meetings = () => {
                             onClick={() => handleAddToCalendar(meeting)}
                           >
                             <Calendar className="mr-2 h-4 w-4" />
-                            Add to Calendar
+                            {t('addToCalendar')}
                           </Button>
                           {permissions.canScheduleMeeting && (
                             <Button
@@ -318,19 +296,14 @@ const Meetings = () => {
           <div className="relative p-6 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] mb-6 animate-pulse">
             <Calendar className="h-14 w-14" />
           </div>
-          <h3 className="relative text-2xl font-black text-[#0D2440] dark:text-white mb-3">No meetings scheduled</h3>
+          <h3 className="relative text-2xl font-black text-[#0D2440] dark:text-white mb-3">{t('noMeetingsScheduled')}</h3>
           <p className="relative text-[#2E5E99]/60 max-w-sm mb-8 font-medium">
-            {permissions.canScheduleMeeting
-              ? 'Schedule your first meeting to get started with organizational activities.'
-              : 'No meetings have been scheduled yet for this level.'}
+            {permissions.canScheduleMeeting ? t('noMeetingsDesc') : t('noMeetingsDescMember')}
           </p>
           {permissions.canScheduleMeeting && (
-            <Button
-              onClick={() => setShowCreateDialog(true)}
-              className="relative px-8 h-12 rounded-2xl bg-[#2E5E99] text-white font-bold hover:scale-110 transition-all shadow-xl shadow-[#2E5E99]/20"
-            >
+            <Button onClick={() => setShowCreateDialog(true)} className="relative px-8 h-12 rounded-2xl bg-[#2E5E99] text-white font-bold hover:scale-110 transition-all shadow-xl shadow-[#2E5E99]/20">
               <Plus className="mr-2 h-5 w-5" />
-              Schedule Meeting
+              {t('scheduleMeeting')}
             </Button>
           )}
         </div>

@@ -19,8 +19,15 @@ const Login = () => {
   const location = useLocation();
   const { login, isLoggingIn } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { language, toggleLanguage } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const toggleLanguage = () => {
+    if (language === 'en') setLanguage('am');
+    else if (language === 'am') setLanguage('om');
+    else setLanguage('en');
+  };
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -63,7 +70,10 @@ const Login = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.username.trim() || !formData.password.trim()) return;
-    login(formData);
+    setLoginError(null);
+    login(formData, {
+      onError: (error: any) => setLoginError(error.message || t('loginFailed')),
+    });
   };
 
   // Show loading while checking authentication
@@ -97,7 +107,7 @@ const Login = () => {
           className={`gap-2 rounded-xl backdrop-blur-md border border-[#2E5E99]/10 shadow-sm hover:shadow-md transition-all ${theme === 'dark' ? 'bg-[#0D2440]/50 hover:bg-[#0D2440]/70 text-white' : 'bg-white/50 hover:bg-white/70 text-[#0D2440]'}`}
         >
           <Home className="h-4 w-4" />
-          <span className="font-bold text-xs uppercase tracking-wider">Home</span>
+          <span className="font-bold text-xs uppercase tracking-wider">{t('loginHome')}</span>
         </Button>
       </motion.div>
 
@@ -122,7 +132,7 @@ const Login = () => {
           className={`gap-2 rounded-xl border-[#2E5E99]/10 backdrop-blur-md font-bold text-xs ${theme === 'dark' ? 'bg-[#0D2440]/50 hover:bg-[#0D2440]/70 text-white' : 'bg-white/50 hover:bg-white/70 text-[#0D2440]'}`}
         >
           <Languages className="h-4 w-4 text-[#2E5E99]" />
-          <span>{t('languageToggle')}</span>
+          <span>{language === 'en' ? 'AM' : language === 'am' ? 'OM' : 'EN'}</span>
         </Button>
       </motion.div>
 
@@ -156,14 +166,14 @@ const Login = () => {
               >
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20 mb-2">
                   <Sparkles className="h-3 w-3" />
-                  Divine Access
+                  {t('loginBadge')}
                 </div>
                 <CardTitle className={`text-2xl sm:text-4xl font-black font-ethiopic tracking-tight ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                  Mahibere Ahaw Login
+                  {t('loginTitle')}
                 </CardTitle>
               </motion.div>
               <CardDescription className={`text-base font-ethiopic ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/60'}`}>
-                Sign in to manage your digital ministry
+                {t('loginSubtitle')}
               </CardDescription>
             </div>
           </CardHeader>
@@ -177,15 +187,15 @@ const Login = () => {
                   transition={{ delay: 0.4 }}
                   className="space-y-2"
                 >
-                  <Label htmlFor="username" className={`text-xs uppercase font-bold tracking-widest ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>Username or Email</Label>
+                  <Label htmlFor="username" className={`text-xs uppercase font-bold tracking-widest ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>{t('loginUsernameLabel')}</Label>
                   <div className="relative group">
                     <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground group-focus-within:text-[#2E5E99] transition-colors" />
                     <Input
                       id="username"
                       type="text"
-                      placeholder="Username or Email"
+                      placeholder={t('loginUsernamePlaceholder')}
                       value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      onChange={(e) => { setFormData({ ...formData, username: e.target.value }); setLoginError(null); }}
                       required
                       disabled={isLoggingIn}
                       className={`pl-10 h-12 rounded-xl border-[#2E5E99]/20 bg-transparent focus:bg-[#2E5E99]/5 focus:border-[#2E5E99] transition-all ${theme === 'dark' ? 'text-white placeholder:text-white/20' : 'text-[#0D2440]'}`}
@@ -199,15 +209,15 @@ const Login = () => {
                   transition={{ delay: 0.5 }}
                   className="space-y-2"
                 >
-                  <Label htmlFor="password" className={`text-xs uppercase font-bold tracking-widest ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>Password</Label>
+                  <Label htmlFor="password" className={`text-xs uppercase font-bold tracking-widest ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>{t('loginPasswordLabel')}</Label>
                   <div className="relative group">
                     <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground group-focus-within:text-[#2E5E99] transition-colors" />
                     <Input
                       id="password"
                       type="password"
-                      placeholder="••••••••"
+                      placeholder={t('loginPasswordPlaceholder')}
                       value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setLoginError(null); }}
                       required
                       disabled={isLoggingIn}
                       className={`pl-10 h-12 rounded-xl border-[#2E5E99]/20 bg-transparent focus:bg-[#2E5E99]/5 focus:border-[#2E5E99] transition-all ${theme === 'dark' ? 'text-white placeholder:text-white/20' : 'text-[#0D2440]'}`}
@@ -221,6 +231,12 @@ const Login = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
+                {loginError && (
+                  <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm font-medium flex items-start gap-2">
+                    <span className="mt-0.5">⚠️</span>
+                    <span>{loginError}</span>
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full h-12 bg-[#2E5E99] hover:bg-[#1a3a60] text-white rounded-xl shadow-lg hover:shadow-xl hover:shadow-[#2E5E99]/20 transition-all duration-300 font-bold tracking-wide"
@@ -230,11 +246,11 @@ const Login = () => {
                   {isLoggingIn ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-                      <span>Verifying...</span>
+                      <span>{t('loginVerifying')}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span>Sign In</span>
+                      <span>{t('loginSignIn')}</span>
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   )}
@@ -247,9 +263,9 @@ const Login = () => {
                 transition={{ delay: 0.7 }}
                 className={`text-center text-xs space-y-2 p-4 rounded-xl border border-dashed border-[#2E5E99]/20 ${theme === 'dark' ? 'bg-[#2E5E99]/5 text-white/40' : 'bg-[#E7F0FA] text-[#0D2440]/50'}`}
               >
-                <p className="font-bold uppercase tracking-widest mb-2">Authentication</p>
+                <p className="font-bold uppercase tracking-widest mb-2">{t('loginAuthNote')}</p>
                 <div className="flex justify-center gap-4 font-mono">
-                  <span>Sign in with your Firebase credentials</span>
+                  <span>{t('loginAuthDesc')}</span>
                 </div>
               </motion.div>
             </form>

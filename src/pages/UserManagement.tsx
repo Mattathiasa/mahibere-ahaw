@@ -139,7 +139,7 @@ const UserManagement = () => {
       } else if (entityFormData.entityType === 'EnkesekaseMaikel' || entityFormData.entityType === 'Mahderat') {
         return hierarchyService.getEntitiesByLevel('Atbiya');
       }
-      return { entities: [] };
+      return [];
     },
     enabled: !!entityFormData.entityType,
   });
@@ -236,17 +236,8 @@ const UserManagement = () => {
     // Validate hierarchyEntityId
     const hierarchyEntityId = formData.hierarchyEntityId || currentUser?.hierarchyEntityId;
 
-    console.log('Creating user with hierarchyEntityId:', hierarchyEntityId);
-    console.log('Current user:', currentUser);
-
     if (!hierarchyEntityId || hierarchyEntityId.trim() === '') {
       toast.error('Hierarchy entity is required. Please create a Zone first or ensure you are logged in properly.');
-      return;
-    }
-
-    // Validate it's a valid MongoDB ObjectId format (24 hex characters)
-    if (!/^[0-9a-fA-F]{24}$/.test(hierarchyEntityId)) {
-      toast.error('Invalid hierarchy entity ID. Please create a Zone first.');
       return;
     }
 
@@ -522,7 +513,7 @@ const UserManagement = () => {
                           <SelectValue placeholder="Select parent entity" />
                         </SelectTrigger>
                         <SelectContent>
-                          {parentEntitiesData?.entities?.map((entity: any) => (
+                          {parentEntitiesData?.map((entity: any) => (
                             <SelectItem key={entity.id} value={entity.id}>
                               {entity.name} / {entity.nameAmharic}
                             </SelectItem>
@@ -826,8 +817,8 @@ const UserManagement = () => {
                         <SelectValue placeholder="Select a Zone" />
                       </SelectTrigger>
                       <SelectContent>
-                        {zonesData?.entities?.length > 0 ? (
-                          zonesData.entities.map((zone: any) => (
+                        {zonesData?.length > 0 ? (
+                          zonesData.map((zone: any) => (
                             <SelectItem key={zone.id} value={zone.id}>
                               {zone.name} / {zone.nameAmharic}
                             </SelectItem>
@@ -859,7 +850,7 @@ const UserManagement = () => {
                             <SelectValue placeholder="Select Atbiya" />
                           </SelectTrigger>
                           <SelectContent>
-                            {atbiyaData?.entities?.map((atbiya: any) => (
+                            {atbiyaData?.map((atbiya: any) => (
                               <SelectItem key={atbiya.id} value={atbiya.id}>
                                 {atbiya.name} / {atbiya.nameAmharic}
                               </SelectItem>
@@ -878,7 +869,7 @@ const UserManagement = () => {
                             <SelectValue placeholder={formData.atbiyaId ? "Select Mahderat" : "Select Atbiya first"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {mahderatData?.entities?.map((mahderat: any) => (
+                            {mahderatData?.map((mahderat: any) => (
                               <SelectItem key={mahderat.id} value={mahderat.id}>
                                 {mahderat.name} / {mahderat.nameAmharic}
                               </SelectItem>
@@ -1237,7 +1228,7 @@ const UserManagement = () => {
                         <SelectValue placeholder="Select Atbiya" />
                       </SelectTrigger>
                       <SelectContent>
-                        {atbiyaData?.entities?.map((atbiya: any) => (
+                        {atbiyaData?.map((atbiya: any) => (
                           <SelectItem key={atbiya.id} value={atbiya.id}>
                             {atbiya.name} / {atbiya.nameAmharic}
                           </SelectItem>
@@ -1256,7 +1247,7 @@ const UserManagement = () => {
                         <SelectValue placeholder={formData.atbiyaId ? "Select Mahderat" : "Select Atbiya first"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {mahderatData?.entities?.map((mahderat: any) => (
+                        {mahderatData?.map((mahderat: any) => (
                           <SelectItem key={mahderat.id} value={mahderat.id}>
                             {mahderat.name} / {mahderat.nameAmharic}
                           </SelectItem>

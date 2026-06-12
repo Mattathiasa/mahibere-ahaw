@@ -10,7 +10,7 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useQuery } from '@tanstack/react-query';
-import { memberService } from '@/services/members';
+import { userService } from '@/services/users';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -35,11 +35,11 @@ const Members = () => {
 
   const { data: membersData, isLoading } = useQuery({
     queryKey: ['members'],
-    queryFn: () => memberService.getAllMembers(),
+    queryFn: () => userService.getAllUsers(),
   });
 
   const createMemberMutation = useMutation({
-    mutationFn: (data: any) => memberService.createMember(data),
+    mutationFn: (data: any) => userService.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
       toast.success(t('memberAddedSuccess'));
@@ -51,7 +51,7 @@ const Members = () => {
   });
 
   const updateMemberMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: any }) => memberService.updateMember(id, data),
+    mutationFn: ({ id, data }: { id: string, data: any }) => userService.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
       toast.success('Member profile updated');
@@ -65,7 +65,7 @@ const Members = () => {
   });
 
   const deleteMemberMutation = useMutation({
-    mutationFn: (id: string) => memberService.deleteMember(id),
+    mutationFn: (id: string) => userService.deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
       toast.success('Member removed');
@@ -96,7 +96,7 @@ const Members = () => {
       nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
       nameAm.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (member.phone && member.phone.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      member.hierarchyLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (member.hierarchyLevel || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (member.address?.region && member.address.region.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (member.address?.zone && member.address.zone.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -113,7 +113,9 @@ const Members = () => {
         return (a.fullNameEnglish || a.fullName || '').localeCompare(b.fullNameEnglish || b.fullName || '');
       case 'hierarchy':
         const hierarchyOrder = ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel', 'HiyawanMahderat'];
-        return hierarchyOrder.indexOf(a.hierarchyLevel) - hierarchyOrder.indexOf(b.hierarchyLevel);
+        const ai = hierarchyOrder.indexOf(a.hierarchyLevel || '');
+        const bi = hierarchyOrder.indexOf(b.hierarchyLevel || '');
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       case 'region':
         return (a.address?.region || '').localeCompare(b.address?.region || '');
       case 'zone':
@@ -241,7 +243,7 @@ const Members = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-10 border-t border-[#2E5E99]/10">
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Personal Contact</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{t('personalContact')}</p>
                     <div className="space-y-4">
                       <div className="flex items-center gap-4 text-slate-700 font-bold italic">
                         <Phone className="h-5 w-5 text-[#2E5E99]" />
@@ -255,7 +257,7 @@ const Members = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Jurisdiction</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{t('jurisdiction')}</p>
                     <div className="flex items-center gap-4 text-slate-700 font-bold italic">
                       <MapPin className="h-5 w-5 text-[#2E5E99]" />
                       {selectedMember.address?.region}, {selectedMember.address?.zone}, {selectedMember.address?.woreda}
@@ -265,7 +267,7 @@ const Members = () => {
 
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Ministry Roles</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{t('ministryRoles')}</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedMember.churchRoles?.map((r: string) => (
                         <Badge key={r} className="bg-[#2E5E99] text-white border-none rounded-xl text-[10px] font-black uppercase px-4 py-1.5 shadow-lg shadow-[#2E5E99]/20">
@@ -276,7 +278,7 @@ const Members = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Ministry Teams</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{t('ministryTeams')}</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedMember.ministryType?.map((m: string) => (
                         <Badge key={m} className="bg-emerald-500 text-white border-none rounded-xl text-[10px] font-black uppercase px-4 py-1.5 shadow-lg shadow-emerald-500/20">
@@ -293,7 +295,7 @@ const Members = () => {
                   onClick={() => setIsViewOpen(false)}
                   className="h-14 px-12 rounded-2xl bg-[#0D2440] text-white font-black uppercase tracking-widest hover:bg-[#1a3a5f] shadow-xl"
                 >
-                  Done
+                  {t('done')}
                 </Button>
               </div>
             </div>
@@ -373,11 +375,12 @@ const Members = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           <AnimatePresence mode="popLayout">
             {sortedMembers.map((member: any, index: number) => {
-              const initials = member.fullName
+              const displayName = member.fullNameEnglish || member.fullName || member.username || 'Unknown';
+              const initials = displayName
                 .split(' ')
-                .map((n: string) => n[0])
+                .map((n: string) => n[0] || '')
                 .join('')
-                .toUpperCase();
+                .toUpperCase() || '?';
 
               return (
                 <motion.div
@@ -404,7 +407,7 @@ const Members = () => {
                         </div>
                         <div className="space-y-2">
                           <CardTitle className="text-2xl font-black text-[#0D2440] dark:text-white tracking-tight italic line-clamp-1">
-                            {member.fullNameEnglish || member.fullName}
+                            {member.fullNameEnglish || member.fullName || member.username || 'Unknown'}
                           </CardTitle>
                           {member.fullNameAmharic && (
                             <p className="text-sm font-black font-ethiopic text-[#2E5E99] dark:text-blue-300 opacity-80 line-clamp-1">
@@ -441,28 +444,11 @@ const Members = () => {
 
                       <div className="flex items-center justify-between gap-2 pt-4 border-t border-white/20">
                         <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedMember(member);
-                              setIsViewOpen(true);
-                            }}
-                            className="h-10 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-[#2E5E99] hover:bg-[#2E5E99]/5"
-                          >
-                            Details
+                          <Button variant="ghost" size="sm" onClick={() => { setSelectedMember(member); setIsViewOpen(true); }} className="h-10 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-[#2E5E99] hover:bg-[#2E5E99]/5">
+                            {t('details')}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedMember(member);
-                              setIsEditing(true);
-                              setIsWizardOpen(true);
-                            }}
-                            className="h-10 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-[#2E5E99] hover:bg-[#2E5E99]/5"
-                          >
-                            Edit
+                          <Button variant="ghost" size="sm" onClick={() => { setSelectedMember(member); setIsEditing(true); setIsWizardOpen(true); }} className="h-10 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-[#2E5E99] hover:bg-[#2E5E99]/5">
+                            {t('edit')}
                           </Button>
                         </div>
                         <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -470,7 +456,7 @@ const Members = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (window.confirm(`Archive ${member.fullName}?`)) {
+                              if (window.confirm(`Archive ${member.fullNameEnglish || member.fullName || 'this member'}?`)) {
                                 deleteMemberMutation.mutate(member.id);
                               }
                             }}

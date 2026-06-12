@@ -11,14 +11,13 @@ import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTranslation } from '@/hooks/useTranslation';
 import { ThreeBackground } from './ThreeBackground';
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, t: (key: string) => string) => {
+const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, t: any) => {
   const items = [
     { name: 'dashboard', href: '/dashboard', icon: Home },
     { name: 'announcements', href: '/announcements', icon: Bell },
@@ -29,11 +28,7 @@ const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, 
     { name: 'finance', href: '/finance', icon: DollarSign },
     { name: 'churchRules', href: '/church-rules', icon: Scale },
     { name: 'higeDenb', href: '/hige-denb', icon: BookOpen },
-    { name: 'missionary', href: '/missionary', icon: Globe },
-    { name: 'teachings', href: '/teachings', icon: BookOpen },
     { name: 'strategicPlan', href: '/strategic-plan', icon: FileText },
-    { name: 'partner', href: '/partner', icon: Handshake },
-    { name: 'volunteer', href: '/volunteer', icon: Heart },
     { name: 'documents', href: '/documents', icon: FolderOpen },
   ];
 
@@ -55,8 +50,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const permissions = useRolePermissions();
   const { user: currentUser, logout, isLoggingOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { language, toggleLanguage } = useLanguage();
-  const { t } = useTranslation();
+  const { language, setLanguage, t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const canManageUsers = currentUser?.hierarchyLevel === 'Memriya';
   const navigationItems = getNavigationItems(permissions.canViewHierarchy, canManageUsers, t);
@@ -65,12 +59,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     logout();
   };
 
+  const toggleLanguage = () => {
+    if (language === 'en') setLanguage('am');
+    else if (language === 'am') setLanguage('om');
+    else setLanguage('en');
+  };
+
   const NavContent = ({ isCollapsed = false }: { isCollapsed?: boolean }) => (
     <nav className="space-y-1">
       {navigationItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.href;
-        const translatedName = t(item.name as any);
+        const translatedName = (t.nav as any)[item.name];
         return (
           <Link
             key={item.name}
@@ -93,10 +93,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         disabled={isLoggingOut}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group text-red-500/80 hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed ${isCollapsed ? 'justify-center' : ''
           }`}
-        title={isCollapsed ? t('logout') : undefined}
+        title={isCollapsed ? t.nav.logout : undefined}
       >
         <LogOut className={`h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110 ${isCollapsed ? 'mx-auto' : ''}`} />
-        {!isCollapsed && <span className="font-medium tracking-wide">{isLoggingOut ? t('loggingOut') : t('logout')}</span>}
+        {!isCollapsed && <span className="font-medium tracking-wide">{isLoggingOut ? t.nav.logout : t.nav.logout}</span>}
       </button>
     </nav>
   );
@@ -147,7 +147,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               size="icon"
               onClick={toggleTheme}
               className="hover:bg-[#2E5E99]/10"
-              title={theme === 'light' ? t('switchToDark') : t('switchToLight')}
+              title={theme === 'light' ? t.settings.appearance : t.settings.appearance}
             >
               {theme === 'light' ? <Moon className="h-5 w-5 text-[#2E5E99]" /> : <Sun className="h-5 w-5 text-[#7BA4D0]" />}
             </Button>
@@ -155,11 +155,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              title={language === 'en' ? t('switchToAmharic') : t('switchToEnglish')}
+              title={language === 'en' ? 'Switch to Amharic' : language === 'am' ? 'Switch to Afaan Oromoo' : 'Switch to English'}
               className="gap-1 hover:bg-[#2E5E99]/10 font-bold"
             >
               <Languages className={`h-5 w-5 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`} />
-              <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{language === 'en' ? 'AM' : 'EN'}</span>
+              <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                {language === 'en' ? 'AM' : language === 'am' ? 'OM' : 'EN'}
+              </span>
             </Button>
             <ProfileDropdown />
           </div>
@@ -207,7 +209,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 ) : (
                   <>
                     <ChevronLeft className="h-4 w-4 mr-2" />
-                    <span className="text-[10px] uppercase font-black tracking-widest">{t('collapse')}</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest">{t.common.cancel}</span>
                   </>
                 )}
               </Button>
@@ -242,7 +244,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 className="gap-2 hover:bg-[#2E5E99]/10 rounded-xl px-4 h-10 transition-all font-bold"
               >
                 <Languages className={`h-4 w-4 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`} />
-                <span className={`text-xs ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{language === 'en' ? 'AMHARIC' : 'ENGLISH'}</span>
+                <span className={`text-xs ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                  {language === 'en' ? 'AMHARIC' : language === 'am' ? 'OROMOO' : 'ENGLISH'}
+                </span>
               </Button>
               <div className="w-px h-8 bg-[#2E5E99]/20 mx-2" />
               <ProfileDropdown />

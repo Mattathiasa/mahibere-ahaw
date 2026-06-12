@@ -43,3 +43,6 @@ Thumbs.db
 *.temp
 .vercel
 .env*.local
+
+# Firebase functions build output
+functions/lib/

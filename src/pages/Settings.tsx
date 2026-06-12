@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Bell, Palette, Globe, Shield, LogOut, Monitor, Download, Trash, RefreshCw, Database, HardDrive, Wifi } from 'lucide-react';
+import { User, Bell, Palette, Globe, Shield, LogOut, Monitor, Download, Trash, RefreshCw, Database, HardDrive, Wifi, Layout } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { authService } from '@/services/auth';
 import { userService } from '@/services/users';
+import { translationService, TranslationOverrides } from '@/services/translations';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,15 +18,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useTranslation } from '@/hooks/useTranslation';
+import { Language } from '@/i18n/translations';
 
 const Settings = () => {
   const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
   const queryClient = useQueryClient();
-  const { language, toggleLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const { t } = useTranslation();
 
   const [profilePicture, setProfilePicture] = useState((currentUser as any)?.profilePicture || '');
   const [profileData, setProfileData] = useState({
@@ -62,13 +62,21 @@ const Settings = () => {
     timeZone: 'eat',
   });
 
+  const [translationOverrides, setTranslationOverrides] = useState<TranslationOverrides>({});
+  const isAdmin = currentUser?.role === 'Admin' || currentUser?.hierarchyLevel === 'Memriya';
+  const { refreshTranslations } = useLanguage();
+
   // Load preferences from localStorage (Keep app preferences like Theme local for now)
   useEffect(() => {
     const savedPreferences = localStorage.getItem('preferences');
     if (savedPreferences) {
       setPreferences(JSON.parse(savedPreferences));
     }
-  }, []);
+
+    if (isAdmin) {
+      translationService.getOverrides().then(setTranslationOverrides);
+    }
+  }, [isAdmin]);
 
   // Initialize notifications from user profile
   useEffect(() => {
@@ -180,6 +188,29 @@ const Settings = () => {
     logout();
   };
 
+  const handleSaveTranslations = async () => {
+    try {
+      await translationService.saveOverrides(translationOverrides);
+      await refreshTranslations();
+      toast.success('Translations updated successfully!');
+    } catch (error) {
+      toast.error('Failed to save translations');
+    }
+  };
+
+  const updateTranslation = (lang: Language, section: string, key: string, value: string) => {
+    setTranslationOverrides(prev => ({
+      ...prev,
+      [lang]: {
+        ...(prev[lang as keyof TranslationOverrides] || {}),
+        [section]: {
+          ...((prev[lang as keyof TranslationOverrides] as any)?.[section] || {}),
+          [key]: value
+        }
+      }
+    }));
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -188,13 +219,14 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4 lg:grid-cols-7' : 'grid-cols-3 lg:grid-cols-6'}`}>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="language">Language</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
+          {isAdmin && <TabsTrigger value="translations" className="text-primary font-bold">Admin: Translations</TabsTrigger>}
         </TabsList>
 
         {/* Profile Tab */}
@@ -574,13 +606,7 @@ const Settings = () => {
                 <Label>Display Language</Label>
                 <Select
                   value={language}
-                  onValueChange={(value) => {
-                    if (value === 'en' || value === 'am') {
-                      if (language !== value) {
-                        toggleLanguage();
-                      }
-                    }
-                  }}
+                  onValueChange={(value) => setLanguage(value as Language)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -588,6 +614,7 @@ const Settings = () => {
                   <SelectContent>
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="am">አማርኛ (Amharic)</SelectItem>
+                    <SelectItem value="om">Afaan Oromoo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -632,6 +659,64 @@ const Settings = () => {
             </div>
           </SectionCard>
         </TabsContent>
+
+        {/* Admin: Translations Tab */}
+        {isAdmin && (
+          <TabsContent value="translations" className="space-y-6">
+            <SectionCard title="Custom Translation Overrides" icon={RefreshCw}>
+              <div className="space-y-8">
+                <p className="text-sm text-muted-foreground">
+                  Override any text in the system. Changes will apply to all users instantly. 
+                  Leave a field empty to use the default translation.
+                </p>
+
+                <Tabs defaultValue="en">
+                  <TabsList className="w-full justify-start mb-4">
+                    <TabsTrigger value="en">English Overrides</TabsTrigger>
+                    <TabsTrigger value="am">Amharic Overrides</TabsTrigger>
+                    <TabsTrigger value="om">Oromo Overrides</TabsTrigger>
+                  </TabsList>
+
+                  {(['en', 'am', 'om'] as Language[]).map((lang) => (
+                    <TabsContent key={lang} value={lang} className="space-y-6">
+                      <div className="grid gap-8">
+                        {['nav', 'dashboard', 'common', 'home', 'footer', 'settings'].map((section) => (
+                          <div key={section} className="space-y-4">
+                            <h4 className="text-sm font-black uppercase tracking-widest text-[#2E5E99] border-b pb-2">
+                              {section} Section
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {Object.keys((t as any)[section] || {}).map((key) => (
+                                <div key={key} className="space-y-1.5">
+                                  <Label className="text-[10px] font-bold uppercase opacity-50">{key}</Label>
+                                  <Input
+                                    placeholder={(t as any)[section][key]}
+                                    value={(translationOverrides[lang] as any)?.[section]?.[key] || ''}
+                                    onChange={(e) => updateTranslation(lang, section, key, e.target.value)}
+                                    className="bg-white/50"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+
+                <div className="flex justify-end pt-6 border-t gap-3">
+                  <Button variant="outline" onClick={() => translationService.getOverrides().then(setTranslationOverrides)}>
+                    Reset to Saved
+                  </Button>
+                  <Button onClick={handleSaveTranslations} className="bg-[#2E5E99]">
+                    Publish Changes
+                  </Button>
+                </div>
+              </div>
+            </SectionCard>
+          </TabsContent>
+        )}
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
@@ -845,8 +930,22 @@ const Settings = () => {
             </div>
           </SectionCard>
 
-          <SectionCard title="Advanced Settings" icon={Shield}>
-            <div className="space-y-6">
+          {/* Landing Page Editor — visible to Sinodos / KuamiSinodos only */}
+          {['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '') && (
+            <SectionCard title="Landing Page Editor" icon={Layout}>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Edit the public landing page content — hero text, stats, features, bank accounts, and footer — directly from here. Changes are saved to Firestore and go live immediately.
+                </p>
+                <Button onClick={() => navigate('/admin/landing-editor')} className="gap-2">
+                  <Layout className="h-4 w-4" />
+                  Open Landing Page Editor
+                </Button>
+              </div>
+            </SectionCard>
+          )}
+
+          <SectionCard title="Advanced Settings" icon={Shield}>            <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>

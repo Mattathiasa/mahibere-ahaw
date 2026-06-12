@@ -3,6 +3,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  reauthenticateWithCredential,
+  updatePassword,
+  EmailAuthProvider,
   User as FirebaseUser
 } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -44,20 +47,30 @@ export const authService = {
 
     let userCredential;
     try {
-      console.log(`Attempting login with authenticated email: ${email}`);
+      console.log(`Attempting login with email: ${email}`);
       userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         credentials.password
       );
     } catch (error: any) {
-      console.error('Firebase Auth Error:', error);
-      if (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-        throw new Error('Invalid username, email, or password. Please try again.');
-      } else if (error.code === 'auth/invalid-email') {
-        throw new Error('The email or username format is invalid.');
+      console.error('Firebase Auth Error:', error.code, error.message);
+      switch (error.code) {
+        case 'auth/invalid-login-credentials':
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+          throw new Error('Incorrect password. Please try again.');
+        case 'auth/user-not-found':
+          throw new Error('No account found with this username or email.');
+        case 'auth/invalid-email':
+          throw new Error('The email or username format is invalid.');
+        case 'auth/user-disabled':
+          throw new Error('This account has been disabled. Contact your administrator.');
+        case 'auth/too-many-requests':
+          throw new Error('Too many failed attempts. Please wait a few minutes and try again.');
+        default:
+          throw new Error(`Login failed: ${error.message}`);
       }
-      throw error;
     }
 
     const firebaseUser = userCredential.user;
@@ -148,11 +161,20 @@ export const authService = {
   },
 
   async changePassword(data: { currentPassword: string; newPassword: string }): Promise<void> {
-    // Firebase password change requires re-authentication or different flow
-    // For now, leaving it as is or using a simplified version if possible
-    if (auth.currentUser) {
-      // This is a simplified version, real one needs re-auth
-      throw new Error('Password change requires re-authentication');
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser || !firebaseUser.email) {
+      throw new Error('No user is currently signed in.');
     }
+    if (data.newPassword.length < 6) {
+      throw new Error('New password must be at least 6 characters long.');
+    }
+    // Re-authenticate the user before changing the password (Firebase requirement)
+    const credential = EmailAuthProvider.credential(firebaseUser.email, data.currentPassword);
+    try {
+      await reauthenticateWithCredential(firebaseUser, credential);
+    } catch {
+      throw new Error('Current password is incorrect.');
+    }
+    await updatePassword(firebaseUser, data.newPassword);
   },
 };
