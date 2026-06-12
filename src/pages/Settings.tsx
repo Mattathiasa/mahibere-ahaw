@@ -947,6 +947,21 @@ const Settings = () => {
             </SectionCard>
           )}
 
+          {/* Mobile App Control — visible to Sinodos / KuamiSinodos only */}
+          {['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '') && (
+            <SectionCard title="Mobile App Control" icon={Shield}>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Remotely control the mobile app — kill switch, forced updates, per-module feature flags — and audit which devices and app versions are in use.
+                </p>
+                <Button onClick={() => navigate('/admin/mobile-control')} className="gap-2">
+                  <Shield className="h-4 w-4" />
+                  Open Mobile App Control
+                </Button>
+              </div>
+            </SectionCard>
+          )}
+
           <SectionCard title="Advanced Settings" icon={Shield}>            <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">

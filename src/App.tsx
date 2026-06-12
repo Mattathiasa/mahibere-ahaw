@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import AboutFeatures from "./pages/AboutFeatures";
 import LandingEditor from "./pages/LandingEditor";
 import PermissionControl from "./pages/PermissionControl";
+const MobileControl = lazy(() => import("./pages/MobileControl"));
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Announcements = lazy(() => import("./pages/Announcements"));
@@ -63,6 +64,7 @@ const App = () => (
                   <Route path="/features" element={<AboutFeatures />} />
                   <Route path="/admin/landing-editor" element={<AdminRoute><LandingEditor /></AdminRoute>} />
                   <Route path="/admin/permissions" element={<AdminRoute superAdminOnly><PermissionControl /></AdminRoute>} />
+                  <Route path="/admin/mobile-control" element={<AdminRoute><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><MobileControl /></Suspense></AdminRoute>} />
 
                   {/* Protected Dashboard Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Dashboard /></Suspense></DashboardLayout></ProtectedRoute>} />
