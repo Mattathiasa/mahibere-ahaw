@@ -25,6 +25,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       en: deepMergeTranslations(localTranslations.en, overrides.en),
       am: deepMergeTranslations(localTranslations.am, overrides.am),
       om: deepMergeTranslations(localTranslations.om, overrides.om),
+      ti: deepMergeTranslations(localTranslations.ti, overrides.ti),
     };
 
     setActiveTranslations(merged);

@@ -28,6 +28,7 @@ const LANG_LABELS: Record<Language, string> = {
   en: '🇬🇧 English',
   am: '🇪🇹 አማርኛ (Amharic)',
   om: '🇪🇹 Afaan Oromoo',
+  ti: '🇪🇹 ትግርኛ (Tigrigna)',
 };
 
 // Walk the nested translations object and return flat { key, defaultValue, isLong } entries

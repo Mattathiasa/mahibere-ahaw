@@ -9,6 +9,7 @@ export interface TranslationOverrides {
   en?: Partial<Translations>;
   am?: Partial<Translations>;
   om?: Partial<Translations>;
+  ti?: Partial<Translations>;
 }
 
 export const translationService = {

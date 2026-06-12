@@ -36,6 +36,7 @@ const LANGUAGES: { value: Language; label: string; flag: string }[] = [
   { value: 'en', label: 'English', flag: '🇬🇧' },
   { value: 'am', label: 'አማርኛ', flag: '🇪🇹' },
   { value: 'om', label: 'Afaan Oromoo', flag: '🇪🇹' },
+  { value: 'ti', label: 'ትግርኛ', flag: '🇪🇹' },
 ];
 
 // ─── Tiny field wrapper ───────────────────────────────────────────────────────

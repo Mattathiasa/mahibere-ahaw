@@ -53,6 +53,7 @@ const Home: React.FC = () => {
   const toggleLanguage = () => {
     if (language === 'en') setLanguage('am');
     else if (language === 'am') setLanguage('om');
+    else if (language === 'om') setLanguage('ti');
     else setLanguage('en');
   };
 
@@ -101,7 +102,7 @@ const Home: React.FC = () => {
               {theme === 'light' ? <Moon className="h-5 w-5 text-[#2E5E99]" /> : <Sun className="h-5 w-5 text-[#7BA4D0]" />}
             </button>
             <button onClick={toggleLanguage} className="p-3 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs uppercase text-[#2E5E99]">
-              {language === 'en' ? 'AM' : language === 'am' ? 'OM' : 'EN'}
+              {language === 'en' ? 'AM' : language === 'am' ? 'OM' : language === 'om' ? 'TI' : 'EN'}
             </button>
             <Button onClick={() => navigate('/login')} className="flex bg-[#2E5E99] hover:bg-[#2E5E99]/90 px-4 sm:px-8 py-2 sm:py-3 text-xs sm:text-base rounded-2xl shadow-xl shadow-[#2E5E99]/20">
               {t.nav.login}

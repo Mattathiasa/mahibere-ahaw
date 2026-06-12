@@ -615,6 +615,7 @@ const Settings = () => {
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="am">አማርኛ (Amharic)</SelectItem>
                     <SelectItem value="om">Afaan Oromoo</SelectItem>
+                    <SelectItem value="ti">ትግርኛ (Tigrigna)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -675,9 +676,10 @@ const Settings = () => {
                     <TabsTrigger value="en">English Overrides</TabsTrigger>
                     <TabsTrigger value="am">Amharic Overrides</TabsTrigger>
                     <TabsTrigger value="om">Oromo Overrides</TabsTrigger>
+                    <TabsTrigger value="ti">Tigrigna Overrides</TabsTrigger>
                   </TabsList>
 
-                  {(['en', 'am', 'om'] as Language[]).map((lang) => (
+                  {(['en', 'am', 'om', 'ti'] as Language[]).map((lang) => (
                     <TabsContent key={lang} value={lang} className="space-y-6">
                       <div className="grid gap-8">
                         {['nav', 'dashboard', 'common', 'home', 'footer', 'settings'].map((section) => (

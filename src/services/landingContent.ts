@@ -213,6 +213,55 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       copyright: '© 2025 Mahibere Ahaw Ecosystem. Mirgi hundi eegamaadha.',
     },
   },
+  ti: {
+    hero: {
+      badge: 'ኣገልግሎት ምሕዳስ',
+      title: 'ማሕበረ ኣኀው ናይ ክርስቶስ ቤተክርስቲያን',
+      titleHighlight: '',
+      description: 'ኣብ መጽሓፍ ቅዱስ ዝተገልጸ ፍቓድ ኣምላኽ እተገልግል፣ ብቓሉን ብመንፈሱን ኣብ ምሉእ ዓለም ተልእኾኣ እትፍጽም ዝተሓደሰት ኦርቶዶክሳዊት ቤተክርስቲያን።',
+      ctaPrimary: 'ጀምር',
+      ctaSecondary: 'ተወሳኺ ፍለጥ',
+      statsCard1Label: 'ንጡፋት ነፍሳት',
+      statsCard1Value: '12.5k+',
+      statsCard2Label: 'ግዜ ኣገልግሎት',
+      statsCard2Value: '99.9%',
+    },
+    stats: [
+      { label: 'ጉባኤታት', value: '850', icon: 'MapPin' },
+      { label: 'ኣመሓደርቲ ሰራሕተኛታት', value: '2.4k', icon: 'Shield' },
+      { label: 'መንፈሳዊ ዕቤት', value: '40%', icon: 'Heart' },
+      { label: 'ዓለምለኻዊ ተበጻሕነት', value: '120+', icon: 'Languages' },
+    ],
+    features: {
+      sectionTitle: 'ዘድልየኩም ኩሉ',
+      sectionDescription: 'ቤተክርስቲያንኩም ናብ መጻኢ ንምምራሕ ዘድልየኩም ኩሉ።',
+      items: [
+        { id: 'members', title: 'ምሕደራ ኣባላት', description: 'ኣባላት ቤተክርስቲያን፣ ኣገልግሎታትን ናይ ርክብ ሓበሬታን ብቐሊሉ ኣመሓድሩ።', icon: 'Users' },
+        { id: 'planning', title: 'መደባትን ጸብጻባትን', description: 'መደባት ኣገልግሎት ኣዳሉዉ፣ ዕቤት ድማ ተኸታተሉ።', icon: 'Calendar' },
+        { id: 'reports', title: 'ትንተናን ጸብጻባትን', description: 'ንኹሉ ንጥፈታት ቤተክርስቲያን ሰፊሕ ጸብጻብን ክትትልን።', icon: 'BarChart3' },
+      ],
+    },
+    support: {
+      badge: 'ደገፍ ኣገልግሎት',
+      title: 'ነቲ ኣገልግሎት ደግፉ',
+      description: 'ለጋስ ወፈያኹም ነዚ መድረኽ ንኽብሪ ኣምላኽ ንምዕቃብን ንምዕባይን ይሕግዘና።',
+      missionTitle: 'ተልእኾና',
+      missionStatement: 'ብቓሉን ብመንፈሱን ኣብ ምሉእ ዓለም ተልእኾኣ እትፍጽም ዝተሓደሰት ኦርቶዶክሳዊት ቤተክርስቲያን።',
+      banks: [
+        { name: 'ንግዲ ባንክ', account: '1000002580978' },
+        { name: 'ብርሃን ባንክ', account: '2500600031780' },
+        { name: 'ኣቢሲንያ ባንክ', account: '16356077' },
+        { name: 'ኣዋሽ ባንክ', account: '01303228078700' },
+        { name: 'ኦሮሚያ ባንክ', account: '1035222' },
+        { name: 'ኒብ ባንክ', account: '7000012443035' },
+      ],
+    },
+    footer: {
+      description: 'ጥንታዊ መንፈሳዊ ክብርታት ምስ ዘመናዊ ምህንድስና ብምውህሃድ። ናብ ምንቅስቓስ ዲጂታላዊ ደቀ መዛሙርትነት ተጸንበሩ።',
+      email: 'meleketeahew@gmail.com',
+      copyright: '© 2025 ማሕበረ ኣኀው። ኩሉ መሰላት ዝተሓለወ እዩ።',
+    },
+  },
 };
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────
