@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { ProfileDropdown } from '@/components/ProfileDropdown';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -26,6 +27,8 @@ const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, 
     { name: 'members', href: '/members', icon: Users },
     { name: 'meetings', href: '/meetings', icon: Calendar },
     { name: 'finance', href: '/finance', icon: DollarSign },
+    { name: 'hr', href: '/hr', icon: Users },
+    { name: 'inventory', href: '/inventory', icon: FolderOpen },
     { name: 'churchRules', href: '/church-rules', icon: Scale },
     { name: 'higeDenb', href: '/hige-denb', icon: BookOpen },
     { name: 'strategicPlan', href: '/strategic-plan', icon: FileText },
@@ -52,8 +55,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { showNav } = useSoftwareControl();
   const canManageUsers = currentUser?.hierarchyLevel === 'Memriya';
-  const navigationItems = getNavigationItems(permissions.canViewHierarchy, canManageUsers, t);
+  const navigationItems = getNavigationItems(permissions.canViewHierarchy, canManageUsers, t)
+    .filter((item) => showNav(item.name));
 
   const handleLogout = () => {
     logout();

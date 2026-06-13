@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useQuery } from '@tanstack/react-query';
 import { userService } from '@/services/users';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ const Members = () => {
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const permissions = useRolePermissions();
+  const { showElement } = useSoftwareControl();
 
   const { data: membersData, isLoading } = useQuery({
     queryKey: ['members'],
@@ -148,7 +150,7 @@ const Members = () => {
         />
 
         <div className="flex gap-4">
-          {permissions.canExportData && (
+          {permissions.canExportData && showElement('members.export') && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -165,7 +167,7 @@ const Members = () => {
             </motion.div>
           )}
 
-          {permissions.canAddMembers && (
+          {permissions.canAddMembers && showElement('members.add') && (
             <Dialog open={isWizardOpen} onOpenChange={(open) => {
               setIsWizardOpen(open);
               if (!open) {

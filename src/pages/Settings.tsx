@@ -14,6 +14,7 @@ import { translationService, TranslationOverrides } from '@/services/translation
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -23,6 +24,7 @@ import { Language } from '@/i18n/translations';
 const Settings = () => {
   const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
+  const { isSuperAdmin } = usePermissions();
   const queryClient = useQueryClient();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
@@ -957,6 +959,21 @@ const Settings = () => {
                 <Button onClick={() => navigate('/admin/mobile-control')} className="gap-2">
                   <Shield className="h-4 w-4" />
                   Open Mobile App Control
+                </Button>
+              </div>
+            </SectionCard>
+          )}
+
+          {/* Software Control — super admins only */}
+          {isSuperAdmin && (
+            <SectionCard title="Software Control" icon={Shield}>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Centrally manage which roles see which navigation tabs and buttons across the entire app — plus quick links to Permissions, Mobile App Control, and the Site Content Editor.
+                </p>
+                <Button onClick={() => navigate('/admin/software-control')} className="gap-2">
+                  <Shield className="h-4 w-4" />
+                  Open Software Control
                 </Button>
               </div>
             </SectionCard>
