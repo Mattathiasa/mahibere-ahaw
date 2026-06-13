@@ -13,6 +13,8 @@ export interface Asset {
   location: string;
   condition: 'New' | 'Good' | 'Fair' | 'Poor';
   status: 'InUse' | 'InStorage' | 'Maintenance' | 'Retired';
+  /** Whether the asset was bought or rented. */
+  acquisitionType: 'Purchased' | 'Rented';
   value?: number;
   purchaseDate?: string;
   assignedTo?: string;

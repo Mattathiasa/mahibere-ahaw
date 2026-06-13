@@ -26,6 +26,7 @@ const EMPTY: EmployeeInput = {
   fullName: '',
   position: '',
   department: '',
+  category: 'Staff',
   employmentType: 'FullTime',
   salary: undefined,
   hireDate: '',
@@ -157,7 +158,12 @@ const HR = () => {
                       <div className="font-semibold">{emp.fullName}</div>
                       <div className="text-xs text-muted-foreground">{emp.email || emp.phone || ''}</div>
                     </td>
-                    <td className="py-3 pr-4">{emp.position}</td>
+                    <td className="py-3 pr-4">
+                      {emp.position}
+                      {emp.category && (
+                        <span className="block text-[10px] text-muted-foreground">{emp.category}</span>
+                      )}
+                    </td>
                     <td className="py-3 pr-4">{emp.department}</td>
                     <td className="py-3 pr-4">{emp.employmentType}</td>
                     <td className="py-3 pr-4">{emp.hireDate || '—'}</td>
@@ -203,6 +209,16 @@ const HR = () => {
             <div className="space-y-1.5">
               <Label>Position</Label>
               <Input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as EmployeeInput['category'] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Priest">Priest (clergy)</SelectItem>
+                  <SelectItem value="Staff">Staff</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Department</Label>

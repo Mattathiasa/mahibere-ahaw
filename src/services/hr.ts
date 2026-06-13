@@ -10,6 +10,8 @@ export interface Employee {
   fullName: string;
   position: string;
   department: string;
+  /** Distinguishes clergy from lay staff (kept separate from general members). */
+  category: 'Priest' | 'Staff';
   employmentType: 'FullTime' | 'PartTime' | 'Contract' | 'Volunteer';
   salary?: number;
   hireDate?: string;

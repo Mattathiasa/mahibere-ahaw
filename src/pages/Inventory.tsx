@@ -29,6 +29,7 @@ const EMPTY: AssetInput = {
   location: '',
   condition: 'Good',
   status: 'InUse',
+  acquisitionType: 'Purchased',
   value: undefined,
   purchaseDate: '',
   assignedTo: '',
@@ -181,7 +182,12 @@ const Inventory = () => {
                     <td className="py-3 pr-4">{asset.category}</td>
                     <td className="py-3 pr-4">{asset.quantity}</td>
                     <td className="py-3 pr-4">{asset.location}</td>
-                    <td className="py-3 pr-4">{asset.condition}</td>
+                    <td className="py-3 pr-4">
+                      {asset.condition}
+                      {asset.acquisitionType && (
+                        <span className="block text-[10px] text-muted-foreground">{asset.acquisitionType}</span>
+                      )}
+                    </td>
                     <td className="py-3 pr-4">
                       <Badge variant="outline" className={STATUS_COLORS[asset.status] ?? ''}>
                         {asset.status}
@@ -257,6 +263,16 @@ const Inventory = () => {
                   {(moduleCfg.options.statuses ?? ['InUse', 'InStorage', 'Maintenance', 'Retired']).map((v) => (
                     <SelectItem key={v} value={v}>{invHumanize(v)}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Acquisition</Label>
+              <Select value={form.acquisitionType} onValueChange={(v) => setForm({ ...form, acquisitionType: v as AssetInput['acquisitionType'] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Purchased">Purchased</SelectItem>
+                  <SelectItem value="Rented">Rented</SelectItem>
                 </SelectContent>
               </Select>
             </div>
