@@ -3,6 +3,7 @@ import { useAuthContext } from './AuthContext';
 import {
   resolvePermissions,
   DEFAULT_ROLE_PERMISSIONS,
+  ALL_PERMISSIONS,
   type PermissionKey,
   type RolePermissionOverrides,
   type UserPermissionOverrides,
@@ -73,7 +74,6 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Super Admin gets everything
     if (isSuperAdmin) {
-      const { ALL_PERMISSIONS } = require('@/lib/rolePermissions');
       return new Set<PermissionKey>(ALL_PERMISSIONS);
     }
 
