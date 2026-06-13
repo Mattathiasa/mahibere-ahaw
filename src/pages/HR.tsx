@@ -19,14 +19,18 @@ import { toast } from 'sonner';
 import { hrService, type Employee, type EmployeeInput } from '@/services/hr';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { flattenStructure } from '@/data/churchStructure';
 
 const humanize = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2');
+const STRUCTURE_OPTIONS = flattenStructure();
 
 const EMPTY: EmployeeInput = {
   fullName: '',
   position: '',
   department: '',
   category: 'Staff',
+  structureId: '',
+  structurePath: '',
   employmentType: 'FullTime',
   salary: undefined,
   hireDate: '',
@@ -163,6 +167,9 @@ const HR = () => {
                       {emp.category && (
                         <span className="block text-[10px] text-muted-foreground">{emp.category}</span>
                       )}
+                      {emp.structurePath && (
+                        <span className="block text-[10px] text-[#2E5E99]">{emp.structurePath}</span>
+                      )}
                     </td>
                     <td className="py-3 pr-4">{emp.department}</td>
                     <td className="py-3 pr-4">{emp.employmentType}</td>
@@ -223,6 +230,26 @@ const HR = () => {
             <div className="space-y-1.5">
               <Label>Department</Label>
               <Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Position in Hierarchy</Label>
+              <Select
+                value={form.structureId || 'none'}
+                onValueChange={(v) => {
+                  if (v === 'none') { setForm({ ...form, structureId: '', structurePath: '' }); return; }
+                  const opt = STRUCTURE_OPTIONS.find((o) => o.id === v);
+                  setForm({ ...form, structureId: v, structurePath: opt?.path ?? '' });
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Assign to a structure" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="none">— Not assigned —</SelectItem>
+                  {STRUCTURE_OPTIONS.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>{o.name} · {o.nameEn}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.structurePath && <p className="text-[11px] text-muted-foreground">{form.structurePath}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Employment Type</Label>

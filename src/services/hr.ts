@@ -12,6 +12,10 @@ export interface Employee {
   department: string;
   /** Distinguishes clergy from lay staff (kept separate from general members). */
   category: 'Priest' | 'Staff';
+  /** Structure node id this employee holds a position in (church hierarchy). */
+  structureId?: string;
+  /** Human-readable structure path (denormalised for display). */
+  structurePath?: string;
   employmentType: 'FullTime' | 'PartTime' | 'Contract' | 'Volunteer';
   salary?: number;
   hireDate?: string;

@@ -123,6 +123,26 @@ export const CHURCH_STRUCTURE: StructureNode = {
                 'Serves as secretary of the administrative council.',
                 'Carries out duties delegated by the General Manager and acts in his absence.',
               ],
+              children: [
+                {
+                  id: 'control-followup',
+                  name: 'አጠቃላይ ቁጥጥርና ክትትል',
+                  nameEn: 'General Control & Follow-up',
+                  roles: ['Monitors overall execution and compliance across the office.'],
+                },
+                {
+                  id: 'strategic-plan-budget',
+                  name: 'ስልታዊ እቅድ፣ በጀትና ፕሮጀክት',
+                  nameEn: 'Strategic Plan, Budget & Project',
+                  roles: ['Coordinates strategic planning, budgeting and projects.'],
+                },
+                {
+                  id: 'legal-section',
+                  name: 'ሕግ ክፍል',
+                  nameEn: 'Legal Section',
+                  roles: ['Handles legal affairs and compliance.'],
+                },
+              ],
             },
             {
               id: 'admin-council',
@@ -144,6 +164,10 @@ export const CHURCH_STRUCTURE: StructureNode = {
                 'Leads gospel preaching and outreach across the church.',
                 'Coordinates evangelists and apostolic mission work.',
               ],
+              children: [
+                { id: 'sec-apostolic-mission', name: 'ሐዋርያዊ ተልዕኮ ክፍል', nameEn: 'Apostolic Mission Section', roles: ['Leads evangelism and mission outreach.'] },
+                { id: 'sec-assembly-worship', name: 'ጉባኤና አምልኮ ክፍል', nameEn: 'Assembly & Worship Section', roles: ['Organises congregational assembly and worship.'] },
+              ],
             },
             {
               id: 'dept-education',
@@ -155,6 +179,11 @@ export const CHURCH_STRUCTURE: StructureNode = {
                 'Coordinates leaders\' and servants\' training.',
                 'Guards the faith and reviews books/literature for doctrinal soundness.',
               ],
+              children: [
+                { id: 'sec-edu-prep', name: 'የትምህርት ዝግጅትና ክትትል', nameEn: 'Education Preparation & Follow-up', roles: ['Prepares curricula and follows up on teaching.'] },
+                { id: 'sec-leaders-training', name: 'የመሪዎችና የስልጠና ማስተባበሪያ', nameEn: 'Leaders & Training Coordination', roles: ['Coordinates leadership and servant training.'] },
+                { id: 'sec-faith-defense', name: 'አቅበተ እምነትና የመጻሕፍት ግምገማ', nameEn: 'Faith Defense & Book Review', roles: ['Defends the faith and reviews books/literature.'] },
+              ],
             },
             {
               id: 'dept-services',
@@ -164,6 +193,12 @@ export const CHURCH_STRUCTURE: StructureNode = {
               roles: [
                 'Organises archive (Mahder) services and miscellaneous ministries.',
                 'Coordinates document and protocol organisation and parish follow-up.',
+              ],
+              children: [
+                { id: 'sec-documents-protocol', name: 'የሰነዶችና ፕሮቶኮል ማደራጃ', nameEn: 'Documents & Protocol Organisation', roles: ['Organises documents and protocol.'] },
+                { id: 'sec-parishes-followup', name: 'የአጥቢያዎች ክትትል', nameEn: 'Parishes Follow-up', roles: ['Follows up on local parishes.'] },
+                { id: 'sec-archive-services', name: 'የማኅደር አገልግሎቶች ማደራጃ', nameEn: 'Archive (Mahder) Services Organisation', roles: ['Organises archive/Mahder services.'] },
+                { id: 'sec-various-services', name: 'የልዩ ልዩ አገልግሎቶች ማደራጃ', nameEn: 'Miscellaneous Services Organisation', roles: ['Coordinates miscellaneous ministries.'] },
               ],
             },
             {
@@ -176,6 +211,13 @@ export const CHURCH_STRUCTURE: StructureNode = {
                 'Runs the finance section, property and general services.',
                 'Oversees the church\'s income-generating institutions.',
               ],
+              children: [
+                { id: 'sec-income-institutions', name: 'የገቢ ተቋማት', nameEn: 'Income-generating Institutions', roles: ['Runs the church\'s income institutions.'] },
+                { id: 'sec-hr-admin', name: 'የሰው ኃይል አስተዳደር', nameEn: 'Human Resources Administration', roles: ['Manages employee records and staffing.'] },
+                { id: 'sec-record-archive', name: 'ሪከርድና ማኅደር', nameEn: 'Records & Archive', roles: ['Maintains records and archives.'] },
+                { id: 'sec-finance', name: 'የፋይናንስ ክፍል', nameEn: 'Finance Section', roles: ['Handles finance and accounting.'] },
+                { id: 'sec-property-general', name: 'ንብረትና ጠቅላላ አገልግሎት', nameEn: 'Property & General Services', roles: ['Manages property and general services.'] },
+              ],
             },
             {
               id: 'dept-public-relations',
@@ -186,6 +228,11 @@ export const CHURCH_STRUCTURE: StructureNode = {
                 'Manages public and external relations of the church.',
                 'Oversees printing & literature, and media coordination.',
               ],
+              children: [
+                { id: 'sec-public-relations', name: 'ሕዝብና የውጭ ግንኙነት', nameEn: 'Public & External Relations', roles: ['Handles public and external relations.'] },
+                { id: 'sec-printing-literature', name: 'ኅትመትና ሥነ ጽሑፍ', nameEn: 'Printing & Literature', roles: ['Manages printing and literature.'] },
+                { id: 'sec-media-coordination', name: 'የሚዲያዎች ማስተባበሪያ', nameEn: 'Media Coordination', roles: ['Coordinates the church\'s media.'] },
+              ],
             },
             {
               id: 'dept-youth-children',
@@ -195,6 +242,11 @@ export const CHURCH_STRUCTURE: StructureNode = {
               roles: [
                 'Leads children\'s ministry, youth ministry and the students\' union.',
                 'Coordinates youth/children service follow-up and training.',
+              ],
+              children: [
+                { id: 'sec-children-service', name: 'የሕጻናት አገልግሎት', nameEn: 'Children Service', roles: ['Runs children\'s ministry.'] },
+                { id: 'sec-youth-service', name: 'የወጣቶች አገልግሎት', nameEn: 'Youth Service', roles: ['Runs youth ministry.'] },
+                { id: 'sec-students-union', name: 'የተማሪዎች ኅብረት', nameEn: 'Students\' Union', roles: ['Coordinates the students\' union.'] },
               ],
             },
           ],
@@ -211,6 +263,13 @@ export const CHURCH_STRUCTURE: StructureNode = {
           ],
           children: [
             {
+              id: 'diocese-parish-council',
+              name: 'የሀገረ ስብከት ጠቅላላ ሰበካ ጉባኤ',
+              nameEn: 'Diocese General Parish Council',
+              article: 'Article 14.3',
+              roles: ['General parish council at the diocese level; governed by internal regulations.'],
+            },
+            {
               id: 'woreda-office',
               name: 'የወረዳ ሰበካ ጽ/ቤት',
               nameEn: 'Woreda Parish Office',
@@ -219,7 +278,7 @@ export const CHURCH_STRUCTURE: StructureNode = {
                 'Intermediate office under the diocese for reaching local parishes.',
                 'Governed by detailed internal regulations (ውስጠ ደንብ).',
               ],
-            },
+              children: [
             {
               id: 'atbiya',
               name: 'አጥቢያ ቤተ ክርስቲያን',
@@ -314,6 +373,14 @@ export const CHURCH_STRUCTURE: StructureNode = {
                   article: 'Article 15.14',
                   roles: ['Runs youth and children ministry at the local church.'],
                 },
+                {
+                  id: 'parish-mahder',
+                  name: 'ማኅደር',
+                  nameEn: 'Mahder (Local Archive)',
+                  roles: ['The local parish archive / treasury.'],
+                },
+              ],
+            },
               ],
             },
           ],
@@ -332,6 +399,10 @@ export const CHURCH_STRUCTURE: StructureNode = {
             'Includes the research institute and Bible school.',
             'Provide formal theological education and training.',
           ],
+          children: [
+            { id: 'research-institute', name: 'ጥናትና ምርምር ተቋም', nameEn: 'Research Institute', roles: ['Conducts theological study and research.'] },
+            { id: 'bible-school', name: 'መጽሐፍ ቅዱስ ት/ቤት', nameEn: 'Bible School', roles: ['Provides Bible education.'] },
+          ],
         },
         {
           id: 'charity-org',
@@ -343,3 +414,24 @@ export const CHURCH_STRUCTURE: StructureNode = {
     },
   ],
 };
+
+/** A flat list of every structure node, with a breadcrumb path — used to
+ *  assign HR employees to a position within the hierarchy. */
+export interface StructureOption {
+  id: string;
+  name: string;     // Amharic
+  nameEn: string;
+  path: string;     // e.g. "General Secretariat › Evangelism Department"
+}
+
+export function flattenStructure(node: StructureNode = CHURCH_STRUCTURE, trail: string[] = []): StructureOption[] {
+  const here = [...trail, node.nameEn];
+  const self: StructureOption = {
+    id: node.id,
+    name: node.name,
+    nameEn: node.nameEn,
+    path: here.join(' › '),
+  };
+  const children = (node.children ?? []).flatMap((c) => flattenStructure(c, here));
+  return [self, ...children];
+}
