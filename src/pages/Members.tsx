@@ -93,8 +93,21 @@ const Members = () => {
     'HiyawanMahderat'
   ];
 
+  // ── Parish-level scoping ──────────────────────────────────────────────────
+  // Head office (Memriya and above) sees aggregated/all members; a parish
+  // (Atbiya) only sees and manages members belonging to its own parish.
+  const HEAD_OFFICE_LEVELS = ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone'];
+  const myParishId = (currentUser as any)?.atbiyaId || (currentUser as any)?.hierarchyEntityId || currentUser?.id || '';
+  const isHeadOffice =
+    HEAD_OFFICE_LEVELS.includes(currentUser?.hierarchyLevel ?? '') ||
+    currentUser?.role === 'SuperAdmin' || currentUser?.role === 'Admin';
+
+  const scopedMembers = isHeadOffice
+    ? members
+    : members.filter((m: any) => (m.parishId ?? '') === myParishId);
+
   // Filter members
-  const filteredMembers = members.filter((member: any) => {
+  const filteredMembers = scopedMembers.filter((member: any) => {
     const nameEn = member.fullNameEnglish || member.fullName || '';
     const nameAm = member.fullNameAmharic || '';
     const matchesSearch =
@@ -131,7 +144,43 @@ const Members = () => {
   });
 
   const handleExport = () => {
-    toast.info('Export functionality coming soon');
+    const rows = sortedMembers;
+    if (rows.length === 0) {
+      toast.info('No members to export');
+      return;
+    }
+    const cols: { key: string; label: string }[] = [
+      { key: 'fullNameEnglish', label: 'Full Name (English)' },
+      { key: 'fullNameAmharic', label: 'Full Name (Amharic)' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'email', label: 'Email' },
+      { key: 'hierarchyLevel', label: 'Hierarchy Level' },
+      { key: 'dateOfBirth', label: 'Date of Birth' },
+      { key: 'maritalStatus', label: 'Marital Status' },
+      { key: 'workSchool', label: 'Work / School' },
+    ];
+    const esc = (v: unknown) => {
+      const s = v === undefined || v === null ? '' : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [
+      cols.map((c) => c.label).join(','),
+      ...rows.map((m: any) => cols.map((c) => esc(
+        c.key === 'phone' ? (m.phone ?? m.phoneNumber)
+          : c.key === 'fullNameEnglish' ? (m.fullNameEnglish ?? m.fullName)
+          : m[c.key]
+      )).join(',')),
+    ].join('\n');
+
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `members-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${rows.length} members`);
   };
 
   if (isLoading) {
@@ -211,7 +260,12 @@ const Members = () => {
                     if (isEditing && selectedMember?.id) {
                       updateMemberMutation.mutate({ id: selectedMember.id, data });
                     } else {
-                      createMemberMutation.mutate(data);
+                      // Stamp new members with the creating parish so parish
+                      // admins only see their own; head office sees all.
+                      const stamped = isHeadOffice
+                        ? data
+                        : { ...data, parishId: myParishId, parishName: currentUser?.hierarchyLevel ?? '' };
+                      createMemberMutation.mutate(stamped);
                     }
                   }}
                 />
