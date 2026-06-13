@@ -14,6 +14,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import logo from '@/assets/logo.png';
 import heroImage from '@/assets/heroImage.jpg';
+import { optimized } from '@/services/cloudinary';
 
 // Map icon name strings (stored in Firestore) to Lucide components
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -176,7 +177,7 @@ const Home: React.FC = () => {
             transition={{ type: 'spring', stiffness: 100, damping: 20 }} className="relative hidden lg:block">
             <div className="absolute -inset-10 bg-[#2E5E99]/10 blur-[100px] rounded-full" />
             <Card className="relative overflow-hidden group border-[#2E5E99]/10 bg-white/40 shadow-2xl !p-0">
-              <img src={heroImage} alt="Mahibere Ahaw" className="w-full aspect-video object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={hero.imageUrl ? optimized(hero.imageUrl) : heroImage} alt="Mahibere Ahaw" className="w-full aspect-video object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0D2440]/90 via-[#0D2440]/20 to-transparent" />
               <div className="absolute bottom-10 left-10 space-y-2">
                 <div className="flex gap-2">

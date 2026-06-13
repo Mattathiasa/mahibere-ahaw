@@ -17,6 +17,8 @@ import {
 } from '@/services/landingContent';
 import { invalidateLandingCache } from '@/hooks/useLandingContent';
 import { pageStringsService, type AllLanguageOverrides } from '@/services/pageStrings';
+import { integrationsService, DEFAULT_INTEGRATIONS, type IntegrationsConfig } from '@/services/integrations';
+import { uploadToCloudinary, optimized } from '@/services/cloudinary';
 import { invalidateTranslationCache } from '@/hooks/useTranslation';
 import { translations, type Language } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
@@ -81,16 +83,49 @@ const LandingEditor: React.FC = () => {
   const [stringsLang, setStringsLang] = useState<Language>('en');
   const [savingStrings, setSavingStrings] = useState(false);
 
+  // Integrations (Cloudinary) + hero image upload state
+  const [integrations, setIntegrations] = useState<IntegrationsConfig>(DEFAULT_INTEGRATIONS);
+  const [savingIntegrations, setSavingIntegrations] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // ── Load ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    Promise.all([landingContentService.getAll(), pageStringsService.get()])
-      .then(([landing, strings]) => {
+    Promise.all([landingContentService.getAll(), pageStringsService.get(), integrationsService.get()])
+      .then(([landing, strings, integ]) => {
         setAllContent(landing);
         setPageStrings(strings);
+        setIntegrations(integ);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleSaveIntegrations() {
+    setSavingIntegrations(true);
+    try {
+      await integrationsService.save(integrations, user?.email ?? 'admin');
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch {
+      setSaveStatus('error');
+    } finally {
+      setSavingIntegrations(false);
+    }
+  }
+
+  async function handleHeroImageUpload(file: File) {
+    setUploadError(null);
+    setUploadingHero(true);
+    try {
+      const result = await uploadToCloudinary(file, integrationsService.toCloudinary(integrations), 'mahibere-ahaw/hero');
+      setHero('imageUrl', result.secureUrl);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setUploadingHero(false);
+    }
+  }
 
   // ── Derived: content for the active language (merged with defaults) ────────
   const content: LandingContent = deepMerge(
@@ -348,6 +383,60 @@ const LandingEditor: React.FC = () => {
                         <Input value={content.hero.ctaSecondary} onChange={(e) => setHero('ctaSecondary', e.target.value)} />
                       </Field>
                     </div>
+
+                    <SectionDivider label="Hero image (Cloudinary)" />
+                    <div className="space-y-3">
+                      {content.hero.imageUrl ? (
+                        <div className="relative w-full max-w-md">
+                          <img src={optimized(content.hero.imageUrl, 600)} alt="Hero" className="w-full rounded-xl border border-border" />
+                          <Button type="button" variant="outline" size="sm" className="mt-2"
+                            onClick={() => setHero('imageUrl', '')}>
+                            Remove image
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No custom image — the bundled default is shown. Upload one to override (web &amp; mobile).</p>
+                      )}
+                      <div className="flex items-center gap-3">
+                        <input
+                          id="hero-upload" type="file" accept="image/*" className="hidden"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHeroImageUpload(f); e.target.value = ''; }}
+                        />
+                        <Button type="button" variant="secondary" disabled={uploadingHero}
+                          onClick={() => document.getElementById('hero-upload')?.click()}>
+                          {uploadingHero ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                          {uploadingHero ? 'Uploading…' : 'Upload hero image'}
+                        </Button>
+                        <span className="text-xs text-muted-foreground">Stored on Cloudinary, optimized on delivery.</span>
+                      </div>
+                      {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
+
+                      <details className="rounded-lg border border-border p-3">
+                        <summary className="text-xs font-bold uppercase tracking-wider text-muted-foreground cursor-pointer">
+                          Cloudinary settings
+                        </summary>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                          <Field label="Cloud name">
+                            <Input value={integrations.cloudinaryCloudName}
+                              onChange={(e) => setIntegrations({ ...integrations, cloudinaryCloudName: e.target.value })}
+                              placeholder="your-cloud-name" />
+                          </Field>
+                          <Field label="Unsigned upload preset">
+                            <Input value={integrations.cloudinaryUploadPreset}
+                              onChange={(e) => setIntegrations({ ...integrations, cloudinaryUploadPreset: e.target.value })}
+                              placeholder="your-unsigned-preset" />
+                          </Field>
+                        </div>
+                        <Button type="button" size="sm" className="mt-3" disabled={savingIntegrations} onClick={handleSaveIntegrations}>
+                          {savingIntegrations ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                          Save Cloudinary settings
+                        </Button>
+                        <p className="text-[11px] text-muted-foreground mt-2">
+                          In Cloudinary: Settings → Upload → add an <b>unsigned</b> upload preset, then paste its name and your cloud name here.
+                        </p>
+                      </details>
+                    </div>
+
                     <SectionDivider label="Floating stat cards" />
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">

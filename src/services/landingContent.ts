@@ -34,6 +34,8 @@ export interface LandingContent {
     statsCard1Value: string;
     statsCard2Label: string;
     statsCard2Value: string;
+    /** Optional Cloudinary (or any) hero image URL; empty = use bundled default. */
+    imageUrl?: string;
   };
   stats: LandingStat[];
   features: {
