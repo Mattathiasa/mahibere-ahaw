@@ -175,16 +175,22 @@ const Plans = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('description')}</Label>
-                  <Textarea
-                    value={formData.details}
-                    onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-                    placeholder="Detail the divine objectives and spiritual milestones..."
-                    className="min-h-[150px] rounded-3xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all p-6"
-                    required
-                  />
-                </div>
+                {(() => {
+                  const detailsField = moduleCfg.fields.find((f) => f.key === 'details');
+                  if (detailsField && !detailsField.visible) return null;
+                  return (
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('description')}</Label>
+                      <Textarea
+                        value={formData.details}
+                        onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                        placeholder="Detail the divine objectives and spiritual milestones..."
+                        className="min-h-[150px] rounded-3xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all p-6"
+                        required={detailsField?.required ?? false}
+                      />
+                    </div>
+                  );
+                })()}
 
                 <div className="flex justify-end gap-4 pt-4">
                   <Button
