@@ -11,12 +11,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { documentService, Document } from '@/services/documents';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { LearnMore } from '@/components/LearnMore';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const MemriyaDocuments = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
+    const moduleCfg = useModuleConfig('documents');
     const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -110,14 +113,15 @@ const MemriyaDocuments = () => {
     return (
         <div className="space-y-6 animate-fade-in max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
+                <div className="space-y-2">
                     <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                         <FolderOpen className="h-8 w-8 text-primary" />
-                        Memriya Documents
+                        {moduleCfg.headerTitle || 'Memriya Documents'}
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Manage files and folders for {user?.hierarchyLevel === 'Memriya' ? 'your Memriya' : 'the Memriya'}.
+                        {moduleCfg.headerDescription || `Manage files and folders for ${user?.hierarchyLevel === 'Memriya' ? 'your Memriya' : 'the Memriya'}.`}
                     </p>
+                    <LearnMore title={moduleCfg.headerTitle || 'Memriya Documents'} content={moduleCfg.learnMore} />
                 </div>
             </div>
 

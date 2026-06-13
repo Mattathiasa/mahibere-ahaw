@@ -22,6 +22,19 @@ const MODULES: { key: ModuleKey; label: string }[] = [
   { key: 'members', label: 'Members' },
   { key: 'plans', label: 'Plans' },
   { key: 'reports', label: 'Reports' },
+  { key: 'announcements', label: 'Announcements' },
+  { key: 'meetings', label: 'Meetings' },
+  { key: 'finance', label: 'Finance' },
+  { key: 'hr', label: 'HR' },
+  { key: 'inventory', label: 'Inventory' },
+  { key: 'teachings', label: 'Teachings' },
+  { key: 'documents', label: 'Documents' },
+  { key: 'hierarchy', label: 'Hierarchy' },
+  { key: 'missionary', label: 'Missionary' },
+  { key: 'volunteer', label: 'Volunteer' },
+  { key: 'strategicPlan', label: 'Strategic Plan' },
+  { key: 'churchRules', label: 'Church Rules' },
+  { key: 'higeDenb', label: 'HigeDenb' },
 ];
 
 const ModuleConfigPage: React.FC = () => {
@@ -102,9 +115,9 @@ const ModuleConfigPage: React.FC = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <Tabs defaultValue="members">
-          <TabsList className="mb-6 w-full">
+          <TabsList className="mb-6 w-full flex-wrap h-auto gap-1">
             {MODULES.map((m) => (
-              <TabsTrigger key={m.key} value={m.key} className="flex-1">{m.label}</TabsTrigger>
+              <TabsTrigger key={m.key} value={m.key}>{m.label}</TabsTrigger>
             ))}
           </TabsList>
 
@@ -145,6 +158,7 @@ const ModuleConfigPage: React.FC = () => {
                 </Card>
 
                 {/* Fields */}
+                {mod.fields.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Form Fields</CardTitle>
@@ -177,8 +191,10 @@ const ModuleConfigPage: React.FC = () => {
                     ))}
                   </CardContent>
                 </Card>
+                )}
 
                 {/* Option lists */}
+                {Object.keys(mod.options).length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Option Lists</CardTitle>
@@ -195,6 +211,7 @@ const ModuleConfigPage: React.FC = () => {
                     ))}
                   </CardContent>
                 </Card>
+                )}
               </TabsContent>
             );
           })}

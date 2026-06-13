@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, FileText, Scale, Shield, Sparkles } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion } from 'framer-motion';
 
@@ -47,9 +48,10 @@ const HigeDenb = () => {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 ease-out pb-20">
-      <PageHeader
-        title={t('higeDenb')}
-        description={t('higeDenbHeaderDesc')}
+      <ConfigurablePageHeader
+        module="higeDenb"
+        defaultTitle={t('higeDenb')}
+        defaultDescription={t('higeDenbHeaderDesc')}
         badge="Sacred Order"
       />
 

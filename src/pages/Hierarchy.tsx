@@ -8,6 +8,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CHURCH_STRUCTURE, type StructureNode } from '@/data/churchStructure';
@@ -122,9 +123,10 @@ const Hierarchy = () => {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
-      <PageHeader
-        title={t('hierarchy')}
-        description="The official organizational structure of the Ahaw Orthodox Tehadiso Church, per the church bylaws (መተዳደሪያ ደንብ, Article 10)."
+      <ConfigurablePageHeader
+        module="hierarchy"
+        defaultTitle={t('hierarchy')}
+        defaultDescription="The official organizational structure of the Ahaw Orthodox Tehadiso Church, per the church bylaws (መተዳደሪያ ደንብ, Article 10)."
         badge="Unity & Order"
       />
 

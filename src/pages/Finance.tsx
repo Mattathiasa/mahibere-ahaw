@@ -14,6 +14,7 @@ import { createTransaction, createBudget, createFinancialReport } from '@/servic
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -91,9 +92,10 @@ export default function Finance() {
   return (
     <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        <PageHeader
-          title={t('finance')}
-          description={t('financeHeaderDesc')}
+        <ConfigurablePageHeader
+          module="finance"
+          defaultTitle={t('finance')}
+          defaultDescription={t('financeHeaderDesc')}
           badge="Divine Stewardship"
         />
 

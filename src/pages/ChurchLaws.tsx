@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Book, Gavel, AlertCircle, ShieldCheck, Scale, Sparkles } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,9 +12,10 @@ const ChurchLaws = () => {
 
     return (
         <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
-            <PageHeader
-                title={t('churchRules')}
-                description={t('churchRulesHeaderDesc')}
+            <ConfigurablePageHeader
+                module="churchRules"
+                defaultTitle={t('churchRules')}
+                defaultDescription={t('churchRulesHeaderDesc')}
                 badge="Canonical Law"
             />
 

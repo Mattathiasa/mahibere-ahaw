@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -132,9 +133,10 @@ const Meetings = () => {
     <div className="space-y-8 animate-in fade-in duration-700 ease-out pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex-1">
-          <PageHeader
-            title={t('meetings')}
-            description={t('meetingsHeaderDesc')}
+          <ConfigurablePageHeader
+            module="meetings"
+            defaultTitle={t('meetings')}
+            defaultDescription={t('meetingsHeaderDesc')}
             badge={`${upcomingCount} ${t('upcomingMeetings')}`}
           />
         </div>

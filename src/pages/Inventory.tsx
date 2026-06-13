@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,9 @@ import { Boxes, Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { inventoryService, type Asset, type AssetInput } from '@/services/inventory';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+
+const invHumanize = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2');
 
 const EMPTY: AssetInput = {
   name: '',
@@ -41,6 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
 const Inventory = () => {
   const queryClient = useQueryClient();
   const { showElement } = useSoftwareControl();
+  const moduleCfg = useModuleConfig('inventory');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);
   const [form, setForm] = useState<AssetInput>(EMPTY);
@@ -97,9 +102,10 @@ const Inventory = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
-      <PageHeader
-        title="Inventory"
-        description="Track church assets, equipment, and property."
+      <ConfigurablePageHeader
+        module="inventory"
+        defaultTitle="Inventory"
+        defaultDescription="Track church assets, equipment, and property."
         badge="Assets"
       />
 
@@ -237,10 +243,9 @@ const Inventory = () => {
               <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v as AssetInput['condition'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="New">New</SelectItem>
-                  <SelectItem value="Good">Good</SelectItem>
-                  <SelectItem value="Fair">Fair</SelectItem>
-                  <SelectItem value="Poor">Poor</SelectItem>
+                  {(moduleCfg.options.conditions ?? ['New', 'Good', 'Fair', 'Poor']).map((v) => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -249,10 +254,9 @@ const Inventory = () => {
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as AssetInput['status'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="InUse">In Use</SelectItem>
-                  <SelectItem value="InStorage">In Storage</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Retired">Retired</SelectItem>
+                  {(moduleCfg.options.statuses ?? ['InUse', 'InStorage', 'Maintenance', 'Retired']).map((v) => (
+                    <SelectItem key={v} value={v}>{invHumanize(v)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

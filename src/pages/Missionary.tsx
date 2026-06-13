@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { LearnMore } from '@/components/LearnMore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +19,7 @@ import { missionaryService } from '@/services/missionary';
 const Missionary = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const moduleCfg = useModuleConfig('missionary');
     const [activeTab, setActiveTab] = useState('application');
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
@@ -102,9 +105,10 @@ const Missionary = () => {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div>
-                <h1 className="text-3xl font-bold text-foreground">Missionary Service</h1>
-                <p className="text-muted-foreground mt-1">Apply for missionary service and manage reports</p>
+            <div className="space-y-2">
+                <h1 className="text-3xl font-bold text-foreground">{moduleCfg.headerTitle || 'Missionary Service'}</h1>
+                <p className="text-muted-foreground mt-1">{moduleCfg.headerDescription || 'Apply for missionary service and manage reports'}</p>
+                <LearnMore title={moduleCfg.headerTitle || 'Missionary Service'} content={moduleCfg.learnMore} />
             </div>
 
             <Tabs defaultValue="application" value={activeTab} onValueChange={setActiveTab} className="space-y-4">

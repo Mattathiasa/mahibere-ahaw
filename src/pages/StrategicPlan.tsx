@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, Users, Flag, Sparkles } from 'lucide-react';
 import { strategicPlanService } from '@/services/strategicPlan';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,9 +41,10 @@ const StrategicPlan = () => {
 
     return (
         <div className="space-y-12 animate-in fade-in duration-700 ease-out pb-20">
-            <PageHeader
-                title={t('strategicPlan')}
-                description={t('strategicPlanHeaderDesc')}
+            <ConfigurablePageHeader
+                module="strategicPlan"
+                defaultTitle={t('strategicPlan')}
+                defaultDescription={t('strategicPlanHeaderDesc')}
                 badge="Divine Vision"
             />
 

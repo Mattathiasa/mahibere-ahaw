@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -155,9 +156,10 @@ const Announcements = () => {
     <div className="space-y-8 animate-in fade-in duration-700 ease-out pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex-1">
-          <PageHeader
-            title={t('announcements')}
-            description={t('latestChurchUpdates')}
+          <ConfigurablePageHeader
+            module="announcements"
+            defaultTitle={t('announcements')}
+            defaultDescription={t('latestChurchUpdates')}
             badge="Church Broadcast"
           />
         </div>

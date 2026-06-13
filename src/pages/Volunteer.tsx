@@ -8,22 +8,31 @@ import { Label } from '@/components/ui/label';
 import { Heart, Hand, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { userService } from '@/services/users';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { LearnMore } from '@/components/LearnMore';
+
+const DEFAULT_MINISTRY_DESCRIPTIONS: Record<string, string> = {
+    'Ebet Metreg': 'Help keep the church clean and welcoming.',
+    'Natanim Agelgelot': 'Special service for helping the needy.',
+    'Choir': 'Sing in the church choir.',
+    'Ushering': 'Welcome and guide guests during services.',
+    'Sunday School': 'Teach and fast-track children.',
+    'Charity': 'Community outreach programs.',
+    'Evangelism': 'Spread the gospel in the community.',
+    'Media': 'Help with sound, video, and projection.',
+};
 
 const Volunteer = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const moduleCfg = useModuleConfig('volunteer');
     const [selectedMinistries, setSelectedMinistries] = useState<string[]>(user?.volunteerMinistries || []);
 
-    const ministries = [
-        { id: 'Ebet Metreg', label: 'Ebet Metreg (Cleaning)', description: 'Help keep the church clean and welcoming.' },
-        { id: 'Natanim Agelgelot', label: 'Natanim Agelgelot', description: 'Special service for helping the needy.' },
-        { id: 'Choir', label: 'Choir', description: 'Sing in the church choir.' },
-        { id: 'Ushering', label: 'Ushering', description: 'Welcome and guide guests during services.' },
-        { id: 'Sunday School', label: 'Sunday School', description: 'Teach and fast-track children.' },
-        { id: 'Charity', label: 'Charity & Outreach', description: 'Community outreach programs.' },
-        { id: 'Evangelism', label: 'Evangelism', description: 'Spread the gospel in the community.' },
-        { id: 'Media', label: 'Media & Tech', description: 'Help with sound, video, and projection.' },
-    ];
+    const ministries = (moduleCfg.options.ministries ?? Object.keys(DEFAULT_MINISTRY_DESCRIPTIONS)).map((id) => ({
+        id,
+        label: id,
+        description: DEFAULT_MINISTRY_DESCRIPTIONS[id] ?? '',
+    }));
 
     const updateProfileMutation = useMutation({
         mutationFn: (data: any) => userService.updateUser(user?.id || '', data),
@@ -54,11 +63,14 @@ const Volunteer = () => {
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
                     <Heart className="h-8 w-8 text-red-500" />
-                    Volunteer Service
+                    {moduleCfg.headerTitle || 'Volunteer Service'}
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    "As each has received a gift, use it to serve one another." - 1 Peter 4:10
+                    {moduleCfg.headerDescription || '"As each has received a gift, use it to serve one another." - 1 Peter 4:10'}
                 </p>
+                <div className="flex justify-center mt-3">
+                    <LearnMore title={moduleCfg.headerTitle || 'Volunteer Service'} content={moduleCfg.learnMore} />
+                </div>
             </div>
 
             <Card>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,9 @@ import { BriefcaseBusiness, Plus, Pencil, Trash2, Loader2, Search } from 'lucide
 import { toast } from 'sonner';
 import { hrService, type Employee, type EmployeeInput } from '@/services/hr';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+
+const humanize = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2');
 
 const EMPTY: EmployeeInput = {
   fullName: '',
@@ -40,6 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
 const HR = () => {
   const queryClient = useQueryClient();
   const { showElement } = useSoftwareControl();
+  const moduleCfg = useModuleConfig('hr');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [form, setForm] = useState<EmployeeInput>(EMPTY);
@@ -94,9 +99,10 @@ const HR = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
-      <PageHeader
-        title="Human Resources"
-        description="Manage church employees, positions, and employment records."
+      <ConfigurablePageHeader
+        module="hr"
+        defaultTitle="Human Resources"
+        defaultDescription="Manage church employees, positions, and employment records."
         badge="HR"
       />
 
@@ -207,10 +213,9 @@ const HR = () => {
               <Select value={form.employmentType} onValueChange={(v) => setForm({ ...form, employmentType: v as EmployeeInput['employmentType'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="FullTime">Full Time</SelectItem>
-                  <SelectItem value="PartTime">Part Time</SelectItem>
-                  <SelectItem value="Contract">Contract</SelectItem>
-                  <SelectItem value="Volunteer">Volunteer</SelectItem>
+                  {(moduleCfg.options.employmentTypes ?? ['FullTime', 'PartTime', 'Contract', 'Volunteer']).map((v) => (
+                    <SelectItem key={v} value={v}>{humanize(v)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -219,9 +224,9 @@ const HR = () => {
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as EmployeeInput['status'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="OnLeave">On Leave</SelectItem>
-                  <SelectItem value="Terminated">Terminated</SelectItem>
+                  {(moduleCfg.options.statuses ?? ['Active', 'OnLeave', 'Terminated']).map((v) => (
+                    <SelectItem key={v} value={v}>{humanize(v)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
