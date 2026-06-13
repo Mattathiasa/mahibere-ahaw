@@ -15,9 +15,12 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { useAuth } from '@/hooks/useAuth';
 
 const Announcements = () => {
+  const moduleCfg = useModuleConfig('announcements');
+  const showField = (k: string) => moduleCfg.fields.find((f) => f.key === k)?.visible ?? true;
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -202,6 +205,7 @@ const Announcements = () => {
                     required
                   />
                 </div>
+                {showField('expiresAt') && (
                 <div className="space-y-2">
                   <Label htmlFor="expiresAt" className="text-sm font-black uppercase tracking-widest text-[#2E5E99]">{t('expirationDate')}</Label>
                   <Input
@@ -213,6 +217,7 @@ const Announcements = () => {
                     className="rounded-xl border-[#2E5E99]/10 focus:border-[#2E5E99] bg-white/50 h-12"
                   />
                 </div>
+                )}
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl px-8 h-12 font-bold">
                     {t('cancel')}

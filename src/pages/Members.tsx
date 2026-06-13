@@ -353,8 +353,11 @@ const Members = () => {
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-white/40 backdrop-blur-xl">
                   <SelectItem value="all" className="rounded-xl font-bold italic">{t('allGenders')}</SelectItem>
-                  <SelectItem value="Male" className="rounded-xl font-bold italic">{t('male')}</SelectItem>
-                  <SelectItem value="Female" className="rounded-xl font-bold italic">{t('female')}</SelectItem>
+                  {(moduleCfg.options.genders ?? ['Male', 'Female']).map((g) => (
+                    <SelectItem key={g} value={g} className="rounded-xl font-bold italic">
+                      {g === 'Male' ? t('male') : g === 'Female' ? t('female') : g}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

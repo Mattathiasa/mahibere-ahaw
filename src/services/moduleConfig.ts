@@ -93,7 +93,9 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
     learnMore:
       'Track income, expenses, budgets and financial reports. Record transactions, set monthly budgets, and generate reports for accountability.',
     fields: [],
-    options: { transactionTypes: ['Income', 'Expense'] },
+    options: {
+      transactionTypes: ['Income', 'Expense', 'Tithe', 'Offering', 'Donation', 'Collection', 'Deposit', 'Asrat', 'YefikirSetota'],
+    },
   },
   hr: {
     headerTitle: '', headerDescription: '',
@@ -132,7 +134,7 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
       f('title', 'Title', true, true), f('speaker', 'Speaker'), f('serviceType', 'Service Type'),
       f('shortDescription', 'Short Description'), f('fullContent', 'Full Content'), f('dateDelivered', 'Date Delivered'),
     ],
-    options: { serviceTypes: ['Sermon', 'Bible Study', 'Teaching', 'Conference'] },
+    options: { serviceTypes: ['Sunday Morning', 'Wednesday Bible Study', "Men's Breakfast", "Women's Ministry", 'Youth Service', 'Special Event', 'Other'] },
   },
   documents: {
     headerTitle: '', headerDescription: '',

@@ -9,6 +9,21 @@ import { FileUpload } from '@/components/ui/file-upload';
 import { RecipientSelector } from '@/components/ui/recipient-selector';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+
+// Known transaction-type labels (English + Amharic). Custom types added in
+// Module Config fall back to their raw value.
+const TX_LABELS: Record<string, string> = {
+  Income: 'Income (ገቢ)',
+  Expense: 'Expense (ወጪ)',
+  Tithe: 'Tithe (አስራት)',
+  Offering: 'Offering (ስጦታ)',
+  Donation: 'Donation (መዋጮ)',
+  Collection: 'Collection (ገቢ መሰብሰቢያ)',
+  Deposit: 'Deposit (ተቀማጭ)',
+  Asrat: 'Asrat (አስራት)',
+  YefikirSetota: 'Yefikir Setota (የፍቅር ስጦታ)',
+};
 
 interface CreateTransactionDialogProps {
   open: boolean;
@@ -18,6 +33,7 @@ interface CreateTransactionDialogProps {
 }
 
 export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoading }: CreateTransactionDialogProps) {
+  const moduleCfg = useModuleConfig('finance');
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     type: 'Income' as 'Income' | 'Expense' | 'Tithe' | 'Offering' | 'Donation' | 'Collection' | 'Deposit' | 'Asrat' | 'YefikirSetota',
@@ -65,15 +81,9 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Income">Income (ገቢ)</SelectItem>
-                <SelectItem value="Expense">Expense (ወጪ)</SelectItem>
-                <SelectItem value="Tithe">Tithe (አስራት)</SelectItem>
-                <SelectItem value="Offering">Offering (ስጦታ)</SelectItem>
-                <SelectItem value="Donation">Donation (መዋጮ)</SelectItem>
-                <SelectItem value="Collection">Collection (ገቢ መሰብሰቢያ)</SelectItem>
-                <SelectItem value="Deposit">Deposit (ተቀማጭ)</SelectItem>
-                <SelectItem value="Asrat">Asrat (አስራት)</SelectItem>
-                <SelectItem value="YefikirSetota">Yefikir Setota (የፍቅር ስጦታ)</SelectItem>
+                {(moduleCfg.options.transactionTypes ?? Object.keys(TX_LABELS)).map((type) => (
+                  <SelectItem key={type} value={type}>{TX_LABELS[type] ?? type}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

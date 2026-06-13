@@ -137,9 +137,9 @@ const Missionary = () => {
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="FullTime">Full Time</SelectItem>
-                                                <SelectItem value="PartTime">Part Time</SelectItem>
-                                                <SelectItem value="ShortTerm">Short Term</SelectItem>
+                                                {(moduleCfg.options.missionaryTypes ?? ['FullTime', 'PartTime', 'ShortTerm']).map((v) => (
+                                                    <SelectItem key={v} value={v}>{v.replace(/([a-z])([A-Z])/g, '$1 $2')}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </div>

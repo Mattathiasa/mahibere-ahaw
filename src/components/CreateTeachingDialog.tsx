@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { X, Plus, Info, Video, FileText, MessageCircle, Mic2 } from 'lucide-react';
 import { teachingService } from '@/services/teachings';
 import { TeachingServiceType, TeachingStatus } from '@/types';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
 
 interface CreateTeachingDialogProps {
     open: boolean;
@@ -33,6 +34,7 @@ const STATUSES: TeachingStatus[] = ['Draft', 'Published', 'Archived'];
 
 export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialogProps) {
     const queryClient = useQueryClient();
+    const moduleCfg = useModuleConfig('teachings');
     const [activeTab, setActiveTab] = useState('metadata');
 
     // Form State
@@ -216,7 +218,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {SERVICE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                                                    {(moduleCfg.options.serviceTypes ?? SERVICE_TYPES).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
                                         </div>

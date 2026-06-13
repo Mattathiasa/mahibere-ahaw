@@ -16,10 +16,13 @@ import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Meetings = () => {
   const { t } = useTranslation();
+  const moduleCfg = useModuleConfig('meetings');
+  const showField = (k: string) => moduleCfg.fields.find((f) => f.key === k)?.visible ?? true;
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -165,10 +168,12 @@ const Meetings = () => {
                     <Label htmlFor="scheduledDate">{t('dateTime')} *</Label>
                     <Input id="scheduledDate" type="datetime-local" value={formData.scheduledDate} onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })} min={new Date().toISOString().slice(0, 16)} required />
                   </div>
+                  {showField('description') && (
                   <div className="space-y-2">
-                    <Label htmlFor="description">{t('description')} *</Label>
-                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter meeting description and agenda" rows={6} required />
+                    <Label htmlFor="description">{t('description')} {(moduleCfg.fields.find((f) => f.key === 'description')?.required ?? true) ? '*' : ''}</Label>
+                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter meeting description and agenda" rows={6} required={moduleCfg.fields.find((f) => f.key === 'description')?.required ?? true} />
                   </div>
+                  )}
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>{t('cancel')}</Button>
                     <Button type="submit" disabled={createMutation.isPending}>
