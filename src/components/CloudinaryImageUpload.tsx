@@ -24,6 +24,15 @@ export function CloudinaryImageUpload({
 
   async function handleFile(file: File) {
     setError(null);
+    // Client-side guards (mirror the Cloudinary preset restrictions).
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image is too large (max 5 MB).');
+      return;
+    }
     setBusy(true);
     try {
       const res = await upload(file, folder);
