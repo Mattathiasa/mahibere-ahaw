@@ -12,6 +12,8 @@ import {
     orderBy,
     serverTimestamp
 } from 'firebase/firestore';
+import { integrationsService } from '@/services/integrations';
+import { uploadToCloudinary } from '@/services/cloudinary';
 
 export interface Document {
     id: string;
@@ -46,16 +48,24 @@ export const documentService = {
         return { id: docRef.id, name, type: 'folder', parentId };
     },
 
-    uploadFile: async (file: File, parentId: string | null) => {
-        // In a real app, you'd use Firebase Storage here.
-        // For now, we'll just mock it in Firestore as metadata.
+    uploadFile: async (file: File, parentId: string | null, opts?: { planId?: string; reportId?: string }) => {
+        // Upload the real file (PDF/image/etc.) to Cloudinary, store its URL.
+        const integ = await integrationsService.get();
+        const result = await uploadToCloudinary(
+            file,
+            integrationsService.toCloudinary(integ),
+            'mahibere-ahaw/documents',
+            'auto',
+        );
         const docRef = await addDoc(collection(db, 'documents'), {
             name: file.name,
             type: 'file',
             parentId,
             size: `${(file.size / 1024).toFixed(2)} KB`,
             fileType: file.type,
-            filePath: `mock_path/${file.name}`, // Mock path
+            filePath: result.secureUrl,
+            ...(opts?.planId ? { planId: opts.planId } : {}),
+            ...(opts?.reportId ? { reportId: opts.reportId } : {}),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
@@ -65,7 +75,8 @@ export const documentService = {
             type: 'file',
             parentId,
             size: `${(file.size / 1024).toFixed(2)} KB`,
-            fileType: file.type
+            fileType: file.type,
+            filePath: result.secureUrl,
         };
     },
 

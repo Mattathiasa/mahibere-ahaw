@@ -21,6 +21,8 @@ export async function uploadToCloudinary(
   file: File,
   config: CloudinaryConfig,
   folder = 'mahibere-ahaw',
+  /** 'image' for photos; 'auto' for any file (PDFs, docs, etc.). */
+  resourceType: 'image' | 'auto' | 'raw' = 'image',
 ): Promise<CloudinaryUploadResult> {
   if (!config.cloudName || !config.uploadPreset) {
     throw new Error('Cloudinary is not configured. Set the cloud name and upload preset first.');
@@ -31,7 +33,7 @@ export async function uploadToCloudinary(
   form.append('folder', folder);
 
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${config.cloudName}/${resourceType}/upload`,
     { method: 'POST', body: form },
   );
   if (!res.ok) {

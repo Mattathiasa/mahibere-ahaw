@@ -279,7 +279,7 @@ const MemriyaDocuments = () => {
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {item.type === 'file' && item.filePath && (
                                                 <a
-                                                    href={`http://localhost:5000/${item.filePath.replace(/\\/g, '/')}`}
+                                                    href={item.filePath.startsWith('http') ? item.filePath : `http://localhost:5000/${item.filePath.replace(/\\/g, '/')}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     onClick={(e) => e.stopPropagation()}
