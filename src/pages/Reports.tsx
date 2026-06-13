@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { LearnMore } from '@/components/LearnMore';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +27,7 @@ import { useAuth } from '@/hooks/useAuth';
 const Reports = () => {
   const permissions = useRolePermissions();
   const { t } = useTranslation();
+  const moduleCfg = useModuleConfig('reports');
   const [expandedReports, setExpandedReports] = useState<string[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
@@ -155,11 +158,14 @@ const Reports = () => {
   return (
     <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        <PageHeader
-          title={t('reports')}
-          description={t('monitoringHeaderDesc')}
-          badge="Performance Tracking"
-        />
+        <div className="flex flex-col gap-3">
+          <PageHeader
+            title={moduleCfg.headerTitle || t('reports')}
+            description={moduleCfg.headerDescription || t('monitoringHeaderDesc')}
+            badge="Performance Tracking"
+          />
+          <LearnMore title={moduleCfg.headerTitle || t('reports')} content={moduleCfg.learnMore} />
+        </div>
 
         {permissions.canCreateReport && (
           <motion.div
@@ -211,9 +217,9 @@ const Reports = () => {
                           <SelectValue placeholder="Select entity type" />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl">
-                          <SelectItem value="Memriya" className="rounded-xl font-bold italic">Memriya</SelectItem>
-                          <SelectItem value="Kifil" className="rounded-xl font-bold italic">Kifil</SelectItem>
-                          <SelectItem value="Zerf" className="rounded-xl font-bold italic">Zerf</SelectItem>
+                          {(moduleCfg.options.types ?? ['Memriya', 'Kifil', 'Zerf']).map((type) => (
+                            <SelectItem key={type} value={type} className="rounded-xl font-bold italic">{type}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>

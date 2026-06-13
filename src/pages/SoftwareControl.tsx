@@ -220,11 +220,12 @@ const SoftwareControl: React.FC = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-5xl space-y-6">
         {/* Related control centers */}
-        <div className="grid sm:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { label: 'Permission Control', desc: 'Role & per-user permissions', href: '/admin/permissions' },
             { label: 'Mobile App Control', desc: 'Kill switch, versions, flags', href: '/admin/mobile-control' },
             { label: 'Site Content Editor', desc: 'Landing page & UI text', href: '/admin/landing-editor' },
+            { label: 'Module Configuration', desc: 'Members, Plans, Reports', href: '/admin/module-config' },
           ].map((l) => (
             <button key={l.href} onClick={() => navigate(l.href)}
               className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition-colors text-left">

@@ -21,8 +21,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toDate } from '@/lib/date-utils';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { LearnMore } from '@/components/LearnMore';
 
 const Plans = () => {
+  const moduleCfg = useModuleConfig('plans');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -113,11 +116,14 @@ const Plans = () => {
   return (
     <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        <PageHeader
-          title={t('plans')}
-          description={t('planningHeaderDesc')}
-          badge="Strategic Planning"
-        />
+        <div className="flex flex-col gap-3">
+          <PageHeader
+            title={moduleCfg.headerTitle || t('plans')}
+            description={moduleCfg.headerDescription || t('planningHeaderDesc')}
+            badge="Strategic Planning"
+          />
+          <LearnMore title={moduleCfg.headerTitle || t('plans')} content={moduleCfg.learnMore} />
+        </div>
 
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -160,9 +166,11 @@ const Plans = () => {
                       <SelectValue placeholder="Select timeframe" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
-                      <SelectItem value="Weekly" className="rounded-xl font-bold italic">{t('weekly')}</SelectItem>
-                      <SelectItem value="Monthly" className="rounded-xl font-bold italic">{t('monthly')}</SelectItem>
-                      <SelectItem value="Annually" className="rounded-xl font-bold italic">{t('annually')}</SelectItem>
+                      {(moduleCfg.options.periods ?? ['Weekly', 'Monthly', 'Annually']).map((period) => (
+                        <SelectItem key={period} value={period} className="rounded-xl font-bold italic">
+                          {period === 'Weekly' ? t('weekly') : period === 'Monthly' ? t('monthly') : period === 'Annually' ? t('annually') : period}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

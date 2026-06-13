@@ -11,6 +11,7 @@ import LandingEditor from "./pages/LandingEditor";
 import PermissionControl from "./pages/PermissionControl";
 const MobileControl = lazy(() => import("./pages/MobileControl"));
 const SoftwareControl = lazy(() => import("./pages/SoftwareControl"));
+const ModuleConfig = lazy(() => import("./pages/ModuleConfig"));
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Announcements = lazy(() => import("./pages/Announcements"));
@@ -69,6 +70,7 @@ const App = () => (
                   <Route path="/admin/permissions" element={<AdminRoute superAdminOnly><PermissionControl /></AdminRoute>} />
                   <Route path="/admin/mobile-control" element={<AdminRoute><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><MobileControl /></Suspense></AdminRoute>} />
                   <Route path="/admin/software-control" element={<AdminRoute superAdminOnly><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><SoftwareControl /></Suspense></AdminRoute>} />
+                  <Route path="/admin/module-config" element={<AdminRoute><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><ModuleConfig /></Suspense></AdminRoute>} />
 
                   {/* Protected Dashboard Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Dashboard /></Suspense></DashboardLayout></ProtectedRoute>} />

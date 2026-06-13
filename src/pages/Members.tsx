@@ -10,6 +10,8 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { LearnMore } from '@/components/LearnMore';
 import { useQuery } from '@tanstack/react-query';
 import { userService } from '@/services/users';
 import { toast } from 'sonner';
@@ -34,6 +36,7 @@ const Members = () => {
   const [isEditing, setIsEditing] = useState(false);
   const permissions = useRolePermissions();
   const { showElement } = useSoftwareControl();
+  const moduleCfg = useModuleConfig('members');
 
   const { data: membersData, isLoading } = useQuery({
     queryKey: ['members'],
@@ -143,11 +146,14 @@ const Members = () => {
   return (
     <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        <PageHeader
-          title={t('members')}
-          description={t('membersHeaderDesc')}
-          badge={`${sortedMembers.length} ${t('activeSouls')}`}
-        />
+        <div className="flex flex-col gap-3">
+          <PageHeader
+            title={moduleCfg.headerTitle || t('members')}
+            description={moduleCfg.headerDescription || t('membersHeaderDesc')}
+            badge={`${sortedMembers.length} ${t('activeSouls')}`}
+          />
+          <LearnMore title={moduleCfg.headerTitle || t('members')} content={moduleCfg.learnMore} />
+        </div>
 
         <div className="flex gap-4">
           {permissions.canExportData && showElement('members.export') && (
