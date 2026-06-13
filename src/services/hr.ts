@@ -3,6 +3,7 @@ import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc,
   query, orderBy, serverTimestamp,
 } from 'firebase/firestore';
+import { auditLogService } from '@/services/auditLog';
 
 export interface Employee {
   id: string;
@@ -36,14 +37,17 @@ export const hrService = {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    auditLogService.dataChange('create', 'employees', ref.id, `Added employee ${data.fullName}`);
     return ref.id;
   },
 
   async update(id: string, data: Partial<EmployeeInput>): Promise<void> {
     await updateDoc(doc(db, COLLECTION, id), { ...data, updatedAt: serverTimestamp() });
+    auditLogService.dataChange('update', 'employees', id, `Updated employee ${data.fullName ?? id}`);
   },
 
   async remove(id: string): Promise<void> {
     await deleteDoc(doc(db, COLLECTION, id));
+    auditLogService.dataChange('delete', 'employees', id, `Removed employee ${id}`);
   },
 };

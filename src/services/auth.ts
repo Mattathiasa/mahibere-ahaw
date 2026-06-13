@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { User, LoginCredentials, AuthResponse } from '@/types';
+import { auditLogService } from '@/services/auditLog';
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
@@ -98,10 +99,27 @@ export const authService = {
     localStorage.setItem('auth_token', token);
     localStorage.setItem('user', JSON.stringify(user));
 
+    auditLogService.log({
+      action: 'login',
+      targetType: 'auth',
+      description: `${user.fullName || user.username} signed in`,
+      actor: { id: user.id, name: user.fullName, email: user.email, hierarchyLevel: user.hierarchyLevel },
+    });
+
     return { token, user };
   },
 
   async logout(): Promise<void> {
+    // Capture the actor before sign-out clears auth state.
+    let actor: { id: string; name?: string; email?: string; hierarchyLevel?: string } | undefined;
+    try {
+      const cached = JSON.parse(localStorage.getItem('user') || '{}');
+      if (cached?.id) {
+        actor = { id: cached.id, name: cached.fullName || cached.fullNameEnglish, email: cached.email, hierarchyLevel: cached.hierarchyLevel };
+      }
+    } catch { /* ignore */ }
+    await auditLogService.log({ action: 'logout', targetType: 'auth', description: 'Signed out', actor });
+
     await signOut(auth);
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');

@@ -12,6 +12,7 @@ import {
   orderBy,
   serverTimestamp
 } from 'firebase/firestore';
+import { auditLogService } from '@/services/auditLog';
 
 export interface CreateAnnouncementData {
   title: string;
@@ -41,6 +42,7 @@ export const announcementService = {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    auditLogService.dataChange('create', 'announcements', docRef.id, `Posted announcement "${(data as any).title ?? ''}"`);
     return { id: docRef.id, ...data };
   },
 
@@ -64,9 +66,11 @@ export const announcementService = {
   async updateAnnouncement(id: string, data: CreateAnnouncementData) {
     const docRef = doc(db, 'announcements', id);
     await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    auditLogService.dataChange('update', 'announcements', id, `Updated announcement "${(data as any).title ?? id}"`);
   },
 
   async deleteAnnouncement(id: string) {
     await deleteDoc(doc(db, 'announcements', id));
+    auditLogService.dataChange('delete', 'announcements', id, `Deleted announcement ${id}`);
   },
 };

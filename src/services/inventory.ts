@@ -3,6 +3,7 @@ import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc,
   query, orderBy, serverTimestamp,
 } from 'firebase/firestore';
+import { auditLogService } from '@/services/auditLog';
 
 export interface Asset {
   id: string;
@@ -36,14 +37,17 @@ export const inventoryService = {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    auditLogService.dataChange('create', 'assets', ref.id, `Added asset ${data.name}`);
     return ref.id;
   },
 
   async update(id: string, data: Partial<AssetInput>): Promise<void> {
     await updateDoc(doc(db, COLLECTION, id), { ...data, updatedAt: serverTimestamp() });
+    auditLogService.dataChange('update', 'assets', id, `Updated asset ${data.name ?? id}`);
   },
 
   async remove(id: string): Promise<void> {
     await deleteDoc(doc(db, COLLECTION, id));
+    auditLogService.dataChange('delete', 'assets', id, `Removed asset ${id}`);
   },
 };
