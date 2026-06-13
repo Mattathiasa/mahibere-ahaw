@@ -4,6 +4,7 @@ import {
   ArrowLeft, Save, Loader2, CheckCircle2, AlertCircle, MonitorCog,
   LayoutPanelLeft, MousePointerClick, ExternalLink, ScrollText, RefreshCw,
   LogIn, LogOut, FilePlus2, FilePen, FileX2, Smartphone, Monitor,
+  ShieldCheck, ChevronDown, RotateCcw,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -15,6 +16,13 @@ import {
   type SoftwareControlConfig,
 } from '@/services/softwareControl';
 import { auditLogService, type AuditLogEntry, type AuditAction } from '@/services/auditLog';
+import { permissionService } from '@/services/permissionService';
+import {
+  ALL_PERMISSIONS, PERMISSION_META, PERMISSION_GROUPS, DEFAULT_ROLE_PERMISSIONS,
+  type PermissionKey, type RolePermissionOverrides,
+} from '@/lib/rolePermissions';
+import type { HierarchyLevel } from '@/types';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,10 +44,15 @@ const NAV_LABELS: Record<string, string> = {
 const SoftwareControl: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { reload: reloadPermissions } = usePermissions();
   const [config, setConfig] = useState<SoftwareControlConfig>(DEFAULT_SOFTWARE_CONTROL);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Roles & access (role → permission overrides)
+  const [roleOverrides, setRoleOverrides] = useState<RolePermissionOverrides>({});
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(PERMISSION_GROUPS));
 
   // Audit logs
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -48,8 +61,45 @@ const SoftwareControl: React.FC = () => {
   const [logSearch, setLogSearch] = useState('');
 
   useEffect(() => {
-    softwareControlService.get().then(setConfig).catch(() => {}).finally(() => setLoading(false));
+    Promise.all([
+      softwareControlService.get(),
+      permissionService.getRolePermissions().catch(() => ({} as RolePermissionOverrides)),
+    ])
+      .then(([cfg, roles]) => { setConfig(cfg); setRoleOverrides(roles); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  // A role's effective permission list = override if present, else default.
+  function rolePerms(level: HierarchyLevel): PermissionKey[] {
+    return roleOverrides[level] ?? DEFAULT_ROLE_PERMISSIONS[level] ?? [];
+  }
+  function roleHasPerm(level: HierarchyLevel, perm: PermissionKey): boolean {
+    return rolePerms(level).includes(perm);
+  }
+  function toggleRolePerm(level: HierarchyLevel, perm: PermissionKey) {
+    setRoleOverrides((prev) => {
+      const current = prev[level] ?? DEFAULT_ROLE_PERMISSIONS[level] ?? [];
+      const next = current.includes(perm)
+        ? current.filter((p) => p !== perm)
+        : [...current, perm];
+      return { ...prev, [level]: next };
+    });
+  }
+  function resetRoleToDefault(level: HierarchyLevel) {
+    setRoleOverrides((prev) => {
+      const next = { ...prev };
+      delete next[level];
+      return next;
+    });
+  }
+  function toggleGroup(group: string) {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      next.has(group) ? next.delete(group) : next.add(group);
+      return next;
+    });
+  }
 
   async function loadLogs(action: 'all' | AuditAction = logFilter) {
     setLogsLoading(true);
@@ -66,7 +116,11 @@ const SoftwareControl: React.FC = () => {
     setSaving(true);
     setStatus('idle');
     try {
-      await softwareControlService.save(config, user?.email ?? 'admin');
+      await Promise.all([
+        softwareControlService.save(config, user?.email ?? 'admin'),
+        permissionService.saveRolePermissions(roleOverrides, user?.email ?? 'admin'),
+      ]);
+      await reloadPermissions();
       setStatus('success');
       setTimeout(() => setStatus('idle'), 3000);
     } catch {
@@ -183,8 +237,11 @@ const SoftwareControl: React.FC = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="tabs" onValueChange={(v) => { if (v === 'audit' && logs.length === 0) loadLogs(); }}>
-          <TabsList className="mb-6 w-full">
+        <Tabs defaultValue="roles" onValueChange={(v) => { if (v === 'audit' && logs.length === 0) loadLogs(); }}>
+          <TabsList className="mb-6 w-full flex-wrap h-auto">
+            <TabsTrigger value="roles" className="flex-1 gap-2">
+              <ShieldCheck className="h-4 w-4" /> Roles &amp; Access
+            </TabsTrigger>
             <TabsTrigger value="tabs" className="flex-1 gap-2">
               <LayoutPanelLeft className="h-4 w-4" /> Navigation Tabs
             </TabsTrigger>
@@ -195,6 +252,80 @@ const SoftwareControl: React.FC = () => {
               <ScrollText className="h-4 w-4" /> Audit Logs
             </TabsTrigger>
           </TabsList>
+
+          {/* ════════ ROLES & ACCESS ════════ */}
+          <TabsContent value="roles">
+            <Card>
+              <CardHeader>
+                <CardTitle>Roles &amp; Access</CardTitle>
+                <CardDescription>
+                  Declare what each role (hierarchy level) is allowed to do. Toggle a permission for a role; changes apply live on Save. Per-user exceptions live in Permission Control.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {PERMISSION_GROUPS.map((group) => {
+                  const perms = ALL_PERMISSIONS.filter((p) => PERMISSION_META[p].group === group);
+                  const isOpen = openGroups.has(group);
+                  return (
+                    <div key={group} className="rounded-xl border border-border overflow-hidden">
+                      <button
+                        onClick={() => toggleGroup(group)}
+                        className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <span className="text-sm font-bold">{group}</span>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+                      </button>
+                      {isOpen && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b text-left">
+                                <th className="py-2 px-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold min-w-[180px]">
+                                  Permission
+                                </th>
+                                {HIERARCHY_LEVELS.map((level) => (
+                                  <th key={level} className="py-2 px-2 text-[10px] uppercase tracking-wide text-muted-foreground text-center">
+                                    {level}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {perms.map((perm) => (
+                                <tr key={perm} className="border-b border-border/50">
+                                  <td className="py-2 px-4">
+                                    <div className="font-medium">{PERMISSION_META[perm].label}</div>
+                                    <div className="text-[11px] text-muted-foreground">{PERMISSION_META[perm].description}</div>
+                                  </td>
+                                  {HIERARCHY_LEVELS.map((level) => (
+                                    <td key={level} className="py-2 px-2 text-center">
+                                      <Checkbox
+                                        checked={roleHasPerm(level as HierarchyLevel, perm)}
+                                        onCheckedChange={() => toggleRolePerm(level as HierarchyLevel, perm)}
+                                      />
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <span className="text-xs text-muted-foreground self-center mr-1">Reset a role to defaults:</span>
+                  {HIERARCHY_LEVELS.map((level) => (
+                    <Button key={level} size="sm" variant="outline" className="gap-1 text-xs"
+                      onClick={() => resetRoleToDefault(level as HierarchyLevel)}>
+                      <RotateCcw className="h-3 w-3" /> {level}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* ════════ NAV TAB ACCESS MATRIX ════════ */}
           <TabsContent value="tabs">

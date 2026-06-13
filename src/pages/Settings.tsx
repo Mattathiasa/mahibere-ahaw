@@ -969,7 +969,7 @@ const Settings = () => {
             <SectionCard title="Software Control" icon={Shield}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Centrally manage which roles see which navigation tabs and buttons across the entire app — plus quick links to Permissions, Mobile App Control, and the Site Content Editor.
+                  Declare roles and their access, control which navigation tabs and buttons each role sees, and review the full audit log — plus quick links to Mobile App Control and the Site Content Editor. Also available in the sidebar.
                 </p>
                 <Button onClick={() => navigate('/admin/software-control')} className="gap-2">
                   <Shield className="h-4 w-4" />

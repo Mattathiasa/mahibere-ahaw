@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen } from 'lucide-react';
+import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
@@ -9,6 +9,7 @@ import { ProfileDropdown } from '@/components/ProfileDropdown';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -18,7 +19,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, t: any) => {
+const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, t: any, isSuperAdmin: boolean) => {
   const items = [
     { name: 'dashboard', href: '/dashboard', icon: Home },
     { name: 'announcements', href: '/announcements', icon: Bell },
@@ -43,6 +44,10 @@ const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, 
     items.push({ name: 'hierarchy', href: '/hierarchy', icon: Network });
   }
 
+  if (isSuperAdmin) {
+    items.push({ name: 'softwareControl', href: '/admin/software-control', icon: ShieldHalf });
+  }
+
   items.push({ name: 'settings', href: '/settings', icon: Settings });
 
   return items;
@@ -56,8 +61,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { language, setLanguage, t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showNav } = useSoftwareControl();
+  const { isSuperAdmin } = usePermissions();
   const canManageUsers = currentUser?.hierarchyLevel === 'Memriya';
-  const navigationItems = getNavigationItems(permissions.canViewHierarchy, canManageUsers, t)
+  const navigationItems = getNavigationItems(permissions.canViewHierarchy, canManageUsers, t, isSuperAdmin)
     .filter((item) => showNav(item.name));
 
   const handleLogout = () => {
