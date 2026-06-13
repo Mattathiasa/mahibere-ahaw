@@ -19,6 +19,7 @@ import { invalidateLandingCache } from '@/hooks/useLandingContent';
 import { pageStringsService, type AllLanguageOverrides } from '@/services/pageStrings';
 import { integrationsService, DEFAULT_INTEGRATIONS, type IntegrationsConfig } from '@/services/integrations';
 import { uploadToCloudinary, optimized } from '@/services/cloudinary';
+import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
 import { invalidateTranslationCache } from '@/hooks/useTranslation';
 import { translations, type Language } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
@@ -149,6 +150,12 @@ const LandingEditor: React.FC = () => {
 
   function setHero(key: keyof LandingContent['hero'], value: string) {
     patch((c) => ({ ...c, hero: { ...c.hero, [key]: value } }));
+  }
+  function addCarouselImage(url: string) {
+    patch((c) => ({ ...c, carousel: [...(c.carousel ?? []), url] }));
+  }
+  function removeCarouselImage(i: number) {
+    patch((c) => ({ ...c, carousel: (c.carousel ?? []).filter((_, idx) => idx !== i) }));
   }
   function setFooter(key: keyof LandingContent['footer'], value: string) {
     patch((c) => ({ ...c, footer: { ...c.footer, [key]: value } }));
@@ -437,6 +444,31 @@ const LandingEditor: React.FC = () => {
                       </details>
                     </div>
 
+                    <SectionDivider label="Photo carousel (4-5 images)" />
+                    <div className="space-y-3">
+                      {(content.carousel ?? []).length > 0 && (
+                        <div className="flex flex-wrap gap-3">
+                          {(content.carousel ?? []).map((url, i) => (
+                            <div key={i} className="relative">
+                              <img src={optimized(url, 240)} alt={`Slide ${i + 1}`} className="h-24 w-36 object-cover rounded-lg border border-border" />
+                              <button type="button" onClick={() => removeCarouselImage(i)}
+                                className="absolute -top-2 -right-2 bg-background border border-border rounded-full p-1 shadow hover:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <CloudinaryImageUpload
+                        value=""
+                        onChange={(url) => { if (url) addCarouselImage(url); }}
+                        folder="mahibere-ahaw/carousel"
+                        label="Add carousel image"
+                        variant="wide"
+                      />
+                      <p className="text-[11px] text-muted-foreground">Uploaded images appear in an auto-advancing carousel on the home page. Recommended 4-5 landscape images.</p>
+                    </div>
+
                     <SectionDivider label="Floating stat cards" />
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
@@ -620,6 +652,18 @@ const LandingEditor: React.FC = () => {
                     <Field label="Copyright line">
                       <Input value={content.footer.copyright} onChange={(e) => setFooter('copyright', e.target.value)} />
                     </Field>
+                    <SectionDivider label="Social & contact links" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="YouTube URL">
+                        <Input value={content.footer.youtube ?? ''} onChange={(e) => setFooter('youtube', e.target.value)} placeholder="https://youtube.com/@…" />
+                      </Field>
+                      <Field label="Telegram URL">
+                        <Input value={content.footer.telegram ?? ''} onChange={(e) => setFooter('telegram', e.target.value)} placeholder="https://t.me/…" />
+                      </Field>
+                      <Field label="Phone number">
+                        <Input value={content.footer.phone ?? ''} onChange={(e) => setFooter('phone', e.target.value)} placeholder="+251…" />
+                      </Field>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

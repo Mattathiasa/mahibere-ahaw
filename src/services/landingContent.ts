@@ -37,6 +37,8 @@ export interface LandingContent {
     /** Optional Cloudinary (or any) hero image URL; empty = use bundled default. */
     imageUrl?: string;
   };
+  /** Auto-advancing photo carousel (Cloudinary URLs); ~4-5 images. */
+  carousel?: string[];
   stats: LandingStat[];
   features: {
     sectionTitle: string;
@@ -55,6 +57,9 @@ export interface LandingContent {
     description: string;
     email: string;
     copyright: string;
+    youtube?: string;
+    telegram?: string;
+    phone?: string;
   };
 }
 

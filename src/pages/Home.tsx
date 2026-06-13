@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, FileText, BarChart3, Sun, Moon,
   Languages, Mail, MapPin, CheckCircle2, Sparkles, Menu, X,
-  ArrowRight, Heart, Calendar, MessageSquare, Bell, Shield, Youtube,
+  ArrowRight, Heart, Calendar, MessageSquare, Bell, Shield, Youtube, Send, Phone,
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Button } from './home-components/Button';
@@ -35,6 +35,14 @@ const Home: React.FC = () => {
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const carousel = content.carousel ?? [];
+
+  useEffect(() => {
+    if (carousel.length < 2) return;
+    const id = setInterval(() => setCarouselIndex((i) => (i + 1) % carousel.length), 4000);
+    return () => clearInterval(id);
+  }, [carousel.length]);
 
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -225,6 +233,33 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* ── Photo carousel ── */}
+      {carousel.length > 0 && (
+        <section className="py-16 sm:py-24 relative overflow-hidden">
+          <div className="container mx-auto px-6">
+            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-[#2E5E99]/10 aspect-video max-h-[70vh] mx-auto">
+              {carousel.map((url, i) => (
+                <motion.img
+                  key={url}
+                  src={optimized(url, 1600)}
+                  alt={`Slide ${i + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  initial={false}
+                  animate={{ opacity: i === carouselIndex ? 1 : 0 }}
+                  transition={{ duration: 0.8 }}
+                />
+              ))}
+              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                {carousel.map((_, i) => (
+                  <button key={i} onClick={() => setCarouselIndex(i)} aria-label={`Go to slide ${i + 1}`}
+                    className={`h-2.5 rounded-full transition-all ${i === carouselIndex ? 'w-8 bg-white' : 'w-2.5 bg-white/50'}`} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Features ── */}
       <section id="services" className="py-32 relative">
         <div className="container mx-auto px-6">
@@ -298,19 +333,29 @@ const Home: React.FC = () => {
                 <span className="text-2xl font-black text-[#2E5E99]">MAHIBERE AHAW</span>
               </div>
               <p className={`font-ethiopic leading-loose ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70'}`}>{footer.description}</p>
-              <div className="flex gap-4">
-                <a href="https://www.youtube.com/@Meleket%E1%88%98%E1%88%88%E1%8A%A8%E1%89%B5" target="_blank" rel="noopener noreferrer"
-                  className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#FF0000] hover:text-white transition-all duration-300 group">
-                  <Youtube className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
-                </a>
-                <a href={`mailto:${footer.email}`} className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
-                  <Mail className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
-                </a>
-                {[MessageSquare, Bell].map((Icon, i) => (
-                  <button key={i} className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
-                    <Icon className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
-                  </button>
-                ))}
+              <div className="flex gap-4 flex-wrap">
+                {footer.youtube && (
+                  <a href={footer.youtube} target="_blank" rel="noopener noreferrer" title="YouTube"
+                    className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#FF0000] hover:text-white transition-all duration-300 group">
+                    <Youtube className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
+                  </a>
+                )}
+                {footer.telegram && (
+                  <a href={footer.telegram} target="_blank" rel="noopener noreferrer" title="Telegram"
+                    className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#229ED9] hover:text-white transition-all duration-300 group">
+                    <Send className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
+                  </a>
+                )}
+                {footer.email && (
+                  <a href={`mailto:${footer.email}`} title="Email" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
+                    <Mail className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
+                  </a>
+                )}
+                {footer.phone && (
+                  <a href={`tel:${footer.phone}`} title="Call" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
+                    <Phone className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
+                  </a>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-2 col-span-1 lg:col-span-3 gap-12">
