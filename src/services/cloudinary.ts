@@ -1,16 +1,13 @@
-// Cloudinary SIGNED uploads + transformation helpers.
-// The API secret lives only in the `signCloudinaryUpload` Cloud Function.
-// The browser asks the function to sign the upload params, then POSTs the file
-// to Cloudinary with the signature + api_key. Cloud name, api key and upload
-// preset are admin-entered (siteConfig/integrations) — none are secret.
-
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/lib/firebase';
+// Cloudinary unsigned uploads + transformation helpers.
+// Cloud name & upload preset are admin-entered (siteConfig/integrations) so no
+// secrets live in the codebase. Create an *unsigned* upload preset in your
+// Cloudinary console (Settings → Upload → Upload presets, Signing Mode =
+// Unsigned) and paste its name plus your cloud name in the Cloudinary settings.
 
 export interface CloudinaryConfig {
   cloudName: string;
   uploadPreset: string;
-  apiKey: string;
+  apiKey?: string;
 }
 
 export interface CloudinaryUploadResult {
@@ -20,34 +17,18 @@ export interface CloudinaryUploadResult {
   height?: number;
 }
 
-const signUpload = httpsCallable<
-  { paramsToSign: Record<string, string> },
-  { signature: string; timestamp: number }
->(functions, 'signCloudinaryUpload');
-
 export async function uploadToCloudinary(
   file: File,
   config: CloudinaryConfig,
   folder = 'mahibere-ahaw',
 ): Promise<CloudinaryUploadResult> {
-  if (!config.cloudName || !config.apiKey) {
-    throw new Error('Cloudinary is not configured. Set the cloud name and API key first.');
+  if (!config.cloudName || !config.uploadPreset) {
+    throw new Error('Cloudinary is not configured. Set the cloud name and upload preset first.');
   }
-
-  // Params that will be signed by the Cloud Function (must match what we send).
-  const paramsToSign: Record<string, string> = { folder };
-  if (config.uploadPreset) paramsToSign.upload_preset = config.uploadPreset;
-
-  const { data } = await signUpload({ paramsToSign });
-  const { signature, timestamp } = data;
-
   const form = new FormData();
   form.append('file', file);
-  form.append('api_key', config.apiKey);
-  form.append('timestamp', String(timestamp));
-  form.append('signature', signature);
+  form.append('upload_preset', config.uploadPreset);
   form.append('folder', folder);
-  if (config.uploadPreset) form.append('upload_preset', config.uploadPreset);
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,

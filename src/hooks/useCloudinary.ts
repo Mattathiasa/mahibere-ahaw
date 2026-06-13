@@ -32,7 +32,7 @@ export function useCloudinary() {
     return () => { cancelled = true; };
   }, []);
 
-  const isConfigured = !!config.cloudinaryCloudName && !!config.cloudinaryApiKey;
+  const isConfigured = !!config.cloudinaryCloudName && !!config.cloudinaryUploadPreset;
 
   async function upload(file: File, folder?: string): Promise<CloudinaryUploadResult> {
     const fresh = await load();

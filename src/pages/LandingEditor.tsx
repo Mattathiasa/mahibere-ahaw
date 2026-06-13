@@ -421,12 +421,7 @@ const LandingEditor: React.FC = () => {
                               onChange={(e) => setIntegrations({ ...integrations, cloudinaryCloudName: e.target.value })}
                               placeholder="your-cloud-name" />
                           </Field>
-                          <Field label="API key">
-                            <Input value={integrations.cloudinaryApiKey}
-                              onChange={(e) => setIntegrations({ ...integrations, cloudinaryApiKey: e.target.value })}
-                              placeholder="123456789012345" />
-                          </Field>
-                          <Field label="Upload preset (signed)">
+                          <Field label="Upload preset (unsigned)">
                             <Input value={integrations.cloudinaryUploadPreset}
                               onChange={(e) => setIntegrations({ ...integrations, cloudinaryUploadPreset: e.target.value })}
                               placeholder="mahibere-ahaw" />
@@ -437,7 +432,7 @@ const LandingEditor: React.FC = () => {
                           Save Cloudinary settings
                         </Button>
                         <p className="text-[11px] text-muted-foreground mt-2">
-                          Signed uploads. Paste your <b>cloud name</b>, <b>API key</b> and the <b>signed</b> upload preset name here. The API <b>secret</b> stays server-side — set it once with <code>firebase functions:secrets:set CLOUDINARY_API_SECRET</code>.
+                          In Cloudinary: Settings → Upload → set the <b>mahibere-ahaw</b> preset's Signing Mode to <b>Unsigned</b>, then paste its name and your cloud name here.
                         </p>
                       </details>
                     </div>

@@ -1,14 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {defineSecret} from "firebase-functions/params";
-import * as crypto from "crypto";
 
 admin.initializeApp();
-
-// Cloudinary API secret — set with:
-//   firebase functions:secrets:set CLOUDINARY_API_SECRET
-// Never exposed to the browser; used only to sign upload requests.
-const CLOUDINARY_API_SECRET = defineSecret("CLOUDINARY_API_SECRET");
 
 const db = admin.firestore();
 const messaging = admin.messaging();
@@ -215,44 +208,3 @@ export const saveFcmToken = functions.https.onCall(async (data, context) => {
 
   return {success: true};
 });
-
-// ─── 5. Sign a Cloudinary upload ─────────────────────────────────────────────
-// Signed uploads keep the API secret server-side. The client sends the
-// parameters it intends to upload with (e.g. folder, upload_preset); this
-// function appends a server timestamp, signs the sorted params with the
-// secret, and returns the signature + timestamp for the client to POST to
-// Cloudinary along with its api_key.
-
-export const signCloudinaryUpload = functions
-  .runWith({secrets: [CLOUDINARY_API_SECRET]})
-  .https.onCall((data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "Must be authenticated to upload"
-      );
-    }
-
-    const paramsToSign: Record<string, string | number> =
-      (data && data.paramsToSign) || {};
-    const timestamp = Math.round(Date.now() / 1000);
-
-    const toSign: Record<string, string | number> = {
-      ...paramsToSign,
-      timestamp,
-    };
-
-    // Cloudinary signature: sorted "key=value" pairs joined by &, then secret.
-    const sorted = Object.keys(toSign)
-      .filter((k) => toSign[k] !== undefined && toSign[k] !== "")
-      .sort()
-      .map((k) => `${k}=${toSign[k]}`)
-      .join("&");
-
-    const signature = crypto
-      .createHash("sha1")
-      .update(sorted + CLOUDINARY_API_SECRET.value())
-      .digest("hex");
-
-    return {signature, timestamp};
-  });
