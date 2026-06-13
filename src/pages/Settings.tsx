@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -242,11 +243,15 @@ const Settings = () => {
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="space-y-2">
                   <p className="text-sm font-medium">{currentUser?.fullName}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Upload your profile picture below
-                  </p>
+                  <CloudinaryImageUpload
+                    value={profilePicture}
+                    onChange={setProfilePicture}
+                    folder="mahibere-ahaw/avatars"
+                    label="Upload profile picture"
+                    variant="avatar"
+                  />
                 </div>
               </div>
 

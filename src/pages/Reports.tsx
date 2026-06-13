@@ -236,16 +236,18 @@ const Reports = () => {
                     />
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('results')}</Label>
-                    <Textarea
-                      value={formData.result}
-                      onChange={(e) => setFormData({ ...formData, result: e.target.value })}
-                      placeholder="Quantify the results and impact..."
-                      className="min-h-[120px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
-                      required
-                    />
-                  </div>
+                  {(moduleCfg.fields.find((f) => f.key === 'results')?.visible ?? true) && (
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('results')}</Label>
+                      <Textarea
+                        value={formData.result}
+                        onChange={(e) => setFormData({ ...formData, result: e.target.value })}
+                        placeholder="Quantify the results and impact..."
+                        className="min-h-[120px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
+                        required={moduleCfg.fields.find((f) => f.key === 'results')?.required ?? false}
+                      />
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-4 pt-4">
                     <Button

@@ -31,6 +31,8 @@ export interface User {
   };
   createdAt?: string;
   updatedAt?: string;
+  /** Cloudinary (or any) profile picture URL. */
+  profilePicture?: string;
 }
 
 export interface LoginCredentials {

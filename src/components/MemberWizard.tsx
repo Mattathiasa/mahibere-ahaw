@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, MapPin, Briefcase, Check, Shield, Heart, Users } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MemberWizardProps {
@@ -49,6 +50,8 @@ const hierarchyLevels = [
 
 export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardProps) => {
   const { t } = useTranslation();
+  const moduleCfg = useModuleConfig('members');
+  const fieldVisible = (key: string) => moduleCfg.fields.find((f) => f.key === key)?.visible ?? true;
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullNameEnglish: initialData?.fullNameEnglish || initialData?.fullName || '',
@@ -274,32 +277,36 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
               </CardHeader>
               <CardContent className="space-y-8 px-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Work / School</Label>
-                    <Input
-                      className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
-                      value={formData.workSchool}
-                      onChange={(e) => setFormData({ ...formData, workSchool: e.target.value })}
-                      placeholder="Occupation or Institution"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Marital Status</Label>
-                    <Select
-                      value={formData.maritalStatus}
-                      onValueChange={(value) => setFormData({ ...formData, maritalStatus: value })}
-                    >
-                      <SelectTrigger className="h-14 rounded-2xl border-2 bg-white/50">
-                        <SelectValue placeholder="Select Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married">Married</SelectItem>
-                        <SelectItem value="Divorced">Divorced</SelectItem>
-                        <SelectItem value="Widowed">Widowed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {fieldVisible('workSchool') && (
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Work / School</Label>
+                      <Input
+                        className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
+                        value={formData.workSchool}
+                        onChange={(e) => setFormData({ ...formData, workSchool: e.target.value })}
+                        placeholder="Occupation or Institution"
+                      />
+                    </div>
+                  )}
+                  {fieldVisible('maritalStatus') && (
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Marital Status</Label>
+                      <Select
+                        value={formData.maritalStatus}
+                        onValueChange={(value) => setFormData({ ...formData, maritalStatus: value })}
+                      >
+                        <SelectTrigger className="h-14 rounded-2xl border-2 bg-white/50">
+                          <SelectValue placeholder="Select Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Single">Single</SelectItem>
+                          <SelectItem value="Married">Married</SelectItem>
+                          <SelectItem value="Divorced">Divorced</SelectItem>
+                          <SelectItem value="Widowed">Widowed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-slate-50/50 p-6 rounded-3xl border-2 border-dashed border-slate-200">

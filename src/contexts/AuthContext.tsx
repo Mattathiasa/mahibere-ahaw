@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         address: userData.address,
                         createdAt: userData.createdAt,
                         updatedAt: userData.updatedAt,
+                        profilePicture: userData.profilePicture,
                     };
 
                     setUser(user);
