@@ -37,7 +37,10 @@ const Reports = () => {
     planId: '',
     option: 'Memriya' as 'Memriya' | 'Kifil' | 'Zerf',
     timeframe: 'Weekly' as 'Weekly' | 'Monthly' | 'Annually',
+    department: '',
+    workPlanned: '',
     workDone: '',
+    uncompletedTasks: '',
     result: '',
     attachments: [] as string[],
     recipients: [] as string[],
@@ -78,7 +81,10 @@ const Reports = () => {
         planId: '',
         option: 'Memriya',
         timeframe: 'Weekly',
+        department: '',
+        workPlanned: '',
         workDone: '',
+        uncompletedTasks: '',
         result: '',
         attachments: [],
         recipients: [],
@@ -225,16 +231,56 @@ const Reports = () => {
                     </div>
                   </div>
 
+                  {(moduleCfg.fields.find((f) => f.key === 'department')?.visible ?? true) && (moduleCfg.options.departments ?? []).length > 0 && (
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Department</Label>
+                      <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
+                        <SelectTrigger className="h-14 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
+                          <SelectValue placeholder="Select department" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          {(moduleCfg.options.departments ?? []).map((d) => (
+                            <SelectItem key={d} value={d} className="rounded-xl font-bold italic">{d}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {(moduleCfg.fields.find((f) => f.key === 'workPlanned')?.visible ?? true) && (
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Work Planned</Label>
+                      <Textarea
+                        value={formData.workPlanned}
+                        onChange={(e) => setFormData({ ...formData, workPlanned: e.target.value })}
+                        placeholder="What was planned for this period..."
+                        className="min-h-[100px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{t('workDone')}</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Work Performed</Label>
                     <Textarea
                       value={formData.workDone}
                       onChange={(e) => setFormData({ ...formData, workDone: e.target.value })}
-                      placeholder="Detail the activities completed..."
+                      placeholder="Detail the activities actually completed..."
                       className="min-h-[120px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
                       required
                     />
                   </div>
+
+                  {(moduleCfg.fields.find((f) => f.key === 'uncompletedTasks')?.visible ?? true) && (
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 ml-1">Uncompleted Tasks</Label>
+                      <Textarea
+                        value={formData.uncompletedTasks}
+                        onChange={(e) => setFormData({ ...formData, uncompletedTasks: e.target.value })}
+                        placeholder="What remains incomplete and why..."
+                        className="min-h-[100px] rounded-2xl border-none bg-rose-50 dark:bg-rose-950/20 focus:ring-2 ring-rose-400 font-medium transition-all"
+                      />
+                    </div>
+                  )}
 
                   {(moduleCfg.fields.find((f) => f.key === 'results')?.visible ?? true) && (
                     <div className="space-y-3">

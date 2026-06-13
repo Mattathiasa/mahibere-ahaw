@@ -64,15 +64,26 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
     headerTitle: '', headerDescription: '',
     learnMore:
       'The Plans module organises ministry plans across all levels. Create a plan with a name, a period (weekly, monthly or annually) and details, then track progress through reports submitted against it.',
-    fields: [f('name', 'Plan Name', true, true), f('timeframe', 'Period', true, true), f('details', 'Details')],
-    options: { periods: ['Weekly', 'Monthly', 'Annually'] },
+    fields: [f('name', 'Plan Name', true, true), f('timeframe', 'Period', true, true), f('department', 'Department'), f('details', 'Details')],
+    options: {
+      periods: ['Weekly', 'Monthly', 'Annually'],
+      departments: ['Evangelism', 'Education & Training', 'Services Coordination', 'Administration & Finance', 'Public & External Relations', 'Youth & Children'],
+    },
   },
   reports: {
     headerTitle: '', headerDescription: '',
     learnMore:
       'The Reports module is where units submit and review work reports. Pick the plan a report belongs to, choose the submission type, describe the work done and the results, and leaders can add professional feedback.',
-    fields: [f('plan', 'Related Plan', true, true), f('type', 'Submission Type', true, true), f('workDone', 'Work Done', true, true), f('results', 'Results')],
-    options: { types: ['Memriya', 'Kifil', 'Zerf'] },
+    fields: [
+      f('plan', 'Related Plan', true, true), f('type', 'Submission Type', true, true),
+      f('department', 'Department'),
+      f('workPlanned', 'Work Planned'), f('workPerformed', 'Work Performed', true, true),
+      f('uncompletedTasks', 'Uncompleted Tasks'), f('results', 'Results'),
+    ],
+    options: {
+      types: ['Memriya', 'Kifil', 'Zerf'],
+      departments: ['Evangelism', 'Education & Training', 'Services Coordination', 'Administration & Finance', 'Public & External Relations', 'Youth & Children'],
+    },
   },
   announcements: {
     headerTitle: '', headerDescription: '',

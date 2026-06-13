@@ -18,7 +18,10 @@ export interface CreateReportData {
   planName?: string;
   option: 'Memriya' | 'Kifil' | 'Zerf';
   timeframe: 'Weekly' | 'Monthly' | 'Annually';
+  department?: string;
+  workPlanned?: string;
   workDone: string;
+  uncompletedTasks?: string;
   result: string;
   attachments?: any[];
   recipients?: any[];

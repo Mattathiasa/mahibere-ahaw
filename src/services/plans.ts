@@ -17,6 +17,7 @@ import {
 export interface CreatePlanData {
   name: string;
   timeframe: 'Weekly' | 'Monthly' | 'Annually';
+  department?: string;
   details: string;
 }
 

@@ -31,6 +31,7 @@ const Plans = () => {
   const [formData, setFormData] = useState({
     name: '',
     timeframe: 'Weekly' as 'Weekly' | 'Monthly' | 'Annually',
+    department: '',
     details: '',
     attachments: [] as string[],
     recipients: [] as string[]
@@ -51,7 +52,7 @@ const Plans = () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       toast.success('Strategy propagated successfully!');
       setShowCreateDialog(false);
-      setFormData({ name: '', timeframe: 'Weekly', details: '', attachments: [], recipients: [] });
+      setFormData({ name: '', timeframe: 'Weekly', department: '', details: '', attachments: [], recipients: [] });
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to establish plan');
@@ -174,6 +175,22 @@ const Plans = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {(moduleCfg.fields.find((f) => f.key === 'department')?.visible ?? true) && (moduleCfg.options.departments ?? []).length > 0 && (
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Department</Label>
+                    <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
+                      <SelectTrigger className="h-16 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        {(moduleCfg.options.departments ?? []).map((d) => (
+                          <SelectItem key={d} value={d} className="rounded-xl font-bold italic">{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {(() => {
                   const detailsField = moduleCfg.fields.find((f) => f.key === 'details');
