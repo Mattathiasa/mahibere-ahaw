@@ -23,7 +23,8 @@ const CATEGORIES: { key: CategoryKey; label: string; amharic: string; icon: type
   { key: 'policies', label: 'Policies', amharic: 'ፖሊሲ', icon: ClipboardList, color: 'text-amber-500' },
 ];
 
-const EDIT_LEVELS = ['Sinodos', 'KuamiSinodos', 'Memriya'];
+// Matches the siteConfig Firestore write rule (Sinodos/KuamiSinodos/SuperAdmin).
+const EDIT_LEVELS = ['Sinodos', 'KuamiSinodos'];
 
 const ChurchLaws = () => {
   const { t } = useTranslation();
