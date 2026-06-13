@@ -13,7 +13,7 @@ export interface IntegrationsConfig {
 }
 
 export const DEFAULT_INTEGRATIONS: IntegrationsConfig = {
-  cloudinaryCloudName: '',
+  cloudinaryCloudName: 'dqxcewc2t',
   cloudinaryUploadPreset: 'mahibere-ahaw',
 };
 
