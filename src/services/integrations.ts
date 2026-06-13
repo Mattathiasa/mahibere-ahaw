@@ -9,12 +9,15 @@ import type { CloudinaryConfig } from '@/services/cloudinary';
 export interface IntegrationsConfig {
   cloudinaryCloudName: string;
   cloudinaryUploadPreset: string;
+  /** Cloudinary API key (public — sent with signed uploads, not secret). */
+  cloudinaryApiKey: string;
   meta?: { updatedAt?: string; updatedBy?: string };
 }
 
 export const DEFAULT_INTEGRATIONS: IntegrationsConfig = {
   cloudinaryCloudName: '',
-  cloudinaryUploadPreset: '',
+  cloudinaryUploadPreset: 'mahibere-ahaw',
+  cloudinaryApiKey: '',
 };
 
 const REF = () => doc(db, 'siteConfig', 'integrations');
@@ -34,6 +37,10 @@ export const integrationsService = {
   },
 
   toCloudinary(config: IntegrationsConfig): CloudinaryConfig {
-    return { cloudName: config.cloudinaryCloudName, uploadPreset: config.cloudinaryUploadPreset };
+    return {
+      cloudName: config.cloudinaryCloudName,
+      uploadPreset: config.cloudinaryUploadPreset,
+      apiKey: config.cloudinaryApiKey,
+    };
   },
 };
