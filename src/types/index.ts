@@ -74,6 +74,10 @@ export interface FinanceTransactionInput {
   date: string;
   mahderatId?: string;
   atbiyaId?: string;
+  /** Bank-to-bank transfer fields (when type === 'Transfer'). */
+  fromAccount?: string;
+  toAccount?: string;
+  receiptUrl?: string;
 }
 
 export interface MonthlyBudget {

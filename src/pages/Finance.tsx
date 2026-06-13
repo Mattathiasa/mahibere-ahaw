@@ -184,6 +184,14 @@ export default function Finance() {
                           </div>
                           <div>
                             <p className="font-black text-[#0D2440] dark:text-white text-xl tracking-tight leading-tight">{transaction.description}</p>
+                            {transaction.type === 'Transfer' && (transaction as any).fromAccount && (
+                              <p className="text-xs font-bold text-[#2E5E99] mt-1">
+                                {(transaction as any).fromAccount} → {(transaction as any).toAccount}
+                                {(transaction as any).receiptUrl && (
+                                  <a href={(transaction as any).receiptUrl} target="_blank" rel="noopener noreferrer" className="ml-2 underline">receipt</a>
+                                )}
+                              </p>
+                            )}
                             <div className="flex items-center gap-3 mt-2">
                               <Badge variant="outline" className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/50 dark:bg-black/20 border-none px-3 py-1 text-[#2E5E99] rounded-full">
                                 {transaction.type}

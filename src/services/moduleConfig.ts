@@ -105,7 +105,8 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
       'Track income, expenses, budgets and financial reports. Record transactions, set monthly budgets, and generate reports for accountability.',
     fields: [],
     options: {
-      transactionTypes: ['Income', 'Expense', 'Tithe', 'Offering', 'Donation', 'Collection', 'Deposit', 'Asrat', 'YefikirSetota'],
+      transactionTypes: ['Income', 'Expense', 'Tithe', 'Offering', 'Donation', 'Collection', 'Deposit', 'Asrat', 'YefikirSetota', 'Transfer'],
+      bankAccounts: ['CBE', 'Berhan Bank', 'Abyssinia Bank', 'Awash Bank', 'Oromia Bank', 'Nib Bank'],
     },
   },
   hr: {

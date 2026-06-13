@@ -10,6 +10,7 @@ import { RecipientSelector } from '@/components/ui/recipient-selector';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
 
 // Known transaction-type labels (English + Amharic). Custom types added in
 // Module Config fall back to their raw value.
@@ -23,6 +24,7 @@ const TX_LABELS: Record<string, string> = {
   Deposit: 'Deposit (ተቀማጭ)',
   Asrat: 'Asrat (አስራት)',
   YefikirSetota: 'Yefikir Setota (የፍቅር ስጦታ)',
+  Transfer: 'Transfer (ዝውውር)',
 };
 
 interface CreateTransactionDialogProps {
@@ -36,14 +38,19 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
   const moduleCfg = useModuleConfig('finance');
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    type: 'Income' as 'Income' | 'Expense' | 'Tithe' | 'Offering' | 'Donation' | 'Collection' | 'Deposit' | 'Asrat' | 'YefikirSetota',
+    type: 'Income' as string,
     amount: '',
     description: '',
     category: '',
     date: new Date().toISOString().split('T')[0],
+    fromAccount: '',
+    toAccount: '',
+    receiptUrl: '',
     attachments: [] as string[],
     recipients: [] as string[],
   });
+
+  const isTransfer = formData.type === 'Transfer';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +65,9 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
       description: '',
       category: '',
       date: new Date().toISOString().split('T')[0],
+      fromAccount: '',
+      toAccount: '',
+      receiptUrl: '',
       attachments: [],
       recipients: [],
     });
@@ -100,6 +110,46 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
               required
             />
           </div>
+
+          {isTransfer && (
+            <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/20">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank-to-bank transfer</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>From account *</Label>
+                  <Select value={formData.fromAccount} onValueChange={(v) => setFormData({ ...formData, fromAccount: v })}>
+                    <SelectTrigger><SelectValue placeholder="Source account" /></SelectTrigger>
+                    <SelectContent>
+                      {(moduleCfg.options.bankAccounts ?? []).map((b) => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>To account *</Label>
+                  <Select value={formData.toAccount} onValueChange={(v) => setFormData({ ...formData, toAccount: v })}>
+                    <SelectTrigger><SelectValue placeholder="Destination account" /></SelectTrigger>
+                    <SelectContent>
+                      {(moduleCfg.options.bankAccounts ?? []).map((b) => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Receipt / screenshot</Label>
+                <CloudinaryImageUpload
+                  value={formData.receiptUrl}
+                  onChange={(url) => setFormData({ ...formData, receiptUrl: url })}
+                  folder="mahibere-ahaw/receipts"
+                  label="Attach receipt"
+                  variant="wide"
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="date">Date *</Label>
