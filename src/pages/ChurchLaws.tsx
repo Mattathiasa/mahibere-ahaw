@@ -1,162 +1,160 @@
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Book, Gavel, AlertCircle, ShieldCheck, Scale, Sparkles } from 'lucide-react';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Scale, BookText, ClipboardList, Plus, Trash2, Save, Loader2, Pencil } from 'lucide-react';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import {
+  churchRulesService, DEFAULT_CHURCH_RULES,
+  type ChurchRulesData, type RuleItem,
+} from '@/services/churchRules';
+
+type CategoryKey = 'denb' | 'memerya' | 'policies';
+
+const CATEGORIES: { key: CategoryKey; label: string; amharic: string; icon: typeof Scale; color: string }[] = [
+  { key: 'denb', label: 'Regulations', amharic: 'ደንብ', icon: Scale, color: 'text-indigo-500' },
+  { key: 'memerya', label: 'Directives', amharic: 'መመሪያ', icon: BookText, color: 'text-emerald-500' },
+  { key: 'policies', label: 'Policies', amharic: 'ፖሊሲ', icon: ClipboardList, color: 'text-amber-500' },
+];
+
+const EDIT_LEVELS = ['Sinodos', 'KuamiSinodos', 'Memriya'];
 
 const ChurchLaws = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const [data, setData] = useState<ChurchRulesData>(DEFAULT_CHURCH_RULES);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
+  const canEdit =
+    EDIT_LEVELS.includes(user?.hierarchyLevel ?? '') ||
+    user?.role === 'SuperAdmin' || user?.role === 'Admin';
+
+  useEffect(() => {
+    churchRulesService.get().then(setData).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  function updateItem(cat: CategoryKey, i: number, key: keyof RuleItem, value: string) {
+    setData((d) => {
+      const items = [...d[cat]];
+      items[i] = { ...items[i], [key]: value };
+      return { ...d, [cat]: items };
+    });
+  }
+  function addItem(cat: CategoryKey) {
+    setData((d) => ({ ...d, [cat]: [...d[cat], { title: '', content: '' }] }));
+  }
+  function removeItem(cat: CategoryKey, i: number) {
+    setData((d) => ({ ...d, [cat]: d[cat].filter((_, idx) => idx !== i) }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await churchRulesService.save(data, user?.email ?? 'admin');
+      toast.success('Church rules saved');
+      setEditMode(false);
+    } catch {
+      toast.error('Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
-            <ConfigurablePageHeader
-                module="churchRules"
-                defaultTitle={t('churchRules')}
-                defaultDescription={t('churchRulesHeaderDesc')}
-                badge="Canonical Law"
-            />
-
-            <Tabs defaultValue="guidelines" className="space-y-8">
-                <TabsList className="bg-white/40 dark:bg-black/20 p-1.5 rounded-2xl border border-white/40 dark:border-white/10 backdrop-blur-xl h-auto flex flex-wrap gap-2">
-                    <TabsTrigger value="guidelines" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-[#2E5E99] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold">
-                        General Guidelines
-                    </TabsTrigger>
-                    <TabsTrigger value="prohibitions" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold">
-                        Prohibitions (Kelkelowich)
-                    </TabsTrigger>
-                    <TabsTrigger value="obligations" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold">
-                        Obligations (Gidetawoch)
-                    </TabsTrigger>
-                    <TabsTrigger value="administration" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold">
-                        Admin Rules
-                    </TabsTrigger>
-                </TabsList>
-
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        <TabsContent value="guidelines">
-                            <Card className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/60 dark:border-white/10 shadow-2xl overflow-hidden">
-                                <CardHeader className="border-b border-white/20 pb-6">
-                                    <CardTitle className="flex items-center gap-3 text-2xl font-black text-[#0D2440] dark:text-white tracking-tight">
-                                        <div className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-500">
-                                            <Book className="h-6 w-6" />
-                                        </div>
-                                        Living Guidelines
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-8">
-                                    <ScrollArea className="h-[500px] pr-6">
-                                        <div className="space-y-8">
-                                            {[
-                                                { title: '1. Sunday Worship', desc: 'All members are expected to attend Sunday worship services regularly with devotion and humility.', icon: Sparkles },
-                                                { title: '2. Community Service', desc: 'Members are encouraged to participate in at least one community service activity per month to manifest the love of Christ in action.', icon: Heart },
-                                                { title: '3. Spiritual Growth', desc: 'Active participation in Bible studies, fasting periods, and sacraments is vital for the spiritual maturity of every believer.', icon: ShieldCheck }
-                                            ].map((item, i) => (
-                                                <div key={i} className="group relative p-6 rounded-3xl bg-white/40 dark:bg-slate-800/40 border border-white/20 hover:bg-[#2E5E99]/5 transition-all duration-300">
-                                                    <h3 className="font-black text-xl mb-3 flex items-center gap-2 text-[#0D2440] dark:text-white">
-                                                        <item.icon className="h-5 w-5 text-[#2E5E99]/60" />
-                                                        {item.title}
-                                                    </h3>
-                                                    <p className="text-[#0D2440]/70 dark:text-white/70 leading-relaxed font-medium text-lg italic">
-                                                        {item.desc}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </ScrollArea>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="prohibitions">
-                            <Card className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/60 dark:border-white/10 shadow-2xl overflow-hidden">
-                                <CardHeader className="border-b border-white/20 pb-6">
-                                    <CardTitle className="flex items-center gap-3 text-2xl font-black text-rose-500 tracking-tight">
-                                        <div className="p-3 rounded-2xl bg-rose-500/10">
-                                            <AlertCircle className="h-6 w-6" />
-                                        </div>
-                                        Prohibited Actions
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-8 px-8">
-                                    <div className="grid gap-6">
-                                        {[
-                                            'Disruptive behavior during services that hinders the spiritual peace of the congregation.',
-                                            'Misuse or mishandling of church funds, property, or sacred items.',
-                                            'Public defamation, gossip, or causing division among church leadership or members.',
-                                            'Non-compliance with the established canonical practices and traditions.'
-                                        ].map((rule, i) => (
-                                            <div key={i} className="flex gap-4 items-start p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10">
-                                                <div className="mt-1 h-2 w-2 rounded-full bg-rose-500 flex-shrink-0" />
-                                                <p className="text-lg font-bold text-[#0D2440]/80 dark:text-white/80">{rule}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="obligations">
-                            <Card className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/60 dark:border-white/10 shadow-2xl overflow-hidden">
-                                <CardHeader className="border-b border-white/20 pb-6">
-                                    <CardTitle className="flex items-center gap-3 text-2xl font-black text-emerald-500 tracking-tight">
-                                        <div className="p-3 rounded-2xl bg-emerald-500/10">
-                                            <ShieldCheck className="h-6 w-6" />
-                                        </div>
-                                        Membership Obligations
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-8 px-8">
-                                    <div className="grid gap-6 sm:grid-cols-2">
-                                        {[
-                                            { title: 'Tithe (Asrat)', desc: 'Faithful and regular contribution of the tithe for church operations.' },
-                                            { title: 'Mahderat', desc: 'Devout participation in the assigned Small Group (Mahderat).' },
-                                            { title: 'Respect', desc: 'Honor and submission to the hierarchy and spiritual leadership.' },
-                                            { title: 'Purity', desc: 'Maintaining spiritual and moral purity in personal and public life.' }
-                                        ].map((item, i) => (
-                                            <div key={i} className="p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10">
-                                                <h4 className="font-black text-lg text-emerald-600 mb-2">{item.title}</h4>
-                                                <p className="font-semibold text-[#0D2440]/70 dark:text-white/70 italic">{item.desc}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="administration">
-                            <Card className="rounded-[2.5rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/60 dark:border-white/10 shadow-2xl overflow-hidden">
-                                <div className="absolute top-0 right-0 p-12 opacity-5 rotate-12">
-                                    <Gavel className="h-48 w-48" />
-                                </div>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-3 text-2xl font-black text-[#0D2440] dark:text-white tracking-tight">
-                                        <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
-                                            <Gavel className="h-6 w-6" />
-                                        </div>
-                                        Administrative Rules
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-4">
-                                    <p className="text-xl font-bold text-[#0D2440]/70 dark:text-white/70 leading-relaxed italic max-w-2xl px-2">
-                                        Rules regarding elections, appointments, and financial management follow the strict guidelines of the Central Council. Transparency and divine accountability are the pillars of our administration.
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </motion.div>
-                </AnimatePresence>
-            </Tabs>
-        </div>
+      <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
     );
+  }
+
+  return (
+    <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <ConfigurablePageHeader
+          module="churchRules"
+          defaultTitle={t('churchRules')}
+          defaultDescription={t('churchRulesHeaderDesc')}
+          badge="Canonical Law"
+        />
+        {canEdit && (
+          <div className="flex gap-2">
+            {editMode ? (
+              <>
+                <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Save
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={() => setEditMode(true)}>
+                <Pencil className="h-4 w-4 mr-2" /> Edit
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <Tabs defaultValue="denb" className="space-y-8">
+        <TabsList className="bg-white/40 dark:bg-black/20 p-1.5 rounded-2xl border border-white/40 dark:border-white/10 backdrop-blur-xl h-auto flex flex-wrap gap-2">
+          {CATEGORIES.map(({ key, label, amharic, icon: Icon }) => (
+            <TabsTrigger key={key} value={key}
+              className="rounded-xl px-6 py-2.5 data-[state=active]:bg-[#2E5E99] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold gap-2">
+              <Icon className="h-4 w-4" /> {label} <span className="font-ethiopic opacity-70">({amharic})</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {CATEGORIES.map(({ key, label, color }) => (
+          <TabsContent key={key} value={key}>
+            <div className="space-y-4">
+              {data[key].length === 0 && !editMode && (
+                <Card className="rounded-3xl"><CardContent className="py-12 text-center text-muted-foreground">No {label.toLowerCase()} yet.</CardContent></Card>
+              )}
+              {data[key].map((item, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <Card className="rounded-[2rem] bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/60 dark:border-white/10 shadow-lg overflow-hidden">
+                    <CardContent className="p-6">
+                      {editMode ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Input value={item.title} placeholder="Title"
+                              onChange={(e) => updateItem(key, i, 'title', e.target.value)} className="font-bold" />
+                            <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeItem(key, i)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <Textarea rows={3} value={item.content} placeholder="Content"
+                            onChange={(e) => updateItem(key, i, 'content', e.target.value)} />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className={`font-black text-xl mb-2 ${color}`}>{item.title}</h3>
+                          <p className="text-[#0D2440]/70 dark:text-white/70 leading-relaxed font-medium italic">{item.content}</p>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+              {editMode && (
+                <Button variant="outline" onClick={() => addItem(key)} className="gap-2">
+                  <Plus className="h-4 w-4" /> Add {label.replace(/s$/, '')}
+                </Button>
+              )}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
 };
 
 export default ChurchLaws;
