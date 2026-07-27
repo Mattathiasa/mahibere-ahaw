@@ -20,6 +20,55 @@ import {
   MonthlyBudgetInput,
   FinancialReportInput,
 } from '@/types';
+import { toEthiopianDateString } from '@/lib/date-utils';
+
+export interface MemberTithe {
+  id: string;
+  memberId?: string;
+  memberName: string;
+  type: 'Asrat (10%)' | 'Offering (መባ)' | 'First Fruit (በኵራት)' | 'Building Contribution';
+  amount: number;
+  paymentMethod: string;
+  receiptNumber: string;
+  date: string;
+  ethiopianDate: string;
+  notes?: string;
+  createdAt?: any;
+}
+
+export interface BuildingPledge {
+  id: string;
+  memberId?: string;
+  memberName: string;
+  campaignTitle: string;
+  pledgedAmount: number;
+  paidAmount: number;
+  status: 'Active' | 'Completed';
+  dueDate: string;
+  ethiopianDate: string;
+}
+
+export interface RequisitionVoucher {
+  id: string;
+  voucherNumber: string;
+  requestedBy: string;
+  department: string;
+  purpose: string;
+  amount: number;
+  status: 'Pending' | 'Approved' | 'Paid' | 'Rejected';
+  approvedBy?: string;
+  date: string;
+  ethiopianDate: string;
+}
+
+export interface ChurchBankAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountType: string;
+  balance: number;
+  currency: string;
+}
 
 // Finance Transactions
 export const createTransaction = async (data: FinanceTransactionInput): Promise<FinanceTransaction> => {
@@ -84,7 +133,6 @@ export const getBudgets = async (params?: {
   year?: number;
   month?: number;
 }): Promise<MonthlyBudget[]> => {
-  // Use createdAt to avoid needing a composite index on year+month
   let q = query(collection(db, 'finance_budgets'), orderBy('createdAt', 'desc'));
 
   if (params?.mahderatId) q = query(q, where('mahderatId', '==', params.mahderatId));
@@ -93,7 +141,6 @@ export const getBudgets = async (params?: {
   const snapshot = await getDocs(q);
   let results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
 
-  // Apply year/month filters client-side
   if (params?.year) results = results.filter((b: any) => b.year === params.year);
   if (params?.month) results = results.filter((b: any) => b.month === params.month);
 
@@ -142,19 +189,103 @@ export const getFinancialReports = async (params?: {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
 };
 
-export const getFinancialReportById = async (id: string): Promise<FinancialReport> => {
-  const docSnap = await getDoc(doc(db, 'finance_reports', id));
-  if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() } as any;
-  throw new Error('Report not found');
+// Member Tithes (አሥራትና መባ) Services
+export const createMemberTithe = async (data: Omit<MemberTithe, 'id'>): Promise<MemberTithe> => {
+  const docRef = await addDoc(collection(db, 'finance_tithes'), {
+    ...data,
+    ethiopianDate: data.ethiopianDate || toEthiopianDateString(data.date),
+    createdAt: serverTimestamp(),
+  });
+
+  // Also mirror as income transaction
+  await createTransaction({
+    amount: data.amount,
+    type: 'Tithe',
+    category: data.type,
+    description: `Tithe record from ${data.memberName} (${data.receiptNumber})`,
+    date: data.date,
+  });
+
+  return { id: docRef.id, ...data };
 };
 
-export const updateFinancialReport = async (id: string, data: Partial<FinancialReportInput>): Promise<FinancialReport> => {
-  const docRef = doc(db, 'finance_reports', id);
-  await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
-  const updated = await getDoc(docRef);
-  return { id: updated.id, ...updated.data() } as any;
+export const getMemberTithes = async (): Promise<MemberTithe[]> => {
+  try {
+    const q = query(collection(db, 'finance_tithes'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  } catch (err) {
+    return [];
+  }
 };
 
-export const deleteFinancialReport = async (id: string): Promise<void> => {
-  await deleteDoc(doc(db, 'finance_reports', id));
+// Pledges Campaign Services
+export const createPledge = async (data: Omit<BuildingPledge, 'id'>): Promise<BuildingPledge> => {
+  const docRef = await addDoc(collection(db, 'finance_pledges'), {
+    ...data,
+    ethiopianDate: data.ethiopianDate || toEthiopianDateString(),
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, ...data };
 };
+
+export const getPledges = async (): Promise<BuildingPledge[]> => {
+  try {
+    const q = query(collection(db, 'finance_pledges'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  } catch (err) {
+    return [];
+  }
+};
+
+export const updatePledgePayment = async (id: string, additionalAmount: number): Promise<void> => {
+  const docRef = doc(db, 'finance_pledges', id);
+  const snap = await getDoc(docRef);
+  if (snap.exists()) {
+    const current = snap.data() as BuildingPledge;
+    const newPaid = (current.paidAmount || 0) + additionalAmount;
+    const newStatus = newPaid >= current.pledgedAmount ? 'Completed' : 'Active';
+    await updateDoc(docRef, {
+      paidAmount: newPaid,
+      status: newStatus,
+    });
+  }
+};
+
+// Requisitions & Vouchers Services
+export const createRequisitionVoucher = async (data: Omit<RequisitionVoucher, 'id' | 'voucherNumber'>): Promise<RequisitionVoucher> => {
+  const voucherNumber = `VCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const docRef = await addDoc(collection(db, 'finance_requisitions'), {
+    ...data,
+    voucherNumber,
+    ethiopianDate: data.ethiopianDate || toEthiopianDateString(data.date),
+    createdAt: serverTimestamp(),
+  });
+  return { id: docRef.id, voucherNumber, ...data };
+};
+
+export const getRequisitions = async (): Promise<RequisitionVoucher[]> => {
+  try {
+    const q = query(collection(db, 'finance_requisitions'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  } catch (err) {
+    return [];
+  }
+};
+
+export const updateRequisitionStatus = async (id: string, status: RequisitionVoucher['status'], approvedBy?: string): Promise<void> => {
+  const docRef = doc(db, 'finance_requisitions', id);
+  await updateDoc(docRef, {
+    status,
+    ...(approvedBy ? { approvedBy } : {}),
+  });
+};
+
+// Church Bank Accounts
+export const DEFAULT_CHURCH_BANKS: ChurchBankAccount[] = [
+  { id: '1', bankName: 'Commercial Bank of Ethiopia (CBE)', accountNumber: '1000123456789', accountType: 'Main Church Account', balance: 185400, currency: 'ETB' },
+  { id: '2', bankName: 'Awash Bank', accountNumber: '01320987654321', accountType: 'Building Fund Account', balance: 94200, currency: 'ETB' },
+  { id: '3', bankName: 'Dashen Bank', accountNumber: '52891122334455', accountType: 'Charity & Welfare Account', balance: 32100, currency: 'ETB' },
+];

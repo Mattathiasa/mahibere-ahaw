@@ -13,6 +13,7 @@ const MobileControl = lazy(() => import("./pages/MobileControl"));
 const SoftwareControl = lazy(() => import("./pages/SoftwareControl"));
 const ModuleConfig = lazy(() => import("./pages/ModuleConfig"));
 
+const Quickboard = lazy(() => import("./pages/Quickboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Announcements = lazy(() => import("./pages/Announcements"));
 const Plans = lazy(() => import("./pages/Plans"));
@@ -73,6 +74,7 @@ const App = () => (
                   <Route path="/admin/module-config" element={<AdminRoute><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><ModuleConfig /></Suspense></AdminRoute>} />
 
                   {/* Protected Dashboard Routes */}
+                  <Route path="/quickboard" element={<ProtectedRoute><Suspense fallback={<div className="p-8 text-center text-white">Loading...</div>}><Quickboard /></Suspense></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Dashboard /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/announcements" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Announcements /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/plans" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Plans /></Suspense></DashboardLayout></ProtectedRoute>} />
@@ -80,12 +82,15 @@ const App = () => (
                   <Route path="/members" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Members /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/meetings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Meetings /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/finance" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Finance /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/finances" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Finance /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hr" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><HR /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/inventory" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/assets" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hierarchy" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Hierarchy /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><HigeDenb /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Settings /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/user-management" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><UserManagement /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/users" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><UserManagement /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/missionary" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Missionary /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/teachings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Teaching /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/strategic-plan" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><StrategicPlan /></Suspense></DashboardLayout></ProtectedRoute>} />

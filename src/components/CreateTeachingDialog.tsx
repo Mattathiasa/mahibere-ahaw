@@ -14,6 +14,7 @@ import { X, Plus, Info, Video, FileText, MessageCircle, Mic2 } from 'lucide-reac
 import { teachingService } from '@/services/teachings';
 import { TeachingServiceType, TeachingStatus } from '@/types';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 interface CreateTeachingDialogProps {
     open: boolean;
@@ -188,11 +189,10 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Date Delivered *</Label>
-                                            <Input
-                                                type="date"
+                                            <Label>ቀን (Date Delivered) *</Label>
+                                            <EthiopianDatePicker
                                                 value={formData.dateDelivered}
-                                                onChange={(e) => setFormData({ ...formData, dateDelivered: e.target.value })}
+                                                onChange={(isoDate) => setFormData({ ...formData, dateDelivered: isoDate })}
                                             />
                                         </div>
                                         <div className="space-y-2">

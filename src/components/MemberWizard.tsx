@@ -11,6 +11,7 @@ import { User, MapPin, Briefcase, Check, Shield, Heart, Users } from 'lucide-rea
 import { useTranslation } from '@/hooks/useTranslation';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 interface MemberWizardProps {
   onClose: () => void;
@@ -186,12 +187,11 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Date of Birth *</Label>
-                    <Input
-                      type="date"
-                      className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Date of Birth (የትውልድ ቀን) *</Label>
+                    <EthiopianDatePicker
                       value={formData.dateOfBirth}
-                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      onChange={(isoDate) => setFormData({ ...formData, dateOfBirth: isoDate })}
+                      className="h-14 bg-white/50 backdrop-blur-sm"
                     />
                   </div>
                   <div className="space-y-2">

@@ -5,8 +5,18 @@ import {
 } from 'firebase/firestore';
 import { auditLogService } from '@/services/auditLog';
 
+export interface EducationItem {
+  id?: string;
+  academicStatus?: string;
+  institution?: string;
+  fieldOfStudy?: string;
+  graduationDate?: string;
+  cvDocumentUrl?: string;
+}
+
 export interface Employee {
   id: string;
+  employeeId?: string; // e.g. EMP-001 or MA-EMP-102
   fullName: string;
   position: string;
   department: string;
@@ -21,8 +31,63 @@ export interface Employee {
   hireDate?: string;
   phone?: string;
   email?: string;
-  status: 'Active' | 'OnLeave' | 'Terminated';
+  status: 'Active' | 'OnLeave' | 'Terminated' | 'Inactive';
   notes?: string;
+
+  // 1. Employer Info
+  employerName?: string;
+  employerLocation?: string;
+  employerHouseNumber?: string;
+  employerPhone?: string;
+
+  // 2. Personal Info
+  gender?: string;
+  dateOfBirth?: string;
+  maritalStatus?: string;
+  address?: string;
+
+  // 3. Family Info
+  spouseName?: string;
+  spousePhone?: string;
+  childrenCount?: number;
+
+  // 4. Education Background
+  educationBackground?: EducationItem[];
+
+  // 5. Job Details
+  haveWorkExperience?: boolean;
+
+  // 6. Bank and TIN (Payroll Details)
+  salaryBankName?: string;
+  salaryBankAccount?: string;
+  pfBankName?: string;
+  pfBankAccount?: string;
+  socialId?: string;
+  tin?: string;
+  grossSalary?: number;
+  overtime?: number;
+  transportAllowance?: number;
+  houseAllowance?: number;
+  communicationAllowance?: number;
+  bonus?: number;
+  tax?: number; // Income tax
+  pension?: number; // Pension deduction (e.g. 7%)
+  providentFund?: number;
+  credit?: number;
+  penalty?: number;
+  deduction?: number; // Total deductions
+  benefit?: number; // Total benefits/allowances
+  netSalary?: number; // Calculated net salary
+
+  // 7. Emergency Contact
+  emergencySalutation?: string;
+  emergencyFirstName?: string;
+  emergencyMiddleName?: string;
+  emergencyLastName?: string;
+  emergencyRelationship?: string;
+  emergencyPhone?: string;
+  emergencyAddress?: string;
+
   createdAt?: unknown;
 }
 

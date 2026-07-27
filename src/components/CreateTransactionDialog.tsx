@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
+import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 // Known transaction-type labels (English + Amharic). Custom types added in
 // Module Config fall back to their raw value.
@@ -152,13 +153,10 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
           )}
 
           <div>
-            <Label htmlFor="date">Date *</Label>
-            <Input
-              id="date"
-              type="date"
+            <Label htmlFor="date">ቀን (Date) *</Label>
+            <EthiopianDatePicker
               value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              required
+              onChange={(isoDate) => setFormData({ ...formData, date: isoDate })}
             />
           </div>
 

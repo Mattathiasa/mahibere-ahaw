@@ -9,11 +9,11 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { Button } from './home-components/Button';
 import { Card } from './home-components/Card';
 import { ThreeBackground } from '../components/ThreeBackground';
+import { OrthodoxCross3D } from '../components/OrthodoxCross3D';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import logo from '@/assets/logo.png';
-import heroImage from '@/assets/heroImage.jpg';
 import { optimized } from '@/services/cloudinary';
 
 // Map icon name strings (stored in Firestore) to Lucide components
@@ -181,20 +181,13 @@ const Home: React.FC = () => {
             </motion.div>
           </div>
 
-          <motion.div initial={{ opacity: 0, scale: 0.8, rotate: -5 }} animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 100, damping: 20 }} className="relative hidden lg:block">
-            <div className="absolute -inset-10 bg-[#2E5E99]/10 blur-[100px] rounded-full" />
-            <Card className="relative overflow-hidden group border-[#2E5E99]/10 bg-white/40 shadow-2xl !p-0">
-              <img src={hero.imageUrl ? optimized(hero.imageUrl) : heroImage} alt="Mahibere Ahaw" className="w-full aspect-video object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0D2440]/90 via-[#0D2440]/20 to-transparent" />
-              <div className="absolute bottom-10 left-10 space-y-2">
-                <div className="flex gap-2">
-                  <div className="w-12 h-2 rounded-full bg-[#2E5E99]" />
-                  <div className="w-6 h-2 rounded-full bg-white/20" />
-                </div>
-                <h4 className="text-2xl font-bold text-white">Mahibere Ahaw</h4>
-              </div>
-            </Card>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }} className="relative">
+            {/* interactive 3D Ethiopian Orthodox cross — drag to spin, double-tap to reset */}
+            <div className="absolute -inset-10 bg-[#FABB2A]/15 blur-[100px] rounded-full" />
+            <div className="relative h-[380px] sm:h-[460px] lg:h-[560px]">
+              <OrthodoxCross3D />
+            </div>
             {/* Floating stat cards hidden for now
             <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity }}
               className="absolute -top-10 -right-10 bg-white/80 backdrop-blur-2xl p-6 rounded-3xl border border-[#2E5E99]/10 shadow-2xl">

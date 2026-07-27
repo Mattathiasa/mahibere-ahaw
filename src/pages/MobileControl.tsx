@@ -29,6 +29,8 @@ const FEATURE_LABELS: Record<string, string> = {
   members: 'Members',
   meetings: 'Meetings',
   finance: 'Finance',
+  hr: 'Human Resources',
+  inventory: 'Inventory',
   hierarchy: 'Hierarchy',
   higeDenb: 'HigeDenb',
   churchRules: 'Church Rules',

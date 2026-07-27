@@ -7,17 +7,22 @@ import { auditLogService } from '@/services/auditLog';
 
 export interface Asset {
   id: string;
+  assetId?: string;
   name: string;
   category: string;
+  assetType?: 'Equipment' | 'Furniture' | 'Vehicle' | 'Electronics' | 'RealEstate' | 'Other';
   quantity: number;
   location: string;
   condition: 'New' | 'Good' | 'Fair' | 'Poor';
-  status: 'InUse' | 'InStorage' | 'Maintenance' | 'Retired';
+  status: 'InUse' | 'InStorage' | 'Maintenance' | 'Retired' | 'Disposed';
   /** Whether the asset was bought or rented. */
   acquisitionType: 'Purchased' | 'Rented';
   value?: number;
   purchaseDate?: string;
   assignedTo?: string;
+  disposed?: boolean;
+  disposedDate?: string;
+  disposedReason?: string;
   notes?: string;
   createdAt?: unknown;
 }

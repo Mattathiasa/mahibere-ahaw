@@ -15,6 +15,8 @@ export const MOBILE_FEATURE_KEYS = [
   'members',
   'meetings',
   'finance',
+  'hr',
+  'inventory',
   'hierarchy',
   'higeDenb',
   'churchRules',

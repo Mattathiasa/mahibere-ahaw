@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Language } from '@/i18n/translations';
+import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -281,12 +282,10 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
+                  <Label htmlFor="dateOfBirth">የትውልድ ቀን (Date of Birth)</Label>
+                  <EthiopianDatePicker
                     value={profileData.dateOfBirth}
-                    onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
+                    onChange={(isoDate) => setProfileData({ ...profileData, dateOfBirth: isoDate })}
                   />
                 </div>
                 <div className="space-y-2">

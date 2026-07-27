@@ -9,6 +9,7 @@ import { FileUpload } from '@/components/ui/file-upload';
 import { RecipientSelector } from '@/components/ui/recipient-selector';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 interface CreateFinancialReportDialogProps {
   open: boolean;
@@ -99,24 +100,18 @@ export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLo
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="startDate">Start Date *</Label>
-              <Input
-                id="startDate"
-                type="date"
+              <Label htmlFor="startDate">የሚጀምራ ቀን (Start Date) *</Label>
+              <EthiopianDatePicker
                 value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                required
+                onChange={(isoDate) => setFormData({ ...formData, startDate: isoDate })}
               />
             </div>
 
             <div>
-              <Label htmlFor="endDate">End Date *</Label>
-              <Input
-                id="endDate"
-                type="date"
+              <Label htmlFor="endDate">የሚጀመቃ ቀን (End Date) *</Label>
+              <EthiopianDatePicker
                 value={formData.endDate}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                required
+                onChange={(isoDate) => setFormData({ ...formData, endDate: isoDate })}
               />
             </div>
           </div>

@@ -1,9 +1,15 @@
-import { Bell, Calendar, FileText, Users as UsersIcon, Clock, Sparkles, ArrowRight, Zap, Mail, Phone, Briefcase, Heart, Baby, MapPin, UserCircle, ShieldCheck, Building } from 'lucide-react';
-import { toDate } from '@/lib/date-utils';
+import { useState, useEffect } from 'react';
+import {
+  Bell, Calendar, FileText, Users as UsersIcon, Clock, Sparkles, ArrowRight, Zap, Mail,
+  Phone, Briefcase, Heart, Baby, UserCircle, ShieldCheck, Building, Search, Share2,
+  DollarSign, UserPlus, MessageSquare, UserCheck, PlusCircle, BookOpen
+} from 'lucide-react';
+import { toDate, toEthiopianDateString } from '@/lib/date-utils';
 import { StatCard } from '@/components/StatCard';
 import AnnouncementCard from '@/components/AnnouncementCard';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { useQuery } from '@tanstack/react-query';
@@ -14,11 +20,28 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const permissions = useRolePermissions();
   const { user: currentUser } = useAuth();
-  const { t } = useTranslation(); // flat function — works for all keys
+  const { t } = useTranslation();
+
+  const [timeString, setTimeString] = useState('');
+  const [memberSearch, setMemberSearch] = useState('');
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      setTimeString(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const ethDate = toEthiopianDateString();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -48,22 +71,30 @@ const Dashboard = () => {
   if (!currentUser) return null;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-16">
 
-      {/* ── Profile header ── */}
+      {/* ── Hero Profile & Live Ethiopian Clock Card ── */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative group p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl overflow-hidden"
+        className="relative group p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#2E5E99]/5 rounded-full -mr-64 -mt-64 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between">
 
           <div className="flex-1 space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20 shadow-inner">
-              <UserCircle className="h-4 w-4" />
-              {t('memberProfile')}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] dark:text-[#7BA4D0] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20 shadow-inner">
+                <UserCircle className="h-4 w-4" />
+                {t('memberProfile')}
+              </div>
+              {/* Ethiopian Live Calendar Tag */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{timeString}</span> • <span>ዕለተ፡ {ethDate}</span>
+              </div>
             </div>
+
             <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2440] dark:text-white font-ethiopic leading-tight">
               {currentUser?.fullNameEnglish || currentUser?.fullName || 'Church Member'}
               {currentUser?.fullNameAmharic && (
@@ -72,9 +103,10 @@ const Dashboard = () => {
                 </span>
               )}
             </h1>
+
             <div className="flex flex-wrap items-center gap-3 pt-2">
               {currentUser?.hierarchyLevel && (
-                <Badge className="bg-[#2E5E99]/10 text-[#2E5E99] border-none uppercase tracking-widest text-[10px] px-3 py-1">
+                <Badge className="bg-[#2E5E99]/10 text-[#2E5E99] dark:text-[#7BA4D0] border-none uppercase tracking-widest text-[10px] px-3 py-1">
                   <Building className="w-3 h-3 mr-1 inline" />
                   {currentUser.hierarchyLevel}
                 </Badge>
@@ -85,10 +117,6 @@ const Dashboard = () => {
                   {t('role')}: {currentUser.role}
                 </Badge>
               )}
-              <span className="text-xs font-bold text-[#0D2440]/50 dark:text-white/50 ml-2">
-                <Calendar className="w-3 h-3 inline mr-1" />
-                {t('joined')}: {currentUser?.createdAt ? format(toDate(currentUser.createdAt), 'MMM yyyy') : 'Recently'}
-              </span>
             </div>
           </div>
 
@@ -117,34 +145,64 @@ const Dashboard = () => {
                 </p>
               </div>
             )}
-            {currentUser?.dateOfBirth && (
-              <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-widest font-black text-[#2E5E99]/60">{t('dateOfBirth')}</p>
-                <p className="text-sm font-bold text-[#0D2440] dark:text-white flex items-center gap-1.5">
-                  <Baby className="w-3.5 h-3.5 opacity-50 text-[#2E5E99]" /> {format(toDate(currentUser.dateOfBirth), 'MMM d, yyyy')}
-                </p>
-              </div>
-            )}
-            {currentUser?.workSchool && (
-              <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-widest font-black text-[#2E5E99]/60">{t('workSchool')}</p>
-                <p className="text-sm font-bold text-[#0D2440] dark:text-white flex items-center gap-1.5 truncate max-w-[130px]" title={currentUser.workSchool}>
-                  <Briefcase className="w-3.5 h-3.5 opacity-50 text-[#2E5E99]" /> {currentUser.workSchool}
-                </p>
-              </div>
-            )}
-            {currentUser?.maritalStatus && (
-              <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-widest font-black text-[#2E5E99]/60">{t('status')}</p>
-                <p className="text-sm font-bold text-[#0D2440] dark:text-white flex items-center gap-1.5">
-                  <Heart className="w-3.5 h-3.5 opacity-50 text-[#2E5E99]" />
-                  {currentUser.maritalStatus} {currentUser.hasChildren ? `(${currentUser.childrenCount || 0} Kids)` : ''}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </motion.div>
+
+      {/* ── Daily Verse & Member Search Widget ── */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Daily Verse (የዕለቱ ጥቅስ) Widget */}
+        <Card className="md:col-span-8 bg-gradient-to-br from-white/60 to-white/30 dark:from-[#0D2440]/60 dark:to-[#0D2440]/30 backdrop-blur-2xl border-white/20 dark:border-white/5 rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[#2E5E99]/10 dark:border-white/10 pb-3 mb-4">
+            <h3 className="text-xl font-bold font-ethiopic text-[#0D2440] dark:text-white flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-[#2E5E99]" />
+              የዕለቱ ጥቅስ
+            </h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                navigator.clipboard.writeText("ሁለተኞቱም ይህችን ትመስላለች፤ እርስዋም። ባልንጀራህን እንደ ነፍስህ ውደድ የምትለው ናት። - የማቴዎስ ወንጌል 22:39");
+                toast.success("Daily verse copied!");
+              }}
+              className="text-[#2E5E99] hover:bg-[#2E5E99]/10 rounded-full"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <blockquote className="text-lg sm:text-xl font-medium font-ethiopic leading-relaxed text-[#0D2440] dark:text-slate-100">
+            "ሁለተኞቱም ይህችን ትመስላለች፤ እርስዋም። ባልንጀራህን እንደ ነፍስህ ውደድ የምትለው ናት።"
+          </blockquote>
+          <p className="text-[#2E5E99] font-bold text-sm font-ethiopic mt-3">
+            የማቴዎስ ወንጌል 22:39
+          </p>
+        </Card>
+
+        {/* Member Search Bar Widget */}
+        <Card className="md:col-span-4 bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-2xl border-white/20 dark:border-white/5 rounded-[2rem] p-6 shadow-xl flex flex-col justify-center gap-3">
+          <label className="text-xs font-black uppercase tracking-widest text-[#2E5E99]">Member Search</label>
+          <div className="flex gap-2">
+            <Input
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              placeholder="Search member name..."
+              className="rounded-xl border-[#2E5E99]/20"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && memberSearch.trim()) {
+                  navigate(`/members?search=${encodeURIComponent(memberSearch)}`);
+                }
+              }}
+            />
+            <Button
+              onClick={() => navigate(`/members?search=${encodeURIComponent(memberSearch)}`)}
+              className="bg-[#2E5E99] hover:bg-[#204a7c] text-white rounded-xl"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        </Card>
+      </div>
 
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
@@ -155,12 +213,43 @@ const Dashboard = () => {
         ))}
       </div>
 
+      {/* ── Comprehensive Quick Actions Grid (Quickboard Actions) ── */}
+      {permissions.dashboardView !== 'basic' && (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-black tracking-tight text-[#0D2440] dark:text-white flex items-center gap-3">
+            <Zap className="h-6 w-6 text-[#2E5E99]" />
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { to: '/members?action=register', icon: UserPlus, title: 'Register Member', color: 'text-indigo-500' },
+              { to: '/announcements?action=send', icon: MessageSquare, title: 'Send Message', color: 'text-sky-500' },
+              { to: '/finance?action=revenue', icon: DollarSign, title: 'Record Revenue', color: 'text-emerald-500' },
+              { to: '/finance?action=requisition', icon: FileText, title: 'Request Requisition', color: 'text-amber-500' },
+              { to: '/hr?action=add', icon: UserCheck, title: 'Add Staff', color: 'text-purple-500' },
+              { to: '/inventory?action=add', icon: PlusCircle, title: 'Add Asset', color: 'text-teal-500' },
+            ].map((act, i) => (
+              <Link key={i} to={act.to}>
+                <motion.div whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.95 }}>
+                  <Button variant="outline" className="w-full h-32 flex flex-col justify-center items-center gap-3 p-4 rounded-3xl border-[#2E5E99]/10 backdrop-blur-xl bg-white/40 dark:bg-white/5 shadow-sm hover:shadow-xl hover:bg-white/60 group">
+                    <div className={`p-3 rounded-2xl bg-white/50 dark:bg-black/20 ${act.color}`}>
+                      <act.icon className="h-6 w-6" />
+                    </div>
+                    <span className="font-bold text-xs text-[#0D2440] dark:text-white text-center leading-tight">
+                      {act.title}
+                    </span>
+                  </Button>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Content Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* ── Main column ── */}
+        {/* Main Column - Recent Announcements */}
         <div className="lg:col-span-2 space-y-8">
-
-          {/* Recent Announcements */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black tracking-tight text-[#0D2440] dark:text-white flex items-center gap-3">
@@ -191,45 +280,10 @@ const Dashboard = () => {
               </Card>
             )}
           </div>
-
-          {/* Quick Actions */}
-          {permissions.dashboardView !== 'basic' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black tracking-tight text-[#0D2440] dark:text-white flex items-center gap-3">
-                <Zap className="h-6 w-6 text-[#2E5E99]" />
-                {t('divineTasks')}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { to: '/reports',       icon: FileText,  title: t('submitReport'),  desc: t('monitoringHeaderDesc') },
-                  { to: '/members',       icon: UsersIcon, title: t('viewMembers'),   desc: t('membersHeaderDesc') },
-                  { to: '/announcements', icon: Bell,      title: t('announcements'), desc: t('latestChurchUpdates') },
-                ].map((action, i) => (
-                  <Link key={i} to={action.to}>
-                    <motion.div whileHover={{ scale: 1.05, y: -5 }} whileTap={{ scale: 0.95 }} className="h-full">
-                      <Button variant="outline" className="w-full h-full justify-start p-6 rounded-3xl border-[#2E5E99]/10 backdrop-blur-xl bg-white/40 dark:bg-white/5 shadow-sm hover:shadow-xl hover:shadow-[#2E5E99]/5 hover:bg-white/60 group" size="lg">
-                        <div className="flex flex-col gap-4 text-left">
-                          <div className="p-3 rounded-2xl bg-[#2E5E99]/10 text-[#2E5E99] group-hover:bg-[#2E5E99] group-hover:text-white transition-colors w-fit">
-                            <action.icon className="h-6 w-6" />
-                          </div>
-                          <div>
-                            <p className="font-black text-lg text-[#0D2440] dark:text-white font-ethiopic">{action.title}</p>
-                            <p className="text-xs text-[#0D2440]/60 dark:text-white/60 font-medium line-clamp-2">{action.desc}</p>
-                          </div>
-                        </div>
-                      </Button>
-                    </motion.div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* ── Sidebar ── */}
+        {/* Sidebar - Upcoming Meetings & Recent Reports */}
         <div className="space-y-8">
-
-          {/* Upcoming Meetings */}
           <section className="space-y-6">
             <h2 className="text-2xl font-black tracking-tight text-[#0D2440] dark:text-white flex items-center gap-3">
               <Calendar className="h-6 w-6 text-[#2E5E99]" />
@@ -264,7 +318,6 @@ const Dashboard = () => {
             )}
           </section>
 
-          {/* Recent Reports */}
           <section className="space-y-6">
             <h2 className="text-2xl font-black tracking-tight text-[#0D2440] dark:text-white flex items-center gap-3">
               <FileText className="h-6 w-6 text-[#2E5E99]" />

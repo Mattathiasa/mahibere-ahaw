@@ -21,10 +21,17 @@ let fetchPromise: Promise<void> | null = null;
 function ensureFetched(): Promise<void> {
   if (cachedData) return Promise.resolve();
   if (fetchPromise) return fetchPromise;
-  fetchPromise = landingContentService
+  // Don't leave visitors on the skeleton forever if Firestore is slow or
+  // unreachable — fall back to defaults after 6s (late data still caches
+  // for the next mount).
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 6000));
+  const fetch = landingContentService
     .getAll()
     .then((data) => { cachedData = data; })
     .catch(() => { cachedData = {}; });
+  fetchPromise = Promise.race([fetch, timeout]).then(() => {
+    if (!cachedData) fetchPromise = null; // timed out — let a later mount retry
+  });
   return fetchPromise;
 }
 

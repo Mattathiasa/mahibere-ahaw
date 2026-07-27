@@ -43,3 +43,21 @@ export function toDate(value: any): Date {
 
     return result;
 }
+
+import { toEthiopianDate } from './ethiopian-calendar';
+
+/**
+ * Returns formatted Ethiopian Date string as system default, e.g. "ሐምሌ 20, 2018 ዓ.ም.".
+ */
+export function toEthiopianDateString(dateInput?: any): string {
+  const ethObj = toEthiopianDate(dateInput);
+  return ethObj.formatted;
+}
+
+/**
+ * Global helper to format any date into system default string (Ethiopian Date).
+ */
+export function formatDateSystemDefault(dateInput?: any): string {
+  return toEthiopianDateString(dateInput);
+}
+
