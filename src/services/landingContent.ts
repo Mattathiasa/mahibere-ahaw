@@ -53,6 +53,33 @@ export interface LandingContent {
     missionStatement: string;
     banks: LandingBank[];
   };
+  /**
+   * Public contact block rendered as its own homepage section. Distinct from
+   * `footer`, which only carries the small social icon row.
+   */
+  contact: {
+    badge: string;
+    sectionTitle: string;
+    sectionDescription: string;
+    addressLabel: string;
+    address: string;
+    phoneLabel: string;
+    /** One or more public phone numbers, rendered as `tel:` links. */
+    phones: string[];
+    emailLabel: string;
+    /** One or more public addresses, rendered as `mailto:` links. */
+    emails: string[];
+    hoursLabel: string;
+    hours: string;
+    /** Google Maps (or any) link shown as "Open in Maps". */
+    mapUrl?: string;
+    socialsLabel: string;
+    youtube?: string;
+    telegram?: string;
+    facebook?: string;
+    tiktok?: string;
+    website?: string;
+  };
   footer: {
     description: string;
     email: string;
@@ -62,6 +89,19 @@ export interface LandingContent {
     phone?: string;
   };
 }
+
+/**
+ * Canonical public contact details. Kept in one place so the four language
+ * defaults below cannot drift apart — only the *labels* are translated, the
+ * numbers and URLs themselves are language-independent.
+ */
+const CONTACT_CHANNELS = {
+  youtube: 'https://www.youtube.com/@Meleket%E1%88%98%E1%88%88%E1%8A%A8%E1%89%B5',
+  telegram: 'https://t.me/meleketeahew',
+  phones: ['+251 911 00 00 00'],
+  emails: ['meleketeahew@gmail.com'],
+  mapUrl: '',
+} as const;
 
 // ─── Per-language store ───────────────────────────────────────────────────────
 
@@ -116,10 +156,30 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { name: 'Nib Bank', account: '7000012443035' },
       ],
     },
+    contact: {
+      badge: 'Get in Touch',
+      sectionTitle: 'Contact Us',
+      sectionDescription: 'Reach the head office directly — by phone, by email, or in person.',
+      addressLabel: 'Address',
+      address: 'Addis Ababa, Ethiopia',
+      phoneLabel: 'Phone',
+      phones: [...CONTACT_CHANNELS.phones],
+      emailLabel: 'Email',
+      emails: [...CONTACT_CHANNELS.emails],
+      hoursLabel: 'Office Hours',
+      hours: 'Monday – Friday, 8:30 AM – 5:00 PM',
+      mapUrl: CONTACT_CHANNELS.mapUrl,
+      socialsLabel: 'Follow Us',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+    },
     footer: {
       description: 'Integrating ancient spiritual values with the precision of modern engineering. Join the movement of digital discipleship.',
       email: 'meleketeahew@gmail.com',
       copyright: '© 2025 Mahibere Ahaw Ecosystem. All rights reserved.',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+      phone: CONTACT_CHANNELS.phones[0],
     },
   },
   am: {
@@ -165,10 +225,30 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { name: 'ኒብ ባንክ', account: '7000012443035' },
       ],
     },
+    contact: {
+      badge: 'ያግኙን',
+      sectionTitle: 'እኛን ያግኙ',
+      sectionDescription: 'ዋናውን ጽሕፈት ቤት በስልክ፣ በኢሜይል ወይም በአካል ያግኙ።',
+      addressLabel: 'አድራሻ',
+      address: 'አዲስ አበባ፣ ኢትዮጵያ',
+      phoneLabel: 'ስልክ',
+      phones: [...CONTACT_CHANNELS.phones],
+      emailLabel: 'ኢሜይል',
+      emails: [...CONTACT_CHANNELS.emails],
+      hoursLabel: 'የሥራ ሰዓት',
+      hours: 'ከሰኞ – ዓርብ፣ ከጠዋቱ 2:30 – ከቀኑ 11:00',
+      mapUrl: CONTACT_CHANNELS.mapUrl,
+      socialsLabel: 'ይከተሉን',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+    },
     footer: {
       description: 'የጥንታዊ መንፈሳዊ እሴቶችን ከዘመናዊ ምህንድስና ትክክለኛነት ጋር በማዋሃድ። የዲጂታል ደቀ መዝሙርነት እንቅስቃሴን ይቀላቀሉ።',
       email: 'meleketeahew@gmail.com',
       copyright: '© 2025 ማኅበረ አኀው ስነ-ምህዳር። ሁሉም መብቶች የተጠበቁ ናቸው።',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+      phone: CONTACT_CHANNELS.phones[0],
     },
   },
   om: {
@@ -214,10 +294,30 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { name: 'Nib Bank', account: '7000012443035' },
       ],
     },
+    contact: {
+      badge: 'Nu Quunnami',
+      sectionTitle: 'Nu Quunnamaa',
+      sectionDescription: 'Waajjira muummee kallattiin quunnamaa — bilbilaan, imeeliin yookaan dhufuun.',
+      addressLabel: 'Teessoo',
+      address: 'Finfinnee, Itoophiyaa',
+      phoneLabel: 'Bilbila',
+      phones: [...CONTACT_CHANNELS.phones],
+      emailLabel: 'Imeelii',
+      emails: [...CONTACT_CHANNELS.emails],
+      hoursLabel: 'Sa\'aatii Hojii',
+      hours: 'Wiixata – Jimaata, 2:30 – 11:00',
+      mapUrl: CONTACT_CHANNELS.mapUrl,
+      socialsLabel: 'Nu Hordofaa',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+    },
     footer: {
       description: 'Aadaa hafuuraa durii fi ogummaa injinariingii ammayyaa waliin makuun. Sosochii bartummaa dijitaalaa bira gaa\'i.',
       email: 'meleketeahew@gmail.com',
       copyright: '© 2025 Mahibere Ahaw Ecosystem. Mirgi hundi eegamaadha.',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+      phone: CONTACT_CHANNELS.phones[0],
     },
   },
   ti: {
@@ -263,10 +363,30 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { name: 'ኒብ ባንክ', account: '7000012443035' },
       ],
     },
+    contact: {
+      badge: 'ርኸቡና',
+      sectionTitle: 'ርኸቡና',
+      sectionDescription: 'ንቤት ጽሕፈት ብቐጥታ ብተሌፎን፣ ብኢመይል ወይ ብኣካል ርኸቡና።',
+      addressLabel: 'ኣድራሻ',
+      address: 'ኣዲስ ኣበባ፣ ኢትዮጵያ',
+      phoneLabel: 'ተሌፎን',
+      phones: [...CONTACT_CHANNELS.phones],
+      emailLabel: 'ኢመይል',
+      emails: [...CONTACT_CHANNELS.emails],
+      hoursLabel: 'ናይ ስራሕ ሰዓታት',
+      hours: 'ሰኑይ – ዓርቢ፣ 2:30 – 11:00',
+      mapUrl: CONTACT_CHANNELS.mapUrl,
+      socialsLabel: 'ተኸታተሉና',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+    },
     footer: {
       description: 'ጥንታዊ መንፈሳዊ ክብርታት ምስ ዘመናዊ ምህንድስና ብምውህሃድ። ናብ ምንቅስቓስ ዲጂታላዊ ደቀ መዛሙርትነት ተጸንበሩ።',
       email: 'meleketeahew@gmail.com',
       copyright: '© 2025 ማሕበረ ኣኀው። ኩሉ መሰላት ዝተሓለወ እዩ።',
+      youtube: CONTACT_CHANNELS.youtube,
+      telegram: CONTACT_CHANNELS.telegram,
+      phone: CONTACT_CHANNELS.phones[0],
     },
   },
 };

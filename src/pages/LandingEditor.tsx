@@ -160,6 +160,23 @@ const LandingEditor: React.FC = () => {
   function setFooter(key: keyof LandingContent['footer'], value: string) {
     patch((c) => ({ ...c, footer: { ...c.footer, [key]: value } }));
   }
+  function setContact(key: keyof LandingContent['contact'], value: string) {
+    patch((c) => ({ ...c, contact: { ...c.contact, [key]: value } }));
+  }
+  /** Phones and emails are plain string lists — one editable row each. */
+  function setContactListItem(key: 'phones' | 'emails', i: number, value: string) {
+    patch((c) => {
+      const list = [...(c.contact[key] ?? [])];
+      list[i] = value;
+      return { ...c, contact: { ...c.contact, [key]: list } };
+    });
+  }
+  function addContactListItem(key: 'phones' | 'emails') {
+    patch((c) => ({ ...c, contact: { ...c.contact, [key]: [...(c.contact[key] ?? []), ''] } }));
+  }
+  function removeContactListItem(key: 'phones' | 'emails', i: number) {
+    patch((c) => ({ ...c, contact: { ...c.contact, [key]: (c.contact[key] ?? []).filter((_, idx) => idx !== i) } }));
+  }
   function setSupport(key: keyof LandingContent['support'], value: string) {
     patch((c) => ({ ...c, support: { ...c.support, [key]: value } }));
   }
@@ -359,6 +376,7 @@ const LandingEditor: React.FC = () => {
                 <TabsTrigger value="stats">Stats</TabsTrigger>
                 <TabsTrigger value="features">Features</TabsTrigger>
                 <TabsTrigger value="support">Support & Banks</TabsTrigger>
+                <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="footer">Footer</TabsTrigger>
               </TabsList>
 
@@ -633,6 +651,113 @@ const LandingEditor: React.FC = () => {
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              {/* ── Contact ── */}
+              <TabsContent value="contact">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contact Section</CardTitle>
+                    <CardDescription>
+                      The public "Contact Us" section on the homepage. The nav bar's
+                      Contact link scrolls here.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Badge text" hint="Small pill above the title">
+                        <Input value={content.contact.badge} onChange={(e) => setContact('badge', e.target.value)} />
+                      </Field>
+                      <Field label="Section title">
+                        <Input value={content.contact.sectionTitle} onChange={(e) => setContact('sectionTitle', e.target.value)} />
+                      </Field>
+                    </div>
+                    <Field label="Section description">
+                      <Textarea rows={2} value={content.contact.sectionDescription} onChange={(e) => setContact('sectionDescription', e.target.value)} />
+                    </Field>
+
+                    <SectionDivider label="Address" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Address card label">
+                        <Input value={content.contact.addressLabel} onChange={(e) => setContact('addressLabel', e.target.value)} />
+                      </Field>
+                      <Field label="Google Maps link (optional)">
+                        <Input value={content.contact.mapUrl ?? ''} onChange={(e) => setContact('mapUrl', e.target.value)} placeholder="https://maps.app.goo.gl/…" />
+                      </Field>
+                    </div>
+                    <Field label="Address">
+                      <Textarea rows={3} value={content.contact.address} onChange={(e) => setContact('address', e.target.value)} />
+                    </Field>
+
+                    <SectionDivider label="Phone numbers" />
+                    <Field label="Phone card label">
+                      <Input value={content.contact.phoneLabel} onChange={(e) => setContact('phoneLabel', e.target.value)} />
+                    </Field>
+                    <div className="space-y-2">
+                      {(content.contact.phones ?? []).map((p, i) => (
+                        <div key={i} className="flex gap-2">
+                          <Input value={p} onChange={(e) => setContactListItem('phones', i, e.target.value)} placeholder="+251 911 22 33 44" />
+                          <Button type="button" variant="outline" size="icon" onClick={() => removeContactListItem('phones', i)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button type="button" variant="outline" size="sm" onClick={() => addContactListItem('phones')}>
+                        <Plus className="h-4 w-4 mr-2" /> Add phone
+                      </Button>
+                    </div>
+
+                    <SectionDivider label="Email addresses" />
+                    <Field label="Email card label">
+                      <Input value={content.contact.emailLabel} onChange={(e) => setContact('emailLabel', e.target.value)} />
+                    </Field>
+                    <div className="space-y-2">
+                      {(content.contact.emails ?? []).map((em, i) => (
+                        <div key={i} className="flex gap-2">
+                          <Input type="email" value={em} onChange={(e) => setContactListItem('emails', i, e.target.value)} placeholder="name@example.com" />
+                          <Button type="button" variant="outline" size="icon" onClick={() => removeContactListItem('emails', i)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button type="button" variant="outline" size="sm" onClick={() => addContactListItem('emails')}>
+                        <Plus className="h-4 w-4 mr-2" /> Add email
+                      </Button>
+                    </div>
+
+                    <SectionDivider label="Office hours" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Hours card label">
+                        <Input value={content.contact.hoursLabel} onChange={(e) => setContact('hoursLabel', e.target.value)} />
+                      </Field>
+                      <Field label="Office hours">
+                        <Input value={content.contact.hours} onChange={(e) => setContact('hours', e.target.value)} />
+                      </Field>
+                    </div>
+
+                    <SectionDivider label="Social links" />
+                    <Field label="Socials heading">
+                      <Input value={content.contact.socialsLabel} onChange={(e) => setContact('socialsLabel', e.target.value)} />
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="YouTube URL">
+                        <Input value={content.contact.youtube ?? ''} onChange={(e) => setContact('youtube', e.target.value)} placeholder="https://youtube.com/@…" />
+                      </Field>
+                      <Field label="Telegram URL">
+                        <Input value={content.contact.telegram ?? ''} onChange={(e) => setContact('telegram', e.target.value)} placeholder="https://t.me/…" />
+                      </Field>
+                      <Field label="Facebook URL">
+                        <Input value={content.contact.facebook ?? ''} onChange={(e) => setContact('facebook', e.target.value)} placeholder="https://facebook.com/…" />
+                      </Field>
+                      <Field label="TikTok URL">
+                        <Input value={content.contact.tiktok ?? ''} onChange={(e) => setContact('tiktok', e.target.value)} placeholder="https://tiktok.com/@…" />
+                      </Field>
+                      <Field label="Website URL">
+                        <Input value={content.contact.website ?? ''} onChange={(e) => setContact('website', e.target.value)} placeholder="https://…" />
+                      </Field>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* ── Footer ── */}

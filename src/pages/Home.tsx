@@ -4,6 +4,7 @@ import {
   Users, FileText, BarChart3, Sun, Moon,
   Languages, Mail, MapPin, CheckCircle2, Sparkles, Menu, X,
   ArrowRight, Heart, Calendar, MessageSquare, Bell, Shield, Youtube, Send, Phone,
+  Clock, Globe, Church, Facebook, Music2, ExternalLink,
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Button } from './home-components/Button';
@@ -20,6 +21,7 @@ import { optimized } from '@/services/cloudinary';
 const ICON_MAP: Record<string, React.ElementType> = {
   Users, FileText, BarChart3, Calendar, MapPin, Shield, Heart,
   Languages, Bell, CheckCircle2, Mail, ArrowRight, Sparkles,
+  Youtube, Send, Phone, Clock, Globe, Church, MessageSquare,
 };
 
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
@@ -78,7 +80,7 @@ const Home: React.FC = () => {
     );
   }
 
-  const { hero, stats, features, support, footer } = content;
+  const { hero, stats, features, support, footer, contact } = content;
 
   return (
     <div className={`min-h-screen selection:bg-[#2E5E99]/30 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440] text-white' : 'bg-[#E7F0FA] text-[#0D2440]'}`}>
@@ -185,6 +187,20 @@ const Home: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.2 }} className="relative">
             {/* interactive 3D Ethiopian Orthodox cross — drag to spin, double-tap to reset */}
             <div className="absolute -inset-10 bg-[#FABB2A]/15 blur-[100px] rounded-full" />
+            {/* Optional hero photo (Landing Editor → Hero) sits behind the cross
+                as a soft backdrop. Empty by default, in which case only the glow shows. */}
+            {hero.imageUrl && (
+              <div
+                aria-hidden
+                className="absolute inset-0 rounded-[3rem] overflow-hidden opacity-25 blur-[2px] pointer-events-none"
+              >
+                <img
+                  src={optimized(hero.imageUrl, 1200)}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
             <div className="relative h-[380px] sm:h-[460px] lg:h-[560px]">
               <OrthodoxCross3D />
             </div>
@@ -316,8 +332,119 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* ── Contact ── */}
+      <section id="contact" className="py-32 relative">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl mb-16 space-y-4">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
+              <Phone className="h-3 w-3" />
+              {contact.badge}
+            </motion.div>
+            <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{contact.sectionTitle}</h2>
+            <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">{contact.sectionDescription}</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Address */}
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              className={`p-8 rounded-3xl border shadow-sm space-y-4 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+              <div className="inline-flex p-3 rounded-2xl bg-[#E7F0FA] border border-[#2E5E99]/10">
+                <MapPin className="h-6 w-6 text-[#2E5E99]" />
+              </div>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#2E5E99]">{contact.addressLabel}</h3>
+              <p className={`font-ethiopic leading-relaxed ${theme === 'dark' ? 'text-white/70' : 'text-[#0D2440]/70'}`}>{contact.address}</p>
+              {contact.mapUrl && (
+                <a href={contact.mapUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-[#2E5E99] hover:gap-3 transition-all">
+                  Open in Maps <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </motion.div>
+
+            {/* Phones */}
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} viewport={{ once: true }}
+              className={`p-8 rounded-3xl border shadow-sm space-y-4 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+              <div className="inline-flex p-3 rounded-2xl bg-[#E7F0FA] border border-[#2E5E99]/10">
+                <Phone className="h-6 w-6 text-[#2E5E99]" />
+              </div>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#2E5E99]">{contact.phoneLabel}</h3>
+              <ul className="space-y-2">
+                {(contact.phones ?? []).filter(Boolean).map((p) => (
+                  <li key={p}>
+                    <a href={`tel:${p.replace(/\s+/g, '')}`}
+                      className={`font-bold hover:text-[#2E5E99] transition-colors ${theme === 'dark' ? 'text-white/80' : 'text-[#0D2440]'}`}>{p}</a>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* Emails */}
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} viewport={{ once: true }}
+              className={`p-8 rounded-3xl border shadow-sm space-y-4 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+              <div className="inline-flex p-3 rounded-2xl bg-[#E7F0FA] border border-[#2E5E99]/10">
+                <Mail className="h-6 w-6 text-[#2E5E99]" />
+              </div>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#2E5E99]">{contact.emailLabel}</h3>
+              <ul className="space-y-2">
+                {(contact.emails ?? []).filter(Boolean).map((e) => (
+                  <li key={e}>
+                    <a href={`mailto:${e}`} className={`font-bold break-all hover:text-[#2E5E99] transition-colors ${theme === 'dark' ? 'text-white/80' : 'text-[#0D2440]'}`}>{e}</a>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* Hours + socials */}
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} viewport={{ once: true }}
+              className={`p-8 rounded-3xl border shadow-sm space-y-4 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+              <div className="inline-flex p-3 rounded-2xl bg-[#E7F0FA] border border-[#2E5E99]/10">
+                <Clock className="h-6 w-6 text-[#2E5E99]" />
+              </div>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#2E5E99]">{contact.hoursLabel}</h3>
+              <p className={`font-ethiopic leading-relaxed ${theme === 'dark' ? 'text-white/70' : 'text-[#0D2440]/70'}`}>{contact.hours}</p>
+              <div className="pt-2 space-y-3">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7BA4D0]">{contact.socialsLabel}</h4>
+                <div className="flex gap-2 flex-wrap">
+                  {contact.youtube && (
+                    <a href={contact.youtube} target="_blank" rel="noopener noreferrer" title="YouTube"
+                      className="p-3 rounded-xl bg-[#2E5E99]/5 hover:bg-[#FF0000] transition-all duration-300 group">
+                      <Youtube className="h-4 w-4 text-[#2E5E99] group-hover:text-white" />
+                    </a>
+                  )}
+                  {contact.telegram && (
+                    <a href={contact.telegram} target="_blank" rel="noopener noreferrer" title="Telegram"
+                      className="p-3 rounded-xl bg-[#2E5E99]/5 hover:bg-[#229ED9] transition-all duration-300 group">
+                      <Send className="h-4 w-4 text-[#2E5E99] group-hover:text-white" />
+                    </a>
+                  )}
+                  {contact.facebook && (
+                    <a href={contact.facebook} target="_blank" rel="noopener noreferrer" title="Facebook"
+                      className="p-3 rounded-xl bg-[#2E5E99]/5 hover:bg-[#1877F2] transition-all duration-300 group">
+                      <Facebook className="h-4 w-4 text-[#2E5E99] group-hover:text-white" />
+                    </a>
+                  )}
+                  {contact.tiktok && (
+                    <a href={contact.tiktok} target="_blank" rel="noopener noreferrer" title="TikTok"
+                      className="p-3 rounded-xl bg-[#2E5E99]/5 hover:bg-[#0D2440] transition-all duration-300 group">
+                      <Music2 className="h-4 w-4 text-[#2E5E99] group-hover:text-white" />
+                    </a>
+                  )}
+                  {contact.website && (
+                    <a href={contact.website} target="_blank" rel="noopener noreferrer" title="Website"
+                      className="p-3 rounded-xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] transition-all duration-300 group">
+                      <Globe className="h-4 w-4 text-[#2E5E99] group-hover:text-white" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
-      <footer id="contact" className={`pt-32 pb-12 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440]/90 border-t border-white/5' : 'bg-white border-t border-[#2E5E99]/10'}`}>
+      <footer id="footer" className={`pt-32 pb-12 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440]/90 border-t border-white/5' : 'bg-white border-t border-[#2E5E99]/10'}`}>
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-4 gap-16 mb-24">
             <div className="col-span-1 lg:col-span-1 space-y-8">
@@ -345,7 +472,7 @@ const Home: React.FC = () => {
                   </a>
                 )}
                 {footer.phone && (
-                  <a href={`tel:${footer.phone}`} title="Call" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
+                  <a href={`tel:${footer.phone.replace(/\s+/g, '')}`} title="Call" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
                     <Phone className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
                   </a>
                 )}

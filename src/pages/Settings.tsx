@@ -938,8 +938,8 @@ const Settings = () => {
             </div>
           </SectionCard>
 
-          {/* Landing Page Editor — visible to Sinodos / KuamiSinodos only */}
-          {['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '') && (
+          {/* Landing Page Editor — admin hierarchy levels plus super admins */}
+          {(isSuperAdmin || ['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '')) && (
             <SectionCard title="Landing Page Editor" icon={Layout}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -953,8 +953,8 @@ const Settings = () => {
             </SectionCard>
           )}
 
-          {/* Mobile App Control — visible to Sinodos / KuamiSinodos only */}
-          {['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '') && (
+          {/* Mobile App Control — admin hierarchy levels plus super admins */}
+          {(isSuperAdmin || ['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '')) && (
             <SectionCard title="Mobile App Control" icon={Shield}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
+import { useAuth } from '@/hooks/useAuth';
 import { LearnMore } from '@/components/LearnMore';
 import { useQuery } from '@tanstack/react-query';
 import { userService } from '@/services/users';
@@ -37,6 +38,7 @@ const Members = () => {
   const permissions = useRolePermissions();
   const { showElement } = useSoftwareControl();
   const moduleCfg = useModuleConfig('members');
+  const { user: currentUser } = useAuth();
 
   const { data: membersData, isLoading } = useQuery({
     queryKey: ['members'],

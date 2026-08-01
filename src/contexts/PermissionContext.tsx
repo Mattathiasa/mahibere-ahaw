@@ -61,9 +61,13 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
+  // Re-resolve whenever the signed-in user changes. The cached copies give an
+  // instant first paint, but they must not outlive the session that fetched
+  // them — user-level overrides are per-uid, so a stale cache would hand user B
+  // the permissions that were resolved for user A.
   useEffect(() => {
-    if (!cachedRoleOverrides) load();
-  }, []);
+    load();
+  }, [user?.id]);
 
   const isSuperAdmin =
     user?.role === 'SuperAdmin' ||
