@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { auditLogService } from '@/services/auditLog';
 import {
   collection,
   getDocs,
@@ -60,6 +61,10 @@ export const userService = {
         email,
         username,
         role: userData.role || 'user',
+        // Admin-created accounts are usable immediately — only self-service
+        // sign-ups go through the parish approval queue.
+        status: userData.status || 'active',
+        signupSource: userData.signupSource || 'admin',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -85,8 +90,26 @@ export const userService = {
     });
   },
 
+  /**
+   * Suspends an account rather than deleting the document.
+   *
+   * A hard delete removed only the Firestore record — the Firebase Auth
+   * account survived and could still sign in, and login treated the missing
+   * document as a default Atbiya-level user. Suspension is now enforced by
+   * `isActive()` in firestore.rules, so it actually revokes access.
+   */
   async deleteUser(id: string) {
+    await updateDoc(doc(db, 'users', id), {
+      status: 'suspended',
+      updatedAt: serverTimestamp(),
+    });
+    auditLogService.dataChange('delete', 'users', id, 'Suspended user account');
+  },
+
+  /** Hard delete, for genuinely erroneous records. Admin-only via rules. */
+  async purgeUser(id: string) {
     await deleteDoc(doc(db, 'users', id));
+    auditLogService.dataChange('delete', 'users', id, 'Permanently deleted user record');
   },
 
   async getUserById(id: string) {
@@ -108,11 +131,12 @@ export const userService = {
   },
 
   async getAuditLogs(limit: number = 10) {
-    // Audit logs collection — returns an empty list if it doesn't exist yet
+    // Reads 'auditLogs' — this used to read 'audit_logs' (snake_case), a
+    // collection nothing has ever written, so the tab was always empty.
     try {
       const { query: fsQuery, orderBy: fsOrderBy, limit: fsLimit } = await import('firebase/firestore');
       const q = fsQuery(
-        collection(db, 'audit_logs'),
+        collection(db, 'auditLogs'),
         fsOrderBy('createdAt', 'desc'),
         fsLimit(limit)
       );

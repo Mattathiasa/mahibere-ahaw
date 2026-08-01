@@ -1392,15 +1392,17 @@ const UserManagement = () => {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Suspend this account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the user <strong>{selectedUser?.fullName}</strong>. This action cannot be undone.
+              <strong>{selectedUser?.fullName}</strong> will immediately lose access to
+              everything in the system and will not be able to sign in. Their record is
+              kept, so you can restore access later by setting their status back to active.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={deleteUserMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleteUserMutation.isPending ? 'Deleting...' : 'Delete'}
+              {deleteUserMutation.isPending ? 'Suspending…' : 'Suspend'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

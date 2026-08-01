@@ -2,117 +2,304 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /users/{userId} {
-      allow read: if request.auth != null; 
-      allow write: if request.auth != null;
+    // ════════════════════════════════════════════════════════════════════════
+    //  Helpers
+    //
+    //  Roles are dynamic (siteConfig/roles), so nothing below hardcodes a role
+    //  name as its only source of truth. The flattened role sets live in
+    //  siteConfig/roleFlags, written atomically with the registry by
+    //  services/roleRegistry.ts.
+    //
+    //  EVERY roleFlags lookup takes a fallback that reproduces the behaviour
+    //  from before roles became dynamic. If that document is missing or
+    //  corrupt, access degrades to the old hardcoded rules rather than locking
+    //  everyone out.
+    //
+    //  Cost: the three get() paths below (users/{uid}, siteConfig/roleFlags,
+    //  siteConfig/superAdmins) are cached per request, so a gated request costs
+    //  at most 3 extra document reads no matter how many helpers reference them.
+    // ════════════════════════════════════════════════════════════════════════
+
+    function signedIn() {
+      return request.auth != null;
     }
 
-    match /meetings/{meetingId} {
-      allow read, write: if request.auth != null;
+    function userData() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : {};
     }
 
-    match /announcements/{announcementId} {
-      allow read, write: if request.auth != null;
+    function hasUserDoc() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    match /plans/{planId} {
-      allow read, write: if request.auth != null;
+    function flags() {
+      return exists(/databases/$(database)/documents/siteConfig/roleFlags)
+        ? get(/databases/$(database)/documents/siteConfig/roleFlags).data
+        : {};
     }
 
-    match /reports/{reportId} {
-      allow read, write: if request.auth != null;
+    function roleList(key, fallback) {
+      return flags().get(key, fallback);
     }
 
-    match /finance_transactions/{docId} {
-      allow read, write: if request.auth != null;
+    // The roles the app ships with — used as fallbacks only.
+    function seedRoles() {
+      return ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya',
+              'EnkesekaseMaikel', 'HiyawanMahderat'];
     }
 
-    match /finance_budgets/{docId} {
-      allow read, write: if request.auth != null;
+    function myRole()   { return userData().get('hierarchyLevel', ''); }
+    function myAtbiya() { return userData().get('atbiyaId', ''); }
+
+    // A MISSING status means 'active'. Every account created before
+    // self-service sign-up existed predates this field, and they must keep
+    // working untouched. This single default is what makes the migration safe.
+    function myStatus() { return userData().get('status', 'active'); }
+
+    function superAdminUids() {
+      return exists(/databases/$(database)/documents/siteConfig/superAdmins)
+        ? get(/databases/$(database)/documents/siteConfig/superAdmins).data.get('uids', [])
+        : [];
     }
 
-    match /finance_reports/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /notifications/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /hierarchy/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /teachings/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /missionary_applications/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /missionary_reports/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /documents/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /members/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /strategic_plans/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /partner_contacts/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /employees/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /assets/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Audit trail — any signed-in user appends entries (immutable: no update/
-    // delete); admins (siteConfig writers) read the whole collection.
-    match /auditLogs/{docId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read: if request.auth != null && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('hierarchyLevel', '') in ['Sinodos', 'KuamiSinodos']
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'SuperAdmin'
-        || request.auth.uid in get(/databases/$(database)/documents/siteConfig/superAdmins).data.get('uids', [])
+    // Deliberately NOT status-gated: the super-admin escape hatch has to
+    // survive a corrupted status field, otherwise a bad write is unrecoverable
+    // from inside the app.
+    function isSuperAdmin() {
+      return signedIn() && (
+        userData().get('role', '') == 'SuperAdmin'
+        || request.auth.uid in superAdminUids()
       );
+    }
+
+    // The universal gate: signed in, has a user document, and approved.
+    function isActive() {
+      return hasUserDoc() && myStatus() == 'active';
+    }
+
+    function inRole(key, fallback) {
+      return isActive() && (myRole() in roleList(key, fallback));
+    }
+
+    function isAdmin()          { return isSuperAdmin() || inRole('adminRoles', ['Sinodos', 'KuamiSinodos']); }
+    function isApprover()       { return isAdmin() || inRole('approverRoles', ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya']); }
+    function isMemberManager()  { return isAdmin() || inRole('memberManagerRoles', seedRoles()); }
+    function canReadDirectory() { return isAdmin() || inRole('directoryRoles', seedRoles()); }
+    function canManageNews()    { return isAdmin() || inRole('newsRoles', ['Sinodos', 'KuamiSinodos', 'Memriya']); }
+    function hasGlobalScope()   { return isAdmin() || inRole('globalScopeRoles', ['Sinodos', 'KuamiSinodos', 'Memriya']); }
+    function isAtbiyaManager()  { return isAdmin() || inRole('atbiyaManagerRoles', ['Atbiya']); }
+    function signupRole()       { return flags().get('signupRole', 'HiyawanMahderat'); }
+
+    function changed(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+    function changedOnly(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  users
+    //
+    //  Previously `allow read, write: if request.auth != null` — any signed-in
+    //  user could rewrite anyone's role, hierarchyLevel or status, which are
+    //  exactly the fields the permission system trusts.
+    // ════════════════════════════════════════════════════════════════════════
+    match /users/{userId} {
+
+      // Your own document is always readable, including while pending — the
+      // app needs it to show the right "awaiting approval" message.
+      allow get: if signedIn() && request.auth.uid == userId;
+
+      // Member directory, User Management, recipient pickers.
+      allow get, list: if canReadDirectory();
+
+      // ── Self sign-up ────────────────────────────────────────────────────
+      // Always pending, never self-elevating. Once public sign-up exists, any
+      // rule that lets a user create their own doc as 'active' is a complete
+      // authentication bypass.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.signupSource == 'self'
+        && request.resource.data.hierarchyLevel == signupRole()
+        && request.resource.data.role == 'user'
+        && request.resource.data.atbiyaId is string
+        && request.resource.data.atbiyaId.size() > 0
+        && request.resource.data.keys().hasOnly([
+             'username', 'email', 'fullName', 'fullNameEnglish', 'fullNameAmharic',
+             'phone', 'phoneNumber', 'dateOfBirth', 'gender', 'maritalStatus',
+             'hasChildren', 'childrenCount', 'workSchool', 'address',
+             'ministryType', 'churchRoles', 'profilePicture',
+             'atbiyaId', 'atbiyaName', 'hierarchyLevel', 'role', 'status',
+             'signupSource', 'requestedAt', 'createdAt', 'updatedAt'
+           ]);
+
+      // ── Admin-created accounts ──────────────────────────────────────────
+      // userService.createUser runs under the ADMIN's auth via the secondary
+      // Firebase app, so userId != request.auth.uid here.
+      allow create: if isMemberManager();
+
+      // ── Editing your own profile ────────────────────────────────────────
+      allow update: if isActive()
+        && request.auth.uid == userId
+        && !changed(['role', 'hierarchyLevel', 'status', 'atbiyaId',
+                     'hierarchyEntityId', 'mahderatId', 'approvedBy', 'approvedAt',
+                     'rejectedBy', 'rejectedAt', 'rejectedReason', 'signupSource']);
+
+      // ── An approver deciding a pending request ──────────────────────────
+      // Restricted to requests for their own parish unless they are global.
+      //
+      // A non-admin approver may set the new member's role, but NOT to an
+      // admin role and never to 'SuperAdmin' — otherwise any parish leader
+      // could register an account and approve it straight into full control.
+      allow update: if isApprover()
+        && resource.data.get('status', 'active') == 'pending'
+        && (hasGlobalScope() || resource.data.get('atbiyaId', '') == myAtbiya())
+        && request.resource.data.status in ['active', 'rejected']
+        && request.resource.data.get('role', 'user') == 'user'
+        && !(request.resource.data.get('hierarchyLevel', '')
+             in roleList('adminRoles', ['Sinodos', 'KuamiSinodos']))
+        && changedOnly(['status', 'approvedBy', 'approvedAt', 'rejectedBy',
+                        'rejectedAt', 'rejectedReason', 'hierarchyLevel', 'role',
+                        'updatedAt']);
+
+      // ── Member managers edit profiles, but never privilege fields ───────
+      // hierarchyLevel belongs here: without it, any role in memberManagerRoles
+      // (which includes Zone and Atbiya) could promote itself to Sinodos.
+      // Assigning roles is an admin action, handled by the rule below.
+      allow update: if isMemberManager()
+        && !changed(['role', 'hierarchyLevel', 'status', 'atbiyaId',
+                     'hierarchyEntityId', 'mahderatId', 'approvedBy', 'approvedAt',
+                     'rejectedBy', 'rejectedAt', 'rejectedReason', 'signupSource']);
+
+      // ── Full admin edit (role changes, suspensions) ─────────────────────
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  siteConfig
+    // ════════════════════════════════════════════════════════════════════════
+    match /siteConfig/{docId} {
+      // Public documents: the landing page and the sign-up form must render
+      // before the visitor has any account. roleFlags is included because the
+      // sign-up form needs `signupRole`; it holds no secrets, only role names.
+      allow read: if docId in ['landingPage', 'pageStrings', 'integrations',
+                               'churchRules', 'roleFlags', 'roles'];
+
+      // Everything else is readable by any signed-in user, including a pending
+      // one — the app needs moduleConfig and softwareControl to render at all.
+      allow read: if signedIn();
+
+      allow write: if isAdmin();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  hierarchy — also the Atbiya (parish) registry
+    //
+    //  The two `allow` statements below are deliberately NOT folded into one
+    //  `resource.data.level == 'Atbiya' || isActive()` disjunct: keeping them
+    //  separate makes the list-query proof unambiguous and avoids paying a
+    //  get() on anonymous traffic.
+    //
+    //  `where('level','==','Atbiya')` is an equality filter, so Firestore can
+    //  prove every returned document satisfies the rule and the public sign-up
+    //  dropdown works unauthenticated. An UNFILTERED list stays denied.
+    // ════════════════════════════════════════════════════════════════════════
+    match /hierarchy/{docId} {
+      allow get:  if resource.data.level == 'Atbiya';
+      allow list: if resource.data.level == 'Atbiya';
+      allow read: if isActive();
+
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin();
+      // A parish leader may maintain their own parish record, but cannot move
+      // it in the tree or change what kind of entity it is.
+      allow update: if isAtbiyaManager()
+        && resource.data.level == 'Atbiya'
+        && docId == myAtbiya()
+        && !changed(['level', 'parentId']);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  news — public reads only for published posts
+    // ════════════════════════════════════════════════════════════════════════
+    match /news/{newsId} {
+      allow get:  if resource.data.status == 'published';
+      allow list: if resource.data.status == 'published';
+      // Authors and admins also see drafts.
+      allow read: if canManageNews();
+
+      allow create: if canManageNews()
+        && request.resource.data.authorId == request.auth.uid
+        && (hasGlobalScope()
+            || (request.resource.data.scope == 'atbiya'
+                && myAtbiya() != ''
+                && request.resource.data.atbiyaId == myAtbiya()));
+
+      allow update: if canManageNews()
+        && (hasGlobalScope()
+            || (myAtbiya() != '' && resource.data.get('atbiyaId', '') == myAtbiya()));
+
+      allow delete: if isAdmin()
+        || (canManageNews() && resource.data.authorId == request.auth.uid);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  Username → email lookup, so sign-in by username works before auth.
+    //  Holds no secrets: a username and the synthetic login email.
+    // ════════════════════════════════════════════════════════════════════════
+    match /usernames/{username} {
+      allow get: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow delete: if isAdmin();
+      // No list: enumerating every username is not something the app needs.
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  Audit trails
+    // ════════════════════════════════════════════════════════════════════════
+    match /auditLogs/{docId} {
+      // Any signed-in user appends their own entries; entries are immutable.
+      // Not status-gated, so a blocked sign-in attempt is still recorded.
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin();
       allow update, delete: if false;
     }
 
-    // Landing page config & page strings — public read, admin-only write.
-    // hierarchyLevel/role live on the user's Firestore document (no custom claims are set),
-    // and super admins are listed in siteConfig/superAdmins.uids.
-    match /siteConfig/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('hierarchyLevel', '') in ['Sinodos', 'KuamiSinodos']
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'SuperAdmin'
-        || request.auth.uid in get(/databases/$(database)/documents/siteConfig/superAdmins).data.get('uids', [])
-      );
+    match /mobileAudit/{userId} {
+      allow create, update: if signedIn() && request.auth.uid == userId;
+      allow read: if (signedIn() && request.auth.uid == userId) || isAdmin();
+      allow delete: if false;
     }
 
-    // Mobile app audit trail — each signed-in user upserts their own record,
-    // admins (same set that can write siteConfig) read the whole collection.
-    match /mobileAudit/{userId} {
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null && (
-        request.auth.uid == userId
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('hierarchyLevel', '') in ['Sinodos', 'KuamiSinodos']
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'SuperAdmin'
-        || request.auth.uid in get(/databases/$(database)/documents/siteConfig/superAdmins).data.get('uids', [])
-      );
-    }
+    // ════════════════════════════════════════════════════════════════════════
+    //  Application data — everything here requires an APPROVED account.
+    //  A pending user can authenticate but every read and write below fails.
+    // ════════════════════════════════════════════════════════════════════════
+    match /meetings/{docId}                { allow read, write: if isActive(); }
+    match /announcements/{docId}           { allow read, write: if isActive(); }
+    match /plans/{docId}                   { allow read, write: if isActive(); }
+    match /reports/{docId}                 { allow read, write: if isActive(); }
+    match /finance_transactions/{docId}    { allow read, write: if isActive(); }
+    match /finance_budgets/{docId}         { allow read, write: if isActive(); }
+    match /finance_reports/{docId}         { allow read, write: if isActive(); }
+    match /finance_requisitions/{docId}    { allow read, write: if isActive(); }
+    match /notifications/{docId}           { allow read, write: if isActive(); }
+    match /teachings/{docId}               { allow read, write: if isActive(); }
+    match /missionary_applications/{docId} { allow read, write: if isActive(); }
+    match /missionary_reports/{docId}      { allow read, write: if isActive(); }
+    match /documents/{docId}               { allow read, write: if isActive(); }
+    match /strategic_plans/{docId}         { allow read, write: if isActive(); }
+    match /partner_contacts/{docId}        { allow read, write: if isActive(); }
+    match /employees/{docId}               { allow read, write: if isActive(); }
+    match /assets/{docId}                  { allow read, write: if isActive(); }
+
+    // NOTE: the old /members/{docId} block was dead — members ARE users
+    // (Members.tsx calls userService), so it only ever misled readers.
   }
 }

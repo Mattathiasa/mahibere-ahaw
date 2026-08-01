@@ -9,7 +9,8 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "test": "vitest",
-        "test:ui": "vitest --ui"
+        "test:ui": "vitest --ui",
+        "test:rules": "firebase emulators:exec --only firestore --project mahibere-ahaw-rules-test \"vitest run src/test/firestore.rules.test.ts\""
     },
     "dependencies": {
         "@hookform/resolvers": "^3.10.0",
@@ -69,6 +70,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.32.0",
+        "@firebase/rules-unit-testing": "^5.0.1",
         "@tailwindcss/typography": "^0.5.16",
         "@testing-library/dom": "^10.4.1",
         "@testing-library/react": "^16.3.2",
