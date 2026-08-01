@@ -26,7 +26,7 @@ import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 const Settings = () => {
   const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
-  const { isSuperAdmin } = usePermissions();
+  const { isSuperAdmin, isAdminRole } = usePermissions();
   const queryClient = useQueryClient();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
@@ -67,7 +67,8 @@ const Settings = () => {
   });
 
   const [translationOverrides, setTranslationOverrides] = useState<TranslationOverrides>({});
-  const isAdmin = currentUser?.role === 'Admin' || currentUser?.hierarchyLevel === 'Memriya';
+  // Gates the "Admin: Translations" tab. Driven by the role registry now.
+  const isAdmin = isSuperAdmin || isAdminRole(currentUser?.hierarchyLevel);
   const { refreshTranslations } = useLanguage();
 
   // Load preferences from localStorage (Keep app preferences like Theme local for now)
@@ -939,7 +940,7 @@ const Settings = () => {
           </SectionCard>
 
           {/* Landing Page Editor — admin hierarchy levels plus super admins */}
-          {(isSuperAdmin || ['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '')) && (
+          {isAdmin && (
             <SectionCard title="Landing Page Editor" icon={Layout}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -954,7 +955,7 @@ const Settings = () => {
           )}
 
           {/* Mobile App Control — admin hierarchy levels plus super admins */}
-          {(isSuperAdmin || ['Sinodos', 'KuamiSinodos'].includes(currentUser?.hierarchyLevel ?? currentUser?.role ?? '')) && (
+          {isAdmin && (
             <SectionCard title="Mobile App Control" icon={Shield}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">

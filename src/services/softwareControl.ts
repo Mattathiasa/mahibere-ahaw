@@ -6,22 +6,24 @@ import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 // rule; admin-only write). Both the web and any future mobile gating can read
 // the same document.
 
-export const HIERARCHY_LEVELS = [
-  'Sinodos',
-  'KuamiSinodos',
-  'Memriya',
-  'Zone',
-  'Atbiya',
-  'EnkesekaseMaikel',
-  'HiyawanMahderat',
-] as const;
-
-/** Sidebar tabs that can be restricted per hierarchy level. */
+/** Sidebar tabs that can be restricted per role. */
 export const NAV_KEYS = [
   'dashboard', 'announcements', 'plans', 'reports', 'members', 'meetings',
   'finance', 'hr', 'inventory', 'churchRules', 'higeDenb', 'strategicPlan',
   'documents', 'userManagement', 'hierarchy', 'settings',
+  'news', 'missionary', 'teachings', 'volunteer', 'notifications', 'softwareControl',
 ] as const;
+
+export const NAV_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard', announcements: 'Announcements', plans: 'Plans',
+  reports: 'Reports', members: 'Members', meetings: 'Meetings',
+  finance: 'Finance', hr: 'Human Resources', inventory: 'Inventory',
+  churchRules: 'Church Rules', higeDenb: 'HigeDenb', strategicPlan: 'Strategic Plan',
+  documents: 'Documents', userManagement: 'User Management',
+  hierarchy: 'Hierarchy', settings: 'Settings', news: 'News',
+  missionary: 'Missionary', teachings: 'Teachings', volunteer: 'Volunteer',
+  notifications: 'Notifications', softwareControl: 'Software Control',
+};
 
 /** UI elements (buttons/actions) that can be toggled or role-restricted.
  *  Add a key here + a useElementControl() call at the button to gate it. */
@@ -40,6 +42,9 @@ export const ELEMENT_KEYS: { key: string; label: string; page: string }[] = [
   { key: 'inventory.add', label: 'Add Asset button', page: 'Inventory' },
   { key: 'inventory.delete', label: 'Delete Asset button', page: 'Inventory' },
   { key: 'teachings.create', label: 'Create Teaching button', page: 'Teachings' },
+  { key: 'news.create', label: 'New Post button', page: 'News' },
+  { key: 'atbiya.add', label: 'Add Atbiya button', page: 'Software Control' },
+  { key: 'members.approve', label: 'Approve / Reject buttons', page: 'Membership Requests' },
 ];
 
 export interface ElementRule {

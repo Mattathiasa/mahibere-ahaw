@@ -12,6 +12,7 @@ import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { LearnMore } from '@/components/LearnMore';
 import { useQuery } from '@tanstack/react-query';
 import { userService } from '@/services/users';
@@ -39,6 +40,7 @@ const Members = () => {
   const { showElement } = useSoftwareControl();
   const moduleCfg = useModuleConfig('members');
   const { user: currentUser } = useAuth();
+  const { roleKeys, isHeadOffice, myAtbiyaId, roleLabel } = usePermissions();
 
   const { data: membersData, isLoading } = useQuery({
     queryKey: ['members'],
@@ -84,29 +86,18 @@ const Members = () => {
 
   const members = membersData?.users || [];
 
-  // All possible hierarchy levels in order
-  const hierarchyLevels = [
-    'Sinodos',
-    'KuamiSinodos',
-    'Memriya',
-    'Zone',
-    'Atbiya',
-    'EnkesekaseMaikel',
-    'HiyawanMahderat'
-  ];
+  // Hierarchy levels come from the role registry so a role added in Software
+  // Control shows up in the filter and sort without a code change.
+  const hierarchyLevels = roleKeys;
 
   // ── Parish-level scoping ──────────────────────────────────────────────────
-  // Head office (Memriya and above) sees aggregated/all members; a parish
-  // (Atbiya) only sees and manages members belonging to its own parish.
-  const HEAD_OFFICE_LEVELS = ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone'];
-  const myParishId = (currentUser as any)?.atbiyaId || (currentUser as any)?.hierarchyEntityId || currentUser?.id || '';
-  const isHeadOffice =
-    HEAD_OFFICE_LEVELS.includes(currentUser?.hierarchyLevel ?? '') ||
-    currentUser?.role === 'SuperAdmin' || currentUser?.role === 'Admin';
-
+  // A global-scope role sees every member; anything narrower sees only its own
+  // parish. `myAtbiyaId` is empty when the account has no parish assigned, in
+  // which case a non-head-office user correctly sees nothing.
+  const myParishId = myAtbiyaId;
   const scopedMembers = isHeadOffice
     ? members
-    : members.filter((m: any) => (m.parishId ?? '') === myParishId);
+    : members.filter((m: any) => (m.parishId ?? m.atbiyaId ?? '') === myParishId);
 
   // Filter members
   const filteredMembers = scopedMembers.filter((member: any) => {
@@ -132,9 +123,9 @@ const Members = () => {
       case 'name':
         return (a.fullNameEnglish || a.fullName || '').localeCompare(b.fullNameEnglish || b.fullName || '');
       case 'hierarchy':
-        const hierarchyOrder = ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel', 'HiyawanMahderat'];
-        const ai = hierarchyOrder.indexOf(a.hierarchyLevel || '');
-        const bi = hierarchyOrder.indexOf(b.hierarchyLevel || '');
+        // Registry order is the display order set in Software Control.
+        const ai = roleKeys.indexOf(a.hierarchyLevel || '');
+        const bi = roleKeys.indexOf(b.hierarchyLevel || '');
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       case 'region':
         return (a.address?.region || '').localeCompare(b.address?.region || '');
@@ -264,9 +255,16 @@ const Members = () => {
                     } else {
                       // Stamp new members with the creating parish so parish
                       // admins only see their own; head office sees all.
+                      // `parishName` used to be written as the creator's role
+                      // (literally "Atbiya"), which made it useless as a label.
                       const stamped = isHeadOffice
                         ? data
-                        : { ...data, parishId: myParishId, parishName: currentUser?.hierarchyLevel ?? '' };
+                        : {
+                            ...data,
+                            parishId: myParishId,
+                            atbiyaId: myParishId,
+                            parishName: currentUser?.atbiyaName ?? '',
+                          };
                       createMemberMutation.mutate(stamped);
                     }
                   }}
@@ -427,7 +425,7 @@ const Members = () => {
                   <SelectItem value="all" className="rounded-xl font-bold italic">{t('allLevels')}</SelectItem>
                   {hierarchyLevels.map((level: any) => (
                     <SelectItem key={level} value={level} className="rounded-xl font-bold italic">
-                      {level}
+                      {roleLabel(level)}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -8,6 +8,7 @@ import { Scale, BookText, ClipboardList, Plus, Trash2, Save, Loader2, Pencil } f
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -23,20 +24,18 @@ const CATEGORIES: { key: CategoryKey; label: string; amharic: string; icon: type
   { key: 'policies', label: 'Policies', amharic: 'ፖሊሲ', icon: ClipboardList, color: 'text-amber-500' },
 ];
 
-// Matches the siteConfig Firestore write rule (Sinodos/KuamiSinodos/SuperAdmin).
-const EDIT_LEVELS = ['Sinodos', 'KuamiSinodos'];
-
 const ChurchLaws = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isAdminRole, isSuperAdmin } = usePermissions();
   const [data, setData] = useState<ChurchRulesData>(DEFAULT_CHURCH_RULES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  const canEdit =
-    EDIT_LEVELS.includes(user?.hierarchyLevel ?? '') ||
-    user?.role === 'SuperAdmin' || user?.role === 'Admin';
+  // Mirrors the siteConfig Firestore write rule, which now reads the admin role
+  // set from siteConfig/roleFlags rather than a hardcoded list.
+  const canEdit = isSuperAdmin || isAdminRole(user?.hierarchyLevel);
 
   useEffect(() => {
     churchRulesService.get().then(setData).catch(() => {}).finally(() => setLoading(false));

@@ -4,24 +4,26 @@ import {
   ArrowLeft, Save, Loader2, CheckCircle2, AlertCircle, MonitorCog,
   LayoutPanelLeft, MousePointerClick, ExternalLink, ScrollText, RefreshCw,
   LogIn, LogOut, FilePlus2, FilePen, FileX2, Smartphone, Monitor,
-  ShieldCheck, ChevronDown, RotateCcw,
+  ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   softwareControlService,
   DEFAULT_SOFTWARE_CONTROL,
-  HIERARCHY_LEVELS,
   NAV_KEYS,
+  NAV_LABELS,
   ELEMENT_KEYS,
   type SoftwareControlConfig,
 } from '@/services/softwareControl';
 import { auditLogService, type AuditLogEntry, type AuditAction } from '@/services/auditLog';
-import { permissionService } from '@/services/permissionService';
 import {
-  ALL_PERMISSIONS, PERMISSION_META, PERMISSION_GROUPS, DEFAULT_ROLE_PERMISSIONS,
-  type PermissionKey, type RolePermissionOverrides,
-} from '@/lib/rolePermissions';
-import type { HierarchyLevel } from '@/types';
+  roleRegistryService, roleLabel, validateRegistry, DEFAULT_SIGNUP_ROLE,
+  type Role,
+} from '@/services/roleRegistry';
+import { DEFAULT_ROLE_PERMISSIONS, type PermissionKey } from '@/lib/rolePermissions';
+import { userService } from '@/services/users';
+import { PermissionMatrix } from '@/components/PermissionMatrix';
+import { RoleEditorDialog } from '@/components/RoleEditorDialog';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -31,28 +33,28 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-const NAV_LABELS: Record<string, string> = {
-  dashboard: 'Dashboard', announcements: 'Announcements', plans: 'Plans',
-  reports: 'Reports', members: 'Members', meetings: 'Meetings',
-  finance: 'Finance', hr: 'Human Resources', inventory: 'Inventory',
-  churchRules: 'Church Rules', higeDenb: 'HigeDenb', strategicPlan: 'Strategic Plan',
-  documents: 'Documents', userManagement: 'User Management',
-  hierarchy: 'Hierarchy', settings: 'Settings',
-};
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 
 const SoftwareControl: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { reload: reloadPermissions } = usePermissions();
+  const { reload: reloadPermissions, isSuperAdmin } = usePermissions();
   const [config, setConfig] = useState<SoftwareControlConfig>(DEFAULT_SOFTWARE_CONTROL);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Roles & access (role → permission overrides)
-  const [roleOverrides, setRoleOverrides] = useState<RolePermissionOverrides>({});
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(PERMISSION_GROUPS));
+  // ── Role registry ─────────────────────────────────────────────────────────
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [registryVersion, setRegistryVersion] = useState(1);
+  const [signupRole, setSignupRole] = useState(DEFAULT_SIGNUP_ROLE);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  /** roleKey → how many accounts carry it, so deletes can warn and reassign. */
+  const [roleUsage, setRoleUsage] = useState<Record<string, number>>({});
 
   // Audit logs
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -61,42 +63,93 @@ const SoftwareControl: React.FC = () => {
   const [logSearch, setLogSearch] = useState('');
 
   useEffect(() => {
-    Promise.all([
-      softwareControlService.get(),
-      permissionService.getRolePermissions().catch(() => ({} as RolePermissionOverrides)),
-    ])
-      .then(([cfg, roles]) => { setConfig(cfg); setRoleOverrides(roles); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    (async () => {
+      try {
+        // Write the seed before anything reads it. Safe under both the old and
+        // the new rules, and a no-op once siteConfig/roles exists.
+        if (isSuperAdmin) {
+          await roleRegistryService.ensureSeeded(user?.email ?? 'admin').catch(() => false);
+        }
+        const [cfg, registry] = await Promise.all([
+          softwareControlService.get(),
+          roleRegistryService.get(),
+        ]);
+        setConfig(cfg);
+        setRoles(registry.roles);
+        setRegistryVersion(registry.version);
 
-  // A role's effective permission list = override if present, else default.
-  function rolePerms(level: HierarchyLevel): PermissionKey[] {
-    return roleOverrides[level] ?? DEFAULT_ROLE_PERMISSIONS[level] ?? [];
+        // Role usage counts are advisory only — a failure here must not block
+        // the page, so it is fetched separately and swallowed.
+        try {
+          const { users } = await userService.getAllUsers();
+          const counts: Record<string, number> = {};
+          for (const u of users as { hierarchyLevel?: string }[]) {
+            const key = u.hierarchyLevel ?? '';
+            if (key) counts[key] = (counts[key] ?? 0) + 1;
+          }
+          setRoleUsage(counts);
+        } catch { /* counts stay empty */ }
+      } catch { /* defaults already in state */ } finally {
+        setLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuperAdmin]);
+
+  // ── Role registry mutations (local until Save & Publish) ───────────────────
+  function toggleRolePerm(roleKey: string, perm: PermissionKey) {
+    setRoles((prev) => prev.map((r) => {
+      if (r.key !== roleKey) return r;
+      const has = r.permissions.includes(perm);
+      return {
+        ...r,
+        permissions: has ? r.permissions.filter((p) => p !== perm) : [...r.permissions, perm],
+      };
+    }));
   }
-  function roleHasPerm(level: HierarchyLevel, perm: PermissionKey): boolean {
-    return rolePerms(level).includes(perm);
+
+  function resetRoleToDefault(roleKey: string) {
+    setRoles((prev) => prev.map((r) =>
+      r.key === roleKey ? { ...r, permissions: [...(DEFAULT_ROLE_PERMISSIONS[roleKey] ?? [])] } : r
+    ));
   }
-  function toggleRolePerm(level: HierarchyLevel, perm: PermissionKey) {
-    setRoleOverrides((prev) => {
-      const current = prev[level] ?? DEFAULT_ROLE_PERMISSIONS[level] ?? [];
-      const next = current.includes(perm)
-        ? current.filter((p) => p !== perm)
-        : [...current, perm];
-      return { ...prev, [level]: next };
-    });
-  }
-  function resetRoleToDefault(level: HierarchyLevel) {
-    setRoleOverrides((prev) => {
-      const next = { ...prev };
-      delete next[level];
+
+  function upsertRole(role: Role) {
+    setRoles((prev) => {
+      const idx = prev.findIndex((r) => r.key === role.key);
+      if (idx === -1) {
+        // New roles start from the narrowest sensible baseline rather than
+        // inheriting everything.
+        return [...prev, { ...role, permissions: role.permissions.length ? role.permissions : [] }];
+      }
+      const next = [...prev];
+      next[idx] = { ...role, permissions: prev[idx].permissions };
       return next;
     });
+    setRoleDialogOpen(false);
+    setEditingRole(null);
   }
-  function toggleGroup(group: string) {
-    setOpenGroups((prev) => {
-      const next = new Set(prev);
-      next.has(group) ? next.delete(group) : next.add(group);
+
+  function deleteRole(role: Role) {
+    if (role.isSystem) return;
+    const count = roleUsage[role.key] ?? 0;
+    if (count > 0) {
+      setErrorMsg(
+        `"${roleLabel(role, 'en')}" still has ${count} account${count === 1 ? '' : 's'}. ` +
+        'Move those accounts to another role in User Management first — deleting it now would leave them with no permissions.'
+      );
+      setStatus('error');
+      return;
+    }
+    setRoles((prev) => prev.filter((r) => r.key !== role.key));
+  }
+
+  function moveRole(index: number, delta: number) {
+    setRoles((prev) => {
+      const target = index + delta;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
   }
@@ -113,17 +166,30 @@ const SoftwareControl: React.FC = () => {
   }
 
   async function handleSave() {
+    setErrorMsg(null);
+
+    // Refuse client-side before writing anything — a registry with no admin
+    // role would lock every human out of this page permanently.
+    const problem = validateRegistry(roles);
+    if (problem) {
+      setErrorMsg(problem);
+      setStatus('error');
+      return;
+    }
+
     setSaving(true);
     setStatus('idle');
     try {
-      await Promise.all([
-        softwareControlService.save(config, user?.email ?? 'admin'),
-        permissionService.saveRolePermissions(roleOverrides, user?.email ?? 'admin'),
-      ]);
+      const nextVersion = await roleRegistryService.save(
+        roles, user?.email ?? 'admin', registryVersion, signupRole
+      );
+      setRegistryVersion(nextVersion);
+      await softwareControlService.save(config, user?.email ?? 'admin');
       await reloadPermissions();
       setStatus('success');
       setTimeout(() => setStatus('idle'), 3000);
-    } catch {
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Failed to save. Check your permissions.');
       setStatus('error');
     } finally {
       setSaving(false);
@@ -134,7 +200,7 @@ const SoftwareControl: React.FC = () => {
   // seeds the full list so unchecking removes just that level.
   function toggleNavLevel(navKey: string, level: string) {
     setConfig((c) => {
-      const current = c.navAccess[navKey] ?? [...HIERARCHY_LEVELS];
+      const current = c.navAccess[navKey] ?? roles.map((r) => r.key);
       const next = current.includes(level)
         ? current.filter((l) => l !== level)
         : [...current, level];
@@ -158,7 +224,7 @@ const SoftwareControl: React.FC = () => {
   function toggleElementLevel(key: string, level: string) {
     setConfig((c) => {
       const rule = c.elements[key] ?? {};
-      const current = rule.levels ?? [...HIERARCHY_LEVELS];
+      const current = rule.levels ?? roles.map((r) => r.key);
       const next = current.includes(level)
         ? current.filter((l) => l !== level)
         : [...current, level];
@@ -212,8 +278,9 @@ const SoftwareControl: React.FC = () => {
         )}
         {status === 'error' && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-center gap-2 text-red-700 text-sm">
-            <AlertCircle className="h-4 w-4" /> Failed to save. Check permissions.
+            className="bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-start gap-2 text-red-700 text-sm">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>{errorMsg ?? 'Failed to save. Check permissions.'}</span>
           </motion.div>
         )}
       </div>
@@ -255,75 +322,108 @@ const SoftwareControl: React.FC = () => {
           </TabsList>
 
           {/* ════════ ROLES & ACCESS ════════ */}
-          <TabsContent value="roles">
+          <TabsContent value="roles" className="space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <div>
+                  <CardTitle>Roles</CardTitle>
+                  <CardDescription>
+                    Every role in the system. The seven built-in roles come from the church
+                    bylaws — their labels, permissions and flags are editable, but their keys
+                    are permanent because existing accounts store them.
+                  </CardDescription>
+                </div>
+                <Button size="sm" onClick={() => { setEditingRole(null); setRoleDialogOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-1" /> Add role
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {roles.map((role, i) => (
+                  <div key={role.key}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/20 flex-wrap">
+                    <div className="flex flex-col gap-0.5">
+                      <button onClick={() => moveRole(i, -1)} disabled={i === 0}
+                        className="text-[10px] leading-none px-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                        aria-label="Move up">▲</button>
+                      <button onClick={() => moveRole(i, 1)} disabled={i === roles.length - 1}
+                        className="text-[10px] leading-none px-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                        aria-label="Move down">▼</button>
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm">{roleLabel(role, 'en')}</span>
+                        {role.labels.am && (
+                          <span className="text-sm text-muted-foreground font-ethiopic">{role.labels.am}</span>
+                        )}
+                        <code className="text-[10px] text-muted-foreground">{role.key}</code>
+                        {role.isSystem && (
+                          <Badge variant="secondary" className="gap-1 text-[10px]">
+                            <Lock className="h-2.5 w-2.5" /> Built-in
+                          </Badge>
+                        )}
+                        {!role.active && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{role.description}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] capitalize">{role.scope}</Badge>
+                      {role.isAdmin && <Badge className="text-[10px]">Admin</Badge>}
+                      {role.canApproveMembers && (
+                        <Badge variant="secondary" className="text-[10px]">Approver</Badge>
+                      )}
+                      <Badge variant="outline" className="gap-1 text-[10px]">
+                        <UsersIcon className="h-2.5 w-2.5" /> {roleUsage[role.key] ?? 0}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        {role.permissions.length} perms
+                      </Badge>
+                      <Button size="icon" variant="ghost" className="h-8 w-8"
+                        onClick={() => { setEditingRole(role); setRoleDialogOpen(true); }}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 disabled:opacity-30"
+                        disabled={role.isSystem}
+                        title={role.isSystem ? 'Built-in roles cannot be deleted' : 'Delete role'}
+                        onClick={() => deleteRole(role)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="pt-4 border-t border-border flex items-center gap-3 flex-wrap">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold">Role for new sign-ups</p>
+                    <p className="text-xs text-muted-foreground">
+                      Assigned automatically when someone registers from the public sign-up page.
+                    </p>
+                  </div>
+                  <Select value={signupRole} onValueChange={setSignupRole}>
+                    <SelectTrigger className="w-56 ml-auto"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {roles.filter((r) => r.active !== false).map((r) => (
+                        <SelectItem key={r.key} value={r.key}>{roleLabel(r, 'en')}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
-                <CardTitle>Roles &amp; Access</CardTitle>
+                <CardTitle>Permissions</CardTitle>
                 <CardDescription>
-                  Declare what each role (hierarchy level) is allowed to do. Toggle a permission for a role; changes apply live on Save. Per-user exceptions live in Permission Control.
+                  What each role may do. Columns follow the role list above. Per-user
+                  exceptions live in Permission Control.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {PERMISSION_GROUPS.map((group) => {
-                  const perms = ALL_PERMISSIONS.filter((p) => PERMISSION_META[p].group === group);
-                  const isOpen = openGroups.has(group);
-                  return (
-                    <div key={group} className="rounded-xl border border-border overflow-hidden">
-                      <button
-                        onClick={() => toggleGroup(group)}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
-                      >
-                        <span className="text-sm font-bold">{group}</span>
-                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? '' : '-rotate-90'}`} />
-                      </button>
-                      {isOpen && (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b text-left">
-                                <th className="py-2 px-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold min-w-[180px]">
-                                  Permission
-                                </th>
-                                {HIERARCHY_LEVELS.map((level) => (
-                                  <th key={level} className="py-2 px-2 text-[10px] uppercase tracking-wide text-muted-foreground text-center">
-                                    {level}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {perms.map((perm) => (
-                                <tr key={perm} className="border-b border-border/50">
-                                  <td className="py-2 px-4">
-                                    <div className="font-medium">{PERMISSION_META[perm].label}</div>
-                                    <div className="text-[11px] text-muted-foreground">{PERMISSION_META[perm].description}</div>
-                                  </td>
-                                  {HIERARCHY_LEVELS.map((level) => (
-                                    <td key={level} className="py-2 px-2 text-center">
-                                      <Checkbox
-                                        checked={roleHasPerm(level as HierarchyLevel, perm)}
-                                        onCheckedChange={() => toggleRolePerm(level as HierarchyLevel, perm)}
-                                      />
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="text-xs text-muted-foreground self-center mr-1">Reset a role to defaults:</span>
-                  {HIERARCHY_LEVELS.map((level) => (
-                    <Button key={level} size="sm" variant="outline" className="gap-1 text-xs"
-                      onClick={() => resetRoleToDefault(level as HierarchyLevel)}>
-                      <RotateCcw className="h-3 w-3" /> {level}
-                    </Button>
-                  ))}
-                </div>
+              <CardContent>
+                <PermissionMatrix
+                  roles={roles}
+                  onToggle={toggleRolePerm}
+                  onResetRole={resetRoleToDefault}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -342,9 +442,9 @@ const SoftwareControl: React.FC = () => {
                   <thead>
                     <tr className="border-b text-left">
                       <th className="py-2 pr-4 text-xs uppercase tracking-wider text-muted-foreground">Tab</th>
-                      {HIERARCHY_LEVELS.map((level) => (
-                        <th key={level} className="py-2 px-2 text-[10px] uppercase tracking-wide text-muted-foreground text-center">
-                          {level}
+                      {roles.map((role) => (
+                        <th key={role.key} className="py-2 px-2 text-[10px] uppercase tracking-wide text-muted-foreground text-center whitespace-nowrap">
+                          {roleLabel(role, 'en')}
                         </th>
                       ))}
                     </tr>
@@ -353,11 +453,11 @@ const SoftwareControl: React.FC = () => {
                     {NAV_KEYS.map((navKey) => (
                       <tr key={navKey} className="border-b border-border/50">
                         <td className="py-2.5 pr-4 font-semibold whitespace-nowrap">{NAV_LABELS[navKey] ?? navKey}</td>
-                        {HIERARCHY_LEVELS.map((level) => (
-                          <td key={level} className="py-2.5 px-2 text-center">
+                        {roles.map((role) => (
+                          <td key={role.key} className="py-2.5 px-2 text-center">
                             <Checkbox
-                              checked={navHasLevel(navKey, level)}
-                              onCheckedChange={() => toggleNavLevel(navKey, level)}
+                              checked={navHasLevel(navKey, role.key)}
+                              onCheckedChange={() => toggleNavLevel(navKey, role.key)}
                             />
                           </td>
                         ))}
@@ -396,13 +496,13 @@ const SoftwareControl: React.FC = () => {
                       </div>
                       {visible && (
                         <div className="flex flex-wrap gap-3 pt-1">
-                          {HIERARCHY_LEVELS.map((level) => (
-                            <label key={level} className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
+                          {roles.map((role) => (
+                            <label key={role.key} className="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
                               <Checkbox
-                                checked={elementHasLevel(key, level)}
-                                onCheckedChange={() => toggleElementLevel(key, level)}
+                                checked={elementHasLevel(key, role.key)}
+                                onCheckedChange={() => toggleElementLevel(key, role.key)}
                               />
-                              {level}
+                              {roleLabel(role, 'en')}
                             </label>
                           ))}
                         </div>
@@ -519,6 +619,15 @@ const SoftwareControl: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <RoleEditorDialog
+        open={roleDialogOpen}
+        role={editingRole}
+        existingKeys={roles.map((r) => r.key)}
+        userCount={editingRole ? roleUsage[editingRole.key] ?? 0 : 0}
+        onSave={upsertRole}
+        onClose={() => { setRoleDialogOpen(false); setEditingRole(null); }}
+      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf } from 'lucide-react';
+import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
@@ -19,7 +19,23 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, t: any, isSuperAdmin: boolean) => {
+const NAV_FALLBACK_LABELS: Record<string, string> = {
+  news: 'News',
+  landingEditor: 'Landing Page',
+  softwareControl: 'Software Control',
+};
+
+interface NavFlags {
+  canViewHierarchy: boolean;
+  canManageUsers: boolean;
+  canViewNews: boolean;
+  isSuperAdmin: boolean;
+  isAdmin: boolean;
+}
+
+const getNavigationItems = ({
+  canViewHierarchy, canManageUsers, canViewNews, isSuperAdmin, isAdmin,
+}: NavFlags) => {
   const items = [
     { name: 'dashboard', href: '/dashboard', icon: Home },
     { name: 'announcements', href: '/announcements', icon: Bell },
@@ -36,12 +52,22 @@ const getNavigationItems = (canViewHierarchy: boolean, canManageUsers: boolean, 
     { name: 'documents', href: '/documents', icon: FolderOpen },
   ];
 
+  if (canViewNews) {
+    items.push({ name: 'news', href: '/news-manager', icon: Newspaper });
+  }
+
   if (canManageUsers) {
     items.push({ name: 'userManagement', href: '/user-management', icon: Users });
   }
 
   if (canViewHierarchy) {
     items.push({ name: 'hierarchy', href: '/hierarchy', icon: Network });
+  }
+
+  // The Landing Editor had no sidebar entry at all — it was reachable only via
+  // a card buried in Settings, which is why it looked like it had been removed.
+  if (isAdmin || isSuperAdmin) {
+    items.push({ name: 'landingEditor', href: '/admin/landing-editor', icon: Layout });
   }
 
   if (isSuperAdmin) {
@@ -61,10 +87,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { language, setLanguage, t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showNav } = useSoftwareControl();
-  const { isSuperAdmin } = usePermissions();
-  const canManageUsers = currentUser?.hierarchyLevel === 'Memriya';
-  const navigationItems = getNavigationItems(permissions.canViewHierarchy, canManageUsers, t, isSuperAdmin)
-    .filter((item) => showNav(item.name));
+  const { isSuperAdmin, isAdminRole } = usePermissions();
+  // Driven by the permission matrix now, not a hardcoded `=== 'Memriya'`,
+  // which had locked Sinodos and super admins out of User Management.
+  const canManageUsers = permissions.canViewUserManagement;
+  const navigationItems = getNavigationItems({
+    canViewHierarchy: permissions.canViewHierarchy,
+    canManageUsers,
+    canViewNews: permissions.canViewNews,
+    isSuperAdmin,
+    isAdmin: isAdminRole(currentUser?.hierarchyLevel),
+  }).filter((item) => showNav(item.name));
 
   const handleLogout = () => {
     logout();
@@ -82,7 +115,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {navigationItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.href;
-        const translatedName = (t.nav as any)[item.name];
+        // Newer nav entries have no i18n key yet — fall back rather than
+        // rendering an empty label.
+        const translatedName = (t.nav as any)[item.name] ?? NAV_FALLBACK_LABELS[item.name] ?? item.name;
         return (
           <Link
             key={item.name}

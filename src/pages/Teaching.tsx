@@ -11,10 +11,15 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Teaching = () => {
     const { t } = useTranslation();
+    const { showElement } = useSoftwareControl();
+    const rolePerms = useRolePermissions();
+    const canCreateTeaching = rolePerms.canCreateTeaching && showElement('teachings.create');
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const { data: teachings, isLoading } = useQuery({
         queryKey: ['teachings'],
@@ -39,13 +44,15 @@ const Teaching = () => {
                     defaultDescription={t('teachingsHeaderDesc')}
                     badge="Wisdom & Grace"
                 />
-                <Button
-                    onClick={() => setIsCreateDialogOpen(true)}
-                    className="h-14 px-8 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black shadow-xl shadow-[#2E5E99]/20 active:scale-95 transition-all gap-2"
-                >
-                    <Plus className="h-6 w-6" />
-                    {t('create')}
-                </Button>
+                {canCreateTeaching && (
+                    <Button
+                        onClick={() => setIsCreateDialogOpen(true)}
+                        className="h-14 px-8 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black shadow-xl shadow-[#2E5E99]/20 active:scale-95 transition-all gap-2"
+                    >
+                        <Plus className="h-6 w-6" />
+                        {t('create')}
+                    </Button>
+                )}
             </div>
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">

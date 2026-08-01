@@ -1,5 +1,3 @@
-import { HierarchyLevel } from '@/types';
-
 // ─── All permission keys in the system ───────────────────────────────────────
 
 export const ALL_PERMISSIONS = [
@@ -22,6 +20,7 @@ export const ALL_PERMISSIONS = [
   'canViewUserManagement',
   'canViewSettings',
   'canViewNotifications',
+  'canViewNews',
   // ── Actions ───────────────────────────────────────────────────────────────
   'canCreateAnnouncement',
   'canEditAnnouncement',
@@ -45,6 +44,9 @@ export const ALL_PERMISSIONS = [
   'canCreateTeaching',
   'canSubmitMissionaryApplication',
   'canSubmitMissionaryReport',
+  'canManageNews',
+  'canApproveMembers',
+  'canManageAtbiyas',
   // ── Dashboard view level ──────────────────────────────────────────────────
   'canViewFullDashboard',
   'canViewLimitedDashboard',
@@ -80,6 +82,7 @@ export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
   canViewUserManagement:       { label: 'View User Management',     description: 'See the user management page',                 group: 'Pages' },
   canViewSettings:             { label: 'View Settings',            description: 'Access settings',                              group: 'Pages' },
   canViewNotifications:        { label: 'View Notifications',       description: 'See notifications',                            group: 'Pages' },
+  canViewNews:                 { label: 'View News',                description: 'See the news manager',                         group: 'Pages' },
   // Announcements
   canCreateAnnouncement:       { label: 'Create Announcement',      description: 'Post new announcements',                       group: 'Announcements' },
   canEditAnnouncement:         { label: 'Edit Announcement',        description: 'Edit existing announcements',                  group: 'Announcements' },
@@ -111,6 +114,11 @@ export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
   // Missionary
   canSubmitMissionaryApplication: { label: 'Submit Missionary Application', description: 'Apply for missionary service',         group: 'Missionary' },
   canSubmitMissionaryReport:   { label: 'Submit Missionary Report', description: 'Submit field reports',                         group: 'Missionary' },
+  // News
+  canManageNews:               { label: 'Manage News',              description: 'Write, publish and unpublish homepage news',   group: 'News' },
+  // Administration
+  canApproveMembers:           { label: 'Approve Member Requests',  description: 'Approve or reject membership sign-up requests', group: 'Administration' },
+  canManageAtbiyas:            { label: 'Manage Atbiya Registry',   description: 'Add and edit parish records',                  group: 'Administration' },
   // Dashboard
   canViewFullDashboard:        { label: 'Full Dashboard View',      description: 'See all stats and quick actions',              group: 'Dashboard' },
   canViewLimitedDashboard:     { label: 'Limited Dashboard View',   description: 'See basic stats only',                         group: 'Dashboard' },
@@ -119,9 +127,11 @@ export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
 export const PERMISSION_GROUPS = [...new Set(ALL_PERMISSIONS.map(p => PERMISSION_META[p].group))];
 
 // ─── Default role → permissions mapping ──────────────────────────────────────
-// This is the FALLBACK used when no Firestore override exists.
+// Seed values for the role registry (siteConfig/roles) and the FALLBACK used
+// when Firestore is unreachable. Roles are dynamic, so this is keyed on plain
+// strings — the seven bylaw levels below are simply the roles we ship with.
 
-export const DEFAULT_ROLE_PERMISSIONS: Record<HierarchyLevel, PermissionKey[]> = {
+export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   Sinodos: [...ALL_PERMISSIONS], // all permissions
 
   KuamiSinodos: ALL_PERMISSIONS.filter(p => p !== 'canViewUserManagement'),
@@ -131,7 +141,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<HierarchyLevel, PermissionKey[]> =
     'canViewMembers', 'canViewMeetings', 'canViewFinance', 'canViewChurchRules',
     'canViewHigeDenb', 'canViewStrategicPlan', 'canViewDocuments', 'canViewMissionary',
     'canViewTeachings', 'canViewVolunteer', 'canViewUserManagement', 'canViewSettings',
-    'canViewNotifications',
+    'canViewNotifications', 'canViewNews',
     'canCreateAnnouncement', 'canEditAnnouncement', 'canDeleteAnnouncement',
     'canCreatePlan', 'canDeletePlan',
     'canCreateReport', 'canViewAllReports', 'canCommentOnReport',
@@ -141,6 +151,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<HierarchyLevel, PermissionKey[]> =
     'canUploadDocuments', 'canDeleteDocuments',
     'canCreateTeaching',
     'canSubmitMissionaryApplication', 'canSubmitMissionaryReport',
+    'canManageNews', 'canApproveMembers', 'canManageAtbiyas',
     'canViewFullDashboard',
   ],
 
@@ -155,6 +166,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<HierarchyLevel, PermissionKey[]> =
     'canAddTransaction',
     'canUploadDocuments',
     'canSubmitMissionaryApplication', 'canSubmitMissionaryReport',
+    'canViewNews', 'canApproveMembers',
     'canViewLimitedDashboard',
   ],
 
@@ -168,6 +180,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<HierarchyLevel, PermissionKey[]> =
     'canAddTransaction',
     'canUploadDocuments',
     'canSubmitMissionaryApplication', 'canSubmitMissionaryReport',
+    // A parish approves its own membership requests and posts its own news.
+    'canViewNews', 'canManageNews', 'canApproveMembers',
     'canViewLimitedDashboard',
   ],
 
@@ -195,11 +209,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<HierarchyLevel, PermissionKey[]> =
 // ─── Runtime permission resolver ─────────────────────────────────────────────
 // Merges role defaults with per-user overrides loaded from Firestore.
 
-export type RolePermissionOverrides = Partial<Record<HierarchyLevel, PermissionKey[]>>;
+export type RolePermissionOverrides = Record<string, PermissionKey[]>;
 export type UserPermissionOverrides = Record<string, Partial<Record<PermissionKey, boolean>>>;
 
 export function resolvePermissions(
-  role: HierarchyLevel,
+  role: string,
   userId: string,
   roleOverrides: RolePermissionOverrides,
   userOverrides: UserPermissionOverrides

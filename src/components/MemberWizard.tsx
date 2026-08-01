@@ -12,6 +12,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
+import { usePermissions } from '@/contexts/PermissionContext';
 
 interface MemberWizardProps {
   onClose: () => void;
@@ -39,19 +40,12 @@ const churchRoles = [
   'Elder',
 ];
 
-const hierarchyLevels = [
-  'Sinodos',
-  'KuamiSinodos',
-  'Memriya',
-  'Zone',
-  'Atbiya',
-  'EnkesekaseMaikel',
-  'HiyawanMahderat'
-];
-
 export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardProps) => {
   const { t } = useTranslation();
   const moduleCfg = useModuleConfig('members');
+  // Roles come from the registry rather than a local copy of the old 7-value list.
+  const { roles, roleLabel } = usePermissions();
+  const hierarchyLevels = roles.filter((r) => r.active !== false).map((r) => r.key);
   const fieldVisible = (key: string) => moduleCfg.fields.find((f) => f.key === key)?.visible ?? true;
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -410,7 +404,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                     </SelectTrigger>
                     <SelectContent>
                       {hierarchyLevels.map((level) => (
-                        <SelectItem key={level} value={level}>{level}</SelectItem>
+                        <SelectItem key={level} value={level}>{roleLabel(level)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -15,11 +15,16 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { useAuth } from '@/hooks/useAuth';
 
 const Announcements = () => {
   const moduleCfg = useModuleConfig('announcements');
+  const { showElement } = useSoftwareControl();
+  const rolePerms = useRolePermissions();
+  const canCreateAnnouncement = rolePerms.canCreateAnnouncement && showElement('announcements.create');
   const showField = (k: string) => moduleCfg.fields.find((f) => f.key === k)?.visible ?? true;
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -168,12 +173,14 @@ const Announcements = () => {
         </div>
         <div className="flex shrink-0">
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto px-8 py-6 rounded-2xl bg-[#2E5E99] hover:scale-105 transition-all shadow-xl shadow-[#2E5E99]/20 font-bold tracking-wide">
-                <Plus className="mr-2 h-5 w-5" />
-                {t('newAnnouncement')}
-              </Button>
-            </DialogTrigger>
+            {canCreateAnnouncement && (
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto px-8 py-6 rounded-2xl bg-[#2E5E99] hover:scale-105 transition-all shadow-xl shadow-[#2E5E99]/20 font-bold tracking-wide">
+                  <Plus className="mr-2 h-5 w-5" />
+                  {t('newAnnouncement')}
+                </Button>
+              </DialogTrigger>
+            )}
             <DialogContent className="max-w-2xl rounded-[2.5rem] bg-white/90 backdrop-blur-2xl border-[#2E5E99]/10">
               <DialogHeader>
                 <DialogTitle className="text-3xl font-black text-[#0D2440] font-ethiopic">{t('newAnnouncement')}</DialogTitle>

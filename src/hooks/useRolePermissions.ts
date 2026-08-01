@@ -1,15 +1,11 @@
 import { usePermissions } from '@/contexts/PermissionContext';
-import { useAuthContext } from '@/contexts/AuthContext';
-import type { HierarchyLevel } from '@/types';
 
 /**
  * Drop-in replacement for the old useRolePermissions hook.
  * Now reads from the dynamic PermissionContext instead of hardcoded rules.
  */
 export const useRolePermissions = () => {
-  const { can, isSuperAdmin } = usePermissions();
-  const { user } = useAuthContext();
-  const role = (user?.hierarchyLevel as HierarchyLevel) ?? 'HiyawanMahderat';
+  const { can, isSuperAdmin, myRole: role } = usePermissions();
 
   // dashboardView derived from permissions
   const dashboardView: 'full' | 'limited' | 'basic' = can('canViewFullDashboard')
@@ -36,6 +32,11 @@ export const useRolePermissions = () => {
     canUploadDocuments:    can('canUploadDocuments'),
     canDeleteDocuments:    can('canDeleteDocuments'),
     canCreateTeaching:     can('canCreateTeaching'),
+    canViewNews:           can('canViewNews'),
+    canManageNews:         can('canManageNews'),
+    canApproveMembers:     can('canApproveMembers'),
+    canManageAtbiyas:      can('canManageAtbiyas'),
+    canViewUserManagement: can('canViewUserManagement'),
     dashboardView,
     currentRole: role,
     isSuperAdmin,

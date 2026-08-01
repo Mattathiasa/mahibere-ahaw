@@ -1,5 +1,12 @@
 // Local type definitions (previously from @church-cms/shared)
 
+/**
+ * Whether an account may use the app. Enforced server-side in
+ * `firestore.rules` — a 'pending' user can authenticate but every data read
+ * and write is denied until their parish approves them.
+ */
+export type MembershipStatus = 'active' | 'pending' | 'rejected' | 'suspended';
+
 export interface User {
   id: string;
   username: string;
@@ -12,10 +19,26 @@ export interface User {
   fullNameAmharic?: string;
   phone?: string;
   dateOfBirth?: string;
+  /** Role key from the `siteConfig/roles` registry. */
   hierarchyLevel?: string;
   hierarchyEntityId?: string;
   atbiyaId?: string;
+  /** Denormalized parish name so lists need no join. */
+  atbiyaName?: string;
   mahderatId?: string;
+  /**
+   * Membership state. A MISSING value means 'active' — every account created
+   * before self-service sign-up existed predates this field.
+   */
+  status?: MembershipStatus;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+  rejectedReason?: string;
+  /** How the account came into being. */
+  signupSource?: 'self' | 'admin' | 'legacy';
+  requestedAt?: string;
   ministryType?: string[];
   churchRoles?: string[];
   workSchool?: string;
@@ -149,13 +172,19 @@ export enum TeachingStatus {
   CANCELLED = 'Cancelled',
 }
 
-export type HierarchyLevel = 
-  | 'Sinodos' 
-  | 'KuamiSinodos' 
-  | 'Memriya' 
-  | 'Zone' 
-  | 'Atbiya' 
-  | 'EnkesekaseMaikel' 
+/**
+ * @deprecated Roles are dynamic — they live in `siteConfig/roles` and are read
+ * through `usePermissions().roles`. This union only names the seven roles the
+ * app ships with, and will not include any role added in Software Control.
+ * Use `string` for a role key.
+ */
+export type HierarchyLevel =
+  | 'Sinodos'
+  | 'KuamiSinodos'
+  | 'Memriya'
+  | 'Zone'
+  | 'Atbiya'
+  | 'EnkesekaseMaikel'
   | 'HiyawanMahderat';
 
 export type MinistryType = 

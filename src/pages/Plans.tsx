@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toDate } from '@/lib/date-utils';
@@ -26,6 +28,9 @@ import { LearnMore } from '@/components/LearnMore';
 
 const Plans = () => {
   const moduleCfg = useModuleConfig('plans');
+  const { showElement } = useSoftwareControl();
+  const rolePerms = useRolePermissions();
+  const canCreatePlan = rolePerms.canCreatePlan && showElement('plans.create');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -131,13 +136,15 @@ const Plans = () => {
           animate={{ opacity: 1, x: 0 }}
         >
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="h-16 px-10 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20 transition-all duration-300 hover:scale-105 group overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <Plus className="mr-3 h-6 w-6" />
-                {t('newPlan')}
-              </Button>
-            </DialogTrigger>
+            {canCreatePlan && (
+              <DialogTrigger asChild>
+                <Button className="h-16 px-10 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20 transition-all duration-300 hover:scale-105 group overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  <Plus className="mr-3 h-6 w-6" />
+                  {t('newPlan')}
+                </Button>
+              </DialogTrigger>
+            )}
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-[3rem] bg-white/95 backdrop-blur-2xl border-white/40 shadow-2xl">
               <DialogHeader className="p-4">
                 <DialogTitle className="text-3xl font-black text-[#0D2440] tracking-tight italic">{t('newPlan')}</DialogTitle>

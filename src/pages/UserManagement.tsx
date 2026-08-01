@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Users, UserPlus, History, Search, Pencil, Trash2, Building2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '@/services/users';
@@ -70,6 +71,8 @@ const ETHIOPIAN_REGIONS = [
 
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
+  const { can, roles, roleLabel } = usePermissions();
+  const assignableRoles = roles.filter((r) => r.active !== false);
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -392,7 +395,9 @@ const UserManagement = () => {
 
   const auditLogs = auditData?.logs || [];
 
-  const canManageUsers = currentUser?.hierarchyLevel === 'Memriya';
+  // Was hardcoded to `hierarchyLevel === 'Memriya'`, which locked out Sinodos
+  // and super admins. Now driven by the permission matrix.
+  const canManageUsers = can('canViewUserManagement');
 
   if (!canManageUsers) {
     return (
@@ -403,7 +408,8 @@ const UserManagement = () => {
         </div>
         <SectionCard title="Access Denied" icon={Users}>
           <p className="text-muted-foreground">
-            Only Memriya level administrators can access user management.
+            Your role does not include the "View User Management" permission. A super
+            admin can grant it in Software Control → Roles.
           </p>
         </SectionCard>
       </div>
@@ -778,13 +784,9 @@ const UserManagement = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Sinodos">Sinodos</SelectItem>
-                        <SelectItem value="KuamiSinodos">Kuami Sinodos</SelectItem>
-                        <SelectItem value="Memriya">Memriya</SelectItem>
-                        <SelectItem value="Zone">Zone</SelectItem>
-                        <SelectItem value="Atbiya">Atbiya</SelectItem>
-                        <SelectItem value="EnkesekaseMaikel">Enkesekase Maikel</SelectItem>
-                        <SelectItem value="HiyawanMahderat">Hiyawan Mahderat</SelectItem>
+                        {assignableRoles.map((r) => (
+                          <SelectItem key={r.key} value={r.key}>{roleLabel(r.key)}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1245,13 +1247,9 @@ const UserManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Sinodos">Sinodos</SelectItem>
-                    <SelectItem value="KuamiSinodos">Kuami Sinodos</SelectItem>
-                    <SelectItem value="Memriya">Memriya</SelectItem>
-                    <SelectItem value="Zone">Zone</SelectItem>
-                    <SelectItem value="Atbiya">Atbiya</SelectItem>
-                    <SelectItem value="EnkesekaseMaikel">Enkesekase Maikel</SelectItem>
-                    <SelectItem value="HiyawanMahderat">Hiyawan Mahderat</SelectItem>
+                    {assignableRoles.map((r) => (
+                      <SelectItem key={r.key} value={r.key}>{roleLabel(r.key)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

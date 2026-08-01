@@ -27,19 +27,19 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const HIERARCHY_LEVELS: HierarchyLevel[] = [
-  'Sinodos', 'KuamiSinodos', 'Memriya', 'Zone',
-  'Atbiya', 'EnkesekaseMaikel', 'HiyawanMahderat',
-];
-
-const LEVEL_COLORS: Record<HierarchyLevel, string> = {
-  Sinodos:           'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
-  KuamiSinodos:      'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  Memriya:           'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-  Zone:              'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  Atbiya:            'bg-orange-500/10 text-orange-600 border-orange-500/20',
-  EnkesekaseMaikel:  'bg-rose-500/10 text-rose-600 border-rose-500/20',
-  HiyawanMahderat:   'bg-slate-500/10 text-slate-600 border-slate-500/20',
+/**
+ * Role colours are declared per role in the registry (Software Control -> Roles).
+ * This maps the stored colour token onto Tailwind classes.
+ */
+const COLOR_CLASSES: Record<string, string> = {
+  indigo:  'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
+  violet:  'bg-violet-500/10 text-violet-600 border-violet-500/20',
+  blue:    'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  cyan:    'bg-cyan-500/10 text-cyan-600 border-cyan-500/20',
+  emerald: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  amber:   'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  rose:    'bg-rose-500/10 text-rose-600 border-rose-500/20',
+  slate:   'bg-slate-500/10 text-slate-600 border-slate-500/20',
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -47,10 +47,13 @@ const LEVEL_COLORS: Record<HierarchyLevel, string> = {
 const PermissionControl: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { reload: reloadPermissions } = usePermissions();
+  const { reload: reloadPermissions, roles, roleLabel } = usePermissions();
+  const roleByKey = new Map(roles.map((r) => [r.key, r]));
+  /** Tailwind classes for a role badge, from the role's declared colour. */
+  const levelClass = (key: string | undefined) =>
+    COLOR_CLASSES[roleByKey.get(key ?? '')?.color ?? 'slate'] ?? COLOR_CLASSES.slate;
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [roleOverrides, setRoleOverrides] = useState<RolePermissionOverrides>({});
   const [userOverrides, setUserOverrides] = useState<UserPermissionOverrides>({});
   const [superAdmins, setSuperAdmins] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -64,12 +67,10 @@ const PermissionControl: React.FC = () => {
   // ── Load ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     Promise.all([
-      permissionService.getRolePermissions(),
       permissionService.getUserOverrides(),
       permissionService.getSuperAdmins(),
       userService.getAllUsers(),
-    ]).then(([ro, uo, sa, usersData]) => {
-      setRoleOverrides(ro);
+    ]).then(([uo, sa, usersData]) => {
       setUserOverrides(uo);
       setSuperAdmins(sa);
       setUsers((usersData as any).users ?? []);
@@ -79,23 +80,13 @@ const PermissionControl: React.FC = () => {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  function getRolePerms(role: HierarchyLevel): Set<PermissionKey> {
-    return new Set(roleOverrides[role] ?? DEFAULT_ROLE_PERMISSIONS[role] ?? []);
-  }
-
-  function toggleRolePerm(role: HierarchyLevel, perm: PermissionKey) {
-    const current = getRolePerms(role);
-    if (current.has(perm)) current.delete(perm);
-    else current.add(perm);
-    setRoleOverrides(prev => ({ ...prev, [role]: [...current] }));
-  }
-
-  function resetRoleToDefault(role: HierarchyLevel) {
-    setRoleOverrides(prev => {
-      const next = { ...prev };
-      delete next[role];
-      return next;
-    });
+  /**
+   * Read-only view of a role's permissions, used to show what a per-user
+   * override is layered on top of. Editing role permissions happens in
+   * Software Control -> Roles, which owns `siteConfig/roles`.
+   */
+  function getRolePerms(role: string): Set<PermissionKey> {
+    return new Set(roleByKey.get(role)?.permissions ?? DEFAULT_ROLE_PERMISSIONS[role] ?? []);
   }
 
   function getUserPerm(userId: string, perm: PermissionKey): boolean | undefined {
@@ -130,8 +121,10 @@ const PermissionControl: React.FC = () => {
     setSaving(true);
     setSaveStatus('idle');
     try {
+      // Deliberately does NOT write siteConfig/rolePermissions — the role
+      // registry owns that document, and saving it from here used to silently
+      // overwrite whatever Software Control had just published.
       await Promise.all([
-        permissionService.saveRolePermissions(roleOverrides, user?.email ?? 'admin'),
         permissionService.saveUserOverrides(userOverrides, user?.email ?? 'admin'),
         permissionService.setSuperAdmins(superAdmins, user?.email ?? 'admin'),
       ]);
@@ -212,118 +205,37 @@ const PermissionControl: React.FC = () => {
               ROLE PERMISSIONS TAB
           ══════════════════════════════════════════════════════════════ */}
           <TabsContent value="roles">
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Role-Level Permissions</CardTitle>
-                  <CardDescription>
-                    Set which permissions each hierarchy level has by default. These apply to all users at that level unless overridden individually.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              {/* Permission matrix */}
-              <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left px-4 py-3 font-bold w-64 sticky left-0 bg-muted/50 z-10">
-                        Permission
-                      </th>
-                      {HIERARCHY_LEVELS.map(level => (
-                        <th key={level} className="px-3 py-3 text-center min-w-[110px]">
-                          <div className="flex flex-col items-center gap-1">
-                            <Badge variant="outline" className={`text-[10px] font-black uppercase ${LEVEL_COLORS[level]}`}>
-                              {level}
-                            </Badge>
-                            <button
-                              onClick={() => resetRoleToDefault(level)}
-                              className="text-[9px] text-muted-foreground hover:text-primary transition-colors"
-                              title="Reset to default"
-                            >
-                              <RotateCcw className="h-3 w-3" />
-                            </button>
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {PERMISSION_GROUPS.map(group => (
-                      <React.Fragment key={group}>
-                        {/* Group header row */}
-                        <tr
-                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => setExpandedGroups(prev => {
-                            const next = new Set(prev);
-                            if (next.has(group)) next.delete(group);
-                            else next.add(group);
-                            return next;
-                          })}
-                        >
-                          <td colSpan={HIERARCHY_LEVELS.length + 1} className="px-4 py-2 sticky left-0 bg-muted/30">
-                            <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-widest text-muted-foreground">
-                              {expandedGroups.has(group)
-                                ? <ChevronDown className="h-3.5 w-3.5" />
-                                : <ChevronRight className="h-3.5 w-3.5" />
-                              }
-                              {group}
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* Permission rows */}
-                        {expandedGroups.has(group) && ALL_PERMISSIONS
-                          .filter(p => PERMISSION_META[p].group === group)
-                          .map((perm, i) => (
-                            <tr key={perm} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? '' : 'bg-muted/10'}`}>
-                              <td className="px-4 py-2.5 sticky left-0 bg-background z-10">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="cursor-help">
-                                      <p className="font-medium text-sm">{PERMISSION_META[perm].label}</p>
-                                      <p className="text-[11px] text-muted-foreground truncate max-w-[220px]">
-                                        {PERMISSION_META[perm].description}
-                                      </p>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    <p className="text-xs max-w-xs">{PERMISSION_META[perm].description}</p>
-                                    <p className="text-[10px] text-muted-foreground font-mono mt-1">{perm}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </td>
-                              {HIERARCHY_LEVELS.map(level => {
-                                const hasDefault = DEFAULT_ROLE_PERMISSIONS[level]?.includes(perm);
-                                const hasOverride = roleOverrides[level] !== undefined;
-                                const hasPerm = getRolePerms(level).has(perm);
-                                const changed = hasOverride && hasPerm !== hasDefault;
-                                return (
-                                  <td key={level} className="px-3 py-2.5 text-center">
-                                    <div className="flex items-center justify-center">
-                                      <Switch
-                                        checked={hasPerm}
-                                        onCheckedChange={() => toggleRolePerm(level, perm)}
-                                        className={changed ? 'ring-2 ring-amber-400 ring-offset-1' : ''}
-                                      />
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          ))
-                        }
-                      </React.Fragment>
+            <Card>
+              <CardHeader>
+                <CardTitle>Role Permissions</CardTitle>
+                <CardDescription>
+                  Role permissions moved to Software Control, which is now the single
+                  editor for them. Two matrices writing the same document used to
+                  overwrite each other's changes without warning.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-border bg-muted/20 p-4">
+                  <p className="text-sm font-bold mb-1">Current roles</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {roles.map((r) => (
+                      <Badge key={r.key} variant="outline"
+                        className={`text-[10px] font-black uppercase ${levelClass(r.key)}`}>
+                        {roleLabel(r.key)} · {r.permissions.length}
+                      </Badge>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="inline-block w-3 h-3 rounded-full ring-2 ring-amber-400 bg-background" />
-                Amber ring = changed from default. Click the ↺ icon on a column header to reset that level to defaults.
-              </p>
-            </div>
+                  </div>
+                </div>
+                <Button onClick={() => navigate('/admin/software-control')} className="gap-2">
+                  <Shield className="h-4 w-4" />
+                  Open Software Control → Roles
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Per-user exceptions and super admins are still managed on this page,
+                  in the other two tabs.
+                </p>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* ══════════════════════════════════════════════════════════════
@@ -366,8 +278,8 @@ const PermissionControl: React.FC = () => {
                               {u.fullNameEnglish || u.fullName || u.username}
                             </p>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${LEVEL_COLORS[u.hierarchyLevel as HierarchyLevel] ?? ''}`}>
-                                {u.hierarchyLevel ?? 'Unknown'}
+                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${levelClass(u.hierarchyLevel)}`}>
+                                {roleLabel(u.hierarchyLevel) || 'Unknown'}
                               </Badge>
                               {isSA && <Crown className="h-3 w-3 text-amber-500" />}
                               {hasOverrides && <span className="text-[9px] text-amber-600 font-bold">OVERRIDES</span>}
@@ -404,8 +316,8 @@ const PermissionControl: React.FC = () => {
                               {selectedUser.fullNameEnglish || selectedUser.fullName || selectedUser.username}
                             </CardTitle>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className={`text-[10px] ${LEVEL_COLORS[selectedUser.hierarchyLevel as HierarchyLevel] ?? ''}`}>
-                                {selectedUser.hierarchyLevel}
+                              <Badge variant="outline" className={`text-[10px] ${levelClass(selectedUser.hierarchyLevel)}`}>
+                                {roleLabel(selectedUser.hierarchyLevel)}
                               </Badge>
                               <span className="text-xs text-muted-foreground">{selectedUser.email}</span>
                             </div>
@@ -531,8 +443,8 @@ const PermissionControl: React.FC = () => {
                             {isSA && <Crown className="h-4 w-4 text-amber-500" />}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${LEVEL_COLORS[u.hierarchyLevel as HierarchyLevel] ?? ''}`}>
-                              {u.hierarchyLevel ?? 'Unknown'}
+                            <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${levelClass(u.hierarchyLevel)}`}>
+                              {roleLabel(u.hierarchyLevel) || 'Unknown'}
                             </Badge>
                             <span className="text-xs text-muted-foreground">{u.email}</span>
                           </div>

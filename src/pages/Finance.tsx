@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { getTransactions, getBudgets, getFinancialReports, getMemberTithes, DEFAULT_CHURCH_BANKS, MemberTithe } from '@/services/finance';
 import { userService } from '@/services/users';
 import { hierarchyService } from '@/services/hierarchy';
@@ -54,6 +56,13 @@ export default function Finance() {
   const [showTitheDialog, setShowTitheDialog] = useState(false);
   const [showPledgeDialog, setShowPledgeDialog] = useState(false);
   const [showVoucherDialog, setShowVoucherDialog] = useState(false);
+
+  // Software Control gating for the money-touching actions.
+  const { showElement } = useSoftwareControl();
+  const financePerms = useRolePermissions();
+  const canAddTransaction = financePerms.canAddTransaction && showElement('finance.addTransaction');
+  const canCreateBudget = financePerms.canCreateBudget && showElement('finance.createBudget');
+  const canGenerateReport = showElement('finance.generateReport');
 
   useEffect(() => {
     loadData();
@@ -449,17 +458,19 @@ export default function Finance() {
             </TabsTrigger>
           </TabsList>
 
-          <Button
-            onClick={() => {
-              setTransactionPresetType('Income');
-              setTransactionCategoryDefault('');
-              setShowTransactionDialog(true);
-            }}
-            className="bg-[#2E5E99] hover:bg-[#204a7c] text-white font-bold rounded-xl"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {t('addTransaction')}
-          </Button>
+          {canAddTransaction && (
+            <Button
+              onClick={() => {
+                setTransactionPresetType('Income');
+                setTransactionCategoryDefault('');
+                setShowTransactionDialog(true);
+              }}
+              className="bg-[#2E5E99] hover:bg-[#204a7c] text-white font-bold rounded-xl"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t('addTransaction')}
+            </Button>
+          )}
         </div>
 
         <TabsContent value="transactions" className="space-y-4">
@@ -554,9 +565,9 @@ export default function Finance() {
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold">Monthly Budgets</h3>
-                <Button onClick={() => setShowBudgetDialog(true)} size="sm">
+                {canCreateBudget && <Button onClick={() => setShowBudgetDialog(true)} size="sm">
                   <Plus className="mr-2 h-4 w-4" /> Add Budget
-                </Button>
+                </Button>}
               </div>
               <Table>
                 <TableHeader>
@@ -597,9 +608,9 @@ export default function Finance() {
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold">Financial Reports</h3>
-                <Button onClick={() => setShowReportDialog(true)} size="sm">
+                {canGenerateReport && <Button onClick={() => setShowReportDialog(true)} size="sm">
                   <Plus className="mr-2 h-4 w-4" /> Generate Report
-                </Button>
+                </Button>}
               </div>
               {reports.length === 0 ? (
                 <p className="text-center py-8 text-muted-foreground">No financial reports generated yet.</p>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { LearnMore } from '@/components/LearnMore';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -26,6 +27,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const Reports = () => {
   const permissions = useRolePermissions();
+  const { showElement } = useSoftwareControl();
   const { t } = useTranslation();
   const moduleCfg = useModuleConfig('reports');
   const [expandedReports, setExpandedReports] = useState<string[]>([]);
@@ -173,7 +175,7 @@ const Reports = () => {
           <LearnMore title={moduleCfg.headerTitle || t('reports')} content={moduleCfg.learnMore} />
         </div>
 
-        {permissions.canCreateReport && (
+        {permissions.canCreateReport && showElement('reports.create') && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}

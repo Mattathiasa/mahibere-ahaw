@@ -34,6 +34,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         phone: userData.phone || userData.phoneNumber,
                         dateOfBirth: userData.dateOfBirth,
                         hierarchyLevel: userData.hierarchyLevel || 'Atbiya',
+                        // Org placement — previously dropped here, which left
+                        // every parish-scoping check falling back to the user's
+                        // own uid and silently seeing nothing.
+                        hierarchyEntityId: userData.hierarchyEntityId,
+                        atbiyaId: userData.atbiyaId,
+                        atbiyaName: userData.atbiyaName,
+                        mahderatId: userData.mahderatId,
+                        // Membership approval state. A missing field means the
+                        // account predates sign-up and is therefore active.
+                        status: userData.status || 'active',
                         ministryType: userData.ministryType,
                         churchRoles: userData.churchRoles,
                         workSchool: userData.workSchool,

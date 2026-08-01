@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -31,6 +32,7 @@ const Meetings = () => {
   });
   const queryClient = useQueryClient();
   const permissions = useRolePermissions();
+  const { showElement } = useSoftwareControl();
 
   const { data: meetingsData, isLoading } = useQuery({
     queryKey: ['meetings'],
@@ -143,7 +145,7 @@ const Meetings = () => {
             badge={`${upcomingCount} ${t('upcomingMeetings')}`}
           />
         </div>
-        {permissions.canScheduleMeeting && (
+        {permissions.canScheduleMeeting && showElement('meetings.schedule') && (
           <div className="flex shrink-0">
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
@@ -239,7 +241,7 @@ const Meetings = () => {
                             <Calendar className="mr-2 h-4 w-4" />
                             {t('addToCalendar')}
                           </Button>
-                          {permissions.canScheduleMeeting && (
+                          {permissions.canScheduleMeeting && showElement('meetings.schedule') && (
                             <Button
                               variant="destructive"
                               className="h-12 w-12 rounded-2xl shadow-lg hover:rotate-12 transition-transform"
@@ -305,9 +307,9 @@ const Meetings = () => {
           </div>
           <h3 className="relative text-2xl font-black text-[#0D2440] dark:text-white mb-3">{t('noMeetingsScheduled')}</h3>
           <p className="relative text-[#2E5E99]/60 max-w-sm mb-8 font-medium">
-            {permissions.canScheduleMeeting ? t('noMeetingsDesc') : t('noMeetingsDescMember')}
+            {permissions.canScheduleMeeting && showElement('meetings.schedule') ? t('noMeetingsDesc') : t('noMeetingsDescMember')}
           </p>
-          {permissions.canScheduleMeeting && (
+          {permissions.canScheduleMeeting && showElement('meetings.schedule') && (
             <Button onClick={() => setShowCreateDialog(true)} className="relative px-8 h-12 rounded-2xl bg-[#2E5E99] text-white font-bold hover:scale-110 transition-all shadow-xl shadow-[#2E5E99]/20">
               <Plus className="mr-2 h-5 w-5" />
               {t('scheduleMeeting')}

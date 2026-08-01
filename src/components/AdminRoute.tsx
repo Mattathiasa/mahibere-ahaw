@@ -2,18 +2,21 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionContext';
 
-const ADMIN_ROLES = ['Sinodos', 'KuamiSinodos'];
-
 interface AdminRouteProps {
   children: React.ReactNode;
-  /** If true, only Super Admins can access — not just Sinodos/KuamiSinodos */
+  /** If true, only Super Admins can access — not every role flagged as admin */
   superAdminOnly?: boolean;
 }
 
 export default function AdminRoute({ children, superAdminOnly = false }: AdminRouteProps) {
   const location = useLocation();
-  const { user, loading, isAuthenticated } = useAuthContext();
-  const { isSuperAdmin } = usePermissions();
+  const { user, loading: authLoading, isAuthenticated } = useAuthContext();
+  const { isSuperAdmin, isAdminRole, loading: permsLoading } = usePermissions();
+
+  // Both gates matter: the role registry decides who counts as an admin, so
+  // rendering before it resolves would redirect a legitimate admin to
+  // /dashboard on every hard refresh of an /admin/* URL.
+  const loading = authLoading || permsLoading;
 
   if (loading) {
     return (
@@ -35,9 +38,9 @@ export default function AdminRoute({ children, superAdminOnly = false }: AdminRo
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Regular admin routes — Sinodos / KuamiSinodos
+  // Regular admin routes — any role flagged `isAdmin` in the role registry
   const role = user?.hierarchyLevel ?? user?.role ?? '';
-  if (!ADMIN_ROLES.includes(role)) {
+  if (!isAdminRole(role)) {
     return <Navigate to="/dashboard" replace />;
   }
 
