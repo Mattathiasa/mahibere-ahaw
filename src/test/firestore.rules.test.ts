@@ -167,6 +167,21 @@ describe('anonymous visitors', () => {
     await assertSucceeds(getDoc(doc(anon(), 'siteConfig/landingPage')));
     await assertFails(getDocs(collection(anon(), 'users')));
   });
+
+  // Regression: an allowlist of siteConfig docs broke the public pages, which
+  // read translation overrides and the permission documents while signed out.
+  it('can read every siteConfig document the public pages need', async () => {
+    for (const id of ['landingPage', 'pageStrings', 'integrations', 'churchRules',
+                      'roleFlags', 'roles', 'translations_overrides',
+                      'rolePermissions', 'userPermissionOverrides', 'superAdmins',
+                      'softwareControl', 'moduleConfig']) {
+      await assertSucceeds(getDoc(doc(anon(), `siteConfig/${id}`)));
+    }
+  });
+
+  it('still cannot WRITE siteConfig', async () => {
+    await assertFails(setDoc(doc(anon(), 'siteConfig/roles'), { version: 9, roles: [] }));
+  });
 });
 
 describe('legacy accounts (no status field)', () => {

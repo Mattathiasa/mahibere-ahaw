@@ -46,3 +46,8 @@ Thumbs.db
 
 # Firebase functions build output
 functions/lib/
+
+# Firebase emulator output
+firestore-debug.log
+firebase-debug.log
+ui-debug.log

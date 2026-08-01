@@ -184,15 +184,17 @@ service cloud.firestore {
     //  siteConfig
     // ════════════════════════════════════════════════════════════════════════
     match /siteConfig/{docId} {
-      // Public documents: the landing page and the sign-up form must render
-      // before the visitor has any account. roleFlags is included because the
-      // sign-up form needs `signupRole`; it holds no secrets, only role names.
-      allow read: if docId in ['landingPage', 'pageStrings', 'integrations',
-                               'churchRules', 'roleFlags', 'roles'];
-
-      // Everything else is readable by any signed-in user, including a pending
-      // one — the app needs moduleConfig and softwareControl to render at all.
-      allow read: if signedIn();
+      // Public read, as before. Every document here is configuration, not
+      // data: landing page copy, UI translations, module and navigation
+      // config, role definitions, and the list of super-admin uids. The
+      // landing page, login page and sign-up form all read several of these
+      // before the visitor has an account, and PermissionContext loads the
+      // permission documents on every route including public ones.
+      //
+      // An allowlist was tried here and broke exactly that: translation
+      // overrides stopped loading on the public pages. Keep this open and put
+      // anything genuinely secret in its own collection instead.
+      allow read: if true;
 
       allow write: if isAdmin();
     }
