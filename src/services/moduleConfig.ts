@@ -9,7 +9,7 @@ import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 export type ModuleKey =
   | 'members' | 'plans' | 'reports' | 'announcements' | 'meetings' | 'finance'
   | 'hr' | 'inventory' | 'teachings' | 'documents' | 'hierarchy' | 'missionary'
-  | 'volunteer' | 'strategicPlan' | 'churchRules' | 'higeDenb';
+  | 'volunteer' | 'strategicPlan' | 'churchRules' | 'higeDenb' | 'news';
 
 export interface FieldConfig {
   key: string;
@@ -41,10 +41,22 @@ const f = (key: string, label: string, visible = true, required = false): FieldC
 export const MODULE_KEYS: ModuleKey[] = [
   'members', 'plans', 'reports', 'announcements', 'meetings', 'finance',
   'hr', 'inventory', 'teachings', 'documents', 'hierarchy', 'missionary',
-  'volunteer', 'strategicPlan', 'churchRules', 'higeDenb',
+  'volunteer', 'strategicPlan', 'churchRules', 'higeDenb', 'news',
 ];
 
 export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
+  news: {
+    headerTitle: '', headerDescription: '',
+    learnMore:
+      'The News module publishes articles to the public homepage. Head-office authors write for the whole church; a parish author writes for their own Atbiya and their posts carry the parish name. Save a draft while you work, then publish when it is ready.',
+    fields: [
+      f('title', 'Title', true, true),
+      f('excerpt', 'Short Summary'),
+      f('body', 'Full Text', true, true),
+      f('coverImageUrl', 'Cover Image'),
+    ],
+    options: {},
+  },
   members: {
     headerTitle: '', headerDescription: '',
     learnMore:

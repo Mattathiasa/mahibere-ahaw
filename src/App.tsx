@@ -37,6 +37,9 @@ const HR = lazy(() => import("./pages/HR"));
 const Inventory = lazy(() => import("./pages/Inventory"));
 const ChurchLaws = lazy(() => import("./pages/ChurchLaws"));
 const Notifications = lazy(() => import("./pages/Notifications"));
+const NewsManager = lazy(() => import("./pages/NewsManager"));
+const NewsIndex = lazy(() => import("./pages/NewsIndex"));
+const NewsPostPage = lazy(() => import("./pages/NewsPost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
@@ -73,6 +76,8 @@ const App = () => (
                   <Route path="/features" element={<AboutFeatures />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/pending" element={<PendingApproval />} />
+                  <Route path="/news" element={<Suspense fallback={<div className="p-8 text-center">Loading...</div>}><NewsIndex /></Suspense>} />
+                  <Route path="/news/:slug" element={<Suspense fallback={<div className="p-8 text-center">Loading...</div>}><NewsPostPage /></Suspense>} />
                   <Route path="/admin/landing-editor" element={<AdminRoute><LandingEditor /></AdminRoute>} />
                   <Route path="/admin/permissions" element={<AdminRoute superAdminOnly><PermissionControl /></AdminRoute>} />
                   <Route path="/admin/mobile-control" element={<AdminRoute><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><MobileControl /></Suspense></AdminRoute>} />
@@ -96,6 +101,7 @@ const App = () => (
                   <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><HigeDenb /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/church-rules" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><ChurchLaws /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Notifications /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/news-manager" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><NewsManager /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Settings /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/user-management" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><UserManagement /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/users" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><UserManagement /></Suspense></DashboardLayout></ProtectedRoute>} />

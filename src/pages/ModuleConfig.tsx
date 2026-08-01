@@ -35,6 +35,7 @@ const MODULES: { key: ModuleKey; label: string }[] = [
   { key: 'strategicPlan', label: 'Strategic Plan' },
   { key: 'churchRules', label: 'Church Rules' },
   { key: 'higeDenb', label: 'HigeDenb' },
+  { key: 'news', label: 'News' },
 ];
 
 const ModuleConfigPage: React.FC = () => {

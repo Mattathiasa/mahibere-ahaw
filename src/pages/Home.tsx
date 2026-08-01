@@ -16,6 +16,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import logo from '@/assets/logo.png';
 import { optimized } from '@/services/cloudinary';
+import { NewsSection } from '@/components/home/NewsSection';
 
 // Map icon name strings (stored in Firestore) to Lucide components
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -331,6 +332,9 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ── News ── (renders nothing when no posts are published) */}
+      <NewsSection />
 
       {/* ── Contact ── */}
       <section id="contact" className="py-32 relative">
