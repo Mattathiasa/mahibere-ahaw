@@ -4,7 +4,7 @@ import {
   ArrowLeft, Save, Loader2, CheckCircle2, AlertCircle, MonitorCog,
   LayoutPanelLeft, MousePointerClick, ExternalLink, ScrollText, RefreshCw,
   LogIn, LogOut, FilePlus2, FilePen, FileX2, Smartphone, Monitor,
-  ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon,
+  ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon, Church,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -22,8 +22,10 @@ import {
 } from '@/services/roleRegistry';
 import { DEFAULT_ROLE_PERMISSIONS, type PermissionKey } from '@/lib/rolePermissions';
 import { userService } from '@/services/users';
+import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { PermissionMatrix } from '@/components/PermissionMatrix';
 import { RoleEditorDialog } from '@/components/RoleEditorDialog';
+import { AtbiyaEditorDialog } from '@/components/AtbiyaEditorDialog';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -56,6 +58,42 @@ const SoftwareControl: React.FC = () => {
   /** roleKey → how many accounts carry it, so deletes can warn and reassign. */
   const [roleUsage, setRoleUsage] = useState<Record<string, number>>({});
 
+  // ── Atbiya registry ───────────────────────────────────────────────────────
+  const [atbiyas, setAtbiyas] = useState<Atbiya[]>([]);
+  const [atbiyasLoading, setAtbiyasLoading] = useState(false);
+  const [atbiyaSearch, setAtbiyaSearch] = useState('');
+  const [editingAtbiya, setEditingAtbiya] = useState<Atbiya | null>(null);
+  const [atbiyaDialogOpen, setAtbiyaDialogOpen] = useState(false);
+  const [atbiyaMemberCounts, setAtbiyaMemberCounts] = useState<Record<string, number>>({});
+
+  const filteredAtbiyas = atbiyas.filter((a) => {
+    const q = atbiyaSearch.trim().toLowerCase();
+    if (!q) return true;
+    return [a.name, a.nameAmharic, a.cityEn, a.cityAm, a.contact?.nameEn, a.contact?.phone]
+      .join(' ').toLowerCase().includes(q);
+  });
+
+  async function loadAtbiyas() {
+    setAtbiyasLoading(true);
+    try {
+      setAtbiyas(await hierarchyService.getAtbiyas(true));
+    } catch {
+      setAtbiyas([]);
+    } finally {
+      setAtbiyasLoading(false);
+    }
+  }
+
+  async function toggleAtbiyaActive(a: Atbiya) {
+    try {
+      await hierarchyService.deactivateAtbiya(a.id, a.active === false);
+      await loadAtbiyas();
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Could not update the parish.');
+      setStatus('error');
+    }
+  }
+
   // Audit logs
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -78,16 +116,19 @@ const SoftwareControl: React.FC = () => {
         setRoles(registry.roles);
         setRegistryVersion(registry.version);
 
-        // Role usage counts are advisory only — a failure here must not block
-        // the page, so it is fetched separately and swallowed.
+        // Usage counts are advisory only — a failure here must not block the
+        // page, so they are fetched separately and swallowed.
         try {
           const { users } = await userService.getAllUsers();
           const counts: Record<string, number> = {};
-          for (const u of users as { hierarchyLevel?: string }[]) {
+          const parishCounts: Record<string, number> = {};
+          for (const u of users as { hierarchyLevel?: string; atbiyaId?: string }[]) {
             const key = u.hierarchyLevel ?? '';
             if (key) counts[key] = (counts[key] ?? 0) + 1;
+            if (u.atbiyaId) parishCounts[u.atbiyaId] = (parishCounts[u.atbiyaId] ?? 0) + 1;
           }
           setRoleUsage(counts);
+          setAtbiyaMemberCounts(parishCounts);
         } catch { /* counts stay empty */ }
       } catch { /* defaults already in state */ } finally {
         setLoading(false);
@@ -305,7 +346,11 @@ const SoftwareControl: React.FC = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="roles" onValueChange={(v) => { if (v === 'audit' && logs.length === 0) loadLogs(); }}>
+        <Tabs defaultValue="roles" onValueChange={(v) => {
+          // Both tabs load lazily so the page opens fast.
+          if (v === 'audit' && logs.length === 0) loadLogs();
+          if (v === 'atbiya' && atbiyas.length === 0) loadAtbiyas();
+        }}>
           <TabsList className="mb-6 w-full flex-wrap h-auto">
             <TabsTrigger value="roles" className="flex-1 gap-2">
               <ShieldCheck className="h-4 w-4" /> Roles &amp; Access
@@ -316,10 +361,106 @@ const SoftwareControl: React.FC = () => {
             <TabsTrigger value="buttons" className="flex-1 gap-2">
               <MousePointerClick className="h-4 w-4" /> Buttons & Actions
             </TabsTrigger>
+            <TabsTrigger value="atbiya" className="flex-1 gap-2">
+              <Church className="h-4 w-4" /> Atbiya Registry
+            </TabsTrigger>
             <TabsTrigger value="audit" className="flex-1 gap-2">
               <ScrollText className="h-4 w-4" /> Audit Logs
             </TabsTrigger>
           </TabsList>
+
+          {/* ════════ ATBIYA REGISTRY ════════ */}
+          <TabsContent value="atbiya">
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <div>
+                  <CardTitle>Atbiya Registry</CardTitle>
+                  <CardDescription>
+                    Every parish, with its address, bank accounts and contact person.
+                    This list is what a new member picks from on the public sign-up
+                    form, and it is the parish that receives their request.
+                  </CardDescription>
+                </div>
+                <Button size="sm" onClick={() => { setEditingAtbiya(null); setAtbiyaDialogOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-1" /> Add parish
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Input
+                  placeholder="Search parishes…"
+                  value={atbiyaSearch}
+                  onChange={(e) => setAtbiyaSearch(e.target.value)}
+                  className="max-w-sm"
+                />
+                {atbiyasLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : filteredAtbiyas.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Church className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                    <p className="font-medium">No parishes registered yet</p>
+                    <p className="text-sm">
+                      Add one so members can select it when they sign up.
+                    </p>
+                  </div>
+                ) : filteredAtbiyas.map((a) => (
+                  <div key={a.id}
+                    className="p-4 rounded-xl border border-border bg-muted/20 flex items-start gap-4 flex-wrap">
+                    <div className="flex-1 min-w-[240px] space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm">{a.name}</span>
+                        {a.nameAmharic && (
+                          <span className="text-sm text-muted-foreground font-ethiopic">{a.nameAmharic}</span>
+                        )}
+                        {a.active === false && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
+                        {a.isPublic === false && (
+                          <Badge variant="secondary" className="text-[10px]">Hidden from sign-up</Badge>
+                        )}
+                      </div>
+                      {(a.address?.en || a.address?.am) && (
+                        <p className="text-xs text-muted-foreground">
+                          {a.address?.en}{a.address?.en && a.address?.am ? ' · ' : ''}
+                          <span className="font-ethiopic">{a.address?.am}</span>
+                        </p>
+                      )}
+                      {a.contact?.nameEn || a.contact?.phone ? (
+                        <p className="text-xs text-muted-foreground">
+                          {a.contact?.nameEn}
+                          {a.contact?.phone ? ` · ${a.contact.phone}` : ''}
+                          {a.contact?.email ? ` · ${a.contact.email}` : ''}
+                        </p>
+                      ) : null}
+                      {(a.bankAccounts ?? []).length > 0 && (
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {(a.bankAccounts ?? [])
+                            .map((b) => `${b.accountNumber} (${b.bankName})`)
+                            .join('  ·  ')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="gap-1 text-[10px]">
+                        <UsersIcon className="h-2.5 w-2.5" /> {atbiyaMemberCounts[a.id] ?? 0}
+                      </Badge>
+                      <Button size="icon" variant="ghost" className="h-8 w-8"
+                        onClick={() => { setEditingAtbiya(a); setAtbiyaDialogOpen(true); }}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-xs"
+                        onClick={() => toggleAtbiyaActive(a)}>
+                        {a.active === false ? 'Reactivate' : 'Deactivate'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-[11px] text-muted-foreground pt-2">
+                  Parishes are never deleted — member and news records reference them
+                  by id. Deactivate instead.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* ════════ ROLES & ACCESS ════════ */}
           <TabsContent value="roles" className="space-y-6">
@@ -627,6 +768,13 @@ const SoftwareControl: React.FC = () => {
         userCount={editingRole ? roleUsage[editingRole.key] ?? 0 : 0}
         onSave={upsertRole}
         onClose={() => { setRoleDialogOpen(false); setEditingRole(null); }}
+      />
+
+      <AtbiyaEditorDialog
+        open={atbiyaDialogOpen}
+        atbiya={editingAtbiya}
+        onSaved={() => { setAtbiyaDialogOpen(false); setEditingAtbiya(null); loadAtbiyas(); }}
+        onClose={() => { setAtbiyaDialogOpen(false); setEditingAtbiya(null); }}
       />
     </div>
   );

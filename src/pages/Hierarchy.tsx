@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Network, ChevronDown, Building2, ScrollText, CheckCircle2 } from 'lucide-react';
+import { Network, ChevronDown, Building2, ScrollText, CheckCircle2, Church } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -12,6 +12,7 @@ import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CHURCH_STRUCTURE, type StructureNode } from '@/data/churchStructure';
+import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 
 const DEPTH_COLORS = [
   'bg-indigo-500/10 text-indigo-500 border-indigo-500/30',
@@ -118,6 +119,17 @@ const HierarchyTreeNode = ({
 const Hierarchy = () => {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<StructureNode | null>(null);
+  // The bylaws chart above is a static document. These are the parishes that
+  // actually exist in the system, from the Atbiya registry.
+  const [parishes, setParishes] = useState<Atbiya[]>([]);
+  const [parishesLoading, setParishesLoading] = useState(true);
+
+  useEffect(() => {
+    hierarchyService.getAtbiyas()
+      .then(setParishes)
+      .catch(() => setParishes([]))
+      .finally(() => setParishesLoading(false));
+  }, []);
 
   const totalStructures = countNodes(CHURCH_STRUCTURE);
 
@@ -135,7 +147,11 @@ const Hierarchy = () => {
           { label: 'Structures', val: String(totalStructures), sub: 'Bodies in the org chart' },
           { label: 'Governing Document', val: 'ቁ. 001/2018', sub: '5th revised bylaws' },
           { label: 'Top Body', val: 'ሲኖዶስ', sub: 'Supreme assembly' },
-          { label: 'Base Unit', val: 'አጥቢያ', sub: 'Local parish church' },
+          {
+            label: 'Registered Parishes',
+            val: parishesLoading ? '…' : String(parishes.length),
+            sub: 'አጥቢያ — live in the registry',
+          },
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }}>
             <Card className="h-full rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/60 dark:border-white/10 p-5">
@@ -154,6 +170,55 @@ const Hierarchy = () => {
         <div className="relative space-y-3">
           <HierarchyTreeNode node={CHURCH_STRUCTURE} depth={0} onSelect={setSelected} />
         </div>
+      </div>
+
+      {/* Live parishes from the Atbiya registry (Software Control → Atbiya Registry) */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-black text-[#2E5E99] font-ethiopic">
+            አጥቢያዎች · Registered Parishes
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            The parishes that exist in the system today. New members choose one of
+            these when they sign up.
+          </p>
+        </div>
+
+        {parishesLoading ? (
+          <p className="text-sm text-muted-foreground">Loading parishes…</p>
+        ) : parishes.length === 0 ? (
+          <Card className="rounded-2xl border-dashed p-8 text-center bg-white/40 dark:bg-slate-900/40">
+            <Church className="h-8 w-8 mx-auto mb-3 opacity-40" />
+            <p className="font-semibold">No parishes registered yet</p>
+            <p className="text-sm text-muted-foreground">
+              A super admin can add them in Software Control → Atbiya Registry.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {parishes.map((p) => (
+              <Card key={p.id}
+                className="rounded-2xl p-5 space-y-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/60 dark:border-white/10">
+                <div>
+                  <p className="font-black text-[#2E5E99]">{p.name}</p>
+                  {p.nameAmharic && (
+                    <p className="text-sm font-ethiopic text-[#0D2440]/70 dark:text-white/60">{p.nameAmharic}</p>
+                  )}
+                </div>
+                {(p.address?.am || p.address?.en) && (
+                  <p className="text-xs text-[#0D2440]/60 dark:text-white/50 font-ethiopic leading-relaxed">
+                    {p.address?.am || p.address?.en}
+                  </p>
+                )}
+                {p.contact?.phone && (
+                  <p className="text-xs font-semibold text-[#2E5E99]">
+                    {p.contact.nameEn ? `${p.contact.nameEn} · ` : ''}{p.contact.phone}
+                  </p>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>

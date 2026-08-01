@@ -71,8 +71,17 @@ const ETHIOPIAN_REGIONS = [
 
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
-  const { can, roles, roleLabel } = usePermissions();
+  const { can, roles, roleLabel, scopeOf } = usePermissions();
   const assignableRoles = roles.filter((r) => r.active !== false);
+  /**
+   * Which roles need a parish assigned. Previously only HiyawanMahderat was
+   * asked, so an Atbiya-level account never got an atbiyaId — which is why
+   * parish scoping and membership approval had nothing to match on.
+   */
+  const needsAtbiya = (roleKey: string) => {
+    const s = scopeOf(roleKey);
+    return s === 'atbiya' || s === 'mahder';
+  };
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -835,7 +844,7 @@ const UserManagement = () => {
                       Select which Zone this user belongs to. Create a Zone first if none exist.
                     </p>
                   </div>
-                  {formData.hierarchyLevel === 'HiyawanMahderat' && (
+                  {needsAtbiya(formData.hierarchyLevel) && (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="atbiyaId">Atbiya (Church) * / አትብያ (ቤተክርስቲያን) *</Label>
@@ -861,6 +870,10 @@ const UserManagement = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                    </>
+                  )}
+                  {formData.hierarchyLevel === 'HiyawanMahderat' && (
+                    <>
                       <div className="space-y-2">
                         <Label htmlFor="mahderatId">Mahderat (Small Group) * / ማህደራት (ትንሽ ቡድን) *</Label>
                         <Select
@@ -1292,7 +1305,7 @@ const UserManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {formData.hierarchyLevel === 'HiyawanMahderat' && (
+              {needsAtbiya(formData.hierarchyLevel) && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="edit-atbiyaId">Atbiya (Church) * / አትብያ (ቤተክርስቲያን) *</Label>
@@ -1318,6 +1331,10 @@ const UserManagement = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </>
+              )}
+              {formData.hierarchyLevel === 'HiyawanMahderat' && (
+                <>
                   <div className="space-y-2">
                     <Label htmlFor="edit-mahderatId">Mahderat (Small Group) * / ማህደራት (ትንሽ ቡድን) *</Label>
                     <Select
