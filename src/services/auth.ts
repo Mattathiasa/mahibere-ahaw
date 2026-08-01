@@ -16,33 +16,21 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     let email = credentials.username.trim();
 
-    // If the input doesn't look like an email, try to find the user by username
+    // If the input doesn't look like an email, resolve the username to one.
+    //
+    // The `users` collection is not readable before sign-in (and never really
+    // was — that query always failed and silently fell through). The public
+    // `usernames/{username}` map exists precisely for this lookup; the
+    // deterministic fallback keeps every pre-existing account working, since
+    // those were all created with a synthetic @mahibereahaw.local address.
     if (!email.includes('@')) {
+      const typed = email;
+      const deterministic = `${typed.toLowerCase().replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
       try {
-        const q = query(collection(db, 'users'), where('username', '==', email));
-        const snapshot = await getDocs(q);
-
-        if (!snapshot.empty) {
-          const userData = snapshot.docs[0].data();
-          if (userData.email) {
-            email = userData.email;
-          } else {
-            // User exists but has no email field (created before fix). Fall back to deterministic email.
-            const cleanUsername = email.toLowerCase().replace(/[^a-z0-9]/g, '');
-            email = `${cleanUsername}@mahibereahaw.local`;
-          }
-        } else {
-          // If we can verify it's not there, throw
-          throw new Error('Username not found');
-        }
-      } catch (error: any) {
-        if (error.message === 'Username not found') throw error;
-
-        // If Firestore blocks read due to missing rules (e.g. unauthenticated), 
-        // we log it and fallback to the auto-generated deterministic email format.
-        console.warn('Firestore username lookup failed (likely permission denied). Falling back to deterministic email.', error);
-        const cleanUsername = email.toLowerCase().replace(/[^a-z0-9]/g, '');
-        email = `${cleanUsername}@mahibereahaw.local`;
+        const mapped = await getDoc(doc(db, 'usernames', typed.toLowerCase()));
+        email = (mapped.exists() && (mapped.data().email as string)) || deterministic;
+      } catch {
+        email = deterministic;
       }
     }
 
@@ -80,16 +68,58 @@ export const authService = {
     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     const userData = userDoc.exists() ? userDoc.data() : {};
 
+    // ── Membership gate ──────────────────────────────────────────────────
+    // Credentials are valid at this point, but the account may not be
+    // approved. Firestore rules already deny a pending account everything;
+    // this turns that into a clear message instead of an app full of empty
+    // screens. A MISSING status means 'active' — every account created before
+    // sign-up existed has no such field.
+    const status: string = userData.status ?? 'active';
+    if (!userDoc.exists() || status !== 'active') {
+      const parish = userData.atbiyaName ? ` (${userData.atbiyaName})` : '';
+      const message =
+        !userDoc.exists()
+          ? 'This login is not linked to a member record. Please contact your parish administrator.'
+          : status === 'pending'
+            ? `Your membership request is still waiting for approval from your Atbiya${parish}. You will be able to sign in once it is approved.`
+            : status === 'rejected'
+              ? `Your membership request was not approved.${userData.rejectedReason ? ` Reason: ${userData.rejectedReason}` : ''} Please contact your parish if you believe this is a mistake.`
+              : 'This account has been suspended. Please contact your administrator.';
+
+      // Record the blocked attempt BEFORE signing out, while auth is still live.
+      await auditLogService.log({
+        action: 'login',
+        targetType: 'auth',
+        description: `Blocked sign-in (${!userDoc.exists() ? 'no profile' : status})`,
+        actor: {
+          id: firebaseUser.uid,
+          name: userData.fullNameEnglish || userData.fullName,
+          email: firebaseUser.email ?? undefined,
+          hierarchyLevel: userData.hierarchyLevel,
+        },
+      });
+      await signOut(auth);
+
+      const err = new Error(message) as Error & { membershipStatus?: string };
+      err.membershipStatus = userDoc.exists() ? status : 'missing';
+      throw err;
+    }
+
     const user: User = {
       id: firebaseUser.uid,
-      username: firebaseUser.email?.split('@')[0] || 'user',
+      username: userData.username || firebaseUser.email?.split('@')[0] || 'user',
       email: firebaseUser.email || '',
       role: userData.role || 'user',
       firstName: userData.firstName,
       lastName: userData.lastName,
-      fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Church Member',
+      fullName: userData.fullNameEnglish || userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Church Member',
       phone: userData.phone,
       hierarchyLevel: userData.hierarchyLevel || 'Atbiya',
+      hierarchyEntityId: userData.hierarchyEntityId,
+      atbiyaId: userData.atbiyaId,
+      atbiyaName: userData.atbiyaName,
+      mahderatId: userData.mahderatId,
+      status: 'active',
       ministryType: userData.ministryType || 'General',
     };
 

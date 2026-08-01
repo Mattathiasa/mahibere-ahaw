@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import logo from '@/assets/logo.png';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '@/services/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -256,6 +256,23 @@ const Login = () => {
                     </div>
                   )}
                 </Button>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.65 }}
+                className="text-center text-sm"
+              >
+                <span className={theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/60'}>
+                  New member?{' '}
+                </span>
+                <Link to="/signup" className="font-bold text-[#2E5E99] hover:underline">
+                  Create an account
+                </Link>
+                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/30' : 'text-[#0D2440]/40'}`}>
+                  Your Atbiya approves the request before you can sign in.
+                </p>
               </motion.div>
 
               <motion.div

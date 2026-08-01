@@ -4,7 +4,7 @@ import {
   ArrowLeft, Save, Loader2, CheckCircle2, AlertCircle, MonitorCog,
   LayoutPanelLeft, MousePointerClick, ExternalLink, ScrollText, RefreshCw,
   LogIn, LogOut, FilePlus2, FilePen, FileX2, Smartphone, Monitor,
-  ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon, Church,
+  ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon, Church, UserPlus,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -26,6 +26,7 @@ import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { PermissionMatrix } from '@/components/PermissionMatrix';
 import { RoleEditorDialog } from '@/components/RoleEditorDialog';
 import { AtbiyaEditorDialog } from '@/components/AtbiyaEditorDialog';
+import { MembershipRequests } from '@/components/MembershipRequests';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -364,6 +365,9 @@ const SoftwareControl: React.FC = () => {
             <TabsTrigger value="atbiya" className="flex-1 gap-2">
               <Church className="h-4 w-4" /> Atbiya Registry
             </TabsTrigger>
+            <TabsTrigger value="requests" className="flex-1 gap-2">
+              <UserPlus className="h-4 w-4" /> Requests
+            </TabsTrigger>
             <TabsTrigger value="audit" className="flex-1 gap-2">
               <ScrollText className="h-4 w-4" /> Audit Logs
             </TabsTrigger>
@@ -653,6 +657,11 @@ const SoftwareControl: React.FC = () => {
                 })}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ════════ MEMBERSHIP REQUESTS ════════ */}
+          <TabsContent value="requests">
+            <MembershipRequests />
           </TabsContent>
 
           {/* ════════ AUDIT LOGS ════════ */}

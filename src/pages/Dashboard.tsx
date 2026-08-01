@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { MembershipRequests } from '@/components/MembershipRequests';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -212,6 +213,11 @@ const Dashboard = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* ── Membership requests ──
+          Renders itself only for approvers, and sits high on the page so a
+          parish sees waiting requests as soon as they sign in. */}
+      <MembershipRequests />
 
       {/* ── Comprehensive Quick Actions Grid (Quickboard Actions) ── */}
       {permissions.dashboardView !== 'basic' && (

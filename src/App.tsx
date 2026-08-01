@@ -7,6 +7,8 @@ import { lazy, Suspense } from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import AboutFeatures from "./pages/AboutFeatures";
+import Signup from "./pages/Signup";
+import PendingApproval from "./pages/PendingApproval";
 import LandingEditor from "./pages/LandingEditor";
 import PermissionControl from "./pages/PermissionControl";
 const MobileControl = lazy(() => import("./pages/MobileControl"));
@@ -69,6 +71,8 @@ const App = () => (
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/features" element={<AboutFeatures />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/pending" element={<PendingApproval />} />
                   <Route path="/admin/landing-editor" element={<AdminRoute><LandingEditor /></AdminRoute>} />
                   <Route path="/admin/permissions" element={<AdminRoute superAdminOnly><PermissionControl /></AdminRoute>} />
                   <Route path="/admin/mobile-control" element={<AdminRoute><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><MobileControl /></Suspense></AdminRoute>} />

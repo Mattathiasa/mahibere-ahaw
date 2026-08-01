@@ -14,7 +14,29 @@ import {
   writeBatch
 } from 'firebase/firestore';
 
+export interface NotificationInput {
+  userId: string;
+  title: string;
+  message: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
+  link?: string;
+}
+
 export const notificationService = {
+  /**
+   * Sends a notification to one user. The collection was read-only from the
+   * app until now — nothing could actually create one.
+   */
+  async create(input: NotificationInput) {
+    const docRef = await addDoc(collection(db, 'notifications'), {
+      ...input,
+      type: input.type ?? 'info',
+      status: 'unread',
+      createdAt: new Date().toISOString(),
+    });
+    return docRef.id;
+  },
+
   async getNotifications(options?: {
     userId: string;
     status?: 'unread' | 'read' | 'archived';
