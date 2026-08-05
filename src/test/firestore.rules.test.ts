@@ -37,7 +37,11 @@ const ROLE_FLAGS = {
   adminRoles: ['Sinodos', 'KuamiSinodos'],
   approverRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
   globalScopeRoles: ['Sinodos', 'KuamiSinodos', 'Memriya'],
-  atbiyaManagerRoles: ['Atbiya'],
+  // withPerm('canManageAtbiyas') — head office only. A parish leader is NOT
+  // here; registering parishes is deliberately not something they can do.
+  atbiyaManagerRoles: ['Sinodos', 'KuamiSinodos', 'Memriya'],
+  // withPerm('canEditOwnAtbiya') — this is what lets a parish maintain itself.
+  ownAtbiyaRoles: ['Sinodos', 'KuamiSinodos', 'Atbiya'],
   memberManagerRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
   directoryRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel', 'HiyawanMahderat'],
   newsRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Atbiya'],
@@ -70,7 +74,9 @@ beforeAll(async () => {
     firestore: {
       rules: readFileSync(resolve(__dirname, '../../firestore.rules'), 'utf8'),
       host: '127.0.0.1',
-      port: 8080,
+      // Overridable so the suite can still run when something else already
+      // holds 8080 (a local http-server, another emulator).
+      port: Number(process.env.FIRESTORE_EMULATOR_PORT ?? 8080),
     },
   });
 });
@@ -100,6 +106,11 @@ beforeEach(async () => {
     });
     await setDoc(doc(db, 'users/admin-1'), {
       username: 'admin', hierarchyLevel: 'Sinodos', role: 'user', status: 'active',
+    });
+    // Holds canManageAtbiyas without being an admin role — the case the
+    // registry page exists for.
+    await setDoc(doc(db, 'users/memriya-1'), {
+      username: 'memriya', hierarchyLevel: 'Memriya', role: 'user', status: 'active',
     });
     await setDoc(doc(db, 'users/parish-1'), {
       username: 'parish', hierarchyLevel: 'Atbiya', role: 'user', status: 'active',
@@ -390,6 +401,27 @@ describe('roleFlags missing — the anti-lockout fallback', () => {
   it('legacy accounts still reach application data', async () => {
     await assertSucceeds(getDoc(doc(as('legacy-1'), 'meetings/m1')));
   });
+
+  // ownAtbiyaRoles does not exist in any roleFlags document written before this
+  // permission was added, so the fallback is what every existing project runs
+  // on until an admin re-saves the role registry.
+  it('a parish leader can still edit their own parish', async () => {
+    await assertSucceeds(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
+      contact: { phone: '0938714929' },
+    }));
+  });
+
+  it('a parish leader still cannot register a new parish', async () => {
+    await assertFails(setDoc(doc(as('parish-1'), 'hierarchy/atbiya-sneaky'), {
+      name: 'Sneaky Atbiya', level: 'Atbiya', parentId: 'zone-1',
+    }));
+  });
+
+  it('an admin can still register a parish', async () => {
+    await assertSucceeds(setDoc(doc(as('admin-1'), 'hierarchy/atbiya-new'), {
+      name: 'New Atbiya', level: 'Atbiya', parentId: 'zone-1',
+    }));
+  });
 });
 
 describe('parish registry', () => {
@@ -414,6 +446,97 @@ describe('parish registry', () => {
   it('a parish leader cannot move their parish in the tree', async () => {
     await assertFails(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
       parentId: 'zone-other',
+    }));
+  });
+
+  it('a parish leader cannot change what kind of entity their parish is', async () => {
+    await assertFails(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
+      level: 'Zone',
+    }));
+  });
+
+  // ── Registering, as opposed to editing ──────────────────────────────────
+  it('a canManageAtbiyas holder who is NOT an admin can register a parish', async () => {
+    await assertSucceeds(setDoc(doc(as('memriya-1'), 'hierarchy/atbiya-new'), {
+      name: 'New Atbiya', level: 'Atbiya', parentId: 'zone-1',
+    }));
+  });
+
+  it('that same holder cannot graft a non-parish onto the org tree', async () => {
+    await assertFails(setDoc(doc(as('memriya-1'), 'hierarchy/zone-new'), {
+      name: 'New Zone', level: 'Zone', parentId: null,
+    }));
+  });
+
+  it('THE POINT OF THE SPLIT — a parish leader cannot register a parish', async () => {
+    await assertFails(setDoc(doc(as('parish-1'), 'hierarchy/atbiya-sneaky'), {
+      name: 'Sneaky Atbiya', level: 'Atbiya', parentId: 'zone-1',
+    }));
+  });
+
+  // The three update clauses were folded into one; an admin must still be able
+  // to edit the non-parish parts of the tree.
+  it('an admin can still edit a Zone', async () => {
+    await assertSucceeds(updateDoc(doc(as('admin-1'), 'hierarchy/zone-1'), {
+      name: 'Renamed Zone',
+    }));
+  });
+
+  it('a canManageAtbiyas holder cannot edit a Zone', async () => {
+    await assertFails(updateDoc(doc(as('memriya-1'), 'hierarchy/zone-1'), {
+      name: 'Renamed Zone',
+    }));
+  });
+
+  it('an ordinary member can neither register nor edit a parish', async () => {
+    await assertFails(setDoc(doc(as('active-1'), 'hierarchy/atbiya-nope'), {
+      name: 'Nope', level: 'Atbiya', parentId: null,
+    }));
+    await assertFails(updateDoc(doc(as('active-1'), 'hierarchy/atbiya-bishoftu'), {
+      name: 'Renamed',
+    }));
+  });
+});
+
+describe('username → email rows', () => {
+  it('a member manager can write the row for an account it just created', async () => {
+    await assertSucceeds(setDoc(doc(as('admin-1'), 'usernames/newadmin'), {
+      uid: 'some-other-uid', email: 'newadmin@example.com',
+    }));
+  });
+
+  // Note the honest scope of this widening: DEFAULT_ROLE_PERMISSIONS grants
+  // canAddMembers to every role, so in practice any APPROVED account is a
+  // member manager. What the rule still blocks is everyone who is not approved,
+  // plus overwriting a row that already exists (below).
+  it('a pending account cannot write a row pointing at someone else', async () => {
+    await assertFails(setDoc(doc(as('pending-1'), 'usernames/impostor'), {
+      uid: 'admin-1', email: 'attacker@example.com',
+    }));
+  });
+
+  it('an anonymous visitor cannot write a row at all', async () => {
+    await assertFails(setDoc(doc(anon(), 'usernames/impostor'), {
+      uid: 'admin-1', email: 'attacker@example.com',
+    }));
+  });
+
+  it('a member can still write their own row', async () => {
+    await assertSucceeds(setDoc(doc(as('active-1'), 'usernames/active'), {
+      uid: 'active-1', email: 'active@example.com',
+    }));
+  });
+
+  // Create is widened; overwrite is not. An existing sign-in mapping must not
+  // be hijackable by anyone who can create accounts.
+  it('a member manager cannot overwrite an existing row', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'usernames/taken'), {
+        uid: 'active-1', email: 'active@example.com',
+      });
+    });
+    await assertFails(updateDoc(doc(as('parish-1'), 'usernames/taken'), {
+      email: 'attacker@example.com',
     }));
   });
 });

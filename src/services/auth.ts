@@ -5,10 +5,12 @@ import {
   onAuthStateChanged,
   reauthenticateWithCredential,
   updatePassword,
+  sendPasswordResetEmail,
+  verifyBeforeUpdateEmail,
   EmailAuthProvider,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { User, LoginCredentials, AuthResponse } from '@/types';
 import { auditLogService } from '@/services/auditLog';
 
@@ -129,6 +131,11 @@ export const authService = {
     localStorage.setItem('auth_token', token);
     localStorage.setItem('user', JSON.stringify(user));
 
+    // Both values are known and trustworthy only here, so this is where a
+    // username row that has drifted from the account's real sign-in address
+    // gets put right — notably after someone adds a recovery email.
+    this.repairUsernameMapping(user.username, user.id, user.email);
+
     auditLogService.log({
       action: 'login',
       targetType: 'auth',
@@ -224,5 +231,112 @@ export const authService = {
       throw new Error('Current password is incorrect.');
     }
     await updatePassword(firebaseUser, data.newPassword);
+  },
+
+  // ── Password recovery ─────────────────────────────────────────────────────
+  // All of this rides on Firebase Auth's built-in email templates, which are
+  // free on the Spark plan. Nothing here needs Cloud Functions or the Admin
+  // SDK, which the project deliberately avoids.
+
+  /** The address a username signs in with. Readable before sign-in. */
+  async resolveEmail(usernameOrEmail: string): Promise<string> {
+    const typed = usernameOrEmail.trim();
+    if (typed.includes('@')) return typed;
+    const deterministic = `${typed.toLowerCase().replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
+    try {
+      const mapped = await getDoc(doc(db, 'usernames', typed.toLowerCase()));
+      return (mapped.exists() && (mapped.data().email as string)) || deterministic;
+    } catch {
+      return deterministic;
+    }
+  },
+
+  /**
+   * Sends a password reset link.
+   *
+   * Accounts created with only a username sign in as `@mahibereahaw.local`,
+   * which is not a real inbox — there is no way to mail them and no Admin SDK
+   * to set a password server-side, so the caller is told plainly rather than
+   * being shown a success message for a link nobody will ever receive.
+   */
+  async sendPasswordReset(usernameOrEmail: string): Promise<{ sentTo: string }> {
+    const input = usernameOrEmail.trim();
+    if (!input) throw new Error('Enter your username or email address first.');
+
+    const email = await this.resolveEmail(input);
+    if (email.toLowerCase().endsWith('@mahibereahaw.local')) {
+      throw new Error(
+        'This account signs in with a username and has no email address, so a reset link cannot be sent. Ask your parish administrator to issue you a new password.'
+      );
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? '';
+      if (code === 'auth/invalid-email') throw new Error('That email address is not valid.');
+      if (code === 'auth/too-many-requests') {
+        throw new Error('Too many attempts. Please wait a few minutes and try again.');
+      }
+      // auth/user-not-found is deliberately NOT distinguished: saying which
+      // addresses have accounts would let anyone enumerate the membership.
+      if (code !== 'auth/user-not-found') {
+        throw new Error('Could not send the reset email. Please try again.');
+      }
+    }
+    return { sentTo: email };
+  },
+
+  /**
+   * Attaches a real email address to an account that only had a username, so
+   * password reset becomes possible for it.
+   *
+   * Firebase only mails the address on the Auth account, so this genuinely has
+   * to change the sign-in email. `verifyBeforeUpdateEmail` does not take effect
+   * until the link is clicked, so the `usernames` row is deliberately NOT
+   * rewritten here — it keeps pointing at the old address, and username sign-in
+   * keeps working throughout. `repairUsernameMapping` fixes it up on the next
+   * successful sign-in.
+   */
+  async addRecoveryEmail(currentPassword: string, newEmail: string): Promise<void> {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser?.email) throw new Error('No user is currently signed in.');
+    if (!/^\S+@\S+\.\S+$/.test(newEmail.trim())) {
+      throw new Error('That email address is not valid.');
+    }
+
+    const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+    try {
+      await reauthenticateWithCredential(firebaseUser, credential);
+    } catch {
+      throw new Error('Current password is incorrect.');
+    }
+
+    try {
+      await verifyBeforeUpdateEmail(firebaseUser, newEmail.trim());
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? '';
+      if (code === 'auth/email-already-in-use') {
+        throw new Error('Another account already uses that email address.');
+      }
+      throw new Error('Could not start the email change. Please try again.');
+    }
+  },
+
+  /**
+   * Keeps `usernames/{username}` pointing at the address the account actually
+   * signs in with. Runs after a successful sign-in, when both values are known
+   * and the rules allow the user to write their own row. Best-effort: a failure
+   * here must never break a sign-in that already succeeded.
+   */
+  async repairUsernameMapping(username: string, uid: string, email: string): Promise<void> {
+    const key = username.trim().toLowerCase();
+    if (!key || !email) return;
+    try {
+      const existing = await getDoc(doc(db, 'usernames', key));
+      if (existing.exists() && existing.data().email === email) return;
+      if (existing.exists() && existing.data().uid !== uid) return; // not ours to touch
+      await setDoc(doc(db, 'usernames', key), { uid, email, createdAt: serverTimestamp() });
+    } catch { /* non-fatal */ }
   },
 };

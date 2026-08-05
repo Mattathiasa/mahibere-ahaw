@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Bell, Palette, Globe, Shield, LogOut, Monitor, Download, Trash, RefreshCw, Database, HardDrive, Wifi, Layout } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { authService } from '@/services/auth';
+import { isRealEmail } from '@/services/atbiyaAdmins';
 import { userService } from '@/services/users';
 import { translationService, TranslationOverrides } from '@/services/translations';
 import { useNavigate } from 'react-router-dom';
@@ -138,6 +139,25 @@ const Settings = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to change password');
+    },
+  });
+
+  // Accounts created by an administrator often have no real email, which makes
+  // password reset impossible for them. This is how the owner fixes that.
+  const usesSyntheticEmail = !isRealEmail(currentUser?.email);
+  const [recoveryData, setRecoveryData] = useState({ password: '', email: '' });
+  const addRecoveryEmailMutation = useMutation({
+    mutationFn: (d: { password: string; email: string }) =>
+      authService.addRecoveryEmail(d.password, d.email),
+    onSuccess: (_data, variables) => {
+      setRecoveryData({ password: '', email: '' });
+      toast.success(
+        `Confirmation sent to ${variables.email}. Click the link in that email, then sign in with the new address.`,
+        { duration: 10000 }
+      );
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Could not start the email change');
     },
   });
 
@@ -768,6 +788,62 @@ const Settings = () => {
                     {changePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
                   </Button>
                 </div>
+              </div>
+
+              <div className="pt-6 border-t">
+                <h3 className="font-semibold mb-1">Password Recovery</h3>
+                {usesSyntheticEmail ? (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Your account signs in with a username, not a real email
+                      address, so no reset link can reach you if you forget your
+                      password. Add an email here to make recovery possible.
+                    </p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="recovery-password">Current Password</Label>
+                        <Input
+                          id="recovery-password"
+                          type="password"
+                          value={recoveryData.password}
+                          onChange={(e) => setRecoveryData({ ...recoveryData, password: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="recovery-email">Email Address</Label>
+                        <Input
+                          id="recovery-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={recoveryData.email}
+                          onChange={(e) => setRecoveryData({ ...recoveryData, email: e.target.value })}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        We send a confirmation link to that address. The change
+                        only takes effect once you click it — until then, keep
+                        signing in exactly as you do now. Afterwards, sign in
+                        with the new email address.
+                      </p>
+                      <Button
+                        onClick={() => addRecoveryEmailMutation.mutate(recoveryData)}
+                        disabled={
+                          addRecoveryEmailMutation.isPending ||
+                          !recoveryData.password ||
+                          !recoveryData.email
+                        }
+                      >
+                        {addRecoveryEmailMutation.isPending ? 'Sending…' : 'Send Confirmation'}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Your account is reachable at <strong>{currentUser?.email}</strong>.
+                    If you forget your password, use "Forgot password?" on the
+                    sign-in page and a reset link will be sent there.
+                  </p>
+                )}
               </div>
 
               <div className="pt-6 border-t">

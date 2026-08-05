@@ -36,6 +36,7 @@ export const useRolePermissions = () => {
     canManageNews:         can('canManageNews'),
     canApproveMembers:     can('canApproveMembers'),
     canManageAtbiyas:      can('canManageAtbiyas'),
+    canEditOwnAtbiya:      can('canEditOwnAtbiya'),
     canViewUserManagement: can('canViewUserManagement'),
     dashboardView,
     currentRole: role,

@@ -38,6 +38,8 @@ const Inventory = lazy(() => import("./pages/Inventory"));
 const ChurchLaws = lazy(() => import("./pages/ChurchLaws"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const NewsManager = lazy(() => import("./pages/NewsManager"));
+const AtbiyaRegistry = lazy(() => import("./pages/AtbiyaRegistry"));
+const MyAtbiya = lazy(() => import("./pages/MyAtbiya"));
 const NewsIndex = lazy(() => import("./pages/NewsIndex"));
 const NewsPostPage = lazy(() => import("./pages/NewsPost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -98,6 +100,11 @@ const App = () => (
                   <Route path="/inventory" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/assets" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hierarchy" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Hierarchy /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  {/* Not under /admin/* on purpose: these are gated by the
+                      canManageAtbiyas / parish-scope permissions, which a role
+                      can hold without being an admin role. */}
+                  <Route path="/atbiya-registry" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><AtbiyaRegistry /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/my-atbiya" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><MyAtbiya /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><HigeDenb /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/church-rules" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><ChurchLaws /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Notifications /></Suspense></DashboardLayout></ProtectedRoute>} />

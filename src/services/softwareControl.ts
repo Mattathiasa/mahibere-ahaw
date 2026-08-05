@@ -12,6 +12,7 @@ export const NAV_KEYS = [
   'finance', 'hr', 'inventory', 'churchRules', 'higeDenb', 'strategicPlan',
   'documents', 'userManagement', 'hierarchy', 'settings',
   'news', 'missionary', 'teachings', 'volunteer', 'notifications', 'softwareControl',
+  'atbiyaRegistry', 'myAtbiya',
 ] as const;
 
 export const NAV_LABELS: Record<string, string> = {
@@ -23,6 +24,7 @@ export const NAV_LABELS: Record<string, string> = {
   hierarchy: 'Hierarchy', settings: 'Settings', news: 'News',
   missionary: 'Missionary', teachings: 'Teachings', volunteer: 'Volunteer',
   notifications: 'Notifications', softwareControl: 'Software Control',
+  atbiyaRegistry: 'Atbiya Registry', myAtbiya: 'My Atbiya',
 };
 
 /** UI elements (buttons/actions) that can be toggled or role-restricted.
@@ -43,7 +45,8 @@ export const ELEMENT_KEYS: { key: string; label: string; page: string }[] = [
   { key: 'inventory.delete', label: 'Delete Asset button', page: 'Inventory' },
   { key: 'teachings.create', label: 'Create Teaching button', page: 'Teachings' },
   { key: 'news.create', label: 'New Post button', page: 'News' },
-  { key: 'atbiya.add', label: 'Add Atbiya button', page: 'Software Control' },
+  { key: 'atbiya.add', label: 'Register Atbiya button', page: 'Atbiya Registry' },
+  { key: 'atbiya.addAdmin', label: 'Add Administrator button', page: 'Atbiya Registry' },
   { key: 'members.approve', label: 'Approve / Reject buttons', page: 'Membership Requests' },
 ];
 

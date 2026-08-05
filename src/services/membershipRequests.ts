@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase';
 import {
-  collection, query, where, orderBy, getDocs, doc, runTransaction,
+  collection, query, where, orderBy, getDocs, getCountFromServer, doc, runTransaction,
 } from 'firebase/firestore';
 import { auditLogService } from '@/services/auditLog';
 import { notificationService } from '@/services/notifications';
@@ -42,6 +42,28 @@ export const membershipRequestService = {
 
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as MembershipRequest[];
+  },
+
+  /**
+   * How many requests are waiting. Drives the badge that tells a parish a
+   * request has arrived.
+   *
+   * Uses an aggregation query rather than fetching the documents: Firestore
+   * bills a count as one read per 1000 documents, so polling this costs
+   * essentially nothing. Reuses the users(status, atbiyaId, requestedAt) index
+   * by its prefix, so no new index is needed.
+   */
+  async countPending(atbiyaId?: string): Promise<number> {
+    const base = collection(db, 'users');
+    const q = atbiyaId
+      ? query(base, where('status', '==', 'pending'), where('atbiyaId', '==', atbiyaId))
+      : query(base, where('status', '==', 'pending'));
+    try {
+      return (await getCountFromServer(q)).data().count;
+    } catch {
+      // A badge is not worth surfacing an error for.
+      return 0;
+    }
   },
 
   /** Recently decided requests, for context under the pending list. */

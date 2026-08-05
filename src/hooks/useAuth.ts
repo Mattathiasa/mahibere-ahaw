@@ -4,6 +4,7 @@ import { LoginCredentials } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { postLoginPath } from '@/lib/postLogin';
 
 export function useAuth() {
   const queryClient = useQueryClient();
@@ -12,10 +13,12 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.setQueryData(['currentUser'], data.user);
       toast.success('Login successful!');
-      navigate('/dashboard', { replace: true });
+      // Parish administrators land on their own console; everyone else on the
+      // dashboard. postLoginPath falls back to /dashboard if anything fails.
+      navigate(await postLoginPath(data.user), { replace: true });
     },
     onError: (error: any) => {
       const message = error.message || 'Login failed. Please check your credentials.';

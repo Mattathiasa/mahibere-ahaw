@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bell, Check, Trash2, X } from 'lucide-react';
+import { Bell, Check, Trash2, UserPlus, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,6 +19,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
+import { usePendingRequests } from '@/hooks/usePendingRequests';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toDate } from '@/lib/date-utils';
 
@@ -25,7 +27,9 @@ export function NotificationBell() {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { count: pendingCount } = usePendingRequests();
 
   // Get unread count
   const { data: unreadCount = 0 } = useQuery({
@@ -34,6 +38,9 @@ export function NotificationBell() {
     refetchInterval: 30000, // Refetch every 30 seconds
     enabled: !!user,
   });
+
+  /** What the bell badge shows: stored notifications plus waiting requests. */
+  const totalCount = unreadCount + pendingCount;
 
   // Get notifications
   const { data: notificationsData, isLoading } = useQuery({
@@ -92,17 +99,41 @@ export function NotificationBell() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
+          {totalCount > 0 && (
             <Badge
               variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
             >
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {totalCount > 99 ? '99+' : totalCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
+        {/* Membership requests are not stored notifications — they are the
+            pending user documents themselves — so they get their own entry
+            above the list rather than appearing inside it. */}
+        {pendingCount > 0 && (
+          <>
+            <button
+              onClick={() => { setIsOpen(false); navigate('/my-atbiya'); }}
+              className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 border-l-2 border-l-amber-500"
+            >
+              <UserPlus className="h-4 w-4 mt-0.5 shrink-0 text-amber-600" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  {pendingCount === 1
+                    ? '1 membership request is waiting'
+                    : `${pendingCount} membership requests are waiting`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Review and approve them in your parish console.
+                </p>
+              </div>
+            </button>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <div className="flex items-center justify-between p-2">
           <DropdownMenuLabel className="p-0">{t('notifications')}</DropdownMenuLabel>
           {unreadCount > 0 && (

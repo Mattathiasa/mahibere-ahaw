@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout } from 'lucide-react';
+import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
@@ -9,6 +9,7 @@ import { ProfileDropdown } from '@/components/ProfileDropdown';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
+import { usePendingRequests } from '@/hooks/usePendingRequests';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -23,18 +24,24 @@ const NAV_FALLBACK_LABELS: Record<string, string> = {
   news: 'News',
   landingEditor: 'Landing Page',
   softwareControl: 'Software Control',
+  atbiyaRegistry: 'Atbiya Registry',
+  myAtbiya: 'My Atbiya',
 };
 
 interface NavFlags {
   canViewHierarchy: boolean;
   canManageUsers: boolean;
   canViewNews: boolean;
+  canManageAtbiyas: boolean;
+  /** Belongs to a parish AND has a parish-level role — i.e. runs one. */
+  runsAnAtbiya: boolean;
   isSuperAdmin: boolean;
   isAdmin: boolean;
 }
 
 const getNavigationItems = ({
-  canViewHierarchy, canManageUsers, canViewNews, isSuperAdmin, isAdmin,
+  canViewHierarchy, canManageUsers, canViewNews, canManageAtbiyas, runsAnAtbiya,
+  isSuperAdmin, isAdmin,
 }: NavFlags) => {
   const items = [
     { name: 'dashboard', href: '/dashboard', icon: Home },
@@ -64,6 +71,14 @@ const getNavigationItems = ({
     items.push({ name: 'hierarchy', href: '/hierarchy', icon: Network });
   }
 
+  if (runsAnAtbiya) {
+    items.push({ name: 'myAtbiya', href: '/my-atbiya', icon: Church });
+  }
+
+  if (canManageAtbiyas) {
+    items.push({ name: 'atbiyaRegistry', href: '/atbiya-registry', icon: Church });
+  }
+
   // The Landing Editor had no sidebar entry at all — it was reachable only via
   // a card buried in Settings, which is why it looked like it had been removed.
   if (isAdmin || isSuperAdmin) {
@@ -87,7 +102,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { language, setLanguage, t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showNav } = useSoftwareControl();
-  const { isSuperAdmin, isAdminRole } = usePermissions();
+  const { isSuperAdmin, isAdminRole, scopeOf, myAtbiyaId } = usePermissions();
+  const { count: pendingCount } = usePendingRequests();
   // Driven by the permission matrix now, not a hardcoded `=== 'Memriya'`,
   // which had locked Sinodos and super admins out of User Management.
   const canManageUsers = permissions.canViewUserManagement;
@@ -95,6 +111,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     canViewHierarchy: permissions.canViewHierarchy,
     canManageUsers,
     canViewNews: permissions.canViewNews,
+    canManageAtbiyas: permissions.canManageAtbiyas,
+    runsAnAtbiya: !!myAtbiyaId && scopeOf(currentUser?.hierarchyLevel) === 'atbiya',
     isSuperAdmin,
     isAdmin: isAdminRole(currentUser?.hierarchyLevel),
   }).filter((item) => showNav(item.name));
@@ -118,18 +136,27 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         // Newer nav entries have no i18n key yet — fall back rather than
         // rendering an empty label.
         const translatedName = (t.nav as any)[item.name] ?? NAV_FALLBACK_LABELS[item.name] ?? item.name;
+        // Requests waiting on this parish, shown where the administrator will
+        // actually look rather than only inside the console itself.
+        const badge = item.name === 'myAtbiya' ? pendingCount : 0;
         return (
           <Link
             key={item.name}
             to={item.href}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${isActive
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${isActive
               ? 'bg-[#2E5E99] text-white font-bold shadow-lg shadow-[#2E5E99]/20'
               : `text-muted-foreground hover:bg-[#2E5E99]/5 hover:text-[#2E5E99] ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/60'}`
               }`}
-            title={isCollapsed ? translatedName : undefined}
+            title={isCollapsed ? `${translatedName}${badge > 0 ? ` (${badge} waiting)` : ''}` : undefined}
           >
             <Icon className={`h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110 ${isCollapsed ? 'mx-auto' : ''}`} />
             {!isCollapsed && <span className="font-medium tracking-wide">{translatedName}</span>}
+            {badge > 0 && (
+              <span className={`ml-auto min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center ${
+                isCollapsed ? 'absolute top-1.5 right-1.5 ml-0' : ''}`}>
+                {badge > 99 ? '99+' : badge}
+              </span>
+            )}
           </Link>
         );
       })}

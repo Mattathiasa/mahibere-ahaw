@@ -92,6 +92,24 @@ service cloud.firestore {
     function isAtbiyaManager()  { return isAdmin() || inRole('atbiyaManagerRoles', ['Atbiya']); }
     function signupRole()       { return flags().get('signupRole', 'HiyawanMahderat'); }
 
+    // Registering a NEW parish is a head-office action. This fallback
+    // deliberately differs from isAtbiyaManager()'s ['Atbiya']: a parish leader
+    // maintaining their own record must never also mean they can mint parishes.
+    //
+    // Neither helper folds in isAdmin(). Both are used inside a single
+    // `isAdmin() || (...)` clause below, and nesting the admin check into each
+    // one made the /hierarchy rules exceed Firestore's 1000-expression
+    // evaluation cap, which fails CLOSED — every parish edit was denied.
+    function canRegisterAtbiya() {
+      return inRole('atbiyaManagerRoles', ['Sinodos', 'KuamiSinodos']);
+    }
+
+    // Maintaining the parish you belong to. Separate permission, separate flag,
+    // so a parish can keep its own record current without registry-wide power.
+    function isOwnAtbiyaEditor() {
+      return inRole('ownAtbiyaRoles', ['Atbiya']);
+    }
+
     function changed(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
@@ -216,14 +234,26 @@ service cloud.firestore {
       allow list: if resource.data.level == 'Atbiya';
       allow read: if isActive();
 
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin();
-      // A parish leader may maintain their own parish record, but cannot move
-      // it in the tree or change what kind of entity it is.
-      allow update: if isAtbiyaManager()
-        && resource.data.level == 'Atbiya'
-        && docId == myAtbiya()
-        && !changed(['level', 'parentId']);
+      allow delete: if isAdmin();
+
+      // Registering a parish is scoped to level == 'Atbiya', so the registry
+      // permission never becomes a way to graft new Zones or Memriya
+      // departments onto the org tree — those stay admin-only.
+      allow create: if isAdmin()
+        || (canRegisterAtbiya() && request.resource.data.level == 'Atbiya');
+
+      // Kept as ONE clause on purpose. Written as three separate `allow update`
+      // statements, Firestore re-evaluates the whole helper chain per statement
+      // and blows the 1000-expression cap, denying every parish edit.
+      allow update: if isAdmin()
+        || (resource.data.level == 'Atbiya' && (
+              canRegisterAtbiya()
+              // A parish leader may maintain their own record, but cannot move
+              // it in the tree or change what kind of entity it is.
+              || (docId == myAtbiya()
+                  && isOwnAtbiyaEditor()
+                  && !changed(['level', 'parentId']))
+            ));
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -256,7 +286,13 @@ service cloud.firestore {
     // ════════════════════════════════════════════════════════════════════════
     match /usernames/{username} {
       allow get: if true;
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      // Self sign-up writes its own row. A member manager writes the row for an
+      // account it just created for someone else — without this, an
+      // admin-created user whose email is a real address could never sign in by
+      // username, because authService only falls back to the synthetic
+      // @mahibereahaw.local address when no row exists.
+      allow create: if (signedIn() && request.resource.data.uid == request.auth.uid)
+        || isMemberManager();
       allow update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow delete: if isAdmin();
       // No list: enumerating every username is not something the app needs.

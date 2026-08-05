@@ -47,6 +47,7 @@ export const ALL_PERMISSIONS = [
   'canManageNews',
   'canApproveMembers',
   'canManageAtbiyas',
+  'canEditOwnAtbiya',
   // ── Dashboard view level ──────────────────────────────────────────────────
   'canViewFullDashboard',
   'canViewLimitedDashboard',
@@ -118,7 +119,11 @@ export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
   canManageNews:               { label: 'Manage News',              description: 'Write, publish and unpublish homepage news',   group: 'News' },
   // Administration
   canApproveMembers:           { label: 'Approve Member Requests',  description: 'Approve or reject membership sign-up requests', group: 'Administration' },
-  canManageAtbiyas:            { label: 'Manage Atbiya Registry',   description: 'Add and edit parish records',                  group: 'Administration' },
+  // Two deliberately separate keys. Registering a parish is a head-office act;
+  // maintaining the one you belong to is not. Folding them together would mean
+  // every parish leader could mint new parishes.
+  canManageAtbiyas:            { label: 'Manage Atbiya Registry',   description: 'Register parishes and edit any parish record', group: 'Administration' },
+  canEditOwnAtbiya:            { label: 'Edit Own Atbiya',          description: "Edit the details of the parish you belong to", group: 'Administration' },
   // Dashboard
   canViewFullDashboard:        { label: 'Full Dashboard View',      description: 'See all stats and quick actions',              group: 'Dashboard' },
   canViewLimitedDashboard:     { label: 'Limited Dashboard View',   description: 'See basic stats only',                         group: 'Dashboard' },
@@ -180,8 +185,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     'canAddTransaction',
     'canUploadDocuments',
     'canSubmitMissionaryApplication', 'canSubmitMissionaryReport',
-    // A parish approves its own membership requests and posts its own news.
-    'canViewNews', 'canManageNews', 'canApproveMembers',
+    // A parish approves its own membership requests, posts its own news and
+    // maintains its own record — but cannot register other parishes.
+    'canViewNews', 'canManageNews', 'canApproveMembers', 'canEditOwnAtbiya',
     'canViewLimitedDashboard',
   ],
 

@@ -22,6 +22,8 @@ const Login = () => {
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [resetNotice, setResetNotice] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   const toggleLanguage = () => {
     if (language === 'en') setLanguage('am');
@@ -72,9 +74,35 @@ const Login = () => {
     e.preventDefault();
     if (!formData.username.trim() || !formData.password.trim()) return;
     setLoginError(null);
+    setResetNotice(null);
     login(formData, {
       onError: (error: any) => setLoginError(error.message || t('loginFailed')),
     });
+  };
+
+  /**
+   * Firebase's own reset email — free, no Cloud Functions involved. Accounts
+   * created with only a username have no real inbox; sendPasswordReset says so
+   * rather than reporting a success nobody will ever receive.
+   */
+  const handleForgotPassword = async () => {
+    setLoginError(null);
+    setResetNotice(null);
+    if (!formData.username.trim()) {
+      setLoginError('Enter your username or email address first, then choose "Forgot password?".');
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const { sentTo } = await authService.sendPasswordReset(formData.username);
+      setResetNotice(
+        `If an account exists for ${sentTo}, a reset link is on its way. Check the inbox and the spam folder.`
+      );
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : 'Could not send the reset email.');
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   // Show loading while checking authentication
@@ -224,6 +252,22 @@ const Login = () => {
                       className={`pl-10 h-12 rounded-xl border-[#2E5E99]/20 bg-transparent focus:bg-[#2E5E99]/5 focus:border-[#2E5E99] transition-all ${theme === 'dark' ? 'text-white placeholder:text-white/20' : 'text-[#0D2440]'}`}
                     />
                   </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      disabled={isResetting}
+                      className="text-xs font-bold text-[#2E5E99] hover:underline disabled:opacity-50"
+                    >
+                      {isResetting ? 'Sending…' : 'Forgot password?'}
+                    </button>
+                  </div>
+                  {resetNotice && (
+                    <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-sm flex items-start gap-2">
+                      <span className="mt-0.5">✅</span>
+                      <span>{resetNotice}</span>
+                    </div>
+                  )}
                 </motion.div>
               </div>
 

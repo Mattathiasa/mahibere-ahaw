@@ -10,6 +10,7 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
   addDoc,
   serverTimestamp
 } from 'firebase/firestore';
@@ -118,6 +119,21 @@ export const userService = {
       return { id: docSnap.id, ...docSnap.data() };
     }
     return null;
+  },
+
+  /**
+   * Everyone belonging to one parish. Uses the existing
+   * users(atbiyaId, fullNameEnglish) composite index.
+   */
+  async getUsersByAtbiya(atbiyaId: string) {
+    if (!atbiyaId) return [];
+    const q = query(
+      collection(db, 'users'),
+      where('atbiyaId', '==', atbiyaId),
+      orderBy('fullNameEnglish', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   },
 
   async getUsersByHierarchyLevel(hierarchyLevel?: string) {

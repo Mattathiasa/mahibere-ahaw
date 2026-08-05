@@ -55,7 +55,10 @@ export interface RoleFlags {
   adminRoles: string[];
   approverRoles: string[];
   globalScopeRoles: string[];
+  /** May register a parish and edit ANY parish record. Head office. */
   atbiyaManagerRoles: string[];
+  /** May edit only the parish the account belongs to. */
+  ownAtbiyaRoles: string[];
   memberManagerRoles: string[];
   directoryRoles: string[];
   newsRoles: string[];
@@ -159,6 +162,7 @@ export function deriveFlags(roles: Role[], signupRole = DEFAULT_SIGNUP_ROLE): Ro
       .map((r) => r.key),
     globalScopeRoles: active.filter((r) => r.scope === 'global').map((r) => r.key),
     atbiyaManagerRoles: withPerm('canManageAtbiyas'),
+    ownAtbiyaRoles: withPerm('canEditOwnAtbiya'),
     memberManagerRoles: withPerm('canAddMembers'),
     directoryRoles: withPerm('canViewMembers'),
     newsRoles: withPerm('canManageNews'),
