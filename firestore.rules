@@ -294,7 +294,10 @@ service cloud.firestore {
       allow create: if (signedIn() && request.resource.data.uid == request.auth.uid)
         || isMemberManager();
       allow update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
-      allow delete: if isAdmin();
+      // Renaming yourself has to release the old name. Without a self-delete
+      // the previous row lingers, reserving the name against every future
+      // sign-up AND still resolving it to a live account.
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       // No list: enumerating every username is not something the app needs.
     }
 

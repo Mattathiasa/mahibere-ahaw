@@ -126,8 +126,8 @@ const Settings = () => {
       authService.getCurrentUser(); // Refresh stored user
       toast.success('Profile updated successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
     },
   });
 
@@ -137,8 +137,30 @@ const Settings = () => {
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       toast.success('Password changed successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to change password');
+    // These were read as `error.response?.data?.message` — an axios shape that
+    // a Firebase error never has — so every real reason ("Current password is
+    // incorrect.") was swallowed and replaced with a generic failure.
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to change password');
+    },
+  });
+
+  // ── Username ──────────────────────────────────────────────────────────────
+  const [username, setUsername] = useState(currentUser?.username ?? '');
+  // currentUser is null on the first render while auth resolves, so seed the
+  // field once it arrives — otherwise it stays blank until a manual edit.
+  useEffect(() => {
+    if (currentUser?.username) setUsername(currentUser.username);
+  }, [currentUser?.username]);
+  const changeUsernameMutation = useMutation({
+    mutationFn: (next: string) => authService.changeUsername(next),
+    onSuccess: async () => {
+      await authService.getCurrentUser();
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      toast.success('Username changed. Use the new one next time you sign in.');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Could not change the username');
     },
   });
 
@@ -846,31 +868,42 @@ const Settings = () => {
                 )}
               </div>
 
+              {/* "Active Sessions" and "Enable 2FA" used to sit here. Both were
+                  buttons with no handler and nothing behind them, which is
+                  worse than not offering the feature at all. */}
+
               <div className="pt-6 border-t">
-                <h3 className="font-semibold mb-4">Session Management</h3>
+                <h3 className="font-semibold mb-1">Username</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  What you type to sign in. Changing it does not change your
+                  password.
+                </p>
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium">Active Sessions</p>
-                      <p className="text-sm text-muted-foreground">
-                        You are currently logged in on this device
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      View Sessions
-                    </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="abebe.k"
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      At least 3 characters: letters, digits, dot, dash or
+                      underscore.
+                      {usesSyntheticEmail && ' Your previous username may also keep working at sign-in, because it is built into this account’s internal address.'}
+                    </p>
                   </div>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium">Two-Factor Authentication</p>
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security to your account
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Enable 2FA
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => changeUsernameMutation.mutate(username)}
+                    disabled={
+                      changeUsernameMutation.isPending ||
+                      !username.trim() ||
+                      username.trim() === (currentUser?.username ?? '')
+                    }
+                  >
+                    {changeUsernameMutation.isPending ? 'Saving…' : 'Change Username'}
+                  </Button>
                 </div>
               </div>
 

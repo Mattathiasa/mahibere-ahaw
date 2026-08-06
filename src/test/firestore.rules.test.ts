@@ -591,6 +591,16 @@ describe('username → email rows', () => {
     }));
   });
 
+  it('a user deletes their own row when renaming, but not somebody else\'s', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'usernames/mine'), { uid: 'active-1', email: 'a@example.com' });
+      await setDoc(doc(db, 'usernames/theirs'), { uid: 'parish-1', email: 'p@example.com' });
+    });
+    await assertSucceeds(deleteDoc(doc(as('active-1'), 'usernames/mine')));
+    await assertFails(deleteDoc(doc(as('active-1'), 'usernames/theirs')));
+  });
+
   // Create is widened; overwrite is not. An existing sign-in mapping must not
   // be hijackable by anyone who can create accounts.
   it('a member manager cannot overwrite an existing row', async () => {

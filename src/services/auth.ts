@@ -10,7 +10,7 @@ import {
   EmailAuthProvider,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { User, LoginCredentials, AuthResponse } from '@/types';
 import { auditLogService } from '@/services/auditLog';
 
@@ -172,7 +172,11 @@ export const authService = {
 
           const user: User = {
             id: firebaseUser.uid,
-            username: firebaseUser.email?.split('@')[0] || 'user',
+            // The Firestore record is the source of truth. Deriving this from
+            // the email local-part made a renamed username silently revert on
+            // the next reload, and showed the wrong name entirely once someone
+            // attached a recovery email.
+            username: userData.username || firebaseUser.email?.split('@')[0] || 'user',
             email: firebaseUser.email || '',
             role: userData.role || 'user',
             firstName: userData.firstName,
@@ -223,14 +227,90 @@ export const authService = {
     if (data.newPassword.length < 6) {
       throw new Error('New password must be at least 6 characters long.');
     }
-    // Re-authenticate the user before changing the password (Firebase requirement)
+    // Re-authenticate before changing the password (a Firebase requirement).
     const credential = EmailAuthProvider.credential(firebaseUser.email, data.currentPassword);
     try {
       await reauthenticateWithCredential(firebaseUser, credential);
-    } catch {
+    } catch (e) {
+      // Previously every failure here read as "wrong password", including a
+      // rate-limit, which sent people round in circles retrying a password
+      // that was in fact correct.
+      const code = (e as { code?: string }).code ?? '';
+      if (code === 'auth/too-many-requests') {
+        throw new Error('Too many attempts. Please wait a few minutes and try again.');
+      }
+      if (code === 'auth/network-request-failed') {
+        throw new Error('Network problem — check your connection and try again.');
+      }
       throw new Error('Current password is incorrect.');
     }
-    await updatePassword(firebaseUser, data.newPassword);
+
+    try {
+      await updatePassword(firebaseUser, data.newPassword);
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? '';
+      if (code === 'auth/weak-password') {
+        throw new Error('That password is too weak. Choose something longer or less predictable.');
+      }
+      if (code === 'auth/requires-recent-login') {
+        throw new Error('For security, please sign out and back in, then change your password.');
+      }
+      throw new Error('Could not change the password. Please try again.');
+    }
+  },
+
+  /**
+   * Renames the account.
+   *
+   * The Auth email is deliberately left alone. Accounts created from a username
+   * sign in as `name@mahibereahaw.local`, and the only way to change that
+   * address is a link mailed to it — impossible for an address with no inbox.
+   * Sign-in survives because `login` resolves the typed name through
+   * `usernames/{name}`, so the new row carries the account's REAL current email.
+   *
+   * Ordered so a failure never leaves the account unreachable: the new row
+   * exists before the old one is removed.
+   */
+  async changeUsername(next: string): Promise<void> {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser?.email) throw new Error('No user is currently signed in.');
+
+    const trimmed = next.trim();
+    if (!/^[a-zA-Z0-9._-]{3,}$/.test(trimmed)) {
+      throw new Error('A username needs at least 3 characters, and may use only letters, digits, dot, dash or underscore.');
+    }
+
+    const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+    const current: string = snap.exists() ? (snap.data().username ?? '') : '';
+    if (trimmed.toLowerCase() === current.toLowerCase()) return;
+
+    const existing = await getDoc(doc(db, 'usernames', trimmed.toLowerCase()));
+    if (existing.exists() && existing.data().uid !== firebaseUser.uid) {
+      throw new Error('That username is already taken. Choose another.');
+    }
+
+    try {
+      await setDoc(doc(db, 'usernames', trimmed.toLowerCase()), {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        createdAt: serverTimestamp(),
+      });
+      await updateDoc(doc(db, 'users', firebaseUser.uid), {
+        username: trimmed,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch {
+      throw new Error('Could not save the new username. Please try again.');
+    }
+
+    // Best-effort: the rename has already taken effect. A leftover row only
+    // means the old name stays reserved.
+    if (current) {
+      try { await deleteDoc(doc(db, 'usernames', current.toLowerCase())); }
+      catch { /* non-fatal */ }
+    }
+
+    auditLogService.dataChange('update', 'users', firebaseUser.uid, `Changed username to ${trimmed}`);
   },
 
   // ── Password recovery ─────────────────────────────────────────────────────
