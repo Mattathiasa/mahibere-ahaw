@@ -31,6 +31,7 @@ export interface NewsPost {
   excerpt: LocalizedText;
   body: LocalizedText;
   coverImageUrl?: string;
+  images?: string[];
   scope: NewsScope;
   atbiyaId: string | null;
   /** Denormalized so the homepage badge needs no join. */

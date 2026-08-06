@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, Globe, Church } from 'lucide-react';
+import { Loader2, AlertCircle, Globe, Church, Image as ImageIcon, Star, Trash2 } from 'lucide-react';
 import {
   newsService, pickText,
   type NewsPost, type NewsInput, type LocalizedText, type NewsScope,
@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import { optimized } from '@/services/cloudinary';
 
 const LANGS: { code: Language; label: string }[] = [
   { code: 'en', label: 'English' },
@@ -43,6 +44,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
   const [excerpt, setExcerpt] = useState<LocalizedText>({});
   const [body, setBody] = useState<LocalizedText>({});
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,7 +59,23 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
     setExcerpt(post?.excerpt ?? {});
     setBody(post?.body ?? {});
     setCoverImageUrl(post?.coverImageUrl ?? '');
+    setImages(post?.images ?? []);
   }, [open, post]);
+
+  function handleImageUploaded({ url }: { url: string }) {
+    if (!url) return;
+    setImages((prev) => (prev.includes(url) ? prev : [...prev, url]));
+    // Automatically set cover image if none is set yet
+    if (!coverImageUrl) setCoverImageUrl(url);
+  }
+
+  function removeImage(url: string) {
+    setImages((prev) => prev.filter((img) => img !== url));
+    if (coverImageUrl === url) {
+      const remaining = images.filter((img) => img !== url);
+      setCoverImageUrl(remaining[0] ?? '');
+    }
+  }
 
   function build(status: 'draft' | 'published'): NewsInput | null {
     if (!pickText(title, 'en') && !pickText(title, 'am')) {
@@ -74,6 +92,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
       publishedAt: post?.publishedAt ?? null,
       title, excerpt, body,
       coverImageUrl,
+      images,
       scope,
       atbiyaId: scope === 'atbiya' ? myAtbiyaId : null,
       atbiyaName: scope === 'atbiya'
@@ -123,17 +142,86 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Cover image
-            </Label>
-            <CloudinaryImageUpload
-              value={coverImageUrl}
-              onChange={setCoverImageUrl}
-              folder="mahibere-ahaw/news"
-              variant="wide"
-            />
+        <div className="space-y-6 py-2">
+          {/* Cover & Gallery Images Section */}
+          <div className="space-y-4 p-4 rounded-xl bg-muted/40 border border-border">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                  Main Cover Image
+                </Label>
+                {coverImageUrl && (
+                  <span className="text-[11px] text-emerald-600 font-medium">Cover image set</span>
+                )}
+              </div>
+              <CloudinaryImageUpload
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                folder="mahibere-ahaw/news"
+                variant="wide"
+                label="Upload Cover Image"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-border/60 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <ImageIcon className="h-3.5 w-3.5 text-[#2E5E99]" />
+                  Article Gallery Photos ({images.length})
+                </Label>
+              </div>
+
+              <CloudinaryImageUpload
+                onChange={(url) => { if (url) handleImageUploaded({ url }); }}
+                onUploaded={handleImageUploaded}
+                folder="mahibere-ahaw/news"
+                variant="wide"
+                multiple
+                label="Add Gallery Photos"
+              />
+
+              {images.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 pt-2">
+                  {images.map((imgUrl, idx) => {
+                    const isCover = coverImageUrl === imgUrl;
+                    return (
+                      <div key={idx} className={`relative group aspect-square rounded-lg overflow-hidden border-2 transition-all ${isCover ? 'border-amber-500 shadow-md ring-2 ring-amber-500/20' : 'border-border'}`}>
+                        <img src={optimized(imgUrl, 300)} alt="" className="w-full h-full object-cover" />
+                        
+                        {/* Overlay Controls */}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-1">
+                          {!isCover && (
+                            <button
+                              type="button"
+                              onClick={() => setCoverImageUrl(imgUrl)}
+                              title="Set as Cover Image"
+                              className="p-1.5 rounded-full bg-amber-500 text-white hover:scale-110 transition-transform"
+                            >
+                              <Star className="h-3.5 w-3.5 fill-white" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(imgUrl)}
+                            title="Remove photo"
+                            className="p-1.5 rounded-full bg-red-600 text-white hover:scale-110 transition-transform"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
+                        {isCover && (
+                          <div className="absolute top-1 left-1 bg-amber-500 text-white text-[9px] font-black uppercase px-1.5 py-0.5 rounded shadow">
+                            Cover
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <Tabs defaultValue="en">

@@ -110,6 +110,11 @@ const NewsIndex: React.FC = () => {
                         {new Date(post.publishedAt).toLocaleDateString()}
                       </span>
                     )}
+                    {(post.images?.length ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[9px] text-amber-600 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full">
+                        📷 {post.images!.length}
+                      </span>
+                    )}
                   </div>
                   <h2 className={`text-xl font-bold font-ethiopic leading-tight ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
                     {pickText(post.title, language)}
