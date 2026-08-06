@@ -89,12 +89,12 @@ service cloud.firestore {
     function canReadDirectory() { return isAdmin() || inRole('directoryRoles', seedRoles()); }
     function canManageNews()    { return isAdmin() || inRole('newsRoles', ['Sinodos', 'KuamiSinodos', 'Memriya']); }
     function hasGlobalScope()   { return isAdmin() || inRole('globalScopeRoles', ['Sinodos', 'KuamiSinodos', 'Memriya']); }
-    function isAtbiyaManager()  { return isAdmin() || inRole('atbiyaManagerRoles', ['Atbiya']); }
     function signupRole()       { return flags().get('signupRole', 'HiyawanMahderat'); }
 
-    // Registering a NEW parish is a head-office action. This fallback
-    // deliberately differs from isAtbiyaManager()'s ['Atbiya']: a parish leader
-    // maintaining their own record must never also mean they can mint parishes.
+    // Parish management is two capabilities, not one. There used to be a single
+    // isAtbiyaManager() falling back to ['Atbiya'], which would have meant that
+    // letting a parish leader maintain their own record also let them mint new
+    // parishes. Registering is head office; maintaining your own is not.
     //
     // Neither helper folds in isAdmin(). Both are used inside a single
     // `isAdmin() || (...)` clause below, and nesting the admin check into each
