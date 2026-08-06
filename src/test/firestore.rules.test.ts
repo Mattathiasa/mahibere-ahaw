@@ -145,6 +145,16 @@ beforeEach(async () => {
 
     await setDoc(doc(db, 'meetings/m1'), { title: 'Council' });
     await setDoc(doc(db, 'siteConfig/landingPage'), { en: {} });
+
+    // ── Notifications ─────────────────────────────────────────────────────
+    await setDoc(doc(db, 'notifications/n-active'), {
+      userId: 'active-1', title: 'For you', message: 'hello',
+      type: 'info', status: 'unread', createdAt: '2026-08-01T00:00:00.000Z',
+    });
+    await setDoc(doc(db, 'notifications/n-parish'), {
+      userId: 'parish-1', title: 'For the parish leader', message: 'hello',
+      type: 'info', status: 'unread', createdAt: '2026-08-01T00:00:00.000Z',
+    });
   });
 });
 
@@ -495,6 +505,60 @@ describe('parish registry', () => {
     await assertFails(updateDoc(doc(as('active-1'), 'hierarchy/atbiya-bishoftu'), {
       name: 'Renamed',
     }));
+  });
+});
+
+describe('notifications are private correspondence', () => {
+  it('a user reads their own notification', async () => {
+    await assertSucceeds(getDoc(doc(as('active-1'), 'notifications/n-active')));
+  });
+
+  it('THE POINT — a user cannot read somebody else\'s', async () => {
+    await assertFails(getDoc(doc(as('active-1'), 'notifications/n-parish')));
+  });
+
+  it('an owner-scoped list query is allowed', async () => {
+    const db = as('active-1');
+    await assertSucceeds(
+      getDocs(query(collection(db, 'notifications'), where('userId', '==', 'active-1')))
+    );
+  });
+
+  it('an unfiltered list of everyone\'s notifications is denied', async () => {
+    await assertFails(getDocs(collection(as('active-1'), 'notifications')));
+  });
+
+  it('listing another user\'s notifications is denied', async () => {
+    const db = as('active-1');
+    await assertFails(
+      getDocs(query(collection(db, 'notifications'), where('userId', '==', 'parish-1')))
+    );
+  });
+
+  // Broadcasting an announcement, and approving a membership request, both
+  // write notifications addressed to other people.
+  it('an approved user creates a notification for somebody else', async () => {
+    await assertSucceeds(setDoc(doc(as('admin-1'), 'notifications/n-new'), {
+      userId: 'active-1', title: 'Broadcast', message: 'hello',
+      type: 'info', status: 'unread', createdAt: '2026-08-02T00:00:00.000Z',
+    }));
+  });
+
+  it('a pending account cannot create notifications', async () => {
+    await assertFails(setDoc(doc(as('pending-1'), 'notifications/n-spam'), {
+      userId: 'active-1', title: 'Spam', message: 'hello',
+      type: 'info', status: 'unread', createdAt: '2026-08-02T00:00:00.000Z',
+    }));
+  });
+
+  it('a user marks their own notification read, but not another\'s', async () => {
+    await assertSucceeds(updateDoc(doc(as('active-1'), 'notifications/n-active'), { status: 'read' }));
+    await assertFails(updateDoc(doc(as('active-1'), 'notifications/n-parish'), { status: 'read' }));
+  });
+
+  it('a user deletes their own notification, but not another\'s', async () => {
+    await assertSucceeds(deleteDoc(doc(as('active-1'), 'notifications/n-active')));
+    await assertFails(deleteDoc(doc(as('active-1'), 'notifications/n-parish')));
   });
 });
 

@@ -20,7 +20,7 @@ import {
   roleRegistryService, roleLabel, validateRegistry, DEFAULT_SIGNUP_ROLE,
   type Role,
 } from '@/services/roleRegistry';
-import { DEFAULT_ROLE_PERMISSIONS, type PermissionKey } from '@/lib/rolePermissions';
+import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS_VERSION, type PermissionKey } from '@/lib/rolePermissions';
 import { userService } from '@/services/users';
 import { PermissionMatrix } from '@/components/PermissionMatrix';
 import { RoleEditorDialog } from '@/components/RoleEditorDialog';
@@ -51,6 +51,8 @@ const SoftwareControl: React.FC = () => {
   // ── Role registry ─────────────────────────────────────────────────────────
   const [roles, setRoles] = useState<Role[]>([]);
   const [registryVersion, setRegistryVersion] = useState(1);
+  /** Saved roles predate this app version, so siteConfig/roleFlags is stale. */
+  const [permissionsOutOfDate, setPermissionsOutOfDate] = useState(false);
   const [signupRole, setSignupRole] = useState(DEFAULT_SIGNUP_ROLE);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
@@ -81,6 +83,7 @@ const SoftwareControl: React.FC = () => {
         setConfig(cfg);
         setRoles(registry.roles);
         setRegistryVersion(registry.version);
+        setPermissionsOutOfDate((registry.permissionsVersion ?? 0) < PERMISSIONS_VERSION);
 
         // Usage counts are advisory only — a failure here must not block the
         // page, so they are fetched separately and swallowed.
@@ -188,6 +191,7 @@ const SoftwareControl: React.FC = () => {
         roles, user?.email ?? 'admin', registryVersion, signupRole
       );
       setRegistryVersion(nextVersion);
+      setPermissionsOutOfDate(false);
       await softwareControlService.save(config, user?.email ?? 'admin');
       await reloadPermissions();
       setStatus('success');
@@ -286,6 +290,20 @@ const SoftwareControl: React.FC = () => {
             <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
             <span>{errorMsg ?? 'Failed to save. Check permissions.'}</span>
           </motion.div>
+        )}
+        {/* The registry reconciles itself on read, so the app is already
+            correct. siteConfig/roleFlags — which firestore.rules reads — is
+            only rewritten on save, and only an admin can write it. */}
+        {permissionsOutOfDate && status !== 'success' && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-start gap-2 text-amber-700 text-sm">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>
+              This app version updated the built-in roles. Everyone already sees
+              the corrected permissions, but the security rules still read the
+              previous ones — press <strong>Save &amp; Publish</strong> once to bring
+              them up to date.
+            </span>
+          </div>
         )}
       </div>
 

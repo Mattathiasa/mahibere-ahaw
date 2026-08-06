@@ -13,11 +13,30 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { auditLogService } from '@/services/auditLog';
+import { notificationService } from '@/services/notifications';
+import { userService } from '@/services/users';
+import type { User } from '@/types';
+
+/**
+ * Who an announcement is for.
+ *
+ * Stored on the announcement rather than only used at send time, so it stays
+ * auditable — you can see afterwards who a message was meant to reach.
+ */
+export type AnnouncementAudience =
+  | { kind: 'parish'; atbiyaId: string }
+  | { kind: 'everyone' }
+  | { kind: 'roles'; roles: string[] };
 
 export interface CreateAnnouncementData {
   title: string;
   content: string;
   expiresAt?: string;
+  /** Stamped by the page from the signed-in user. */
+  authorId?: string;
+  authorName?: string;
+  authorHierarchyLevel?: string;
+  audience?: AnnouncementAudience;
 }
 
 export const announcementService = {
@@ -42,8 +61,57 @@ export const announcementService = {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    auditLogService.dataChange('create', 'announcements', docRef.id, `Posted announcement "${(data as any).title ?? ''}"`);
+    auditLogService.dataChange('create', 'announcements', docRef.id, `Posted announcement "${data.title ?? ''}"`);
     return { id: docRef.id, ...data };
+  },
+
+  /**
+   * Everyone an audience resolves to: approved accounts only, and never the
+   * author — nobody needs to be notified of their own announcement.
+   */
+  async resolveRecipients(audience: AnnouncementAudience, authorId?: string): Promise<User[]> {
+    const all = audience.kind === 'parish'
+      ? (await userService.getUsersByAtbiya(audience.atbiyaId)) as User[]
+      : (await userService.getAllUsers()).users as User[];
+
+    return all.filter((u) => {
+      if (u.id === authorId) return false;
+      // A missing status means active — every account predating sign-up.
+      if ((u.status ?? 'active') !== 'active') return false;
+      if (audience.kind === 'roles') {
+        return !!u.hierarchyLevel && audience.roles.includes(u.hierarchyLevel);
+      }
+      return true;
+    });
+  },
+
+  /**
+   * Delivers an announcement to its audience as notifications.
+   *
+   * This is how an ordinary member sees an announcement at all — they have no
+   * Announcements page. Returns the number of people reached so the caller can
+   * say something true rather than an optimistic "notifications sent!".
+   */
+  async broadcast(
+    announcement: { id: string; title: string; content: string },
+    audience: AnnouncementAudience,
+    author?: { id?: string; name?: string }
+  ): Promise<number> {
+    const recipients = await this.resolveRecipients(audience, author?.id);
+    if (recipients.length === 0) return 0;
+
+    return notificationService.createMany(
+      recipients.map((u) => ({
+        userId: u.id,
+        title: announcement.title,
+        message: announcement.content.length > 300
+          ? `${announcement.content.slice(0, 300)}…`
+          : announcement.content,
+        type: 'info' as const,
+        link: '/notifications',
+        senderName: author?.name,
+      }))
+    );
   },
 
   async getActiveAnnouncements() {

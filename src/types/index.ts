@@ -68,14 +68,32 @@ export interface AuthResponse {
   user: User;
 }
 
+/**
+ * A notification addressed to exactly one user.
+ *
+ * Reaching many people means one document each — see
+ * `notificationService.createMany`.
+ *
+ * This interface previously declared `read: boolean`, which nothing has ever
+ * written; read state is the `status` field below. Every UI that touched a
+ * notification was therefore fighting the compiler.
+ */
 export interface Notification {
   id: string;
+  userId: string;
   title: string;
   message: string;
   type: 'info' | 'warning' | 'error' | 'success';
-  read: boolean;
+  /** Read state. A missing value means unread. */
+  status?: 'unread' | 'read' | 'archived';
+  /** In-app route opened when the notification is clicked. */
+  link?: string;
   createdAt: string;
-  userId: string;
+  /** Optional translations, shown when the UI language is Amharic. */
+  titleAmharic?: string;
+  messageAmharic?: string;
+  senderName?: string;
+  attachments?: string[];
 }
 
 export interface FinanceTransaction {

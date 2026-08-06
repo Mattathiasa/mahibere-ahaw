@@ -210,7 +210,12 @@ export function NotificationBell() {
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="justify-center">
-              <Button variant="ghost" size="sm" className="w-full">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => { setIsOpen(false); navigate('/notifications'); }}
+              >
                 {t('viewAllNotifications')}
               </Button>
             </DropdownMenuItem>

@@ -65,6 +65,9 @@ const getNavigationItems = ({ can, runsAnAtbiya, isSuperAdmin, isAdmin }: NavFla
     { name: 'finance', href: '/finance', icon: DollarSign, permission: 'canViewFinance' },
     { name: 'hr', href: '/hr', icon: Users, permission: 'canViewHR' },
     { name: 'inventory', href: '/inventory', icon: FolderOpen, permission: 'canViewInventory' },
+    // Where a member reads announcements broadcast to them, so it must be
+    // reachable by every role that can receive one.
+    { name: 'notifications', href: '/notifications', icon: Bell, permission: 'canViewNotifications' },
     { name: 'churchRules', href: '/church-rules', icon: Scale, permission: 'canViewChurchRules' },
     { name: 'higeDenb', href: '/hige-denb', icon: BookOpen, permission: 'canViewHigeDenb' },
     { name: 'strategicPlan', href: '/strategic-plan', icon: FileText, permission: 'canViewStrategicPlan' },

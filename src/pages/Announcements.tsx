@@ -4,7 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { announcementService } from '@/services/announcements';
+import { announcementService, type AnnouncementAudience } from '@/services/announcements';
+import { usePermissions } from '@/contexts/PermissionContext';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -35,17 +39,63 @@ const Announcements = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
+  // ── Who the announcement goes to ──────────────────────────────────────────
+  // A member has no Announcements page, so this is the only way the message
+  // reaches them: it is turned into one notification per recipient.
+  const { myAtbiyaId, isHeadOffice, roles, roleLabel } = usePermissions();
+  const [audienceKind, setAudienceKind] = useState<AnnouncementAudience['kind']>(
+    isHeadOffice ? 'everyone' : 'parish'
+  );
+  const [audienceRoles, setAudienceRoles] = useState<string[]>([]);
+
+  function buildAudience(): AnnouncementAudience {
+    if (audienceKind === 'roles' && audienceRoles.length > 0) {
+      return { kind: 'roles', roles: audienceRoles };
+    }
+    // Falling back to 'everyone' when a parish-scoped author has no parish
+    // avoids silently sending to nobody.
+    if (audienceKind === 'parish' && myAtbiyaId) {
+      return { kind: 'parish', atbiyaId: myAtbiyaId };
+    }
+    return { kind: 'everyone' };
+  }
+
   const { data: announcementsData, isLoading } = useQuery({
     queryKey: ['announcements'],
     queryFn: () => announcementService.getAnnouncements(),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => announcementService.createAnnouncement(data),
-    onSuccess: () => {
+    /**
+     * Posts the announcement, then delivers it. The delivery count is reported
+     * honestly — this toast used to claim notifications had been sent when the
+     * app had never sent one.
+     */
+    mutationFn: async (data: any) => {
+      const created = await announcementService.createAnnouncement(data);
+      try {
+        const sent = await announcementService.broadcast(
+          { id: created.id, title: data.title, content: data.content },
+          data.audience,
+          { id: user?.id, name: user?.fullName || user?.username }
+        );
+        return { sent, delivered: true as const };
+      } catch {
+        // The announcement itself is posted and must not be rolled back; only
+        // delivery failed, and that is worth saying out loud.
+        return { sent: 0, delivered: false as const };
+      }
+    },
+    onSuccess: ({ sent, delivered }) => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Announcement created and notifications sent!');
+      if (!delivered) {
+        toast.warning('Announcement posted, but notifications could not be sent.');
+      } else if (sent === 0) {
+        toast.success('Announcement posted. Nobody matched the chosen audience.');
+      } else {
+        toast.success(`Announcement posted and sent to ${sent} ${sent === 1 ? 'person' : 'people'}.`);
+      }
       setShowCreateDialog(false);
       setFormData({ title: '', content: '', expiresAt: '' });
     },
@@ -100,6 +150,7 @@ const Announcements = () => {
       authorId: user?.id,
       authorName: user?.fullName || user?.username,
       authorHierarchyLevel: user?.hierarchyLevel || 'Atbiya',
+      audience: buildAudience(),
     };
 
     // Only include expiresAt if it has a value
@@ -225,6 +276,57 @@ const Announcements = () => {
                   />
                 </div>
                 )}
+
+                {/* Delivery. Members never open this page — this is how they
+                    receive the announcement at all. */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-black uppercase tracking-widest text-[#2E5E99]">
+                    Send to
+                  </Label>
+                  <Select value={audienceKind} onValueChange={(v) => setAudienceKind(v as AnnouncementAudience['kind'])}>
+                    <SelectTrigger className="rounded-xl border-[#2E5E99]/10 bg-white/50 h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {myAtbiyaId && <SelectItem value="parish">My Atbiya</SelectItem>}
+                      <SelectItem value="everyone">Everyone</SelectItem>
+                      <SelectItem value="roles">Chosen roles</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {audienceKind === 'roles' && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {roles.filter((r) => r.active !== false).map((r) => {
+                        const on = audienceRoles.includes(r.key);
+                        return (
+                          <button
+                            key={r.key}
+                            type="button"
+                            onClick={() => setAudienceRoles((prev) =>
+                              on ? prev.filter((k) => k !== r.key) : [...prev, r.key]
+                            )}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                              on
+                                ? 'bg-[#2E5E99] text-white border-[#2E5E99]'
+                                : 'bg-white border-[#2E5E99]/20 hover:border-[#2E5E99]/50'}`}
+                          >
+                            {roleLabel(r.key)}
+                          </button>
+                        );
+                      })}
+                      {audienceRoles.length === 0 && (
+                        <p className="text-[11px] text-muted-foreground w-full">
+                          Pick at least one role, or this will go to everyone.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    Each recipient gets this as a notification. Members read
+                    announcements there rather than on this page.
+                  </p>
+                </div>
+
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl px-8 h-12 font-bold">
                     {t('cancel')}

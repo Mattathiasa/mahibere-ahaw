@@ -327,7 +327,31 @@ service cloud.firestore {
     match /finance_budgets/{docId}         { allow read, write: if isActive(); }
     match /finance_reports/{docId}         { allow read, write: if isActive(); }
     match /finance_requisitions/{docId}    { allow read, write: if isActive(); }
-    match /notifications/{docId}           { allow read, write: if isActive(); }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  notifications — a private inbox, one document per recipient
+    //
+    //  This was `allow read, write: if isActive()`, which let any approved
+    //  account read EVERYONE's notifications. Now that announcements are
+    //  delivered here rather than browsed on a page, that is real correspondence
+    //  and belongs to its addressee.
+    //
+    //  Both app queries already filter on `userId ==`, so owner-scoped list
+    //  queries still prove out against this rule.
+    // ════════════════════════════════════════════════════════════════════════
+    match /notifications/{docId} {
+      allow read, update, delete: if isActive()
+        && resource.data.userId == request.auth.uid;
+
+      // Deliberately open to any approved account: broadcasting an announcement
+      // and approving a membership request both write documents addressed to
+      // other people. Narrowing this would need another roleFlags array and
+      // another helper chain, and the /hierarchy rules already showed what
+      // happens when this file gets too deep — it exceeds the expression cap
+      // and fails closed.
+      allow create: if isActive();
+    }
+
     match /teachings/{docId}               { allow read, write: if isActive(); }
     match /missionary_applications/{docId} { allow read, write: if isActive(); }
     match /missionary_reports/{docId}      { allow read, write: if isActive(); }

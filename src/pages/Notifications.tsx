@@ -10,20 +10,26 @@ import { notificationService } from '@/services/notifications';
 import { Notification } from '@/types';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/hooks/useAuth';
 import { toDate } from '@/lib/date-utils';
 
 export default function Notifications() {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'read'>('all');
 
-  // Get notifications based on active tab
+  // Every notification is addressed to one user, so the query MUST carry the
+  // uid. Without it the service defaulted to `userId == 'system'` and this page
+  // showed nothing to anybody — which is why it was effectively dead.
   const { data: notificationsData, isLoading } = useQuery({
-    queryKey: ['notifications', activeTab],
+    queryKey: ['notifications', 'page', user?.id, activeTab],
     queryFn: () => notificationService.getNotifications({
+      userId: user?.id ?? '',
       status: activeTab === 'all' ? undefined : activeTab,
-      limit: 50
+      limitCount: 50,
     }),
+    enabled: !!user?.id,
   });
 
   // Mark as read mutation
@@ -37,7 +43,7 @@ export default function Notifications() {
 
   // Mark all as read mutation
   const markAllAsReadMutation = useMutation({
-    mutationFn: () => notificationService.markAllAsRead(),
+    mutationFn: () => notificationService.markAllAsRead(user?.id ?? ''),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
@@ -55,7 +61,8 @@ export default function Notifications() {
     },
   });
 
-  const notifications = notificationsData?.notifications || [];
+  // getNotifications returns a bare array, not { notifications }.
+  const notifications = (notificationsData ?? []) as Notification[];
   const unreadCount = notifications.filter((n: Notification) => n.status === 'unread').length;
 
   const handleMarkAsRead = (notificationId: string) => {

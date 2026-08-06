@@ -137,6 +137,23 @@ export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
 
 export const PERMISSION_GROUPS = [...new Set(ALL_PERMISSIONS.map(p => PERMISSION_META[p].group))];
 
+/**
+ * Bump this whenever DEFAULT_ROLE_PERMISSIONS changes for a built-in role.
+ *
+ * Roles are persisted to `siteConfig/roles` once an admin has opened Software
+ * Control, and the persisted copy wins over this file — which meant a deploy
+ * that changed a role's permissions had no effect at all. `roleRegistry`
+ * compares this number against the stored one and reconciles the built-in roles
+ * back to what the app ships. See `reconcileRoles` there.
+ *
+ * History:
+ *   1 — original seven bylaw roles
+ *   2 — added canViewHR / canViewInventory / canEditOwnAtbiya; narrowed
+ *       HiyawanMahderat to an ordinary member (no members, meetings,
+ *       announcements or canAddMembers)
+ */
+export const PERMISSIONS_VERSION = 2;
+
 // ─── Default role → permissions mapping ──────────────────────────────────────
 // Seed values for the role registry (siteConfig/roles) and the FALLBACK used
 // when Firestore is unreachable. Roles are dynamic, so this is keyed on plain
@@ -218,8 +235,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   // so granting it would put every self-service sign-up into isMemberManager()
   // in firestore.rules, letting them create user documents and username rows
   // for other people.
+  // `canViewAnnouncements` is absent deliberately: announcements are broadcast
+  // to members as notifications rather than being a page they browse.
   HiyawanMahderat: [
-    'canViewDashboard', 'canViewAnnouncements',
+    'canViewDashboard',
     'canViewChurchRules', 'canViewHigeDenb', 'canViewTeachings', 'canViewVolunteer',
     'canViewSettings', 'canViewNotifications',
     'canSubmitMissionaryApplication',

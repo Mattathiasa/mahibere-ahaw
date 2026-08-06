@@ -2,6 +2,7 @@ import { doc, getDoc, writeBatch, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
   DEFAULT_ROLE_PERMISSIONS,
+  PERMISSIONS_VERSION,
   type PermissionKey,
   type RolePermissionOverrides,
 } from '@/lib/rolePermissions';
@@ -42,6 +43,11 @@ export interface Role {
 export interface RoleRegistry {
   version: number;
   roles: Role[];
+  /**
+   * Which PERMISSIONS_VERSION this document was last reconciled against.
+   * Missing means it predates reconciliation entirely.
+   */
+  permissionsVersion?: number;
   meta?: { updatedAt?: string; updatedBy?: string };
 }
 
@@ -142,7 +148,11 @@ export const SEED_ROLES: Role[] = SEED_SPECS.map((s) => ({
   active: true,
 }));
 
-export const DEFAULT_ROLE_REGISTRY: RoleRegistry = { version: 1, roles: SEED_ROLES };
+export const DEFAULT_ROLE_REGISTRY: RoleRegistry = {
+  version: 1,
+  roles: SEED_ROLES,
+  permissionsVersion: PERMISSIONS_VERSION,
+};
 
 // ─── Derivations ─────────────────────────────────────────────────────────────
 
@@ -170,6 +180,42 @@ export function deriveFlags(roles: Role[], signupRole = DEFAULT_SIGNUP_ROLE): Ro
     signupRole,
     updatedAt: new Date().toISOString(),
   };
+}
+
+/**
+ * Brings roles saved before `PERMISSIONS_VERSION` back in line with the app.
+ *
+ * Once an admin opens Software Control, `siteConfig/roles` exists and is
+ * preferred over DEFAULT_ROLE_PERMISSIONS everywhere — so a deploy that added a
+ * permission key or narrowed a role changed nothing at all. That is why members
+ * kept seeing pages their role had already been stripped of in code.
+ *
+ * Only roles the app actually ships are touched, identified by having an entry
+ * in DEFAULT_ROLE_PERMISSIONS. A role an operator created themselves is left
+ * exactly as it is — the app has no opinion about it.
+ *
+ * `permissions`, `isAdmin`, `canApproveMembers` and `scope` are behaviour and
+ * come back from the seed. `labels`, `color`, `description` and `active` are
+ * presentation and deliberate operator choices, so they survive: a role that was
+ * renamed or deactivated stays renamed and deactivated.
+ *
+ * Pure, and applied on read rather than by writing — ordinary users cannot write
+ * siteConfig, and every client needs the corrected answer immediately.
+ */
+export function reconcileRoles(roles: Role[]): Role[] {
+  const seedByKey = new Map(SEED_ROLES.map((r) => [r.key, r]));
+  return roles.map((role) => {
+    const seed = seedByKey.get(role.key);
+    if (!seed || !DEFAULT_ROLE_PERMISSIONS[role.key]) return role;
+    return {
+      ...role,
+      permissions: [...DEFAULT_ROLE_PERMISSIONS[role.key]],
+      isAdmin: seed.isAdmin,
+      canApproveMembers: seed.canApproveMembers,
+      scope: seed.scope,
+      isSystem: true,
+    };
+  });
 }
 
 /** Legacy mirror so pre-upgrade browser tabs keep resolving permissions. */
@@ -223,20 +269,30 @@ const mirrorRef = doc(db, 'siteConfig', 'rolePermissions');
 function normalize(raw: unknown): RoleRegistry | null {
   const data = raw as Partial<RoleRegistry> | undefined;
   if (!data || !Array.isArray(data.roles) || data.roles.length === 0) return null;
+
+  const storedPermissionsVersion = typeof data.permissionsVersion === 'number'
+    ? data.permissionsVersion
+    : 0;
+
+  const parsed: Role[] = data.roles.map((r) => ({
+    ...r,
+    permissions: Array.isArray(r.permissions) ? r.permissions : [],
+    labels: r.labels ?? {},
+    active: r.active !== false,
+    isSystem: r.isSystem === true,
+    isAdmin: r.isAdmin === true,
+    canApproveMembers: r.canApproveMembers === true,
+    scope: (r.scope ?? 'atbiya') as RoleScope,
+    color: r.color ?? 'slate',
+    description: r.description ?? '',
+  }));
+
   return {
     version: typeof data.version === 'number' ? data.version : 1,
-    roles: data.roles.map((r) => ({
-      ...r,
-      permissions: Array.isArray(r.permissions) ? r.permissions : [],
-      labels: r.labels ?? {},
-      active: r.active !== false,
-      isSystem: r.isSystem === true,
-      isAdmin: r.isAdmin === true,
-      canApproveMembers: r.canApproveMembers === true,
-      scope: (r.scope ?? 'atbiya') as RoleScope,
-      color: r.color ?? 'slate',
-      description: r.description ?? '',
-    })),
+    // A document saved before this version predates permission changes that
+    // shipped since, so the built-in roles are brought back in line here.
+    roles: storedPermissionsVersion < PERMISSIONS_VERSION ? reconcileRoles(parsed) : parsed,
+    permissionsVersion: storedPermissionsVersion,
     meta: data.meta,
   };
 }
@@ -300,6 +356,9 @@ export const roleRegistryService = {
     batch.set(rolesRef, {
       version: nextVersion,
       roles,
+      // Records that this document has caught up with the shipped defaults, so
+      // reconcileRoles stops re-applying them on read.
+      permissionsVersion: PERMISSIONS_VERSION,
       meta: { updatedAt: new Date().toISOString(), updatedBy },
     });
     batch.set(flagsRef, deriveFlags(roles, signupRole));
@@ -331,6 +390,7 @@ export const roleRegistryService = {
     batch.set(rolesRef, {
       version: 1,
       roles: SEED_ROLES,
+      permissionsVersion: PERMISSIONS_VERSION,
       meta: { updatedAt: new Date().toISOString(), updatedBy, seeded: true },
     });
     batch.set(flagsRef, deriveFlags(SEED_ROLES));
