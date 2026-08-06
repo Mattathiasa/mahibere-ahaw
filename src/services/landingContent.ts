@@ -96,8 +96,8 @@ export interface LandingContent {
  * numbers and URLs themselves are language-independent.
  */
 const CONTACT_CHANNELS = {
-  youtube: 'https://www.youtube.com/@Meleket%E1%88%98%E1%88%88%E1%8A%A8%E1%89%B5',
-  telegram: 'https://t.me/meleketeahew',
+  youtube: 'https://www.youtube.com/@MahiberAhawTV',
+  telegram: 'https://t.me/mahibere_ahaw',
   phones: ['+251 911 00 00 00'],
   emails: ['meleketeahew@gmail.com'],
   mapUrl: '',
