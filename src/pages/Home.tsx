@@ -16,6 +16,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import logo from '@/assets/logo.png';
 import { PICTURES } from '@/assets/pictures';
+import { useGallery } from '@/hooks/useGallery';
+import { captionFor } from '@/services/gallery';
 import { optimized } from '@/services/cloudinary';
 import { NewsSection } from '@/components/home/NewsSection';
 
@@ -40,14 +42,18 @@ const Home: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const { gallery } = useGallery();
   /**
-   * Configured Cloudinary URLs win, so the Landing Editor keeps working. With
-   * none set, the band falls back to whatever photos are left over after the
-   * feature cards have taken theirs — which is why the section, previously
-   * always empty and therefore invisible, now actually shows something.
+   * Three sources, in order of authority:
+   *   1. the admin-managed gallery (siteConfig/gallery)
+   *   2. the legacy per-language `carousel`, so anything already uploaded
+   *      before the gallery existed is not silently lost
+   *   3. the photos bundled with the app
    */
   const featureCount = content.features?.items?.length ?? 0;
-  const carousel = (content.carousel?.length ? content.carousel : PICTURES.slice(featureCount));
+  const carousel = gallery.images.length > 0
+    ? gallery.images.map((i) => i.url)
+    : (content.carousel?.length ? content.carousel : PICTURES.slice(featureCount));
 
   useEffect(() => {
     if (carousel.length < 2) return;
@@ -267,6 +273,14 @@ const Home: React.FC = () => {
                   transition={{ duration: 0.8 }}
                 />
               ))}
+              {/* Caption of the visible slide, when the gallery supplies one. */}
+              {gallery.images[carouselIndex] && captionFor(gallery.images[carouselIndex], language) && (
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0D2440]/80 to-transparent p-6 pb-16">
+                  <p className="text-white text-lg font-ethiopic max-w-3xl">
+                    {captionFor(gallery.images[carouselIndex], language)}
+                  </p>
+                </div>
+              )}
               <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                 {carousel.map((_, i) => (
                   <button key={i} onClick={() => setCarouselIndex(i)} aria-label={`Go to slide ${i + 1}`}

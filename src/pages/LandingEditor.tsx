@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Save, Plus, Trash2, ArrowLeft, Eye, Loader2,
   CheckCircle2, AlertCircle, Type, Globe,
+  ArrowUp, ArrowDown, Image as ImageIcon,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -16,6 +17,17 @@ import {
   type MultiLangLandingContent,
 } from '@/services/landingContent';
 import { invalidateLandingCache } from '@/hooks/useLandingContent';
+import { galleryService, EMPTY_GALLERY, type Gallery, type GalleryImage } from '@/services/gallery';
+import { invalidateGalleryCache } from '@/hooks/useGallery';
+import {
+  featuresContentService,
+  DEFAULT_FEATURES_CONTENT,
+  FEATURE_COLOR_KEYS,
+  type FeaturesContent,
+  type FeatureSection,
+  type MultiLangFeaturesContent,
+} from '@/services/featuresContent';
+import { invalidateFeaturesCache } from '@/hooks/useFeaturesContent';
 import { pageStringsService, type AllLanguageOverrides } from '@/services/pageStrings';
 import { integrationsService, DEFAULT_INTEGRATIONS, type IntegrationsConfig } from '@/services/integrations';
 import { uploadToCloudinary, optimized } from '@/services/cloudinary';
@@ -74,6 +86,9 @@ const LandingEditor: React.FC = () => {
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [allContent, setAllContent] = useState<MultiLangLandingContent>({});
+  /** Not per-language: photographs are shared, only captions are translated. */
+  const [gallery, setGallery] = useState<Gallery>(EMPTY_GALLERY);
+  const [featuresContent, setFeaturesContent] = useState<MultiLangFeaturesContent>({});
   const [activeLang, setActiveLang] = useState<Language>('en');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -92,11 +107,16 @@ const LandingEditor: React.FC = () => {
 
   // ── Load ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    Promise.all([landingContentService.getAll(), pageStringsService.get(), integrationsService.get()])
-      .then(([landing, strings, integ]) => {
+    Promise.all([
+      landingContentService.getAll(), pageStringsService.get(),
+      integrationsService.get(), galleryService.get(), featuresContentService.getAll(),
+    ])
+      .then(([landing, strings, integ, gal, features]) => {
         setAllContent(landing);
         setPageStrings(strings);
         setIntegrations(integ);
+        setGallery(gal);
+        setFeaturesContent(features);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -151,11 +171,101 @@ const LandingEditor: React.FC = () => {
   function setHero(key: keyof LandingContent['hero'], value: string) {
     patch((c) => ({ ...c, hero: { ...c.hero, [key]: value } }));
   }
-  function addCarouselImage(url: string) {
-    patch((c) => ({ ...c, carousel: [...(c.carousel ?? []), url] }));
+  // ── /features page ─────────────────────────────────────────────────────────
+  // Same merge-on-edit shape as `patch` above: the first edit in a language
+  // materialises the whole default tree, so a saved document is never partial.
+  const fp: FeaturesContent = deepMerge(
+    (DEFAULT_FEATURES_CONTENT[activeLang] ?? DEFAULT_FEATURES_CONTENT.en) as unknown as Record<string, unknown>,
+    ((featuresContent[activeLang] ?? {}) as unknown as Record<string, unknown>)
+  ) as unknown as FeaturesContent;
+
+  function patchFeatures(updater: (prev: FeaturesContent) => FeaturesContent) {
+    setFeaturesContent((prev) => ({
+      ...prev,
+      [activeLang]: updater(
+        deepMerge(
+          (DEFAULT_FEATURES_CONTENT[activeLang] ?? DEFAULT_FEATURES_CONTENT.en) as unknown as Record<string, unknown>,
+          ((prev[activeLang] ?? {}) as unknown as Record<string, unknown>)
+        ) as unknown as FeaturesContent
+      ),
+    }));
   }
-  function removeCarouselImage(i: number) {
-    patch((c) => ({ ...c, carousel: (c.carousel ?? []).filter((_, idx) => idx !== i) }));
+
+  function setFp(key: 'badge' | 'title' | 'titleHighlight' | 'subtitle' | 'backLabel' | 'brand' | 'footer', value: string) {
+    patchFeatures((c) => ({ ...c, [key]: value }));
+  }
+  function setFpCta(key: keyof FeaturesContent['cta'], value: string) {
+    patchFeatures((c) => ({ ...c, cta: { ...c.cta, [key]: value } }));
+  }
+  function updateFeatureSection(i: number, key: keyof FeatureSection, value: string) {
+    patchFeatures((c) => {
+      const sections = [...c.sections];
+      sections[i] = { ...sections[i], [key]: value };
+      return { ...c, sections };
+    });
+  }
+  function addFeatureSection() {
+    patchFeatures((c) => ({
+      ...c,
+      sections: [...c.sections, {
+        id: `section-${Date.now()}`, title: 'New Section', subtitle: '', description: '',
+        icon: 'Sparkles', color: 'blue', bullets: [], imageUrl: '',
+        ctaLabel: 'Experience This Feature',
+      }],
+    }));
+  }
+  function removeFeatureSection(i: number) {
+    patchFeatures((c) => ({ ...c, sections: c.sections.filter((_, idx) => idx !== i) }));
+  }
+  function setSectionBullet(i: number, bIdx: number, value: string) {
+    patchFeatures((c) => {
+      const sections = [...c.sections];
+      const bullets = [...(sections[i].bullets ?? [])];
+      bullets[bIdx] = value;
+      sections[i] = { ...sections[i], bullets };
+      return { ...c, sections };
+    });
+  }
+  function addSectionBullet(i: number) {
+    patchFeatures((c) => {
+      const sections = [...c.sections];
+      sections[i] = { ...sections[i], bullets: [...(sections[i].bullets ?? []), ''] };
+      return { ...c, sections };
+    });
+  }
+  function removeSectionBullet(i: number, bIdx: number) {
+    patchFeatures((c) => {
+      const sections = [...c.sections];
+      sections[i] = { ...sections[i], bullets: (sections[i].bullets ?? []).filter((_, idx) => idx !== bIdx) };
+      return { ...c, sections };
+    });
+  }
+
+  // ── Gallery ────────────────────────────────────────────────────────────────
+  // Language-independent, so these sit outside `patch` and its per-language
+  // content entirely.
+  function addGalleryImage(image: GalleryImage) {
+    setGallery((g) => ({ ...g, images: [...g.images, image] }));
+  }
+  function removeGalleryImage(i: number) {
+    setGallery((g) => ({ ...g, images: g.images.filter((_, idx) => idx !== i) }));
+  }
+  function setGalleryCaption(i: number, lang: Language, value: string) {
+    setGallery((g) => {
+      const images = [...g.images];
+      images[i] = { ...images[i], caption: { ...images[i].caption, [lang]: value } };
+      return { ...g, images };
+    });
+  }
+  /** Order is the display order on the home page, so it has to be editable. */
+  function moveGalleryImage(i: number, delta: number) {
+    setGallery((g) => {
+      const target = i + delta;
+      if (target < 0 || target >= g.images.length) return g;
+      const images = [...g.images];
+      [images[i], images[target]] = [images[target], images[i]];
+      return { ...g, images };
+    });
   }
   function setFooter(key: keyof LandingContent['footer'], value: string) {
     patch((c) => ({ ...c, footer: { ...c.footer, [key]: value } }));
@@ -240,8 +350,16 @@ const LandingEditor: React.FC = () => {
     setSaving(true);
     setSaveStatus('idle');
     try {
-      await landingContentService.saveAll(allContent, user?.email ?? 'admin');
+      // Saved together so one press of Save publishes everything on this page,
+      // including the gallery, which lives in its own document.
+      await Promise.all([
+        landingContentService.saveAll(allContent, user?.email ?? 'admin'),
+        galleryService.save(gallery, user?.email ?? 'admin'),
+        featuresContentService.saveAll(featuresContent, user?.email ?? 'admin'),
+      ]);
       invalidateLandingCache();
+      invalidateGalleryCache();
+      invalidateFeaturesCache();
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
@@ -373,12 +491,210 @@ const LandingEditor: React.FC = () => {
             <Tabs defaultValue="hero">
               <TabsList className="mb-6 flex-wrap h-auto gap-1">
                 <TabsTrigger value="hero">Hero</TabsTrigger>
+                <TabsTrigger value="gallery">Gallery</TabsTrigger>
                 <TabsTrigger value="stats">Stats</TabsTrigger>
                 <TabsTrigger value="features">Features</TabsTrigger>
                 <TabsTrigger value="support">Support & Banks</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="footer">Footer</TabsTrigger>
+                <TabsTrigger value="featuresPage">Features Page</TabsTrigger>
               </TabsList>
+
+              {/* ── /features page ── */}
+              <TabsContent value="featuresPage">
+                <Card>
+                  <CardHeader className="flex flex-row items-start justify-between gap-4">
+                    <div>
+                      <CardTitle>Features Page</CardTitle>
+                      <CardDescription>
+                        Everything on the public /features page, in{' '}
+                        {LANGUAGES.find((l) => l.value === activeLang)?.label}. The
+                        feature cards on the home page link here by anchor.
+                      </CardDescription>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={addFeatureSection}>
+                      <Plus className="h-4 w-4 mr-1" /> Add Section
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4 pb-4 border-b border-border">
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field label="Badge"><Input value={fp.badge} onChange={(e) => setFp('badge', e.target.value)} /></Field>
+                        <Field label="Brand"><Input value={fp.brand} onChange={(e) => setFp('brand', e.target.value)} /></Field>
+                        <Field label="Heading"><Input value={fp.title} onChange={(e) => setFp('title', e.target.value)} /></Field>
+                        <Field label="Heading highlight" hint="The gradient second line."><Input value={fp.titleHighlight} onChange={(e) => setFp('titleHighlight', e.target.value)} /></Field>
+                        <Field label="Back link label"><Input value={fp.backLabel} onChange={(e) => setFp('backLabel', e.target.value)} /></Field>
+                      </div>
+                      <Field label="Subtitle"><Textarea rows={2} value={fp.subtitle} onChange={(e) => setFp('subtitle', e.target.value)} /></Field>
+                    </div>
+
+                    {fp.sections.map((section, i) => (
+                      // key by index: the anchor below is editable, and keying
+                      // on it would remount the row and drop focus per keystroke.
+                      <div key={i} className="p-4 rounded-xl border border-border bg-muted/20 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary">Section {i + 1}</Badge>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"
+                            onClick={() => removeFeatureSection(i)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <Field label="Title"><Input value={section.title} onChange={(e) => updateFeatureSection(i, 'title', e.target.value)} /></Field>
+                          <Field label="Subtitle"><Input value={section.subtitle} onChange={(e) => updateFeatureSection(i, 'subtitle', e.target.value)} /></Field>
+                          <Field label="Icon name (Lucide)" hint="Users, Calendar, BarChart3, Shield, Zap…">
+                            <Input value={section.icon} onChange={(e) => updateFeatureSection(i, 'icon', e.target.value)} />
+                          </Field>
+                          <Field label="Accent colour">
+                            <Select value={section.color} onValueChange={(v) => updateFeatureSection(i, 'color', v)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {FEATURE_COLOR_KEYS.map((c) => (
+                                  <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </Field>
+                        </div>
+                        <Field label="Description"><Textarea rows={3} value={section.description} onChange={(e) => updateFeatureSection(i, 'description', e.target.value)} /></Field>
+                        <Field
+                          label="Link anchor"
+                          hint={`Reached as /features#${section.id || '…'}. Must match a feature's anchor on the home page, or that card will scroll nowhere.`}
+                        >
+                          <Input value={section.id} onChange={(e) => updateFeatureSection(i, 'id', e.target.value)} />
+                        </Field>
+                        <Field label="Button label"><Input value={section.ctaLabel} onChange={(e) => updateFeatureSection(i, 'ctaLabel', e.target.value)} /></Field>
+
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Bullet points
+                          </Label>
+                          {(section.bullets ?? []).map((b, bIdx) => (
+                            <div key={bIdx} className="flex gap-2">
+                              <Input value={b} onChange={(e) => setSectionBullet(i, bIdx, e.target.value)} />
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive shrink-0"
+                                onClick={() => removeSectionBullet(i, bIdx)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button size="sm" variant="outline" onClick={() => addSectionBullet(i)}>
+                            <Plus className="h-4 w-4 mr-1" /> Add bullet
+                          </Button>
+                        </div>
+
+                        <Field label="Photo" hint="Leave empty to show the section's icon instead.">
+                          <CloudinaryImageUpload
+                            value={section.imageUrl}
+                            onChange={(url) => updateFeatureSection(i, 'imageUrl', url)}
+                            folder="mahibere-ahaw/features"
+                            variant="wide"
+                          />
+                        </Field>
+                      </div>
+                    ))}
+
+                    <div className="grid gap-4 pt-4 border-t border-border">
+                      <SectionDivider label="Closing call to action" />
+                      <Field label="Title"><Input value={fp.cta.title} onChange={(e) => setFpCta('title', e.target.value)} /></Field>
+                      <Field label="Description"><Textarea rows={2} value={fp.cta.description} onChange={(e) => setFpCta('description', e.target.value)} /></Field>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field label="Primary button"><Input value={fp.cta.primaryLabel} onChange={(e) => setFpCta('primaryLabel', e.target.value)} /></Field>
+                        <Field label="Secondary button"><Input value={fp.cta.secondaryLabel} onChange={(e) => setFpCta('secondaryLabel', e.target.value)} /></Field>
+                      </div>
+                      <Field label="Footer line"><Input value={fp.footer} onChange={(e) => setFp('footer', e.target.value)} /></Field>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* ── Gallery ── */}
+              <TabsContent value="gallery">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Photo Gallery</CardTitle>
+                    <CardDescription>
+                      The photographs shown on the home page. These are shared
+                      across all four languages — only the captions differ — so
+                      you upload each picture once.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <CloudinaryImageUpload
+                      value=""
+                      onChange={() => { /* handled by onUploaded, which also carries the publicId */ }}
+                      onUploaded={addGalleryImage}
+                      folder="mahibere-ahaw/gallery"
+                      label="Add photos"
+                      variant="wide"
+                      multiple
+                    />
+
+                    {gallery.images.length === 0 ? (
+                      <div className="text-center py-10 text-muted-foreground border border-dashed border-border rounded-xl">
+                        <ImageIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                        <p className="font-medium">No photos yet</p>
+                        <p className="text-sm">
+                          Until you add some, the home page falls back to the
+                          pictures bundled with the app.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {gallery.images.map((image, i) => (
+                          <div key={`${image.url}-${i}`}
+                            className="p-3 rounded-xl border border-border bg-muted/20 flex gap-4 flex-wrap">
+                            <img
+                              src={optimized(image.url, 240)}
+                              alt=""
+                              className="h-24 w-36 object-cover rounded-lg border border-border shrink-0"
+                            />
+                            <div className="flex-1 min-w-[220px] space-y-2">
+                              <Field label={`Caption (${activeLang.toUpperCase()})`} hint="Optional. Shown over the photo.">
+                                <Input
+                                  value={image.caption?.[activeLang] ?? ''}
+                                  onChange={(e) => setGalleryCaption(i, activeLang, e.target.value)}
+                                  placeholder="Sunday service, Bishoftu"
+                                />
+                              </Field>
+                              {/* Shown so the file can be found in Cloudinary:
+                                  removing it here only drops the reference. */}
+                              <p className="text-[10px] text-muted-foreground font-mono break-all">
+                                {image.publicId || '(no publicId — uploaded before this was recorded)'}
+                              </p>
+                            </div>
+                            <div className="flex items-start gap-1">
+                              <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
+                                title="Move earlier" disabled={i === 0}
+                                onClick={() => moveGalleryImage(i, -1)}>
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
+                                title="Move later" disabled={i === gallery.images.length - 1}
+                                onClick={() => moveGalleryImage(i, 1)}>
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                              <Button type="button" variant="ghost" size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                title="Remove from the site"
+                                onClick={() => removeGalleryImage(i)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="text-[11px] text-muted-foreground">
+                      Removing a photo takes it off the site immediately. The file
+                      itself stays in your Cloudinary account — deleting it there
+                      needs a signed request that this app deliberately cannot
+                      make. Use the id above to find it in the Cloudinary console.
+                    </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               {/* ── Hero ── */}
               <TabsContent value="hero">
@@ -462,30 +778,9 @@ const LandingEditor: React.FC = () => {
                       </details>
                     </div>
 
-                    <SectionDivider label="Photo carousel (4-5 images)" />
-                    <div className="space-y-3">
-                      {(content.carousel ?? []).length > 0 && (
-                        <div className="flex flex-wrap gap-3">
-                          {(content.carousel ?? []).map((url, i) => (
-                            <div key={i} className="relative">
-                              <img src={optimized(url, 240)} alt={`Slide ${i + 1}`} className="h-24 w-36 object-cover rounded-lg border border-border" />
-                              <button type="button" onClick={() => removeCarouselImage(i)}
-                                className="absolute -top-2 -right-2 bg-background border border-border rounded-full p-1 shadow hover:text-destructive">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <CloudinaryImageUpload
-                        value=""
-                        onChange={(url) => { if (url) addCarouselImage(url); }}
-                        folder="mahibere-ahaw/carousel"
-                        label="Add carousel image"
-                        variant="wide"
-                      />
-                      <p className="text-[11px] text-muted-foreground">Uploaded images appear in an auto-advancing carousel on the home page. Recommended 4-5 landscape images.</p>
-                    </div>
+                    {/* The photo carousel moved to its own Gallery tab: it used
+                        to live inside this per-language content, so the same
+                        photos had to be uploaded once per language. */}
 
                     <SectionDivider label="Floating stat cards" />
                     <div className="grid grid-cols-2 gap-6">

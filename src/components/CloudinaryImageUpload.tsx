@@ -7,38 +7,56 @@ import { optimized } from '@/services/cloudinary';
 interface Props {
   value?: string;
   onChange: (url: string) => void;
+  /**
+   * Also receives Cloudinary's publicId, which `onChange` cannot carry.
+   * Without it an image can only ever be dereferenced, never located again in
+   * Cloudinary to actually delete.
+   */
+  onUploaded?: (image: { url: string; publicId: string }) => void;
   folder?: string;
   label?: string;
   /** 'avatar' shows a round preview; 'wide' shows a 16:9 banner preview. */
   variant?: 'avatar' | 'wide';
+  /** Accept several files at once, for galleries. */
+  multiple?: boolean;
 }
 
 /** Reusable Cloudinary image picker — upload, preview, remove. */
 export function CloudinaryImageUpload({
-  value, onChange, folder = 'mahibere-ahaw', label = 'Upload image', variant = 'wide',
+  value, onChange, onUploaded, folder = 'mahibere-ahaw', label = 'Upload image',
+  variant = 'wide', multiple = false,
 }: Props) {
   const { isConfigured, upload } = useCloudinary();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleFile(file: File) {
+  async function handleFiles(files: File[]) {
     setError(null);
-    // Client-side guards (mirror the Cloudinary preset restrictions).
-    if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image is too large (max 5 MB).');
-      return;
-    }
     setBusy(true);
+    const failures: string[] = [];
     try {
-      const res = await upload(file, folder);
-      onChange(res.secureUrl);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload failed');
+      // Sequential rather than parallel: a dozen simultaneous uploads from a
+      // phone on a slow connection tends to fail as a group.
+      for (const file of files) {
+        // Client-side guards (mirror the Cloudinary preset restrictions).
+        if (!file.type.startsWith('image/')) {
+          failures.push(`${file.name}: not an image`);
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          failures.push(`${file.name}: larger than 5 MB`);
+          continue;
+        }
+        try {
+          const res = await upload(file, folder);
+          onChange(res.secureUrl);
+          onUploaded?.({ url: res.secureUrl, publicId: res.publicId });
+        } catch (e) {
+          failures.push(`${file.name}: ${e instanceof Error ? e.message : 'upload failed'}`);
+        }
+      }
+      if (failures.length > 0) setError(failures.join(' · '));
     } finally {
       setBusy(false);
     }
@@ -69,8 +87,13 @@ export function CloudinaryImageUpload({
         ref={inputRef}
         type="file"
         accept="image/*"
+        multiple={multiple}
         className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }}
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          if (files.length > 0) handleFiles(files);
+          e.target.value = '';
+        }}
       />
       <div className="flex items-center gap-3 flex-wrap">
         <Button
