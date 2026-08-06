@@ -121,7 +121,7 @@ const Home: React.FC = () => {
               </div>
             </motion.div>
             <div className="hidden lg:flex items-center gap-8">
-              {['home', 'about', 'services', 'contact'].map((section) => (
+              {['home', 'services', 'about', 'news', 'contact'].map((section) => (
                 <button key={section} onClick={() => scrollToSection(section)}
                   className={`text-sm font-bold uppercase tracking-[0.2em] transition-all hover:text-[#2E5E99] ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#0D2440]'} opacity-70 hover:opacity-100`}>
                   {(t.nav as any)[section]}
@@ -164,7 +164,7 @@ const Home: React.FC = () => {
               <button onClick={() => setMobileMenuOpen(false)} className="p-3 bg-red-500/10 text-red-500 rounded-2xl"><X className="h-6 w-6" /></button>
             </div>
             <div className="flex flex-col gap-6">
-              {['home', 'about', 'services', 'contact'].map((section) => (
+              {['home', 'services', 'about', 'news', 'contact'].map((section) => (
                 <button key={section} onClick={() => { setMobileMenuOpen(false); scrollToSection(section); }}
                   className={`text-2xl font-black uppercase text-left w-full py-4 border-b border-[#2E5E99]/10 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'} active:scale-95 transition-transform`}>
                   {(t.nav as any)[section]}

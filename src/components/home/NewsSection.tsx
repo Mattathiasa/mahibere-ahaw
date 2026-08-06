@@ -29,7 +29,36 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
       .finally(() => setLoaded(true));
   }, [max]);
 
-  if (!loaded || posts.length === 0) return null;
+  if (!loaded) {
+    return (
+      <section id="news" className="py-24 sm:py-32 relative">
+        <div className="container mx-auto px-6 text-center animate-pulse">
+          <div className="h-10 w-48 bg-[#2E5E99]/10 rounded-xl mx-auto mb-4" />
+          <div className="h-4 w-72 bg-[#2E5E99]/5 rounded-lg mx-auto" />
+        </div>
+      </section>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <section id="news" className="py-24 sm:py-32 relative">
+        <div className="container mx-auto px-6">
+          <div className="max-w-2xl mx-auto text-center space-y-4 p-12 rounded-3xl bg-white/40 dark:bg-white/5 border border-[#2E5E99]/10 backdrop-blur-md">
+            <div className="inline-flex p-4 rounded-2xl bg-[#2E5E99]/10 text-[#2E5E99] mb-2">
+              <Newspaper className="h-8 w-8" />
+            </div>
+            <h2 className={`text-3xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+              News &amp; Updates
+            </h2>
+            <p className="text-base text-[#2E5E99] font-ethiopic">
+              Stay tuned! News stories and updates from our ministry will appear here soon.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const [lead, ...rest] = posts;
   const cardBg = theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/5';
