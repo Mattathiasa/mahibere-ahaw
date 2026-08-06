@@ -79,11 +79,13 @@ const Landing = () => {
       <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="Ahaw" className="h-12 w-12" />
+            <div className="flex items-center gap-3.5">
+              <div className="relative group p-1.5 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-xl border border-primary/20 shadow-md">
+                <img src={logo} alt="Ahaw" className="h-11 w-11 object-contain" />
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-primary">Ahaw</h1>
-                <p className="text-xs text-muted-foreground">Church Management</p>
+                <h1 className="text-2xl font-black text-primary tracking-tight leading-none">Mahibere Ahaw</h1>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mt-1">Digital Ministry</p>
               </div>
             </div>
             <Button onClick={() => navigate('/login')}>

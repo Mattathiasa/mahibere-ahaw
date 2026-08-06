@@ -184,13 +184,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <SheetContent side="left" className={`w-72 p-0 border-r border-[#2E5E99]/10 ${theme === 'dark' ? 'bg-[#0D2440]' : 'bg-[#E7F0FA]'}`}>
               <div className="flex flex-col h-full">
                 <div className="p-6 border-b border-[#2E5E99]/10">
-                  <div className="relative group mx-auto w-16 h-16">
-                    <div className="absolute -inset-2 bg-[#2E5E99]/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <img src={logo} alt="Ahaw Logo" className="h-16 w-16 relative z-10" />
+                  <div className="relative group mx-auto w-20 h-20">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-[#2E5E99]/30 to-[#7BA4D0]/30 rounded-2xl blur-md opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10 w-full h-full p-2 bg-white/80 dark:bg-white/10 backdrop-blur-xl rounded-2xl border border-[#2E5E99]/20 shadow-lg flex items-center justify-center">
+                      <img src={logo} alt="Ahaw Logo" className="w-full h-full object-contain drop-shadow-md" />
+                    </div>
                   </div>
-                  <h2 className="mt-3 text-center text-lg font-black text-[#2E5E99] tracking-tight text-xl">AHAW</h2>
-                  <p className={`text-center text-xs tracking-wider uppercase font-bold ${theme === 'dark' ? 'text-white/40' : 'text-[#0D2440]/40'}`}>
-                    Church Management
+                  <h2 className="mt-4 text-center text-xl font-black text-[#2E5E99] tracking-tight">MAHIBERE AHAW</h2>
+                  <p className={`text-center text-[10px] tracking-[0.25em] uppercase font-bold ${theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/50'}`}>
+                    Digital Ministry
                   </p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -200,7 +202,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </SheetContent>
           </Sheet>
 
-          <img src={logo} alt="Ahaw" className="h-10 w-10 drop-shadow-md" />
+          <div className="flex items-center gap-2">
+            <div className="p-1 rounded-xl bg-white/80 dark:bg-white/10 border border-[#2E5E99]/20 shadow-sm">
+              <img src={logo} alt="Ahaw" className="h-9 w-9 object-contain drop-shadow-sm" />
+            </div>
+            <span className="font-black text-base text-[#2E5E99] tracking-tighter">AHAW</span>
+          </div>
 
           <div className="flex items-center gap-2">
             <NotificationBell />
@@ -236,19 +243,21 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 border-r border-[#2E5E99]/10 backdrop-blur-2xl transition-all duration-300 ${isCollapsed ? 'lg:w-24' : 'lg:w-72'} ${theme === 'dark' ? 'bg-[#0D2440]/40' : 'bg-white/40'}`}
         >
           <div className="flex flex-col h-full">
-            <div className={`p-8 border-b border-[#2E5E99]/10 ${isCollapsed ? 'p-4 flex justify-center' : ''}`}>
-              <div className={`relative group transition-all duration-300 ${isCollapsed ? 'w-10 h-10' : 'w-20 h-20 mx-auto'}`}>
-                <div className="absolute -inset-4 bg-[#2E5E99]/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <img
-                  src={logo}
-                  alt="Ahaw Logo"
-                  className="w-full h-full object-contain relative z-10 drop-shadow-2xl"
-                />
+            <div className={`p-6 border-b border-[#2E5E99]/10 ${isCollapsed ? 'p-4 flex justify-center' : ''}`}>
+              <div className={`relative group transition-all duration-300 ${isCollapsed ? 'w-12 h-12' : 'w-24 h-24 mx-auto'}`}>
+                <div className="absolute -inset-2 bg-gradient-to-r from-[#2E5E99]/30 via-[#FABB2A]/20 to-[#7BA4D0]/30 rounded-2xl blur-lg opacity-80 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10 w-full h-full p-2.5 bg-white/80 dark:bg-white/10 backdrop-blur-xl rounded-2xl border border-[#2E5E99]/20 shadow-lg flex items-center justify-center">
+                  <img
+                    src={logo}
+                    alt="Ahaw Logo"
+                    className="w-full h-full object-contain drop-shadow-md"
+                  />
+                </div>
               </div>
               {!isCollapsed && (
                 <>
-                  <h1 className="mt-6 text-center text-3xl font-black text-[#2E5E99] tracking-tighter">AHAW</h1>
-                  <p className={`text-center text-[10px] uppercase tracking-[0.3em] font-black mt-1 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>
+                  <h1 className="mt-4 text-center text-2xl font-black text-[#2E5E99] tracking-tighter">MAHIBERE AHAW</h1>
+                  <p className={`text-center text-[10px] uppercase tracking-[0.25em] font-bold mt-1 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>
                     Digital Ministry
                   </p>
                 </>

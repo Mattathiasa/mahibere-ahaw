@@ -110,9 +110,15 @@ const Home: React.FC = () => {
       >
         <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-4 sm:gap-12">
-            <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2 sm:gap-3 cursor-pointer" onClick={() => scrollToSection('home')}>
-              <img src={logo} alt="Mahibere Ahaw" className="h-8 w-8 sm:h-10 sm:w-10" />
-              <span className="text-base sm:text-xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent">MAHIBERE AHAW</span>
+            <motion.div whileHover={{ scale: 1.04 }} className="flex items-center gap-3 sm:gap-4 cursor-pointer" onClick={() => scrollToSection('home')}>
+              <div className="relative group p-1.5 sm:p-2 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-xl border border-[#2E5E99]/20 shadow-md shadow-[#2E5E99]/10 group-hover:shadow-lg transition-all duration-300">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#2E5E99]/20 via-[#FABB2A]/20 to-[#7BA4D0]/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                <img src={logo} alt="Mahibere Ahaw" className="h-9 w-9 sm:h-12 sm:w-12 object-contain relative z-10 drop-shadow-sm" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-base sm:text-2xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent leading-none">MAHIBERE AHAW</span>
+                <span className="text-[8px] sm:text-[10px] uppercase font-bold tracking-[0.25em] text-[#2E5E99]/70 dark:text-[#7BA4D0]/80 mt-1">Digital Ministry</span>
+              </div>
             </motion.div>
             <div className="hidden lg:flex items-center gap-8">
               {['home', 'about', 'services', 'contact'].map((section) => (
@@ -147,8 +153,13 @@ const Home: React.FC = () => {
             className={`fixed inset-0 z-[100] ${theme === 'dark' ? 'bg-[#0D2440]' : 'bg-[#E7F0FA]'} p-6 flex flex-col`}>
             <div className="flex items-center justify-between mb-12">
               <div className="flex items-center gap-3">
-                <img src={logo} alt="Mahibere Ahaw" className="h-10 w-10" />
-                <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent">MAHIBERE AHAW</span>
+                <div className="p-1.5 rounded-2xl bg-white/80 dark:bg-white/10 border border-[#2E5E99]/20 shadow-sm">
+                  <img src={logo} alt="Mahibere Ahaw" className="h-10 w-10 object-contain" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent leading-none">MAHIBERE AHAW</span>
+                  <span className="text-[9px] uppercase font-bold tracking-[0.25em] text-[#2E5E99]/70 dark:text-[#7BA4D0]/80 mt-1">Digital Ministry</span>
+                </div>
               </div>
               <button onClick={() => setMobileMenuOpen(false)} className="p-3 bg-red-500/10 text-red-500 rounded-2xl"><X className="h-6 w-6" /></button>
             </div>
