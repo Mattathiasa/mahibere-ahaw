@@ -11,6 +11,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboard';
@@ -26,6 +27,7 @@ import { MembershipRequests } from '@/components/MembershipRequests';
 const Dashboard = () => {
   const navigate = useNavigate();
   const permissions = useRolePermissions();
+  const { can } = usePermissions();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
 
@@ -50,12 +52,16 @@ const Dashboard = () => {
     refetchInterval: 30000,
   });
 
+  // Each tile is gated by the permission for the data behind it. Without this a
+  // member who cannot read the member directory is shown "Total Members: 0" —
+  // dashboardService.safeQuery swallows the denial and reports a size of zero,
+  // so the number looks like a fact rather than a missing permission.
   const stats = dashboardData ? [
-    { title: t('totalMembers'),        value: dashboardData.stats.totalMembers.toString(),        icon: UsersIcon, color: 'text-primary',    bgColor: 'bg-primary/10' },
-    { title: t('activeAnnouncements'), value: dashboardData.stats.activeAnnouncements.toString(), icon: Bell,      color: 'text-secondary',  bgColor: 'bg-secondary/10' },
-    { title: t('pendingReports'),      value: dashboardData.stats.pendingReports.toString(),      icon: FileText,  color: 'text-accent',     bgColor: 'bg-accent/10' },
-    { title: t('upcomingMeetings'),    value: dashboardData.stats.upcomingMeetings.toString(),    icon: Calendar,  color: 'text-primary',    bgColor: 'bg-primary/10' },
-  ] : [];
+    { title: t('totalMembers'),        value: dashboardData.stats.totalMembers.toString(),        icon: UsersIcon, color: 'text-primary',    bgColor: 'bg-primary/10',   show: can('canViewMembers') },
+    { title: t('activeAnnouncements'), value: dashboardData.stats.activeAnnouncements.toString(), icon: Bell,      color: 'text-secondary',  bgColor: 'bg-secondary/10', show: can('canViewAnnouncements') },
+    { title: t('pendingReports'),      value: dashboardData.stats.pendingReports.toString(),      icon: FileText,  color: 'text-accent',     bgColor: 'bg-accent/10',    show: can('canViewReports') },
+    { title: t('upcomingMeetings'),    value: dashboardData.stats.upcomingMeetings.toString(),    icon: Calendar,  color: 'text-primary',    bgColor: 'bg-primary/10',   show: can('canViewMeetings') },
+  ].filter((s) => s.show) : [];
 
   const recentAnnouncements = dashboardData?.recentAnnouncements || [];
   const recentReports       = dashboardData?.recentReports       || [];

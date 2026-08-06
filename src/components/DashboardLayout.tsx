@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church } from 'lucide-react';
+import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
@@ -7,7 +7,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { ProfileDropdown } from '@/components/ProfileDropdown';
 import { NotificationBell } from '@/components/NotificationBell';
-import { useRolePermissions } from '@/hooks/useRolePermissions';
+import type { PermissionKey } from '@/lib/rolePermissions';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { usePendingRequests } from '@/hooks/usePendingRequests';
 import { usePermissions } from '@/contexts/PermissionContext';
@@ -29,89 +29,74 @@ const NAV_FALLBACK_LABELS: Record<string, string> = {
 };
 
 interface NavFlags {
-  canViewHierarchy: boolean;
-  canManageUsers: boolean;
-  canViewNews: boolean;
-  canManageAtbiyas: boolean;
+  can: (permission: PermissionKey) => boolean;
   /** Belongs to a parish AND has a parish-level role — i.e. runs one. */
   runsAnAtbiya: boolean;
   isSuperAdmin: boolean;
   isAdmin: boolean;
 }
 
-const getNavigationItems = ({
-  canViewHierarchy, canManageUsers, canViewNews, canManageAtbiyas, runsAnAtbiya,
-  isSuperAdmin, isAdmin,
-}: NavFlags) => {
-  const items = [
-    { name: 'dashboard', href: '/dashboard', icon: Home },
-    { name: 'announcements', href: '/announcements', icon: Bell },
-    { name: 'plans', href: '/plans', icon: FileText },
-    { name: 'reports', href: '/reports', icon: Calendar },
-    { name: 'members', href: '/members', icon: Users },
-    { name: 'meetings', href: '/meetings', icon: Calendar },
-    { name: 'finance', href: '/finance', icon: DollarSign },
-    { name: 'hr', href: '/hr', icon: Users },
-    { name: 'inventory', href: '/inventory', icon: FolderOpen },
-    { name: 'churchRules', href: '/church-rules', icon: Scale },
-    { name: 'higeDenb', href: '/hige-denb', icon: BookOpen },
-    { name: 'strategicPlan', href: '/strategic-plan', icon: FileText },
-    { name: 'documents', href: '/documents', icon: FolderOpen },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  /** Shown when the user holds this permission. */
+  permission?: PermissionKey;
+  /** For entries with no single permission of their own. */
+  show?: boolean;
+}
+
+/**
+ * The sidebar.
+ *
+ * Every entry is permission-gated. This list used to be half unconditional, so
+ * an ordinary member who signed up landed on a sidebar offering finance, HR,
+ * inventory and the strategic plan — pages their role never had permission to
+ * act in. The permission keys mostly already existed; nothing was reading them.
+ */
+const getNavigationItems = ({ can, runsAnAtbiya, isSuperAdmin, isAdmin }: NavFlags): NavItem[] => {
+  const items: NavItem[] = [
+    { name: 'dashboard', href: '/dashboard', icon: Home, permission: 'canViewDashboard' },
+    { name: 'announcements', href: '/announcements', icon: Bell, permission: 'canViewAnnouncements' },
+    { name: 'plans', href: '/plans', icon: FileText, permission: 'canViewPlans' },
+    { name: 'reports', href: '/reports', icon: Calendar, permission: 'canViewReports' },
+    { name: 'members', href: '/members', icon: Users, permission: 'canViewMembers' },
+    { name: 'meetings', href: '/meetings', icon: Calendar, permission: 'canViewMeetings' },
+    { name: 'finance', href: '/finance', icon: DollarSign, permission: 'canViewFinance' },
+    { name: 'hr', href: '/hr', icon: Users, permission: 'canViewHR' },
+    { name: 'inventory', href: '/inventory', icon: FolderOpen, permission: 'canViewInventory' },
+    { name: 'churchRules', href: '/church-rules', icon: Scale, permission: 'canViewChurchRules' },
+    { name: 'higeDenb', href: '/hige-denb', icon: BookOpen, permission: 'canViewHigeDenb' },
+    { name: 'strategicPlan', href: '/strategic-plan', icon: FileText, permission: 'canViewStrategicPlan' },
+    { name: 'documents', href: '/documents', icon: FolderOpen, permission: 'canViewDocuments' },
+    { name: 'news', href: '/news-manager', icon: Newspaper, permission: 'canViewNews' },
+    { name: 'userManagement', href: '/user-management', icon: Users, permission: 'canViewUserManagement' },
+    { name: 'hierarchy', href: '/hierarchy', icon: Network, permission: 'canViewHierarchy' },
+    { name: 'myAtbiya', href: '/my-atbiya', icon: Church, show: runsAnAtbiya },
+    { name: 'atbiyaRegistry', href: '/atbiya-registry', icon: Church, permission: 'canManageAtbiyas' },
+    // The Landing Editor had no sidebar entry at all — it was reachable only via
+    // a card buried in Settings, which is why it looked like it had been removed.
+    { name: 'landingEditor', href: '/admin/landing-editor', icon: Layout, show: isAdmin || isSuperAdmin },
+    { name: 'softwareControl', href: '/admin/software-control', icon: ShieldHalf, show: isSuperAdmin },
+    { name: 'settings', href: '/settings', icon: Settings, permission: 'canViewSettings' },
   ];
 
-  if (canViewNews) {
-    items.push({ name: 'news', href: '/news-manager', icon: Newspaper });
-  }
-
-  if (canManageUsers) {
-    items.push({ name: 'userManagement', href: '/user-management', icon: Users });
-  }
-
-  if (canViewHierarchy) {
-    items.push({ name: 'hierarchy', href: '/hierarchy', icon: Network });
-  }
-
-  if (runsAnAtbiya) {
-    items.push({ name: 'myAtbiya', href: '/my-atbiya', icon: Church });
-  }
-
-  if (canManageAtbiyas) {
-    items.push({ name: 'atbiyaRegistry', href: '/atbiya-registry', icon: Church });
-  }
-
-  // The Landing Editor had no sidebar entry at all — it was reachable only via
-  // a card buried in Settings, which is why it looked like it had been removed.
-  if (isAdmin || isSuperAdmin) {
-    items.push({ name: 'landingEditor', href: '/admin/landing-editor', icon: Layout });
-  }
-
-  if (isSuperAdmin) {
-    items.push({ name: 'softwareControl', href: '/admin/software-control', icon: ShieldHalf });
-  }
-
-  items.push({ name: 'settings', href: '/settings', icon: Settings });
-
-  return items;
+  return items.filter((item) => item.show ?? (item.permission ? can(item.permission) : true));
 };
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
-  const permissions = useRolePermissions();
   const { user: currentUser, logout, isLoggingOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showNav } = useSoftwareControl();
-  const { isSuperAdmin, isAdminRole, scopeOf, myAtbiyaId } = usePermissions();
+  const { can, isSuperAdmin, isAdminRole, scopeOf, myAtbiyaId } = usePermissions();
   const { count: pendingCount } = usePendingRequests();
-  // Driven by the permission matrix now, not a hardcoded `=== 'Memriya'`,
-  // which had locked Sinodos and super admins out of User Management.
-  const canManageUsers = permissions.canViewUserManagement;
   const navigationItems = getNavigationItems({
-    canViewHierarchy: permissions.canViewHierarchy,
-    canManageUsers,
-    canViewNews: permissions.canViewNews,
-    canManageAtbiyas: permissions.canManageAtbiyas,
+    // `can` is the permission matrix itself, so User Management is no longer
+    // driven by a hardcoded `=== 'Memriya'` that had locked out Sinodos.
+    can,
     runsAnAtbiya: !!myAtbiyaId && scopeOf(currentUser?.hierarchyLevel) === 'atbiya',
     isSuperAdmin,
     isAdmin: isAdminRole(currentUser?.hierarchyLevel),

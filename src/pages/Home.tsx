@@ -15,6 +15,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import logo from '@/assets/logo.png';
+import { PICTURES } from '@/assets/pictures';
 import { optimized } from '@/services/cloudinary';
 import { NewsSection } from '@/components/home/NewsSection';
 
@@ -39,7 +40,14 @@ const Home: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const carousel = content.carousel ?? [];
+  /**
+   * Configured Cloudinary URLs win, so the Landing Editor keeps working. With
+   * none set, the band falls back to whatever photos are left over after the
+   * feature cards have taken theirs — which is why the section, previously
+   * always empty and therefore invisible, now actually shows something.
+   */
+  const featureCount = content.features?.items?.length ?? 0;
+  const carousel = (content.carousel?.length ? content.carousel : PICTURES.slice(featureCount));
 
   useEffect(() => {
     if (carousel.length < 2) return;
@@ -283,9 +291,29 @@ const Home: React.FC = () => {
             {features.items.map((f, i) => (
               <motion.div key={f.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.2 }} viewport={{ once: true }}>
                 <Card className="h-full hover:shadow-[#2E5E99]/10 bg-white shadow-xl border-[#2E5E99]/5">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center mb-8 shadow-2xl">
-                    <DynamicIcon name={f.icon} className="h-8 w-8 text-white" />
-                  </div>
+                  {/* Photos come from src/assets/pictures by position. With none
+                      in the directory this falls back to the plain icon tile, so
+                      the page never depends on the folder having contents.
+                      The negative margins match the card's own p-8 so the image
+                      bleeds to its edges; only the top corners are rounded. */}
+                  {PICTURES.length > 0 ? (
+                    <div className="relative -mx-8 -mt-8 mb-8 aspect-video overflow-hidden rounded-t-3xl group/photo">
+                      <img
+                        src={PICTURES[i % PICTURES.length]}
+                        alt=""
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/photo:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0D2440]/50 to-transparent" />
+                      <div className="absolute bottom-4 left-4 w-12 h-12 rounded-xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center shadow-2xl">
+                        <DynamicIcon name={f.icon} className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center mb-8 shadow-2xl">
+                      <DynamicIcon name={f.icon} className="h-8 w-8 text-white" />
+                    </div>
+                  )}
                   <h3 className="text-3xl font-bold mb-4 font-ethiopic text-[#0D2440]">{f.title}</h3>
                   <p className="text-lg text-[#0D2440]/70 font-ethiopic leading-relaxed mb-8">{f.description}</p>
                   <div className="flex items-center gap-2 text-[#2E5E99] font-bold group/btn cursor-pointer" onClick={() => navigate(`/features#${f.id}`)}>

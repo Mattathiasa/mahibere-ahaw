@@ -21,6 +21,10 @@ export const ALL_PERMISSIONS = [
   'canViewSettings',
   'canViewNotifications',
   'canViewNews',
+  // These two pages had no view permission at all, which is why they could
+  // never be hidden from an ordinary member.
+  'canViewHR',
+  'canViewInventory',
   // ── Actions ───────────────────────────────────────────────────────────────
   'canCreateAnnouncement',
   'canEditAnnouncement',
@@ -84,6 +88,8 @@ export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
   canViewSettings:             { label: 'View Settings',            description: 'Access settings',                              group: 'Pages' },
   canViewNotifications:        { label: 'View Notifications',       description: 'See notifications',                            group: 'Pages' },
   canViewNews:                 { label: 'View News',                description: 'See the news manager',                         group: 'Pages' },
+  canViewHR:                   { label: 'View Human Resources',     description: 'See the HR page',                              group: 'Pages' },
+  canViewInventory:            { label: 'View Inventory',           description: 'See the inventory page',                       group: 'Pages' },
   // Announcements
   canCreateAnnouncement:       { label: 'Create Announcement',      description: 'Post new announcements',                       group: 'Announcements' },
   canEditAnnouncement:         { label: 'Edit Announcement',        description: 'Edit existing announcements',                  group: 'Announcements' },
@@ -146,7 +152,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     'canViewMembers', 'canViewMeetings', 'canViewFinance', 'canViewChurchRules',
     'canViewHigeDenb', 'canViewStrategicPlan', 'canViewDocuments', 'canViewMissionary',
     'canViewTeachings', 'canViewVolunteer', 'canViewUserManagement', 'canViewSettings',
-    'canViewNotifications', 'canViewNews',
+    'canViewNotifications', 'canViewNews', 'canViewHR', 'canViewInventory',
     'canCreateAnnouncement', 'canEditAnnouncement', 'canDeleteAnnouncement',
     'canCreatePlan', 'canDeletePlan',
     'canCreateReport', 'canViewAllReports', 'canCommentOnReport',
@@ -165,7 +171,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     'canViewMembers', 'canViewMeetings', 'canViewFinance', 'canViewChurchRules',
     'canViewHigeDenb', 'canViewStrategicPlan', 'canViewDocuments', 'canViewHierarchy',
     'canViewMissionary', 'canViewTeachings', 'canViewVolunteer', 'canViewSettings',
-    'canViewNotifications',
+    'canViewNotifications', 'canViewHR', 'canViewInventory',
     'canCreatePlan', 'canCreateReport', 'canCommentOnReport',
     'canAddMembers', 'canEditMembers', 'canExportData',
     'canAddTransaction',
@@ -180,6 +186,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     'canViewMembers', 'canViewMeetings', 'canViewFinance', 'canViewChurchRules',
     'canViewHigeDenb', 'canViewDocuments', 'canViewMissionary', 'canViewTeachings',
     'canViewVolunteer', 'canViewSettings', 'canViewNotifications',
+    'canViewHR', 'canViewInventory',
     'canCreatePlan', 'canCreateReport', 'canCommentOnReport',
     'canAddMembers', 'canEditMembers',
     'canAddTransaction',
@@ -202,11 +209,19 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     'canViewLimitedDashboard',
   ],
 
+  // An ordinary church member. Deliberately narrow: they read announcements and
+  // the church rules, and nothing else. Every administration page — plans,
+  // reports, finance, HR, inventory, documents, the member directory — is
+  // somebody's job, not theirs.
+  //
+  // `canAddMembers` is absent on purpose. memberManagerRoles is derived from it,
+  // so granting it would put every self-service sign-up into isMemberManager()
+  // in firestore.rules, letting them create user documents and username rows
+  // for other people.
   HiyawanMahderat: [
-    'canViewDashboard', 'canViewAnnouncements', 'canViewMembers', 'canViewMeetings',
+    'canViewDashboard', 'canViewAnnouncements',
     'canViewChurchRules', 'canViewHigeDenb', 'canViewTeachings', 'canViewVolunteer',
     'canViewSettings', 'canViewNotifications',
-    'canAddMembers',
     'canSubmitMissionaryApplication',
     'canViewLimitedDashboard',
   ],

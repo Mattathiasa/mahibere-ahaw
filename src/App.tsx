@@ -49,6 +49,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { PermissionProvider } from "./contexts/PermissionContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import { RequirePermission } from "./components/RequirePermission";
 import DashboardLayout from "./components/DashboardLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -90,15 +91,15 @@ const App = () => (
                   <Route path="/quickboard" element={<ProtectedRoute><Suspense fallback={<div className="p-8 text-center text-white">Loading...</div>}><Quickboard /></Suspense></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Dashboard /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/announcements" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Announcements /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/plans" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Plans /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/reports" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Reports /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/members" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Members /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/meetings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Meetings /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/finance" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Finance /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/finances" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Finance /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/hr" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><HR /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/inventory" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/assets" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/plans" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewPlans" module="plans" title="Plans"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Plans /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/reports" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewReports" module="reports" title="Reports"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Reports /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/members" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewMembers" module="members" title="Members"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Members /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/meetings" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewMeetings" module="meetings" title="Meetings"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Meetings /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/finance" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewFinance" module="finance" title="Finance"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Finance /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/finances" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewFinance" module="finance" title="Finance"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Finance /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/hr" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewHR" module="hr" title="Human Resources"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><HR /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/inventory" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewInventory" module="inventory" title="Inventory"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/assets" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewInventory" module="inventory" title="Inventory"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Inventory /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hierarchy" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Hierarchy /></Suspense></DashboardLayout></ProtectedRoute>} />
                   {/* Not under /admin/* on purpose: these are gated by the
                       canManageAtbiyas / parish-scope permissions, which a role
@@ -114,10 +115,10 @@ const App = () => (
                   <Route path="/users" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><UserManagement /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/missionary" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Missionary /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/teachings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Teaching /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/strategic-plan" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><StrategicPlan /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/strategic-plan" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewStrategicPlan" module="strategicPlan" title="Strategic Plan"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><StrategicPlan /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/partner" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><PartnerContact /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/volunteer" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><Volunteer /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/documents" element={<ProtectedRoute><DashboardLayout><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><MemriyaDocuments /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/documents" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewDocuments" module="documents" title="Documents"><Suspense fallback={<div className="p-8 text-center">Loading...</div>}><MemriyaDocuments /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   
                   {/* Redirect to NotFound module */}
                   <Route path="*" element={<Navigate to="/404" replace />} />
