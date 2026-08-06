@@ -4,7 +4,7 @@ import {
   Users, FileText, BarChart3, Sun, Moon,
   Languages, Mail, MapPin, CheckCircle2, Sparkles, Menu, X,
   ArrowRight, Heart, Calendar, MessageSquare, Bell, Shield, Youtube, Send, Phone,
-  Clock, Globe, Church, Facebook, Music2, ExternalLink,
+  Clock, Globe, Church, Facebook, Music2, ExternalLink, BookOpen, Compass, Award, Target,
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Button } from './home-components/Button';
@@ -26,6 +26,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Users, FileText, BarChart3, Calendar, MapPin, Shield, Heart,
   Languages, Bell, CheckCircle2, Mail, ArrowRight, Sparkles,
   Youtube, Send, Phone, Clock, Globe, Church, MessageSquare,
+  BookOpen, Compass, Award, Target,
 };
 
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
@@ -95,7 +96,7 @@ const Home: React.FC = () => {
     );
   }
 
-  const { hero, stats, features, support, footer, contact } = content;
+  const { hero, stats, features, about, support, footer, contact } = content;
 
   return (
     <div className={`min-h-screen selection:bg-[#2E5E99]/30 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440] text-white' : 'bg-[#E7F0FA] text-[#0D2440]'}`}>
@@ -352,37 +353,157 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Support / About ── */}
-      <section id="about" className="py-32 relative bg-[#2E5E99]/5 backdrop-blur-md">
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="space-y-8">
-              <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
-                <Heart className="h-3 w-3" />
-                {support.badge}
-              </motion.div>
-              <h2 className="text-5xl font-black font-ethiopic text-[#0D2440]">{support.title}</h2>
-              <p className="text-xl text-[#0D2440]/70 font-ethiopic leading-relaxed">{support.description}</p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {support.banks.map((bank, i) => (
-                  <motion.div key={i} whileHover={{ scale: 1.02 }} className="p-4 rounded-2xl bg-white border border-[#2E5E99]/10 shadow-sm transition-all">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-[#2E5E99] mb-1">{bank.name}</p>
-                    <p className="text-lg font-bold text-[#0D2440] font-mono">{bank.account}</p>
-                  </motion.div>
-                ))}
+      {/* ── About Us, Faith, Mission & Values ── */}
+      <section id="about" className="py-24 sm:py-32 relative bg-[#2E5E99]/5 backdrop-blur-md">
+        <div className="container mx-auto px-6 space-y-20">
+          
+          {/* Section Header */}
+          <div className="max-w-3xl space-y-4">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
+              <Church className="h-3.5 w-3.5" />
+              {about?.badge ?? 'About Mahibere Ahaw'}
+            </motion.div>
+            <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+              {about?.sectionTitle ?? 'About Us & Our Faith'}
+            </h2>
+            <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
+              {about?.sectionDescription ?? 'Rooted in Holy Scripture and ancient spiritual heritage, serving the Body of Christ with truth, love, and modern dedication.'}
+            </p>
+          </div>
+
+          {/* Identity, Mission & Vision Cards */}
+          <div className="grid lg:grid-cols-3 gap-8">
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              className={`p-8 rounded-3xl border shadow-xl flex flex-col justify-between space-y-6 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+              <div className="space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center shadow-lg">
+                  <Church className="h-7 w-7 text-white" />
+                </div>
+                <h3 className={`text-2xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                  {about?.whoWeAreTitle ?? 'Our Identity'}
+                </h3>
+                <p className={`font-ethiopic leading-relaxed text-base ${theme === 'dark' ? 'text-white/70' : 'text-[#0D2440]/70'}`}>
+                  {about?.whoWeAreDescription ?? 'Mahibere Ahaw is a Christ-centered Orthodox church institution dedicated to spiritual renewal, biblical teaching, and equipping congregations worldwide.'}
+                </p>
               </div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} viewport={{ once: true }}
+              className="p-8 rounded-3xl bg-gradient-to-br from-[#2E5E99] to-[#1D3E66] text-white shadow-2xl flex flex-col justify-between space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10" />
+              <div className="space-y-4 relative z-10">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg">
+                  <Target className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-black font-ethiopic text-white">
+                  {about?.missionTitle ?? 'Our Mission'}
+                </h3>
+                <p className="font-ethiopic leading-relaxed text-base text-white/90">
+                  {about?.missionDescription ?? 'To preach the Gospel of Jesus Christ, nurture believers into spiritual maturity, prepare church leaders, and advance digital ministry.'}
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} viewport={{ once: true }}
+              className={`p-8 rounded-3xl border shadow-xl flex flex-col justify-between space-y-6 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+              <div className="space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7BA4D0] to-[#2E5E99] flex items-center justify-center shadow-lg">
+                  <Compass className="h-7 w-7 text-white" />
+                </div>
+                <h3 className={`text-2xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                  {about?.visionTitle ?? 'Our Vision'}
+                </h3>
+                <p className={`font-ethiopic leading-relaxed text-base ${theme === 'dark' ? 'text-white/70' : 'text-[#0D2440]/70'}`}>
+                  {about?.visionDescription ?? 'To see a vibrant, scripture-anchored, and spiritually revived church that transforms lives and serves every community with love and unity.'}
+                </p>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Statement of Faith / What We Believe */}
+          <div className="space-y-10 pt-4">
+            <div className="space-y-2">
+              <span className="text-xs font-black uppercase tracking-[0.25em] text-[#2E5E99]">Statement of Faith</span>
+              <h3 className={`text-3xl sm:text-4xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                {about?.beliefsTitle ?? 'What We Believe'}
+              </h3>
             </div>
-            <div className="relative">
-              <div className="absolute -inset-10 bg-[#2E5E99]/20 blur-[100px] rounded-full" />
-              <div className="relative p-12 rounded-[3rem] bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] shadow-2xl overflow-hidden hover:rotate-2 transition-transform duration-700">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
-                <Heart className="h-20 w-20 text-white/40 mb-8" />
-                <h3 className="text-4xl font-black text-white mb-6 font-ethiopic">{support.missionTitle}</h3>
-                <p className="text-2xl text-white/90 font-ethiopic leading-relaxed font-bold">"{support.missionStatement}"</p>
-              </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {(about?.beliefs ?? []).map((belief, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                  className={`p-6 sm:p-8 rounded-3xl border shadow-sm flex items-start gap-5 transition-all hover:shadow-xl ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+                  <div className="p-3.5 rounded-2xl bg-[#2E5E99]/10 text-[#2E5E99] shrink-0">
+                    <DynamicIcon name={belief.icon} className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className={`text-xl font-bold font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                      {belief.title}
+                    </h4>
+                    <p className={`font-ethiopic text-sm sm:text-base leading-relaxed ${theme === 'dark' ? 'text-white/70' : 'text-[#0D2440]/70'}`}>
+                      {belief.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
+
+          {/* Core Values */}
+          <div className="space-y-10 pt-4">
+            <div className="space-y-2">
+              <span className="text-xs font-black uppercase tracking-[0.25em] text-[#2E5E99]">Our Culture</span>
+              <h3 className={`text-3xl sm:text-4xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                {about?.valuesTitle ?? 'Our Core Values'}
+              </h3>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {(about?.values ?? []).map((val, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                  className={`p-6 rounded-3xl border shadow-sm space-y-4 hover:-translate-y-1 transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+                  <div className="w-12 h-12 rounded-2xl bg-[#2E5E99]/10 text-[#2E5E99] flex items-center justify-center">
+                    <DynamicIcon name={val.icon} className="h-6 w-6" />
+                  </div>
+                  <h4 className={`text-lg font-bold font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                    {val.title}
+                  </h4>
+                  <p className={`font-ethiopic text-sm leading-relaxed ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70'}`}>
+                    {val.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ministerial Support & Bank Accounts */}
+          <div className="pt-12 border-t border-[#2E5E99]/10 space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
+                  <Heart className="h-3 w-3" />
+                  {support.badge}
+                </div>
+                <h3 className={`text-3xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                  {support.title}
+                </h3>
+                <p className="text-base text-[#2E5E99] font-ethiopic max-w-xl">
+                  {support.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {support.banks.map((bank, i) => (
+                <motion.div key={i} whileHover={{ scale: 1.03 }} className={`p-4 rounded-2xl border shadow-sm transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-[#2E5E99] mb-1">{bank.name}</p>
+                  <p className={`text-sm font-bold font-mono ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{bank.account}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
         </div>
       </section>
 

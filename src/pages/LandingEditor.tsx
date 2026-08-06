@@ -290,6 +290,15 @@ const LandingEditor: React.FC = () => {
   function setSupport(key: keyof LandingContent['support'], value: string) {
     patch((c) => ({ ...c, support: { ...c.support, [key]: value } }));
   }
+  function setAbout(key: keyof NonNullable<LandingContent['about']>, value: any) {
+    patch((c) => ({
+      ...c,
+      about: {
+        ...(c.about ?? DEFAULT_LANDING_CONTENT.en.about!),
+        [key]: value,
+      },
+    }));
+  }
   function setFeaturesSection(key: 'sectionTitle' | 'sectionDescription', value: string) {
     patch((c) => ({ ...c, features: { ...c.features, [key]: value } }));
   }
@@ -494,6 +503,7 @@ const LandingEditor: React.FC = () => {
                 <TabsTrigger value="gallery">Gallery</TabsTrigger>
                 <TabsTrigger value="stats">Stats</TabsTrigger>
                 <TabsTrigger value="features">Features</TabsTrigger>
+                <TabsTrigger value="about">About & Faith</TabsTrigger>
                 <TabsTrigger value="support">Support & Banks</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="footer">Footer</TabsTrigger>
@@ -890,6 +900,163 @@ const LandingEditor: React.FC = () => {
                     ))}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* ── About & Faith ── */}
+              <TabsContent value="about">
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>About Us Section</CardTitle>
+                      <CardDescription>The section header, identity, mission, and vision cards.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Field label="Badge text" hint="Small pill above the section title">
+                        <Input value={content.about?.badge ?? ''} onChange={(e) => setAbout('badge', e.target.value)} />
+                      </Field>
+                      <Field label="Section title">
+                        <Input value={content.about?.sectionTitle ?? ''} onChange={(e) => setAbout('sectionTitle', e.target.value)} />
+                      </Field>
+                      <Field label="Section description">
+                        <Textarea rows={3} value={content.about?.sectionDescription ?? ''} onChange={(e) => setAbout('sectionDescription', e.target.value)} />
+                      </Field>
+                      <SectionDivider label="Identity Card" />
+                      <Field label="Identity card title">
+                        <Input value={content.about?.whoWeAreTitle ?? ''} onChange={(e) => setAbout('whoWeAreTitle', e.target.value)} />
+                      </Field>
+                      <Field label="Identity card description">
+                        <Textarea rows={3} value={content.about?.whoWeAreDescription ?? ''} onChange={(e) => setAbout('whoWeAreDescription', e.target.value)} />
+                      </Field>
+                      <SectionDivider label="Mission Card" />
+                      <Field label="Mission card title">
+                        <Input value={content.about?.missionTitle ?? ''} onChange={(e) => setAbout('missionTitle', e.target.value)} />
+                      </Field>
+                      <Field label="Mission card description">
+                        <Textarea rows={3} value={content.about?.missionDescription ?? ''} onChange={(e) => setAbout('missionDescription', e.target.value)} />
+                      </Field>
+                      <SectionDivider label="Vision Card" />
+                      <Field label="Vision card title">
+                        <Input value={content.about?.visionTitle ?? ''} onChange={(e) => setAbout('visionTitle', e.target.value)} />
+                      </Field>
+                      <Field label="Vision card description">
+                        <Textarea rows={3} value={content.about?.visionDescription ?? ''} onChange={(e) => setAbout('visionDescription', e.target.value)} />
+                      </Field>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Statement of Faith</CardTitle>
+                      <CardDescription>The "What We Believe" belief cards (icon, title, description).</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Field label="Section title" hint="e.g. What We Believe / የምናምንበት እምነታችን">
+                        <Input value={content.about?.beliefsTitle ?? ''} onChange={(e) => setAbout('beliefsTitle', e.target.value)} />
+                      </Field>
+                      <p className="text-xs text-muted-foreground">
+                        Icon must be a Lucide icon name: <code className="bg-muted px-1 rounded">BookOpen</code>, <code className="bg-muted px-1 rounded">Church</code>, <code className="bg-muted px-1 rounded">Heart</code>, <code className="bg-muted px-1 rounded">Shield</code>…
+                      </p>
+                      {(content.about?.beliefs ?? []).map((belief, i) => (
+                        <div key={i} className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary">Belief {i + 1}</Badge>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                const beliefs = (content.about?.beliefs ?? []).filter((_, idx) => idx !== i);
+                                setAbout('beliefs', beliefs);
+                              }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <Field label="Title">
+                              <Input value={belief.title} onChange={(e) => {
+                                const beliefs = [...(content.about?.beliefs ?? [])];
+                                beliefs[i] = { ...beliefs[i], title: e.target.value };
+                                setAbout('beliefs', beliefs);
+                              }} />
+                            </Field>
+                            <Field label="Icon name (Lucide)">
+                              <Input value={belief.icon} onChange={(e) => {
+                                const beliefs = [...(content.about?.beliefs ?? [])];
+                                beliefs[i] = { ...beliefs[i], icon: e.target.value };
+                                setAbout('beliefs', beliefs);
+                              }} />
+                            </Field>
+                          </div>
+                          <Field label="Description">
+                            <Textarea rows={2} value={belief.description} onChange={(e) => {
+                              const beliefs = [...(content.about?.beliefs ?? [])];
+                              beliefs[i] = { ...beliefs[i], description: e.target.value };
+                              setAbout('beliefs', beliefs);
+                            }} />
+                          </Field>
+                        </div>
+                      ))}
+                      <Button size="sm" variant="outline" onClick={() => {
+                        const beliefs = [...(content.about?.beliefs ?? []), { title: 'New Belief', description: '', icon: 'BookOpen' }];
+                        setAbout('beliefs', beliefs);
+                      }}>
+                        <Plus className="h-4 w-4 mr-1" /> Add Belief
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Core Values</CardTitle>
+                      <CardDescription>The value cards displayed in a 4-column grid.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Field label="Section title" hint="e.g. Our Core Values / መሠረታዊ እሴቶቻችን">
+                        <Input value={content.about?.valuesTitle ?? ''} onChange={(e) => setAbout('valuesTitle', e.target.value)} />
+                      </Field>
+                      {(content.about?.values ?? []).map((val, i) => (
+                        <div key={i} className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary">Value {i + 1}</Badge>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                const values = (content.about?.values ?? []).filter((_, idx) => idx !== i);
+                                setAbout('values', values);
+                              }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <Field label="Title">
+                              <Input value={val.title} onChange={(e) => {
+                                const values = [...(content.about?.values ?? [])];
+                                values[i] = { ...values[i], title: e.target.value };
+                                setAbout('values', values);
+                              }} />
+                            </Field>
+                            <Field label="Icon name (Lucide)">
+                              <Input value={val.icon} onChange={(e) => {
+                                const values = [...(content.about?.values ?? [])];
+                                values[i] = { ...values[i], icon: e.target.value };
+                                setAbout('values', values);
+                              }} />
+                            </Field>
+                          </div>
+                          <Field label="Description">
+                            <Textarea rows={2} value={val.description} onChange={(e) => {
+                              const values = [...(content.about?.values ?? [])];
+                              values[i] = { ...values[i], description: e.target.value };
+                              setAbout('values', values);
+                            }} />
+                          </Field>
+                        </div>
+                      ))}
+                      <Button size="sm" variant="outline" onClick={() => {
+                        const values = [...(content.about?.values ?? []), { title: 'New Value', description: '', icon: 'Shield' }];
+                        setAbout('values', values);
+                      }}>
+                        <Plus className="h-4 w-4 mr-1" /> Add Value
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               {/* ── Support & Banks ── */}

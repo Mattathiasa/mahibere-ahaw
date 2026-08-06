@@ -22,6 +22,18 @@ export interface LandingBank {
   account: string;
 }
 
+export interface LandingBelief {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+export interface LandingValue {
+  title: string;
+  description: string;
+  icon: string;
+}
+
 export interface LandingContent {
   hero: {
     badge: string;
@@ -44,6 +56,21 @@ export interface LandingContent {
     sectionTitle: string;
     sectionDescription: string;
     items: LandingFeature[];
+  };
+  about?: {
+    badge: string;
+    sectionTitle: string;
+    sectionDescription: string;
+    whoWeAreTitle: string;
+    whoWeAreDescription: string;
+    missionTitle: string;
+    missionDescription: string;
+    visionTitle: string;
+    visionDescription: string;
+    beliefsTitle: string;
+    beliefs: LandingBelief[];
+    valuesTitle: string;
+    values: LandingValue[];
   };
   support: {
     badge: string;
@@ -141,6 +168,31 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { id: 'reports', title: 'Analytics & Reports', description: 'Comprehensive reporting and tracking for all church activities.', icon: 'BarChart3' },
       ],
     },
+    about: {
+      badge: 'Who We Are',
+      sectionTitle: 'About Us & Our Faith',
+      sectionDescription: 'Rooted in Holy Scripture and ancient spiritual heritage, serving the Body of Christ with truth, love, and modern dedication.',
+      whoWeAreTitle: 'Our Identity',
+      whoWeAreDescription: 'Mahibere Ahaw is a Christ-centered Orthodox church institution dedicated to spiritual renewal, biblical teaching, and equipping congregations worldwide through God\'s Word and Holy Spirit.',
+      missionTitle: 'Our Mission',
+      missionDescription: 'To proclaim the Gospel of Jesus Christ, nurture believers into spiritual maturity, prepare church leaders, and advance digital ministry across all parishes.',
+      visionTitle: 'Our Vision',
+      visionDescription: 'To see a vibrant, scripture-anchored, and spiritually revived church that transforms lives and serves every community with love and divine unity.',
+      beliefsTitle: 'What We Believe',
+      beliefs: [
+        { title: 'The Holy Scriptures', description: 'The Bible is the inspired, infallible Word of God, serving as the supreme authority for faith, doctrine, and daily life.', icon: 'BookOpen' },
+        { title: 'The Holy Trinity', description: 'We confess One God in three co-equal persons: the Father, the Son, and the Holy Spirit.', icon: 'Church' },
+        { title: 'Salvation in Jesus Christ', description: 'Eternal salvation is by grace through faith in the crucified and resurrected Lord Jesus Christ.', icon: 'Heart' },
+        { title: 'One Holy Apostolic Church', description: 'The Church is the body of Christ, united in faith, sacraments, holy tradition, and spiritual fellowship.', icon: 'Shield' },
+      ],
+      valuesTitle: 'Our Core Values',
+      values: [
+        { title: 'Biblical Integrity', description: 'Unwavering faithfulness to the teachings of Holy Scripture and Christian truth.', icon: 'Shield' },
+        { title: 'Love & Christian Unity', description: 'Serving one another in genuine fellowship, compassion, and divine love.', icon: 'Users' },
+        { title: 'Spiritual Discipleship', description: 'Guiding every member to grow in holiness, prayer, and spiritual wisdom.', icon: 'Sparkles' },
+        { title: 'Servant Leadership', description: 'Leading by example with humility, diligence, and stewardship.', icon: 'CheckCircle2' },
+      ],
+    },
     support: {
       badge: 'Ministerial Support',
       title: 'Support the Ministry',
@@ -208,6 +260,31 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { id: 'members', title: 'የአባላት አስተዳደር', description: 'የቤተክርስቲያን አባላትን፣ አገልግሎቶችን እና የእውቂያ መረጃዎችን ያስተዳድሩ።', icon: 'Users' },
         { id: 'planning', title: 'እቅዶች እና ሪፖርቶች', description: 'የአገልግሎት እቅዶችን ያደራጁ እና እድገትን ይከታተሉ።', icon: 'Calendar' },
         { id: 'reports', title: 'ትንታኔ እና ሪፖርቶች', description: 'ለሁሉም የቤተክርስቲያን እንቅስቃሴዎች ሁሉን አቀፍ ሪፖርት።', icon: 'BarChart3' },
+      ],
+    },
+    about: {
+      badge: 'ስለ እኛ',
+      sectionTitle: 'ስለ እኛ እና እምነታችን',
+      sectionDescription: 'በመጽሐፍ ቅዱስ እና በጥንታዊ መንፈሳዊ ቅርስ ላይ የተመሠረተች፣ የክርስቶስን አካል በእውነት፣ በፍቅርና በትጋት የምታገለግል ቤተክርስቲያን።',
+      whoWeAreTitle: 'ማነነታችን',
+      whoWeAreDescription: 'ማኅበረ አኀው በክርስቶስ ላይ የተመሰረተች ኦርቶዶክሳዊት ቤተክርስቲያን ስትሆን፣ በመንፈሳዊ ተሐድሶ፣ በመጽሐፍ ቅዱስ ትምህርትና በቃሉ ብርሃን ምዕመናንን በዓለም ዙሪያ የምታገለግል ማኅበር ናት።',
+      missionTitle: 'ተልዕኮአችን',
+      missionDescription: 'የኢየሱስ ክርስቶስን ወንጌል መስበክ፣ ምዕመናንን በመንፈሳዊ ሕይወት ማነጽ፣ የአገልግሎት መሪዎችን ማዘጋጀትና ዲጂታል አገልግሎትን ማሳደግ።',
+      visionTitle: 'ራዕያችን',
+      visionDescription: 'በእግዚአብሔር ቃል ላይ የተመሠረተች፣ በመንፈስ ቅዱስ የታደሰችና እያንዳንዱን ነፍስ በፍቅር፣ በቅድስናና በአንድነት የምታገለግል ቤተክርስቲያንን ማየት።',
+      beliefsTitle: 'የምናምንበት እምነታችን',
+      beliefs: [
+        { title: 'ቅዱሳት መጻሕፍት', description: 'መጽሐፍ ቅዱስ በእግዚአብሔር መንፈስ የተጻፈ፣ ለእምነትና ለሕይወት ሁሉ የበላይ መመሪያና መሠረት ነው።', icon: 'BookOpen' },
+        { title: 'ቅድስት ሥላሴ', description: 'በአንድ አምላክነት በሦስት አካላት፡ በአብ፣ በወልድ፣ በመንፈስ ቅዱስ እናምናለን።', icon: 'Church' },
+        { title: 'ድኅነት በክርስቶስ', description: 'የዘላለም ድኅነትና ሕይወት በኢየሱስ ክርስቶስ ሞትና ትንሣኤ በማመን የሚገኝ ጸጋ ነው።', icon: 'Heart' },
+        { title: 'አንዲት ቅድስት ቤተክርስቲያን', description: 'ቤተክርስቲያን በእምነት፣ በምሥጢራትና በመንፈሳዊ ኅብረት የተሳሰረች የክርስቶስ አካል ናት።', icon: 'Shield' },
+      ],
+      valuesTitle: 'መሠረታዊ እሴቶቻችን',
+      values: [
+        { title: 'የመጽሐፍ ቅዱስ ታማኝነት', description: 'በሁሉም ትምህርቶችና አሠራሮች የእግዚአብሔርን ቃል መሠረት ማድረግ።', icon: 'Shield' },
+        { title: 'ፍቅርና አንድነት', description: 'እርስ በርሳችን በአንድነት፣ በሩኅሩኄ እና በክርስቲያናዊ ፍቅር መደጋገፍ።', icon: 'Users' },
+        { title: 'መንፈሳዊ ደቀ መዝሙርነት', description: 'ምዕመናን በጸሎት፣ በቅድስናና በመንፈሳዊ ጥበብ እንዲያድጉ ማነጽ።', icon: 'Sparkles' },
+        { title: 'የአገልጋይነት አመራር', description: 'በትህትና፣ በትጋትና በታማኝነት እግዚአብሔርንና ሕዝቡን ማገልገል።', icon: 'CheckCircle2' },
       ],
     },
     support: {
@@ -279,6 +356,31 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { id: 'reports', title: 'Xiinxala fi Gabaasa', description: 'Gabaasa fi hordoffii hojii waldaa hundaaf.', icon: 'BarChart3' },
       ],
     },
+    about: {
+      badge: 'Waa\'ee Keenya',
+      sectionTitle: 'Waa\'ee Keenya fi Amantaa Keenya',
+      sectionDescription: 'Macaafa Qulqulluu fi aadaa hafuuraa durii irratti hundaa\'ee, qaama Kiristoos dhugaadhaan, jaalalaan fi kutannoodhaan kan tajaajilu.',
+      whoWeAreTitle: 'Eenyummaa Keenya',
+      whoWeAreDescription: 'Mahibere Ahaw dhaabbata waldaa kiristaanaa Ortodoksii kan haroomsa hafuuraa, barsiisa Macaafa Qulqulluu fi miseensota addunyaa guutuurra jiran tajaajiluu irratti fuulleffateedha.',
+      missionTitle: 'Ergama Keenya',
+      missionDescription: 'Wangeela Yesuus Kiristoos lallabuu, amantoota hafuuraan guddisuu, hoggantoota tajaajilaa qopheessuu fi tajaajila dijitaalaa guddisuu.',
+      visionTitle: 'Mul\'ata Keenya',
+      visionDescription: 'Waldaa Macaafa Qulqulluurratti cichite, Hafuura Qulqulluudhaan haromfamte fi hawaasa hunda jaalalaa fi tokkummaadhaan tajaajiltu arguu.',
+      beliefsTitle: 'Waan Amannu',
+      beliefs: [
+        { title: 'Macaafa Qulqulluu', description: 'Macaafni Qulqulluun sagalee Waaqayyoo kan hafuraan barreeffamee fi hundee amantaa keenyaati.', icon: 'BookOpen' },
+        { title: 'Sadaasa Qulqulluu', description: 'Waaqa tokko qaama sadan: Abbaa, Ilma, fi Hafuura Qulqulluutti amanna.', icon: 'Church' },
+        { title: 'Fayyina Kiristoosiin', description: 'Fayyinni bara baraa du\'aa fi du\'aa ka\'uu Yesuus Kiristoosiin kan argamu ayyaana Waaqayyooti.', icon: 'Heart' },
+        { title: 'Waldaa Qulqulluu Tokkitti', description: 'Waldaan qaama Kiristoos kan amantaa fi tokkummaa hafuuraatiin walqabatedha.', icon: 'Shield' },
+      ],
+      valuesTitle: 'Dhaadannoo Keenya',
+      values: [
+        { title: 'Amanamummaa Macaafa Qulqulluu', description: 'Barsiisa fi hojii hunda keessatti Sagalee Waaqayyoo jahjeeffachuu.', icon: 'Shield' },
+        { title: 'Jaalala fi Tokkummaa', description: 'Waloo hafuuraa, garaalaafummaa fi jaalala kiristaanaatiin wal tajaajiluu.', icon: 'Users' },
+        { title: 'Guddina Hafuuraa', description: 'Miseensota kadhannaa, qulqullummaa fi ogummaa hafuuraatiin guddisuu.', icon: 'Sparkles' },
+        { title: 'Hogganummaa Tajaajiltummaa', description: 'Gadi deebi\'iinsaan, kutannoon fi amanamummaadhaan Waaqayyoo fi uummata tajaajiluu.', icon: 'CheckCircle2' },
+      ],
+    },
     support: {
       badge: 'Deggersa Tajaajilaa',
       title: 'Tajaajila Deeggari',
@@ -346,6 +448,31 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { id: 'members', title: 'ምሕደራ ኣባላት', description: 'ኣባላት ቤተክርስቲያን፣ ኣገልግሎታትን ናይ ርክብ ሓበሬታን ብቐሊሉ ኣመሓድሩ።', icon: 'Users' },
         { id: 'planning', title: 'መደባትን ጸብጻባትን', description: 'መደባት ኣገልግሎት ኣዳሉዉ፣ ዕቤት ድማ ተኸታተሉ።', icon: 'Calendar' },
         { id: 'reports', title: 'ትንተናን ጸብጻባትን', description: 'ንኹሉ ንጥፈታት ቤተክርስቲያን ሰፊሕ ጸብጻብን ክትትልን።', icon: 'BarChart3' },
+      ],
+    },
+    about: {
+      badge: 'ብዛዕባና',
+      sectionTitle: 'ብዛዕባናን እምነትናን',
+      sectionDescription: 'ኣብ መጽሓፍ ቅዱስን ጥንታዊ መንፈሳዊ ቅርሲን ዝተመሠረተት፣ ንኣካል ክርስቶስ ብሓቂ፣ ብፍቕርን ብትጋህን እተገልግል ቤተክርስቲያን።',
+      whoWeAreTitle: 'መንነትና',
+      whoWeAreDescription: 'ማሕበረ ኣኀው ኣብ ክርስቶስ ዝተመሠረተት ኦርቶዶክሳዊት ቤተክርስቲያን ኮይና፣ ብመንፈሳዊ ተሓድሶ፣ ብትምህርቲ መጽሓፍ ቅዱስን ብብርሃን ቃሉን ንምእመናን ኣብ ምሉእ ዓለም እተገልግል ማሕበር እያ።',
+      missionTitle: 'ተልእኾና',
+      missionDescription: 'ወንጌል ኢየሱስ ክርስቶስ መስበኽ፣ ምእመናን ብመንፈሳዊ ሕይወት ምህናጽ፣ መራሕቲ ኣገልግሎት ምድላውን ዲጂታላዊ ኣገልግሎት ምዕባይን።',
+      visionTitle: 'ራእይና',
+      visionDescription: 'ኣብ ቃል ኣምላኽ ዝተመሠረተት፣ ብመንፈስ ቅዱስ ዝተሓደሰትን ንነፍሲ ወከፍ ብፍቕሪ፣ ብቅድስናን ብሓድነትን እተገልግል ቤተክርስቲያን ምእላይ።',
+      beliefsTitle: 'እንእምነሉ እምነትና',
+      beliefs: [
+        { title: 'ቅዱሳት መጻሕፍቲ', description: 'መጽሓፍ ቅዱስ ብመንፈስ ኣምላኽ ዝተጻሕፈ፣ ንእምነትን ንሕይወትን ኩሉ ላዕለዋይ መመርሕን መሠረትን እዩ።', icon: 'BookOpen' },
+        { title: 'ቅድስት ሥላሴ', description: 'ብሓደ ኣምላኽነት ብሠለስተ ኣካላት፡ በአብ፣ በወልድ፣ በመንፈስ ቅዱስ ንእምን።', icon: 'Church' },
+        { title: 'ድሕነት ብክርስቶስ', description: 'ናይ ዘለዓለም ድሕነትን ሕይወትን ብሞትን ትንሣኤን ኢየሱስ ክርስቶስ ብምእማን ዝርከብ ጸጋ እዩ።', icon: 'Heart' },
+        { title: 'ሓንቲ ቅድስት ቤተክርስቲያን', description: 'ቤተክርስቲያን ብእምነት፣ ብምሥጢራትን ብመንፈሳዊ ኅብረትን ዝተኣሳሰረት ኣካል ክርስቶስ እያ።', icon: 'Shield' },
+      ],
+      valuesTitle: 'መሠረታውያን እሴታትና',
+      values: [
+        { title: 'ታማኝነት መጽሓፍ ቅዱስ', description: 'ኣብ ኩሉ ትምህርትታትን ኣሰራርሓታትን ቃል ኣምላኽ መሠረት ምግባር።', icon: 'Shield' },
+        { title: 'ፍቕርን ሓድነትን', description: 'ንሓድሕድና ብሓድነት፣ ብርኅራኄን ብክርስቲያናዊ ፍቕርን ምድግጋፍ።', icon: 'Users' },
+        { title: 'መንፈሳዊ ደቀ መዛሙርትነት', description: 'ምእመናን ብጸሎት፣ ብቅድስናን ብመንፈሳዊ ጥበብን ንኽዓብዩ ምህናጽ።', icon: 'Sparkles' },
+        { title: 'ናይ ኣገልጋላይነት መራሕነት', description: 'ብትሕትና፣ ብትጋህን ብታማኝነትን ንኣምላኽን ንሕዝብን ምግልጋል።', icon: 'CheckCircle2' },
       ],
     },
     support: {
