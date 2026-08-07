@@ -41,6 +41,10 @@ export const translations = {
       viewAll: 'View All',
       loading: 'Loading...',
       learnMore: 'Learn More',
+      openInMaps: 'Open in Maps',
+      website: 'Website',
+      emailAction: 'Email',
+      callAction: 'Call',
     },
     dashboard: {
       welcome: 'Welcome',
@@ -393,6 +397,10 @@ export const translations = {
       viewAll: 'ሁሉንም ይመልከቱ',
       loading: 'በመጫን ላይ...',
       learnMore: 'ተጨማሪ ይመልከቱ',
+      openInMaps: 'በካርታ ላይ ክፈት',
+      website: 'ድረ-ገጽ',
+      emailAction: 'ኢሜይል',
+      callAction: 'ደውል',
     },
     dashboard: {
       welcome: 'እንኳን ደህና መጡ',
@@ -563,6 +571,10 @@ export const translations = {
       viewAll: 'Hunda Ilaali',
       loading: 'Fe\'amaa jira...',
       learnMore: 'Dabalata Baradhu',
+      openInMaps: 'Kaartaa irratti bani',
+      website: 'Marsariitii',
+      emailAction: 'Imeelii',
+      callAction: 'Bilbili',
     },
     dashboard: {
       welcome: 'Baga Nagaan Dhuftan',
@@ -733,6 +745,10 @@ export const translations = {
       viewAll: 'ኩሉ ርአ',
       loading: 'ይጽዕን ኣሎ...',
       learnMore: 'ተወሳኺ ፍለጥ',
+      openInMaps: 'ኣብ ካርታ ክፈት',
+      website: 'ወብ ሳይት',
+      emailAction: 'ኢመይል',
+      callAction: 'ደውል',
     },
     dashboard: {
       welcome: 'እንቋዕ ብደሓን መጻእኩም',

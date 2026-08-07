@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Save, Loader2, Search, RotateCcw } from 'lucide-react';
 import { translations, type Language } from '@/i18n/translations';
-import { type AllLanguageOverrides } from '@/services/pageStrings';
+import { overrideKey, leafOf, type AllLanguageOverrides } from '@/services/pageStrings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,26 +31,51 @@ const LANG_LABELS: Record<Language, string> = {
   ti: '🇪🇹 ትግርኛ (Tigrigna)',
 };
 
-// Walk the nested translations object and return flat { key, defaultValue, isLong } entries
-function flattenSection(obj: Record<string, unknown>): Array<{ key: string; defaultValue: string; isLong: boolean }> {
-  const result: Array<{ key: string; defaultValue: string; isLong: boolean }> = [];
+interface StringEntry {
+  /** Leaf name, shown to the admin. */
+  key: string;
+  /** Dotted path the override is stored under — see services/pageStrings.ts. */
+  path: string;
+  defaultValue: string;
+  isLong: boolean;
+}
+
+// Walk one section of the nested translations object into flat entries
+function flattenSection(section: string, obj: Record<string, unknown>): StringEntry[] {
+  const result: StringEntry[] = [];
   for (const [key, val] of Object.entries(obj)) {
     if (typeof val === 'string') {
-      result.push({ key, defaultValue: val, isLong: val.length > 60 });
+      result.push({
+        key,
+        path: overrideKey(section, key),
+        defaultValue: val,
+        isLong: val.length > 60,
+      });
     }
   }
   return result;
 }
 
-// Get all top-level sections from translations for a language
-function getSections(lang: Language): Array<{ section: string; entries: ReturnType<typeof flattenSection> }> {
+/**
+ * Every section and key an admin can translate, for one language.
+ *
+ * The key set comes from English, not from the selected language: `pages` has
+ * 233 keys in English and 71 in the other three, and enumerating the selected
+ * language would hide the remaining 162 from the very editor meant to
+ * translate them. Where a language has no string of its own, the English one
+ * is shown as the placeholder — matching what the page actually renders.
+ */
+function getSections(lang: Language): Array<{ section: string; entries: StringEntry[] }> {
+  const englishData = translations.en as Record<string, unknown>;
   const langData = translations[lang] as Record<string, unknown>;
-  return Object.entries(langData)
+
+  return Object.entries(englishData)
     .filter(([, val]) => val && typeof val === 'object' && !Array.isArray(val))
-    .map(([section, val]) => ({
-      section,
-      entries: flattenSection(val as Record<string, unknown>),
-    }))
+    .map(([section, val]) => {
+      const localised = (langData[section] ?? {}) as Record<string, unknown>;
+      const merged = { ...(val as Record<string, unknown>), ...localised };
+      return { section, entries: flattenSection(section, merged) };
+    })
     .filter(({ entries }) => entries.length > 0);
 }
 
@@ -82,23 +107,28 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
     (k) => !k.startsWith('_') && (pageStrings[stringsLang]?.[k] ?? '') !== ''
   ).length;
 
-  function getOverrideValue(key: string): string {
-    return pageStrings[stringsLang]?.[key] ?? '';
+  /** Dotted path first, then the legacy bare-leaf key saved by older versions. */
+  function getOverrideValue(path: string): string {
+    const saved = pageStrings[stringsLang];
+    return saved?.[path] ?? saved?.[leafOf(path)] ?? '';
   }
 
-  function clearOverride(key: string) {
-    setStringOverride(key, '');
+  /** Clears both spellings, or a legacy value would survive the reset. */
+  function clearOverride(path: string) {
+    setStringOverride(path, '');
+    const leaf = leafOf(path);
+    if (pageStrings[stringsLang]?.[leaf] !== undefined) setStringOverride(leaf, '');
   }
 
   // Filter entries by search query
-  function filterEntries(entries: ReturnType<typeof flattenSection>) {
+  function filterEntries(entries: StringEntry[]) {
     if (!searchQuery.trim()) return entries;
     const q = searchQuery.toLowerCase();
     return entries.filter(
-      ({ key, defaultValue }) =>
+      ({ key, path, defaultValue }) =>
         key.toLowerCase().includes(q) ||
         defaultValue.toLowerCase().includes(q) ||
-        getOverrideValue(key).toLowerCase().includes(q)
+        getOverrideValue(path).toLowerCase().includes(q)
     );
   }
 
@@ -167,7 +197,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
         <TabsList className="flex-wrap h-auto gap-1 mb-4">
           {sections.map(({ section, entries }) => {
             const filtered = filterEntries(entries);
-            const hasOverrides = entries.some(({ key }) => getOverrideValue(key) !== '');
+            const hasOverrides = entries.some(({ path }) => getOverrideValue(path) !== '');
             return (
               <TabsTrigger key={section} value={section} className="relative">
                 {SECTION_LABELS[section] ?? section}
@@ -201,11 +231,11 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
                     <p className="text-sm text-muted-foreground py-8 text-center">No strings match your search.</p>
                   ) : (
                     <div className="space-y-4">
-                      {filtered.map(({ key, defaultValue, isLong }) => {
-                        const override = getOverrideValue(key);
+                      {filtered.map(({ key, path, defaultValue, isLong }) => {
+                        const override = getOverrideValue(path);
                         const hasOverride = override !== '';
                         return (
-                          <div key={key} className={`p-4 rounded-xl border transition-colors ${hasOverride ? 'border-blue-200 bg-blue-50/50' : 'border-border bg-muted/20'}`}>
+                          <div key={path} className={`p-4 rounded-xl border transition-colors ${hasOverride ? 'border-blue-200 bg-blue-50/50' : 'border-border bg-muted/20'}`}>
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <code className="text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
@@ -222,7 +252,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
-                                  onClick={() => clearOverride(key)}
+                                  onClick={() => clearOverride(path)}
                                   title="Clear override, revert to default"
                                 >
                                   <RotateCcw className="h-3 w-3 mr-1" />
@@ -235,14 +265,14 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
                                 rows={2}
                                 placeholder={defaultValue}
                                 value={override}
-                                onChange={(e) => setStringOverride(key, e.target.value)}
+                                onChange={(e) => setStringOverride(path, e.target.value)}
                                 className="text-sm"
                               />
                             ) : (
                               <Input
                                 placeholder={defaultValue}
                                 value={override}
-                                onChange={(e) => setStringOverride(key, e.target.value)}
+                                onChange={(e) => setStringOverride(path, e.target.value)}
                                 className="text-sm"
                               />
                             )}

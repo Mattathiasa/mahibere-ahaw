@@ -15,6 +15,9 @@ import {
   type LandingFeature,
   type LandingStat,
   type LandingBank,
+  type LandingBelief,
+  type LandingValue,
+  type LandingLink,
   type MultiLangLandingContent,
 } from '@/services/landingContent';
 import { invalidateLandingCache } from '@/hooks/useLandingContent';
@@ -37,6 +40,7 @@ import { BrandedLoader } from '@/components/BrandedLoader';
 import { invalidateTranslationCache } from '@/hooks/useTranslation';
 import { translations, type Language } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -80,11 +84,57 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
+/** Every link field on this page accepts the same three forms. */
+const LINK_HINT =
+  'An in-app path (/news), a section anchor (#contact), or a full https:// address, which opens in a new tab.';
+
+/** One editable footer link column — heading plus label/URL rows. */
+function FooterLinkEditor({
+  title, heading, onHeading, links, onChange, onAdd, onRemove,
+}: {
+  title: string;
+  heading: string;
+  onHeading: (value: string) => void;
+  links: LandingLink[];
+  onChange: (i: number, key: keyof LandingLink, value: string) => void;
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+}) {
+  return (
+    <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <Badge variant="secondary">{title}</Badge>
+        <Button size="sm" variant="outline" onClick={onAdd}>
+          <Plus className="h-4 w-4 mr-1" /> Add link
+        </Button>
+      </div>
+      <Field label="Column heading">
+        <Input value={heading} onChange={(e) => onHeading(e.target.value)} />
+      </Field>
+      {(links ?? []).map((link, i) => (
+        <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+          <Field label="Label">
+            <Input value={link.label} onChange={(e) => onChange(i, 'label', e.target.value)} />
+          </Field>
+          <Field label="Link">
+            <Input value={link.url} onChange={(e) => onChange(i, 'url', e.target.value)} placeholder="/dashboard" />
+          </Field>
+          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"
+            onClick={() => onRemove(i)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main editor ─────────────────────────────────────────────────────────────
 
 const LandingEditor: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { refreshTranslations } = useLanguage();
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [allContent, setAllContent] = useState<MultiLangLandingContent>({});
@@ -269,8 +319,27 @@ const LandingEditor: React.FC = () => {
       return { ...g, images };
     });
   }
-  function setFooter(key: keyof LandingContent['footer'], value: string) {
+  function setFooter(key: keyof LandingContent['footer'], value: string | boolean) {
     patch((c) => ({ ...c, footer: { ...c.footer, [key]: value } }));
+  }
+  function setNews(key: keyof LandingContent['news'], value: string | number) {
+    patch((c) => ({ ...c, news: { ...c.news, [key]: value } }));
+  }
+  /** The two footer link columns share one shape, so one set of updaters. */
+  function updateFooterLink(
+    list: 'platformLinks' | 'supportLinks', i: number, key: keyof LandingLink, value: string
+  ) {
+    patch((c) => {
+      const links = [...c.footer[list]];
+      links[i] = { ...links[i], [key]: value };
+      return { ...c, footer: { ...c.footer, [list]: links } };
+    });
+  }
+  function addFooterLink(list: 'platformLinks' | 'supportLinks') {
+    patch((c) => ({ ...c, footer: { ...c.footer, [list]: [...c.footer[list], { label: '', url: '' }] } }));
+  }
+  function removeFooterLink(list: 'platformLinks' | 'supportLinks', i: number) {
+    patch((c) => ({ ...c, footer: { ...c.footer, [list]: c.footer[list].filter((_, idx) => idx !== i) } }));
   }
   function setContact(key: keyof LandingContent['contact'], value: string) {
     patch((c) => ({ ...c, contact: { ...c.contact, [key]: value } }));
@@ -292,7 +361,11 @@ const LandingEditor: React.FC = () => {
   function setSupport(key: keyof LandingContent['support'], value: string) {
     patch((c) => ({ ...c, support: { ...c.support, [key]: value } }));
   }
-  function setAbout(key: keyof NonNullable<LandingContent['about']>, value: any) {
+  /** About holds translated strings plus the belief and value card lists. */
+  function setAbout(
+    key: keyof NonNullable<LandingContent['about']>,
+    value: string | LandingBelief[] | LandingValue[]
+  ) {
     patch((c) => ({
       ...c,
       about: {
@@ -304,6 +377,26 @@ const LandingEditor: React.FC = () => {
   function setFeaturesSection(key: 'sectionTitle' | 'sectionDescription', value: string) {
     patch((c) => ({ ...c, features: { ...c.features, [key]: value } }));
   }
+
+  // ── Feature link validation ────────────────────────────────────────────────
+  /**
+   * Which feature cards point at a `/features#…` anchor that no section on the
+   * /features page actually has.
+   *
+   * Only `/features#…` targets are checked: an in-app path or an external URL
+   * is the admin's business, but a broken anchor is always a mistake and one
+   * that silently does nothing when clicked.
+   */
+  const featureSectionIds = new Set(fp.sections.map((sec) => sec.id.trim()).filter(Boolean));
+  const brokenFeatureLinks = content.features.items
+    .map((item, index) => ({ item, index, target: featureLinkTarget(item) }))
+    .filter(({ target }) => target.startsWith('/features#'))
+    .filter(({ target }) => !featureSectionIds.has(target.slice('/features#'.length)))
+    .map(({ item, index, target }) => ({
+      index,
+      title: item.title || `Feature ${index + 1}`,
+      target,
+    }));
 
   // Stats
   function updateStat(i: number, key: keyof LandingStat, value: string) {
@@ -358,6 +451,12 @@ const LandingEditor: React.FC = () => {
 
   // ── Save landing content ──────────────────────────────────────────────────
   async function handleSave() {
+    // A card whose anchor names no section on /features scrolls nowhere, and
+    // the mistake is invisible until someone clicks it on the live site.
+    if (brokenFeatureLinks.length > 0) {
+      setSaveStatus('error');
+      return;
+    }
     setSaving(true);
     setSaveStatus('idle');
     try {
@@ -385,7 +484,12 @@ const LandingEditor: React.FC = () => {
     setSavingStrings(true);
     try {
       await pageStringsService.save(pageStrings, user?.email ?? 'admin');
+      // Two caches read this document: the flat `t('key')` map, and the nested
+      // tree LanguageContext hands to `useLanguage().t` — which is what the
+      // landing page renders. Both have to be told, or the save appears to do
+      // nothing until a full reload.
       invalidateTranslationCache();
+      await refreshTranslations();
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
@@ -430,7 +534,7 @@ const LandingEditor: React.FC = () => {
             <Button variant="outline" size="sm" onClick={() => window.open('/', '_blank')}>
               <Eye className="h-4 w-4 mr-1" /> Preview
             </Button>
-            <Button onClick={handleSave} disabled={saving} size="sm">
+            <Button onClick={handleSave} disabled={saving || brokenFeatureLinks.length > 0} size="sm">
               {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
               {saving ? 'Saving…' : 'Save Changes'}
             </Button>
@@ -443,6 +547,30 @@ const LandingEditor: React.FC = () => {
             className="bg-green-500/10 border-b border-green-500/20 px-4 py-2 flex items-center gap-2 text-green-700 text-sm">
             <CheckCircle2 className="h-4 w-4" /> Changes saved and live.
           </motion.div>
+        )}
+        {brokenFeatureLinks.length > 0 && (
+          <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-amber-800 text-sm">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold">
+                  Saving is blocked: {brokenFeatureLinks.length} feature link
+                  {brokenFeatureLinks.length !== 1 ? 's point' : ' points'} to a section that does not exist.
+                </p>
+                <ul className="list-disc pl-5 mt-1">
+                  {brokenFeatureLinks.map(({ index, title, target }) => (
+                    <li key={index}>
+                      <b>{title}</b> → <code>{target}</code>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-[11px]">
+                  Fix the anchor under Features, or add a matching section under
+                  Features Page. Available: {[...featureSectionIds].join(', ') || '(none)'}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
         {saveStatus === 'error' && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
@@ -502,6 +630,7 @@ const LandingEditor: React.FC = () => {
                 <TabsTrigger value="stats">Stats</TabsTrigger>
                 <TabsTrigger value="features">Features</TabsTrigger>
                 <TabsTrigger value="about">About & Faith</TabsTrigger>
+                <TabsTrigger value="news">News</TabsTrigger>
                 <TabsTrigger value="support">Support & Banks</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="footer">Footer</TabsTrigger>
@@ -731,6 +860,12 @@ const LandingEditor: React.FC = () => {
                       <Field label="Secondary button label">
                         <Input value={content.hero.ctaSecondary} onChange={(e) => setHero('ctaSecondary', e.target.value)} />
                       </Field>
+                      <Field label="Primary button link" hint={LINK_HINT}>
+                        <Input value={content.hero.ctaPrimaryUrl ?? ''} onChange={(e) => setHero('ctaPrimaryUrl', e.target.value)} placeholder="/login" />
+                      </Field>
+                      <Field label="Secondary button link" hint={LINK_HINT}>
+                        <Input value={content.hero.ctaSecondaryUrl ?? ''} onChange={(e) => setHero('ctaSecondaryUrl', e.target.value)} placeholder="#about" />
+                      </Field>
                     </div>
 
                     <SectionDivider label="Hero image (Cloudinary)" />
@@ -788,29 +923,12 @@ const LandingEditor: React.FC = () => {
 
                     {/* The photo carousel moved to its own Gallery tab: it used
                         to live inside this per-language content, so the same
-                        photos had to be uploaded once per language. */}
+                        photos had to be uploaded once per language.
 
-                    <SectionDivider label="Floating stat cards" />
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Card 1 (top-right)</p>
-                        <Field label="Value">
-                          <Input value={content.hero.statsCard1Value} onChange={(e) => setHero('statsCard1Value', e.target.value)} />
-                        </Field>
-                        <Field label="Label">
-                          <Input value={content.hero.statsCard1Label} onChange={(e) => setHero('statsCard1Label', e.target.value)} />
-                        </Field>
-                      </div>
-                      <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Card 2 (bottom-left)</p>
-                        <Field label="Value">
-                          <Input value={content.hero.statsCard2Value} onChange={(e) => setHero('statsCard2Value', e.target.value)} />
-                        </Field>
-                        <Field label="Label">
-                          <Input value={content.hero.statsCard2Label} onChange={(e) => setHero('statsCard2Label', e.target.value)} />
-                        </Field>
-                      </div>
-                    </div>
+                        The "Floating stat cards" fields lived here too. They
+                        edited hero.statsCard1/2, which no part of the page has
+                        rendered since the cards were removed from the hero —
+                        the Stats tab is where editable figures belong. */}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -911,6 +1029,13 @@ const LandingEditor: React.FC = () => {
                         <Field label="Link anchor" hint="e.g. members, planning, reports">
                           <Input value={feature.id} onChange={(e) => updateFeature(i, 'id', e.target.value)} />
                         </Field>
+                        {brokenFeatureLinks.some((b) => b.index === i) && (
+                          <p className="text-[11px] text-amber-700 flex items-start gap-1.5">
+                            <AlertCircle className="h-3.5 w-3.5 mt-px shrink-0" />
+                            No section on the Features page has this anchor, so
+                            this card's link would scroll nowhere.
+                          </p>
+                        )}
                         <div className="grid grid-cols-2 gap-4">
                           <Field label="Button label" hint="Leave empty to use the shared “Learn More” translation.">
                             <Input
@@ -984,6 +1109,9 @@ const LandingEditor: React.FC = () => {
                       <CardDescription>The "What We Believe" belief cards (icon, title, description).</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      <Field label="Eyebrow" hint="The small line above the heading, e.g. Statement of Faith">
+                        <Input value={content.about?.beliefsEyebrow ?? ''} onChange={(e) => setAbout('beliefsEyebrow', e.target.value)} />
+                      </Field>
                       <Field label="Section title" hint="e.g. What We Believe / የምናምንበት እምነታችን">
                         <Input value={content.about?.beliefsTitle ?? ''} onChange={(e) => setAbout('beliefsTitle', e.target.value)} />
                       </Field>
@@ -1042,6 +1170,9 @@ const LandingEditor: React.FC = () => {
                       <CardDescription>The value cards displayed in a 4-column grid.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      <Field label="Eyebrow" hint="The small line above the heading, e.g. Our Culture">
+                        <Input value={content.about?.valuesEyebrow ?? ''} onChange={(e) => setAbout('valuesEyebrow', e.target.value)} />
+                      </Field>
                       <Field label="Section title" hint="e.g. Our Core Values / መሠረታዊ እሴቶቻችን">
                         <Input value={content.about?.valuesTitle ?? ''} onChange={(e) => setAbout('valuesTitle', e.target.value)} />
                       </Field>
@@ -1091,6 +1222,62 @@ const LandingEditor: React.FC = () => {
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              {/* ── News ── */}
+              <TabsContent value="news">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>News Section</CardTitle>
+                    <CardDescription>
+                      Everything the homepage news feed says around the posts.
+                      The posts themselves are managed in News Manager.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Badge text" hint="Small pill above the heading">
+                        <Input value={content.news.badge} onChange={(e) => setNews('badge', e.target.value)} />
+                      </Field>
+                      <Field label="Section title">
+                        <Input value={content.news.sectionTitle} onChange={(e) => setNews('sectionTitle', e.target.value)} />
+                      </Field>
+                    </div>
+                    <Field label="Section description">
+                      <Textarea rows={2} value={content.news.sectionDescription} onChange={(e) => setNews('sectionDescription', e.target.value)} />
+                    </Field>
+
+                    <SectionDivider label="Labels" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="“See all” button">
+                        <Input value={content.news.seeAllLabel} onChange={(e) => setNews('seeAllLabel', e.target.value)} />
+                      </Field>
+                      <Field label="“Read more” link">
+                        <Input value={content.news.readMoreLabel} onChange={(e) => setNews('readMoreLabel', e.target.value)} />
+                      </Field>
+                      <Field label="Head-office attribution" hint="Shown on posts published centrally.">
+                        <Input value={content.news.headOfficeLabel} onChange={(e) => setNews('headOfficeLabel', e.target.value)} />
+                      </Field>
+                      <Field label="Parish attribution" hint="Fallback when a parish has no name in this language.">
+                        <Input value={content.news.parishLabel} onChange={(e) => setNews('parishLabel', e.target.value)} />
+                      </Field>
+                    </div>
+
+                    <SectionDivider label="When nothing is published" />
+                    <Field label="Empty-state title">
+                      <Input value={content.news.emptyTitle} onChange={(e) => setNews('emptyTitle', e.target.value)} />
+                    </Field>
+                    <Field label="Empty-state message">
+                      <Textarea rows={2} value={content.news.emptyDescription} onChange={(e) => setNews('emptyDescription', e.target.value)} />
+                    </Field>
+
+                    <SectionDivider label="Feed" />
+                    <Field label="Posts to show" hint="The newest post leads; the rest form the list beside it.">
+                      <Input type="number" min={1} max={12} value={content.news.maxPosts}
+                        onChange={(e) => setNews('maxPosts', Math.max(1, Math.min(12, Number(e.target.value) || 1)))} />
+                    </Field>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* ── Support & Banks ── */}
@@ -1267,9 +1454,14 @@ const LandingEditor: React.FC = () => {
                     <Field label="Description text">
                       <Textarea rows={3} value={content.footer.description} onChange={(e) => setFooter('description', e.target.value)} />
                     </Field>
-                    <Field label="Contact email">
-                      <Input type="email" value={content.footer.email} onChange={(e) => setFooter('email', e.target.value)} />
-                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Contact email">
+                        <Input type="email" value={content.footer.email} onChange={(e) => setFooter('email', e.target.value)} />
+                      </Field>
+                      <Field label="Email label" hint="Prefixes the address, e.g. “Email: …”">
+                        <Input value={content.footer.emailLabel} onChange={(e) => setFooter('emailLabel', e.target.value)} />
+                      </Field>
+                    </div>
                     <Field label="Copyright line">
                       <Input value={content.footer.copyright} onChange={(e) => setFooter('copyright', e.target.value)} />
                     </Field>
@@ -1285,6 +1477,70 @@ const LandingEditor: React.FC = () => {
                         <Input value={content.footer.phone ?? ''} onChange={(e) => setFooter('phone', e.target.value)} placeholder="+251…" />
                       </Field>
                     </div>
+
+                    <SectionDivider label="Link columns" />
+                    <p className="text-[11px] text-muted-foreground">
+                      These two columns used to be fixed labels pointing at
+                      nothing. A row with no link shows as plain text instead of
+                      a link that does nothing. {LINK_HINT}
+                    </p>
+                    <FooterLinkEditor
+                      title="Platform column"
+                      heading={content.footer.platformHeading}
+                      onHeading={(v) => setFooter('platformHeading', v)}
+                      links={content.footer.platformLinks}
+                      onChange={(i, k, v) => updateFooterLink('platformLinks', i, k, v)}
+                      onAdd={() => addFooterLink('platformLinks')}
+                      onRemove={(i) => removeFooterLink('platformLinks', i)}
+                    />
+                    <FooterLinkEditor
+                      title="Support column"
+                      heading={content.footer.supportHeading}
+                      onHeading={(v) => setFooter('supportHeading', v)}
+                      links={content.footer.supportLinks}
+                      onChange={(i, k, v) => updateFooterLink('supportLinks', i, k, v)}
+                      onAdd={() => addFooterLink('supportLinks')}
+                      onRemove={(i) => removeFooterLink('supportLinks', i)}
+                    />
+
+                    <SectionDivider label="Stay Connected" />
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={content.footer.newsletterEnabled}
+                        onChange={(e) => setFooter('newsletterEnabled', e.target.checked)} />
+                      Show the sign-up block
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      There is no mailing-list service wired up, so the button
+                      opens the visitor's mail app addressed to the contact
+                      email above rather than discarding what they typed.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Heading">
+                        <Input value={content.footer.newsletterHeading} onChange={(e) => setFooter('newsletterHeading', e.target.value)} />
+                      </Field>
+                      <Field label="Input placeholder">
+                        <Input value={content.footer.newsletterPlaceholder} onChange={(e) => setFooter('newsletterPlaceholder', e.target.value)} />
+                      </Field>
+                    </div>
+
+                    <SectionDivider label="Legal links" />
+                    <p className="text-[11px] text-muted-foreground">
+                      Each link is hidden until it has a destination.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Privacy label">
+                        <Input value={content.footer.privacyLabel} onChange={(e) => setFooter('privacyLabel', e.target.value)} />
+                      </Field>
+                      <Field label="Privacy link" hint={LINK_HINT}>
+                        <Input value={content.footer.privacyUrl ?? ''} onChange={(e) => setFooter('privacyUrl', e.target.value)} placeholder="/privacy" />
+                      </Field>
+                      <Field label="Terms label">
+                        <Input value={content.footer.termsLabel} onChange={(e) => setFooter('termsLabel', e.target.value)} />
+                      </Field>
+                      <Field label="Terms link" hint={LINK_HINT}>
+                        <Input value={content.footer.termsUrl ?? ''} onChange={(e) => setFooter('termsUrl', e.target.value)} placeholder="/terms" />
+                      </Field>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1293,7 +1549,7 @@ const LandingEditor: React.FC = () => {
 
             {/* Save button */}
             <div className="mt-8 flex justify-end">
-              <Button onClick={handleSave} disabled={saving} size="lg">
+              <Button onClick={handleSave} disabled={saving || brokenFeatureLinks.length > 0} size="lg">
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 {saving ? 'Saving…' : `Save ${LANGUAGES.find(l => l.value === activeLang)?.flag} ${LANGUAGES.find(l => l.value === activeLang)?.label} Content`}
               </Button>

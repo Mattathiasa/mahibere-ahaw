@@ -14,21 +14,54 @@ export interface EthiopianDate {
   formatted: string;
 }
 
+/** The four languages the app ships. Mirrors `Language` in src/i18n. */
+type MonthLang = 'en' | 'am' | 'om' | 'ti';
+
+/**
+ * Ethiopian month names per language.
+ *
+ * `name` (Amharic) and `englishName` are kept as aliases so the existing
+ * callers — EthiopianDatePicker, Dashboard, Finance — keep working unchanged;
+ * new code should use `monthName(id, lang)`.
+ *
+ * Tigrinya uses the same Ge'ez month names as Amharic. Afaan Oromoo uses the
+ * Latin transliterations rather than invented translations, which is what
+ * Oromo-language Ethiopian calendars in common use do.
+ */
 export const ETHIOPIAN_MONTHS = [
-  { id: 1,  name: 'መስከረም', englishName: 'Meskerem' },
-  { id: 2,  name: 'ጥቅምት',  englishName: 'Tikimt'   },
-  { id: 3,  name: 'ሕዳር',   englishName: 'Hidar'    },
-  { id: 4,  name: 'ታኅሣሥ',  englishName: 'Tahsas'   },
-  { id: 5,  name: 'ጥር',    englishName: 'Tir'      },
-  { id: 6,  name: 'የካቲት',  englishName: 'Yekatit'  },
-  { id: 7,  name: 'መጋቢት',  englishName: 'Megabit'  },
-  { id: 8,  name: 'ሚያዝያ',  englishName: 'Miyazya'  },
-  { id: 9,  name: 'ግንቦት',  englishName: 'Ginbot'   },
-  { id: 10, name: 'ሰኔ',    englishName: 'Sene'     },
-  { id: 11, name: 'ሐምሌ',   englishName: 'Hamle'    },
-  { id: 12, name: 'ነሐሴ',   englishName: 'Nehase'   },
-  { id: 13, name: 'ጳጉሜ',   englishName: 'Pagume'   },
+  { id: 1,  name: 'መስከረም', englishName: 'Meskerem', am: 'መስከረም', ti: 'መስከረም', om: 'Meskeraam' },
+  { id: 2,  name: 'ጥቅምት',  englishName: 'Tikimt',   am: 'ጥቅምት',  ti: 'ጥቅምቲ',  om: 'Tiqimti'   },
+  { id: 3,  name: 'ሕዳር',   englishName: 'Hidar',    am: 'ሕዳር',   ti: 'ሕዳር',   om: 'Hidaar'    },
+  { id: 4,  name: 'ታኅሣሥ',  englishName: 'Tahsas',   am: 'ታኅሣሥ',  ti: 'ታሕሳስ',  om: 'Tahsaas'   },
+  { id: 5,  name: 'ጥር',    englishName: 'Tir',      am: 'ጥር',    ti: 'ጥሪ',    om: 'Tiri'      },
+  { id: 6,  name: 'የካቲት',  englishName: 'Yekatit',  am: 'የካቲት',  ti: 'ለካቲት',  om: 'Yakaatiit' },
+  { id: 7,  name: 'መጋቢት',  englishName: 'Megabit',  am: 'መጋቢት',  ti: 'መጋቢት',  om: 'Magaabiit' },
+  { id: 8,  name: 'ሚያዝያ',  englishName: 'Miyazya',  am: 'ሚያዝያ',  ti: 'ሚያዝያ',  om: 'Miyaaziyaa'},
+  { id: 9,  name: 'ግንቦት',  englishName: 'Ginbot',   am: 'ግንቦት',  ti: 'ግንቦት',  om: 'Ginboot'   },
+  { id: 10, name: 'ሰኔ',    englishName: 'Sene',     am: 'ሰኔ',    ti: 'ሰነ',    om: 'Seenee'    },
+  { id: 11, name: 'ሐምሌ',   englishName: 'Hamle',    am: 'ሐምሌ',   ti: 'ሓምለ',   om: 'Hamlee'    },
+  { id: 12, name: 'ነሐሴ',   englishName: 'Nehase',   am: 'ነሐሴ',   ti: 'ነሓሰ',   om: 'Nahaasee'  },
+  { id: 13, name: 'ጳጉሜ',   englishName: 'Pagume',   am: 'ጳጉሜ',   ti: 'ጳጉሜ',   om: 'Phaagumee' },
 ];
+
+/** An Ethiopian month's name in the reader's language. */
+export function monthName(id: number, lang: MonthLang): string {
+  const m = ETHIOPIAN_MONTHS[Math.min(Math.max(id, 1), 13) - 1] ?? ETHIOPIAN_MONTHS[0];
+  return lang === 'en' ? m.englishName : m[lang];
+}
+
+/**
+ * BCP-47 tag for `toLocaleDateString`, so Gregorian dates follow the language
+ * the reader picked in the app rather than whatever their browser is set to.
+ */
+export function localeFor(lang: string): string {
+  switch (lang) {
+    case 'am': return 'am-ET';
+    case 'ti': return 'ti-ET';
+    case 'om': return 'om-ET';
+    default:   return 'en-GB';
+  }
+}
 
 const ETHIOPIC_EPOCH = 1723856; // JDN of Meskerem 1, Year 1
 

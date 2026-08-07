@@ -3,26 +3,40 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { translations, Language } from '../i18n/translations';
 import { pageStringsService, type PageStringOverrides } from '@/services/pageStrings';
 
-// ─── Build a flat key→string map from the nested translations object ──────────
+/**
+ * Build a flat key→string map from the nested translations object.
+ *
+ * Every string is registered twice: under its dotted path (`nav.plans`) and,
+ * when no other section claimed it first, under its bare leaf (`plans`).
+ *
+ * The bare leaf exists only for callers written before dotted keys and is
+ * genuinely ambiguous — the tree has both `nav.plans` and `pages.plans`, and
+ * whichever section is walked first wins. Prefer the dotted form in new code.
+ */
 function buildFlatMap(lang: Language, overrides: PageStringOverrides = {}): Record<string, string> {
   const source = translations[lang] as Record<string, unknown>;
   const flat: Record<string, string> = {};
 
-  function walk(obj: Record<string, unknown>) {
-    for (const key of Object.keys(obj)) {
-      const val = obj[key];
-      if (typeof val === 'string') {
-        if (!(key in flat)) flat[key] = val;
-      } else if (val && typeof val === 'object') {
-        walk(val as Record<string, unknown>);
-      }
+  for (const [section, value] of Object.entries(source)) {
+    if (!value || typeof value !== 'object') continue;
+    for (const [key, leaf] of Object.entries(value as Record<string, unknown>)) {
+      if (typeof leaf !== 'string') continue;
+      flat[`${section}.${key}`] = leaf;
+      if (!(key in flat)) flat[key] = leaf;
     }
   }
 
-  walk(source);
+  // Firestore overrides win over static translations. A dotted override also
+  // updates the legacy bare alias, so `t('learnMore')` and `t('common.learnMore')`
+  // cannot disagree.
+  for (const [key, value] of Object.entries(overrides)) {
+    if (key.startsWith('_') || !value?.trim()) continue;
+    flat[key] = value;
+    const leaf = key.includes('.') ? key.slice(key.indexOf('.') + 1) : null;
+    if (leaf && flat[leaf] !== undefined) flat[leaf] = value;
+  }
 
-  // Firestore overrides win over static translations
-  return { ...flat, ...overrides };
+  return flat;
 }
 
 // ─── Module-level cache so we only fetch once per session ─────────────────────

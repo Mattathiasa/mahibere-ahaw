@@ -48,6 +48,13 @@ export interface LandingValue {
   icon: string;
 }
 
+/** A labelled destination in the footer link columns. */
+export interface LandingLink {
+  label: string;
+  /** In-app path, `#section` anchor, or external URL. Blank hides the row. */
+  url: string;
+}
+
 export interface LandingContent {
   hero: {
     badge: string;
@@ -56,15 +63,12 @@ export interface LandingContent {
     description: string;
     ctaPrimary: string;
     ctaSecondary: string;
-    statsCard1Label: string;
-    statsCard1Value: string;
-    statsCard2Label: string;
-    statsCard2Value: string;
+    /** Where the buttons go. Blank falls back to the historic destinations. */
+    ctaPrimaryUrl?: string;
+    ctaSecondaryUrl?: string;
     /** Optional Cloudinary (or any) hero image URL; empty = use bundled default. */
     imageUrl?: string;
   };
-  /** Auto-advancing photo carousel (Cloudinary URLs); ~4-5 images. */
-  carousel?: string[];
   stats: LandingStat[];
   features: {
     sectionTitle: string;
@@ -81,8 +85,12 @@ export interface LandingContent {
     missionDescription: string;
     visionTitle: string;
     visionDescription: string;
+    /** Small eyebrow above the beliefs heading, e.g. "Statement of Faith". */
+    beliefsEyebrow: string;
     beliefsTitle: string;
     beliefs: LandingBelief[];
+    /** Small eyebrow above the values heading, e.g. "Our Culture". */
+    valuesEyebrow: string;
     valuesTitle: string;
     values: LandingValue[];
   };
@@ -121,13 +129,45 @@ export interface LandingContent {
     tiktok?: string;
     website?: string;
   };
+  /**
+   * The homepage news feed. The posts themselves come from the `news`
+   * collection; everything the section says around them lives here.
+   */
+  news: {
+    badge: string;
+    sectionTitle: string;
+    sectionDescription: string;
+    seeAllLabel: string;
+    readMoreLabel: string;
+    /** Attribution shown on each card, by post scope. */
+    headOfficeLabel: string;
+    parishLabel: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    /** How many posts the homepage feed shows. */
+    maxPosts: number;
+  };
   footer: {
     description: string;
     email: string;
+    emailLabel: string;
     copyright: string;
     youtube?: string;
     telegram?: string;
     phone?: string;
+    platformHeading: string;
+    platformLinks: LandingLink[];
+    supportHeading: string;
+    supportLinks: LandingLink[];
+    /** The "Stay Connected" signup block; hidden when false. */
+    newsletterEnabled: boolean;
+    newsletterHeading: string;
+    newsletterPlaceholder: string;
+    /** Bottom-bar legal links. A blank URL hides the link. */
+    privacyLabel: string;
+    privacyUrl?: string;
+    termsLabel: string;
+    termsUrl?: string;
   };
 }
 
@@ -162,10 +202,8 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         "A renewed Orthodox Church that serves according to God's will revealed in the Holy Scripture, fulfilling its mission throughout the world through His Word and Spirit.",
       ctaPrimary: 'Get Started',
       ctaSecondary: 'Learn More',
-      statsCard1Label: 'Active Souls',
-      statsCard1Value: '12.5k+',
-      statsCard2Label: 'Service Uptime',
-      statsCard2Value: '99.9%',
+      ctaPrimaryUrl: '/login',
+      ctaSecondaryUrl: '#about',
     },
     stats: [
       { label: 'Congregations', value: '850', icon: 'MapPin' },
@@ -192,6 +230,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       missionDescription: 'To proclaim the Gospel of Jesus Christ, nurture believers into spiritual maturity, prepare church leaders, and advance digital ministry across all parishes.',
       visionTitle: 'Our Vision',
       visionDescription: 'To see a vibrant, scripture-anchored, and spiritually revived church that transforms lives and serves every community with love and divine unity.',
+      beliefsEyebrow: 'Statement of Faith',
       beliefsTitle: 'What We Believe',
       beliefs: [
         { title: 'The Holy Scriptures', description: 'The Bible is the inspired, infallible Word of God, serving as the supreme authority for faith, doctrine, and daily life.', icon: 'BookOpen' },
@@ -199,6 +238,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'Salvation in Jesus Christ', description: 'Eternal salvation is by grace through faith in the crucified and resurrected Lord Jesus Christ.', icon: 'Heart' },
         { title: 'One Holy Apostolic Church', description: 'The Church is the body of Christ, united in faith, sacraments, holy tradition, and spiritual fellowship.', icon: 'Shield' },
       ],
+      valuesEyebrow: 'Our Culture',
       valuesTitle: 'Our Core Values',
       values: [
         { title: 'Biblical Integrity', description: 'Unwavering faithfulness to the teachings of Holy Scripture and Christian truth.', icon: 'Shield' },
@@ -206,6 +246,18 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'Spiritual Discipleship', description: 'Guiding every member to grow in holiness, prayer, and spiritual wisdom.', icon: 'Sparkles' },
         { title: 'Servant Leadership', description: 'Leading by example with humility, diligence, and stewardship.', icon: 'CheckCircle2' },
       ],
+    },
+    news: {
+      badge: 'Latest',
+      sectionTitle: 'News & Updates',
+      sectionDescription: 'What is happening across the church and its parishes.',
+      seeAllLabel: 'See all news',
+      readMoreLabel: 'Read more',
+      headOfficeLabel: 'Head Office',
+      parishLabel: 'Parish',
+      emptyTitle: 'News & Updates',
+      emptyDescription: 'Stay tuned! News stories and updates from our ministry will appear here soon.',
+      maxPosts: 4,
     },
     support: {
       badge: 'Ministerial Support',
@@ -246,6 +298,28 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
       phone: CONTACT_CHANNELS.phones[0],
+      emailLabel: 'Email',
+      platformHeading: 'Platform',
+      platformLinks: [
+        { label: 'Dashboard', url: '' },
+        { label: 'Community', url: '' },
+        { label: 'Analytics', url: '' },
+        { label: 'Security', url: '' },
+      ],
+      supportHeading: 'Support',
+      supportLinks: [
+        { label: 'Documentation', url: '' },
+        { label: 'API Reference', url: '' },
+        { label: 'Help Center', url: '' },
+        { label: 'Status', url: '' },
+      ],
+      newsletterEnabled: true,
+      newsletterHeading: 'Stay Connected',
+      newsletterPlaceholder: 'Email Address',
+      privacyLabel: 'Privacy Architecture',
+      privacyUrl: '',
+      termsLabel: 'Terms of Faith',
+      termsUrl: '',
     },
   },
   am: {
@@ -256,10 +330,8 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       description: 'በመጽሐፍ ቅዱስ የተገለጠውን የእግዚአብሔርን ሃሳብ የምታገለግል በቃሉና በመንፈሱ የታደሰች ኦርቶዶክሳዊት ቤ/ክ በመላው ዓለም ተልዕኮዋን ስትፈጽም ማየት።',
       ctaPrimary: 'ጀምር',
       ctaSecondary: 'ተጨማሪ ይመልከቱ',
-      statsCard1Label: 'ንቁ ነፍሳት',
-      statsCard1Value: '12.5k+',
-      statsCard2Label: 'የአገልግሎት ጊዜ',
-      statsCard2Value: '99.9%',
+      ctaPrimaryUrl: '/login',
+      ctaSecondaryUrl: '#about',
     },
     stats: [
       { label: 'ጉባኤዎች', value: '850', icon: 'MapPin' },
@@ -286,6 +358,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       missionDescription: 'የኢየሱስ ክርስቶስን ወንጌል መስበክ፣ ምዕመናንን በመንፈሳዊ ሕይወት ማነጽ፣ የአገልግሎት መሪዎችን ማዘጋጀትና ዲጂታል አገልግሎትን ማሳደግ።',
       visionTitle: 'ራዕያችን',
       visionDescription: 'በእግዚአብሔር ቃል ላይ የተመሠረተች፣ በመንፈስ ቅዱስ የታደሰችና እያንዳንዱን ነፍስ በፍቅር፣ በቅድስናና በአንድነት የምታገለግል ቤተክርስቲያንን ማየት።',
+      beliefsEyebrow: 'የእምነት መግለጫ',
       beliefsTitle: 'የምናምንበት እምነታችን',
       beliefs: [
         { title: 'ቅዱሳት መጻሕፍት', description: 'መጽሐፍ ቅዱስ በእግዚአብሔር መንፈስ የተጻፈ፣ ለእምነትና ለሕይወት ሁሉ የበላይ መመሪያና መሠረት ነው።', icon: 'BookOpen' },
@@ -293,6 +366,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'ድኅነት በክርስቶስ', description: 'የዘላለም ድኅነትና ሕይወት በኢየሱስ ክርስቶስ ሞትና ትንሣኤ በማመን የሚገኝ ጸጋ ነው።', icon: 'Heart' },
         { title: 'አንዲት ቅድስት ቤተክርስቲያን', description: 'ቤተክርስቲያን በእምነት፣ በምሥጢራትና በመንፈሳዊ ኅብረት የተሳሰረች የክርስቶስ አካል ናት።', icon: 'Shield' },
       ],
+      valuesEyebrow: 'ባህላችን',
       valuesTitle: 'መሠረታዊ እሴቶቻችን',
       values: [
         { title: 'የመጽሐፍ ቅዱስ ታማኝነት', description: 'በሁሉም ትምህርቶችና አሠራሮች የእግዚአብሔርን ቃል መሠረት ማድረግ።', icon: 'Shield' },
@@ -300,6 +374,18 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'መንፈሳዊ ደቀ መዝሙርነት', description: 'ምዕመናን በጸሎት፣ በቅድስናና በመንፈሳዊ ጥበብ እንዲያድጉ ማነጽ።', icon: 'Sparkles' },
         { title: 'የአገልጋይነት አመራር', description: 'በትህትና፣ በትጋትና በታማኝነት እግዚአብሔርንና ሕዝቡን ማገልገል።', icon: 'CheckCircle2' },
       ],
+    },
+    news: {
+      badge: 'የቅርብ ጊዜ',
+      sectionTitle: 'ዜና እና መረጃ',
+      sectionDescription: 'በቤተክርስቲያኗና በአጥቢያዎቿ ውስጥ እየተካሄደ ያለው።',
+      seeAllLabel: 'ሁሉንም ዜናዎች ይመልከቱ',
+      readMoreLabel: 'ተጨማሪ ያንብቡ',
+      headOfficeLabel: 'ዋና ጽሕፈት ቤት',
+      parishLabel: 'አጥቢያ',
+      emptyTitle: 'ዜና እና መረጃ',
+      emptyDescription: 'በቅርቡ ከአገልግሎታችን ዜናዎችና መረጃዎች እዚህ ይወጣሉ።',
+      maxPosts: 4,
     },
     support: {
       badge: 'የአገልግሎት ድጋፍ',
@@ -340,6 +426,28 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
       phone: CONTACT_CHANNELS.phones[0],
+      emailLabel: 'ኢሜይል',
+      platformHeading: 'መድረክ',
+      platformLinks: [
+        { label: 'ዳሽቦርድ', url: '' },
+        { label: 'ማህበረሰብ', url: '' },
+        { label: 'ትንታኔዎች', url: '' },
+        { label: 'ደህንነት', url: '' },
+      ],
+      supportHeading: 'ድጋፍ',
+      supportLinks: [
+        { label: 'ሰነዶች', url: '' },
+        { label: 'የኤፒአይ ማጣቀሻ', url: '' },
+        { label: 'የእገዛ ማዕከል', url: '' },
+        { label: 'ሁኔታ', url: '' },
+      ],
+      newsletterEnabled: true,
+      newsletterHeading: 'ተገናኝተው ይቆዩ',
+      newsletterPlaceholder: 'የኢሜይል አድራሻ',
+      privacyLabel: 'የግላዊነት አርክቴክቸር',
+      privacyUrl: '',
+      termsLabel: 'የእምነት ውሎች',
+      termsUrl: '',
     },
   },
   om: {
@@ -350,10 +458,8 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       description: 'Waldaa Ortodoksii haaraa fedha Waaqayyoo Macaafa Qulqulluu keessatti ibsameen tajaajiltu, tajaajila ishee addunyaa guutuutti Sagalee fi Hafuura Isaatiin raawwattu.',
       ctaPrimary: 'Eegali',
       ctaSecondary: 'Dabalata Baradhu',
-      statsCard1Label: 'Lubbuu Hojirra Jiru',
-      statsCard1Value: '12.5k+',
-      statsCard2Label: 'Yeroo Tajaajilaa',
-      statsCard2Value: '99.9%',
+      ctaPrimaryUrl: '/login',
+      ctaSecondaryUrl: '#about',
     },
     stats: [
       { label: 'Waldaalee', value: '850', icon: 'MapPin' },
@@ -380,6 +486,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       missionDescription: 'Wangeela Yesuus Kiristoos lallabuu, amantoota hafuuraan guddisuu, hoggantoota tajaajilaa qopheessuu fi tajaajila dijitaalaa guddisuu.',
       visionTitle: 'Mul\'ata Keenya',
       visionDescription: 'Waldaa Macaafa Qulqulluurratti cichite, Hafuura Qulqulluudhaan haromfamte fi hawaasa hunda jaalalaa fi tokkummaadhaan tajaajiltu arguu.',
+      beliefsEyebrow: 'Ibsa Amantaa',
       beliefsTitle: 'Waan Amannu',
       beliefs: [
         { title: 'Macaafa Qulqulluu', description: 'Macaafni Qulqulluun sagalee Waaqayyoo kan hafuraan barreeffamee fi hundee amantaa keenyaati.', icon: 'BookOpen' },
@@ -387,6 +494,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'Fayyina Kiristoosiin', description: 'Fayyinni bara baraa du\'aa fi du\'aa ka\'uu Yesuus Kiristoosiin kan argamu ayyaana Waaqayyooti.', icon: 'Heart' },
         { title: 'Waldaa Qulqulluu Tokkitti', description: 'Waldaan qaama Kiristoos kan amantaa fi tokkummaa hafuuraatiin walqabatedha.', icon: 'Shield' },
       ],
+      valuesEyebrow: 'Aadaa Keenya',
       valuesTitle: 'Dhaadannoo Keenya',
       values: [
         { title: 'Amanamummaa Macaafa Qulqulluu', description: 'Barsiisa fi hojii hunda keessatti Sagalee Waaqayyoo jahjeeffachuu.', icon: 'Shield' },
@@ -394,6 +502,18 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'Guddina Hafuuraa', description: 'Miseensota kadhannaa, qulqullummaa fi ogummaa hafuuraatiin guddisuu.', icon: 'Sparkles' },
         { title: 'Hogganummaa Tajaajiltummaa', description: 'Gadi deebi\'iinsaan, kutannoon fi amanamummaadhaan Waaqayyoo fi uummata tajaajiluu.', icon: 'CheckCircle2' },
       ],
+    },
+    news: {
+      badge: 'Haaraa',
+      sectionTitle: 'Oduu fi Odeeffannoo',
+      sectionDescription: 'Waldaa fi waldaalee naannoo keessatti wanti adeemsifamaa jiru.',
+      seeAllLabel: 'Oduu hunda ilaali',
+      readMoreLabel: 'Dabalata dubbisi',
+      headOfficeLabel: 'Waajjira Muummee',
+      parishLabel: 'Waldaa Naannoo',
+      emptyTitle: 'Oduu fi Odeeffannoo',
+      emptyDescription: 'Oduu fi odeeffannoon tajaajila keenyaa dhiyootti asitti ni mul\'ata.',
+      maxPosts: 4,
     },
     support: {
       badge: 'Deggersa Tajaajilaa',
@@ -434,6 +554,28 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
       phone: CONTACT_CHANNELS.phones[0],
+      emailLabel: 'Imeelii',
+      platformHeading: 'Pilaatfoormii',
+      platformLinks: [
+        { label: 'Daashboordii', url: '' },
+        { label: 'Hawaasa', url: '' },
+        { label: 'Xiinxala', url: '' },
+        { label: 'Nageenya', url: '' },
+      ],
+      supportHeading: 'Deggersa',
+      supportLinks: [
+        { label: 'Sanadoota', url: '' },
+        { label: 'API', url: '' },
+        { label: 'Giddu-gala Gargaarsaa', url: '' },
+        { label: 'Haala Hojii', url: '' },
+      ],
+      newsletterEnabled: true,
+      newsletterHeading: 'Waliin Turi',
+      newsletterPlaceholder: 'Imeelii',
+      privacyLabel: 'Icciitii',
+      privacyUrl: '',
+      termsLabel: 'Waliigaltee',
+      termsUrl: '',
     },
   },
   ti: {
@@ -444,10 +586,8 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       description: 'ኣብ መጽሓፍ ቅዱስ ዝተገልጸ ፍቓድ ኣምላኽ እተገልግል፣ ብቓሉን ብመንፈሱን ኣብ ምሉእ ዓለም ተልእኾኣ እትፍጽም ዝተሓደሰት ኦርቶዶክሳዊት ቤተክርስቲያን።',
       ctaPrimary: 'ጀምር',
       ctaSecondary: 'ተወሳኺ ፍለጥ',
-      statsCard1Label: 'ንጡፋት ነፍሳት',
-      statsCard1Value: '12.5k+',
-      statsCard2Label: 'ግዜ ኣገልግሎት',
-      statsCard2Value: '99.9%',
+      ctaPrimaryUrl: '/login',
+      ctaSecondaryUrl: '#about',
     },
     stats: [
       { label: 'ጉባኤታት', value: '850', icon: 'MapPin' },
@@ -474,6 +614,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       missionDescription: 'ወንጌል ኢየሱስ ክርስቶስ መስበኽ፣ ምእመናን ብመንፈሳዊ ሕይወት ምህናጽ፣ መራሕቲ ኣገልግሎት ምድላውን ዲጂታላዊ ኣገልግሎት ምዕባይን።',
       visionTitle: 'ራእይና',
       visionDescription: 'ኣብ ቃል ኣምላኽ ዝተመሠረተት፣ ብመንፈስ ቅዱስ ዝተሓደሰትን ንነፍሲ ወከፍ ብፍቕሪ፣ ብቅድስናን ብሓድነትን እተገልግል ቤተክርስቲያን ምእላይ።',
+      beliefsEyebrow: 'መግለጺ እምነት',
       beliefsTitle: 'እንእምነሉ እምነትና',
       beliefs: [
         { title: 'ቅዱሳት መጻሕፍቲ', description: 'መጽሓፍ ቅዱስ ብመንፈስ ኣምላኽ ዝተጻሕፈ፣ ንእምነትን ንሕይወትን ኩሉ ላዕለዋይ መመርሕን መሠረትን እዩ።', icon: 'BookOpen' },
@@ -481,6 +622,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'ድሕነት ብክርስቶስ', description: 'ናይ ዘለዓለም ድሕነትን ሕይወትን ብሞትን ትንሣኤን ኢየሱስ ክርስቶስ ብምእማን ዝርከብ ጸጋ እዩ።', icon: 'Heart' },
         { title: 'ሓንቲ ቅድስት ቤተክርስቲያን', description: 'ቤተክርስቲያን ብእምነት፣ ብምሥጢራትን ብመንፈሳዊ ኅብረትን ዝተኣሳሰረት ኣካል ክርስቶስ እያ።', icon: 'Shield' },
       ],
+      valuesEyebrow: 'ባህልና',
       valuesTitle: 'መሠረታውያን እሴታትና',
       values: [
         { title: 'ታማኝነት መጽሓፍ ቅዱስ', description: 'ኣብ ኩሉ ትምህርትታትን ኣሰራርሓታትን ቃል ኣምላኽ መሠረት ምግባር።', icon: 'Shield' },
@@ -488,6 +630,18 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
         { title: 'መንፈሳዊ ደቀ መዛሙርትነት', description: 'ምእመናን ብጸሎት፣ ብቅድስናን ብመንፈሳዊ ጥበብን ንኽዓብዩ ምህናጽ።', icon: 'Sparkles' },
         { title: 'ናይ ኣገልጋላይነት መራሕነት', description: 'ብትሕትና፣ ብትጋህን ብታማኝነትን ንኣምላኽን ንሕዝብን ምግልጋል።', icon: 'CheckCircle2' },
       ],
+    },
+    news: {
+      badge: 'ናይ ቀረባ እዋን',
+      sectionTitle: 'ዜናን ሓበሬታን',
+      sectionDescription: 'ኣብ ቤተክርስቲያንን ኣብ ኣጥቢያታታን ዝካየድ ዘሎ።',
+      seeAllLabel: 'ኩሉ ዜናታት ርአ',
+      readMoreLabel: 'ተወሳኺ ኣንብብ',
+      headOfficeLabel: 'ቤት ጽሕፈት',
+      parishLabel: 'ኣጥቢያ',
+      emptyTitle: 'ዜናን ሓበሬታን',
+      emptyDescription: 'ኣብ ቀረባ እዋን ዜናታትን ሓበሬታን ናይ ኣገልግሎትና ኣብዚ ክወጽእ እዩ።',
+      maxPosts: 4,
     },
     support: {
       badge: 'ደገፍ ኣገልግሎት',
@@ -528,6 +682,28 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
       phone: CONTACT_CHANNELS.phones[0],
+      emailLabel: 'ኢመይል',
+      platformHeading: 'መድረኽ',
+      platformLinks: [
+        { label: 'ዳሽቦርድ', url: '' },
+        { label: 'ማሕበረሰብ', url: '' },
+        { label: 'ትንተና', url: '' },
+        { label: 'ድሕነት', url: '' },
+      ],
+      supportHeading: 'ደገፍ',
+      supportLinks: [
+        { label: 'ሰነዳት', url: '' },
+        { label: 'ናይ API መወከሲ', url: '' },
+        { label: 'ማእከል ሓገዝ', url: '' },
+        { label: 'ኩነታት', url: '' },
+      ],
+      newsletterEnabled: true,
+      newsletterHeading: 'ተራኺብኩም ጽንሑ',
+      newsletterPlaceholder: 'ኢመይል ኣድራሻ',
+      privacyLabel: 'ውልቃዊ ሓበሬታ',
+      privacyUrl: '',
+      termsLabel: 'ውዕላት እምነት',
+      termsUrl: '',
     },
   },
 };
@@ -546,6 +722,28 @@ export function featureLinkTarget(feature: LandingFeature): string {
 /** External links open in a new tab; everything else routes in-app. */
 export function isExternalLink(url: string): boolean {
   return /^https?:\/\//i.test(url.trim());
+}
+
+/** What following a configured link should actually do. */
+export type LinkAction =
+  | { kind: 'external'; url: string }
+  | { kind: 'anchor'; id: string }
+  | { kind: 'route'; path: string }
+  | { kind: 'none' };
+
+/**
+ * One place that decides what a link configured in the Landing Editor means.
+ *
+ * Shared by the hero buttons, the feature cards and the footer columns, so an
+ * admin can type `https://…`, `/news` or `#contact` into any of them and get
+ * the behaviour they'd expect from all three.
+ */
+export function resolveLink(url: string | undefined, fallback = ''): LinkAction {
+  const target = (url ?? '').trim() || fallback.trim();
+  if (!target) return { kind: 'none' };
+  if (isExternalLink(target)) return { kind: 'external', url: target };
+  if (target.startsWith('#')) return { kind: 'anchor', id: target.slice(1) };
+  return { kind: 'route', path: target };
 }
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────

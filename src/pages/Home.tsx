@@ -14,7 +14,10 @@ import { OrthodoxCross3D } from '../components/OrthodoxCross3D';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
-import { featureLinkTarget, isExternalLink, type LandingFeature } from '@/services/landingContent';
+import {
+  featureLinkTarget, resolveLink,
+  type LandingFeature, type LandingLink,
+} from '@/services/landingContent';
 import { BrandMark } from '@/components/BrandMark';
 import { BrandedLoader } from '@/components/BrandedLoader';
 import { PICTURES } from '@/assets/pictures';
@@ -56,6 +59,43 @@ const SECTIONS = ['home', 'services', 'about', 'support', 'news', 'contact'] as 
  */
 const SECTION_ANCHOR = 'scroll-mt-24 sm:scroll-mt-28';
 
+/**
+ * One of the footer's two link columns.
+ *
+ * A row with a URL is a button; a row without one is plain text. Both columns
+ * previously rendered `href="#"` for every entry, so all eight looked
+ * clickable and none of them did anything.
+ */
+function FooterLinkColumn({
+  heading, headingClass, links, theme, onFollow,
+}: {
+  heading: string;
+  headingClass: string;
+  links: LandingLink[];
+  theme: string;
+  onFollow: (url: string) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <h5 className={`text-xs font-black uppercase tracking-[0.3em] ${headingClass}`}>{heading}</h5>
+      <ul className={`space-y-4 ${theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/50'}`}>
+        {(links ?? []).filter((l) => l.label?.trim()).map((link) => (
+          <li key={link.label}>
+            {link.url?.trim() ? (
+              <button type="button" className="hover:text-[#2E5E99] transition-colors text-left"
+                onClick={() => onFollow(link.url)}>
+                {link.label}
+              </button>
+            ) : (
+              <span>{link.label}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -68,16 +108,18 @@ const Home: React.FC = () => {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const { gallery } = useGallery();
   /**
-   * Three sources, in order of authority:
-   *   1. the admin-managed gallery (siteConfig/gallery)
-   *   2. the legacy per-language `carousel`, so anything already uploaded
-   *      before the gallery existed is not silently lost
-   *   3. the photos bundled with the app
+   * The admin-managed gallery (siteConfig/gallery), falling back to the photos
+   * bundled with the app until an admin has uploaded any.
+   *
+   * A third source used to sit between them — the per-language `carousel`
+   * field — but it stopped being editable when photos moved to the Gallery
+   * tab, so stale saved data could silently outrank both the gallery and the
+   * bundled photos with no way to correct it. The field is gone.
    */
   const featureCount = content.features?.items?.length ?? 0;
   const carousel = gallery.images.length > 0
     ? gallery.images.map((i) => i.url)
-    : (content.carousel?.length ? content.carousel : PICTURES.slice(featureCount));
+    : PICTURES.slice(featureCount);
 
   useEffect(() => {
     if (carousel.length < 2) return;
@@ -140,12 +182,22 @@ const Home: React.FC = () => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  /** Follow a feature card's link — off-site in a new tab, in-app otherwise. */
-  const openFeatureLink = (feature: LandingFeature) => {
-    const target = featureLinkTarget(feature);
-    if (isExternalLink(target)) window.open(target, '_blank', 'noopener,noreferrer');
-    else navigate(target);
+  /**
+   * Follow any link configured in the Landing Editor — hero buttons, feature
+   * cards, footer columns. External opens a new tab, `#id` scrolls, everything
+   * else routes in-app.
+   */
+  const followLink = (url: string | undefined, fallback = '') => {
+    const action = resolveLink(url, fallback);
+    switch (action.kind) {
+      case 'external': window.open(action.url, '_blank', 'noopener,noreferrer'); break;
+      case 'anchor': scrollToSection(action.id); break;
+      case 'route': navigate(action.path); break;
+      case 'none': break;
+    }
   };
+
+  const openFeatureLink = (feature: LandingFeature) => followLink(featureLinkTarget(feature));
 
   const toggleLanguage = () => {
     if (language === 'en') setLanguage('am');
@@ -273,10 +325,10 @@ const Home: React.FC = () => {
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3 sm:gap-4">
-              <Button size="lg" onClick={() => navigate('/login')} className="rounded-2xl px-6 sm:px-12 py-4 sm:py-8 text-base sm:text-xl bg-[#2E5E99] hover:scale-105 transition-transform">
+              <Button size="lg" onClick={() => followLink(hero.ctaPrimaryUrl, '/login')} className="rounded-2xl px-6 sm:px-12 py-4 sm:py-8 text-base sm:text-xl bg-[#2E5E99] hover:scale-105 transition-transform">
                 {hero.ctaPrimary}
               </Button>
-              <Button size="lg" variant="ghost" onClick={() => scrollToSection('about')}
+              <Button size="lg" variant="ghost" onClick={() => followLink(hero.ctaSecondaryUrl, '#about')}
                 className={`rounded-2xl px-6 sm:px-10 py-4 sm:py-8 text-base sm:text-xl border border-[#2E5E99]/20 hover:bg-[#2E5E99]/5 ${theme === 'dark' ? 'text-white' : 'text-[#2E5E99]'}`}>
                 {hero.ctaSecondary}
               </Button>
@@ -304,20 +356,6 @@ const Home: React.FC = () => {
             <div className="relative h-[380px] sm:h-[460px] lg:h-[560px]">
               <OrthodoxCross3D />
             </div>
-            {/* Floating stat cards hidden for now
-            <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity }}
-              className="absolute -top-10 -right-10 bg-white/80 backdrop-blur-2xl p-6 rounded-3xl border border-[#2E5E99]/10 shadow-2xl">
-              <Users className="h-8 w-8 text-[#2E5E99] mb-2" />
-              <div className="text-xl font-bold text-[#0D2440]">{hero.statsCard1Value}</div>
-              <div className="text-[10px] uppercase tracking-tighter opacity-50 text-[#2E5E99]">{hero.statsCard1Label}</div>
-            </motion.div>
-            <motion.div animate={{ y: [0, 20, 0] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }}
-              className="absolute -bottom-10 -left-10 bg-white/80 backdrop-blur-2xl p-6 rounded-3xl border border-[#2E5E99]/10 shadow-2xl">
-              <Shield className="h-8 w-8 text-[#7BA4D0] mb-2" />
-              <div className="text-xl font-bold text-[#0D2440]">{hero.statsCard2Value}</div>
-              <div className="text-[10px] uppercase tracking-tighter opacity-50 text-[#2E5E99]">{hero.statsCard2Label}</div>
-            </motion.div>
-            */}
           </motion.div>
         </motion.div>
       </section>
@@ -503,7 +541,7 @@ const Home: React.FC = () => {
           {/* Statement of Faith / What We Believe */}
           <div className="space-y-10 pt-4">
             <div className="space-y-2">
-              <span className="text-xs font-black uppercase tracking-[0.25em] text-[#2E5E99]">Statement of Faith</span>
+              <span className="text-xs font-black uppercase tracking-[0.25em] text-[#2E5E99]">{about?.beliefsEyebrow}</span>
               <h3 className={`text-3xl sm:text-4xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
                 {about?.beliefsTitle ?? 'What We Believe'}
               </h3>
@@ -532,7 +570,7 @@ const Home: React.FC = () => {
           {/* Core Values */}
           <div className="space-y-10 pt-4">
             <div className="space-y-2">
-              <span className="text-xs font-black uppercase tracking-[0.25em] text-[#2E5E99]">Our Culture</span>
+              <span className="text-xs font-black uppercase tracking-[0.25em] text-[#2E5E99]">{about?.valuesEyebrow}</span>
               <h3 className={`text-3xl sm:text-4xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
                 {about?.valuesTitle ?? 'Our Core Values'}
               </h3>
@@ -580,6 +618,25 @@ const Home: React.FC = () => {
             </div>
           </div>
 
+          {/* The mission restated beside the giving details. These two fields
+              were editable in the Landing Editor but rendered nowhere, so the
+              translated copy an admin had written was invisible on the site. */}
+          {(support.missionTitle || support.missionStatement) && (
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              className={`p-8 rounded-3xl border shadow-sm max-w-3xl ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+              {support.missionTitle && (
+                <h3 className={`text-xs font-black uppercase tracking-[0.25em] text-[#2E5E99] mb-3`}>
+                  {support.missionTitle}
+                </h3>
+              )}
+              {support.missionStatement && (
+                <blockquote className={`text-lg sm:text-xl font-ethiopic leading-relaxed italic ${theme === 'dark' ? 'text-white/80' : 'text-[#0D2440]/80'}`}>
+                  “{support.missionStatement}”
+                </blockquote>
+              )}
+            </motion.div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {support.banks.map((bank, i) => (
               <motion.div key={i} whileHover={{ scale: 1.03 }} className={`p-4 rounded-2xl border shadow-sm transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
@@ -591,7 +648,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* ── News ── (renders nothing when no posts are published) */}
+      {/* ── News ── (shows an editable empty state when nothing is published) */}
       <NewsSection />
 
       {/* ── Contact ── */}
@@ -619,7 +676,7 @@ const Home: React.FC = () => {
               {contact.mapUrl && (
                 <a href={contact.mapUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm font-bold text-[#2E5E99] hover:gap-3 transition-all">
-                  Open in Maps <ExternalLink className="h-3.5 w-3.5" />
+                  {t.common.openInMaps} <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               )}
             </motion.div>
@@ -693,7 +750,7 @@ const Home: React.FC = () => {
                     </a>
                   )}
                   {contact.website && (
-                    <a href={contact.website} target="_blank" rel="noopener noreferrer" title="Website"
+                    <a href={contact.website} target="_blank" rel="noopener noreferrer" title={t.common.website}
                       className="p-3 rounded-xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] transition-all duration-300 group">
                       <Globe className="h-4 w-4 text-[#2E5E99] group-hover:text-white" />
                     </a>
@@ -726,50 +783,60 @@ const Home: React.FC = () => {
                   </a>
                 )}
                 {footer.email && (
-                  <a href={`mailto:${footer.email}`} title="Email" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
+                  <a href={`mailto:${footer.email}`} title={t.common.emailAction} className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
                     <Mail className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
                   </a>
                 )}
                 {footer.phone && (
-                  <a href={`tel:${footer.phone.replace(/\s+/g, '')}`} title="Call" className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
+                  <a href={`tel:${footer.phone.replace(/\s+/g, '')}`} title={t.common.callAction} className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
                     <Phone className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
                   </a>
                 )}
               </div>
             </div>
             <div className="grid grid-cols-2 col-span-1 lg:col-span-3 gap-12">
-              <div className="space-y-6">
-                <h5 className="text-xs font-black uppercase tracking-[0.3em] text-[#2E5E99]">{t.footer.platform}</h5>
-                <ul className={`space-y-4 ${theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/50'}`}>
-                  {[t.footer.platformDashboard, t.footer.platformCommunity, t.footer.platformAnalytics, t.footer.platformSecurity].map(l => (
-                    <li key={l}><a href="#" className="hover:text-[#2E5E99] transition-colors">{l}</a></li>
-                  ))}
-                </ul>
-              </div>
-              <div className="space-y-6">
-                <h5 className="text-xs font-black uppercase tracking-[0.3em] text-[#7BA4D0]">{t.footer.support}</h5>
-                <ul className={`space-y-4 ${theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/50'}`}>
-                  {[t.footer.supportDocumentation, t.footer.supportApiReference, t.footer.supportHelpCenter, t.footer.supportStatus].map(l => (
-                    <li key={l}><a href="#" className="hover:text-[#2E5E99] transition-colors">{l}</a></li>
-                  ))}
-                </ul>
-              </div>
-              <div className="col-span-2 md:col-span-1 space-y-6">
-                <h5 className="text-xs font-black uppercase tracking-[0.3em] text-[#2E5E99]">{t.footer.stayConnected}</h5>
-                <div className="flex gap-2">
-                  <input type="text" placeholder={t.footer.emailPlaceholder}
-                    className="w-full bg-[#2E5E99]/5 border border-[#2E5E99]/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-[#2E5E99]" />
-                  <Button className="rounded-2xl p-4 bg-[#2E5E99]"><ArrowRight /></Button>
+              {/* Both columns used to be four `href="#"` links that went
+                  nowhere. Labels and destinations now come from the Landing
+                  Editor; a row with no URL renders as plain text rather than
+                  as a link that does nothing. */}
+              <FooterLinkColumn heading={footer.platformHeading} headingClass="text-[#2E5E99]"
+                links={footer.platformLinks} theme={theme} onFollow={followLink} />
+              <FooterLinkColumn heading={footer.supportHeading} headingClass="text-[#7BA4D0]"
+                links={footer.supportLinks} theme={theme} onFollow={followLink} />
+              {footer.newsletterEnabled && (
+                <div className="col-span-2 md:col-span-1 space-y-6">
+                  <h5 className="text-xs font-black uppercase tracking-[0.3em] text-[#2E5E99]">{footer.newsletterHeading}</h5>
+                  {/* There is no mailing-list backend, so this opens the
+                      visitor's mail client addressed to the office rather than
+                      swallowing the address into nothing. */}
+                  <form
+                    className="flex gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const address = new FormData(e.currentTarget).get('subscriber');
+                      window.location.href =
+                        `mailto:${footer.email}?subject=${encodeURIComponent(footer.newsletterHeading)}` +
+                        `&body=${encodeURIComponent(String(address ?? ''))}`;
+                    }}
+                  >
+                    <input type="email" name="subscriber" required placeholder={footer.newsletterPlaceholder}
+                      className="w-full bg-[#2E5E99]/5 border border-[#2E5E99]/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-[#2E5E99]" />
+                    <Button type="submit" aria-label={footer.newsletterHeading} className="rounded-2xl p-4 bg-[#2E5E99]"><ArrowRight /></Button>
+                  </form>
+                  <p className="text-[10px] opacity-40 uppercase font-black tracking-widest">{footer.emailLabel}: {footer.email}</p>
                 </div>
-                <p className="text-[10px] opacity-40 uppercase font-black tracking-widest">Email: {footer.email}</p>
-              </div>
+              )}
             </div>
           </div>
           <div className={`flex flex-col md:flex-row justify-between items-center pt-12 border-t border-[#2E5E99]/5 text-[10px] uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-white/30' : 'text-[#0D2440]/30'}`}>
             <p>{footer.copyright}</p>
             <div className="flex gap-12 mt-8 md:mt-0 font-bold">
-              <a href="#" className="hover:text-[#2E5E99]">{t.footer.privacyArchitecture}</a>
-              <a href="#" className="hover:text-[#2E5E99]">{t.footer.termsOfFaith}</a>
+              {footer.privacyUrl?.trim() && (
+                <button type="button" className="uppercase hover:text-[#2E5E99]" onClick={() => followLink(footer.privacyUrl)}>{footer.privacyLabel}</button>
+              )}
+              {footer.termsUrl?.trim() && (
+                <button type="button" className="uppercase hover:text-[#2E5E99]" onClick={() => followLink(footer.termsUrl)}>{footer.termsLabel}</button>
+              )}
             </div>
           </div>
         </div>

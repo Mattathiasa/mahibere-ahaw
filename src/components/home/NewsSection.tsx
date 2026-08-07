@@ -6,6 +6,8 @@ import { newsService, pickText, type NewsPost } from '@/services/news';
 import { optimized } from '@/services/cloudinary';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLandingContent } from '@/hooks/useLandingContent';
+import { localeFor } from '@/lib/ethiopian-calendar';
 import { InlineLoader } from '@/components/BrandedLoader';
 
 /**
@@ -19,14 +21,19 @@ const SECTION_CLASS = 'py-24 sm:py-32 relative scroll-mt-24 sm:scroll-mt-28';
  * The homepage news feed: the newest post as a large lead story, the rest as a
  * compact list beside it.
  *
- * Renders nothing at all when there are no published posts, so the landing page
- * never shows an empty section. With exactly one post the lead runs full width
- * rather than leaving a gap where the list would be.
+ * Every string it shows — heading, badge, description, the two button labels,
+ * the Head Office / Parish attribution and the empty state — comes from
+ * `content.news` in the Landing Editor, as does how many posts to show. With
+ * exactly one post the lead runs full width rather than leaving a gap where
+ * the list would be; with none it shows the editable empty state.
  */
-export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
+export const NewsSection: React.FC = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { theme } = useTheme();
+  const { content } = useLandingContent();
+  const news = content.news;
+  const max = news?.maxPosts ?? 4;
   const [posts, setPosts] = useState<NewsPost[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -56,10 +63,10 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
               <Newspaper className="h-8 w-8" />
             </div>
             <h2 className={`text-3xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-              News &amp; Updates
+              {news.emptyTitle}
             </h2>
             <p className="text-base text-[#2E5E99] font-ethiopic">
-              Stay tuned! News stories and updates from our ministry will appear here soon.
+              {news.emptyDescription}
             </p>
           </div>
         </div>
@@ -72,15 +79,20 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
   const headingColor = theme === 'dark' ? 'text-white' : 'text-[#0D2440]';
   const bodyColor = theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70';
 
-  /** Parish or head-office attribution, shown on every card. */
+  /**
+   * Parish or head-office attribution. The parish name is looked up in the
+   * active language — it used to fall back to English for anything that was
+   * not Amharic, so Afaan Oromoo and Tigrinya readers always saw English.
+   */
   const source = (post: NewsPost) =>
     post.scope === 'atbiya'
-      ? (post.atbiyaName?.[language === 'am' ? 'am' : 'en'] || post.atbiyaName?.en || 'Parish')
-      : 'Head Office';
+      ? (post.atbiyaName?.[language] || post.atbiyaName?.en || news.parishLabel)
+      : news.headOfficeLabel;
 
+  /** Dates follow the reader's chosen language, not the browser's locale. */
   const published = (post: NewsPost) =>
     post.publishedAt
-      ? new Date(post.publishedAt).toLocaleDateString(undefined, {
+      ? new Date(post.publishedAt).toLocaleDateString(localeFor(language), {
           year: 'numeric', month: 'short', day: 'numeric',
         })
       : null;
@@ -91,18 +103,18 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-14 gap-6">
           <div className="space-y-4 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
-              <Newspaper className="h-3 w-3" /> Latest
+              <Newspaper className="h-3 w-3" /> {news.badge}
             </div>
             <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-              News &amp; Updates
+              {news.sectionTitle}
             </h2>
             <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
-              What is happening across the church and its parishes.
+              {news.sectionDescription}
             </p>
           </div>
           <button onClick={() => navigate('/news')}
             className="flex items-center gap-2 text-[#2E5E99] font-bold hover:gap-3 transition-all shrink-0">
-            See all news <ArrowRight className="h-4 w-4" />
+            {news.seeAllLabel} <ArrowRight className="h-4 w-4" />
           </button>
         </div>
 
@@ -149,7 +161,7 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
                 {pickText(lead.excerpt, language)}
               </p>
               <div className="flex items-center gap-2 text-[#2E5E99] font-bold pt-1">
-                Read more
+                {news.readMoreLabel}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-2" />
               </div>
             </div>
