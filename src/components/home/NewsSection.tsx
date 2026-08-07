@@ -6,6 +6,14 @@ import { newsService, pickText, type NewsPost } from '@/services/news';
 import { optimized } from '@/services/cloudinary';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { InlineLoader } from '@/components/BrandedLoader';
+
+/**
+ * Shared by all three return paths below so the `#news` anchor behaves
+ * identically whichever one renders. `scroll-mt-*` keeps the heading clear of
+ * the landing page's fixed navigation when the nav scrolls here.
+ */
+const SECTION_CLASS = 'py-24 sm:py-32 relative scroll-mt-24 sm:scroll-mt-28';
 
 /**
  * The homepage news feed: the newest post as a large lead story, the rest as a
@@ -31,10 +39,9 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
 
   if (!loaded) {
     return (
-      <section id="news" className="py-24 sm:py-32 relative">
-        <div className="container mx-auto px-6 text-center animate-pulse">
-          <div className="h-10 w-48 bg-[#2E5E99]/10 rounded-xl mx-auto mb-4" />
-          <div className="h-4 w-72 bg-[#2E5E99]/5 rounded-lg mx-auto" />
+      <section id="news" className={SECTION_CLASS}>
+        <div className="container mx-auto px-6">
+          <InlineLoader />
         </div>
       </section>
     );
@@ -42,7 +49,7 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
 
   if (posts.length === 0) {
     return (
-      <section id="news" className="py-24 sm:py-32 relative">
+      <section id="news" className={SECTION_CLASS}>
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto text-center space-y-4 p-12 rounded-3xl bg-white/40 dark:bg-white/5 border border-[#2E5E99]/10 backdrop-blur-md">
             <div className="inline-flex p-4 rounded-2xl bg-[#2E5E99]/10 text-[#2E5E99] mb-2">
@@ -79,7 +86,7 @@ export const NewsSection: React.FC<{ max?: number }> = ({ max = 4 }) => {
       : null;
 
   return (
-    <section id="news" className="py-24 sm:py-32 relative">
+    <section id="news" className={SECTION_CLASS}>
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-14 gap-6">
           <div className="space-y-4 max-w-2xl">

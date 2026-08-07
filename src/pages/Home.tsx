@@ -14,7 +14,9 @@ import { OrthodoxCross3D } from '../components/OrthodoxCross3D';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
-import logo from '@/assets/logo.png';
+import { featureLinkTarget, isExternalLink, type LandingFeature } from '@/services/landingContent';
+import { BrandMark } from '@/components/BrandMark';
+import { BrandedLoader } from '@/components/BrandedLoader';
 import { PICTURES } from '@/assets/pictures';
 import { useGallery } from '@/hooks/useGallery';
 import { captionFor } from '@/services/gallery';
@@ -34,6 +36,26 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
   return <Icon className={className} />;
 }
 
+/**
+ * The navigable sections, in the order they appear down the page.
+ *
+ * This is the single source of truth: the desktop nav, the mobile menu and the
+ * scroll spy all map over it, and each entry's `id` is the `id` of the matching
+ * `<section>` below. The two nav lists used to be written out separately, which
+ * let them drift from each other and from the page.
+ *
+ * The keys index into `t.nav`, so adding one here means adding it to all four
+ * languages in src/i18n/translations.ts.
+ */
+const SECTIONS = ['home', 'services', 'about', 'support', 'news', 'contact'] as const;
+
+/**
+ * Keeps a section's heading clear of the fixed navigation when it is scrolled
+ * to. `scrollIntoView` honours `scroll-margin-top`, so this is all the offset
+ * handling that is needed — no manual scroll maths.
+ */
+const SECTION_ANCHOR = 'scroll-mt-24 sm:scroll-mt-28';
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -41,6 +63,7 @@ const Home: React.FC = () => {
   const { content, loading } = useLandingContent();
 
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const { gallery } = useGallery();
@@ -73,8 +96,55 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  /**
+   * Scroll spy: highlights whichever section is currently in view.
+   *
+   * The top margin matches the fixed nav so a section only counts as "current"
+   * once it is actually visible below the bar, and the bottom margin keeps a
+   * single section selected rather than every one crossing the viewport.
+   */
+  useEffect(() => {
+    if (loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible) setActiveSection(visible.target.id);
+      },
+      { rootMargin: '-96px 0px -55% 0px', threshold: 0 }
+    );
+    SECTIONS.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [loading]);
+
+  /**
+   * Honour a hash arrived at from another page, e.g. the /features CTA linking
+   * to /#contact. The target does not exist until the content resolves, so this
+   * waits for that — the same reason AboutFeatures defers its own hash scroll.
+   */
+  useEffect(() => {
+    if (loading) return;
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [loading]);
+
   const scrollToSection = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  /** Follow a feature card's link — off-site in a new tab, in-app otherwise. */
+  const openFeatureLink = (feature: LandingFeature) => {
+    const target = featureLinkTarget(feature);
+    if (isExternalLink(target)) window.open(target, '_blank', 'noopener,noreferrer');
+    else navigate(target);
   };
 
   const toggleLanguage = () => {
@@ -84,17 +154,9 @@ const Home: React.FC = () => {
     else setLanguage('en');
   };
 
-  // Skeleton shimmer shown while Firestore loads
-  if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#0D2440]' : 'bg-[#E7F0FA]'}`}>
-        <div className="space-y-4 text-center animate-pulse">
-          <div className="h-12 w-64 bg-[#2E5E99]/20 rounded-2xl mx-auto" />
-          <div className="h-4 w-48 bg-[#2E5E99]/10 rounded-xl mx-auto" />
-        </div>
-      </div>
-    );
-  }
+  // Shown while the Firestore-backed page content resolves. Same palette as
+  // the pre-boot splash in index.html, so the two read as one screen.
+  if (loading) return <BrandedLoader />;
 
   const { hero, stats, features, about, support, footer, contact } = content;
 
@@ -111,23 +173,25 @@ const Home: React.FC = () => {
       >
         <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-4 sm:gap-12">
-            <motion.div whileHover={{ scale: 1.04 }} className="flex items-center gap-3 sm:gap-4 cursor-pointer" onClick={() => scrollToSection('home')}>
-              <div className="relative group p-1.5 sm:p-2 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-xl border border-[#2E5E99]/20 shadow-md shadow-[#2E5E99]/10 group-hover:shadow-lg transition-all duration-300">
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#2E5E99]/20 via-[#FABB2A]/20 to-[#7BA4D0]/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                <img src={logo} alt="Mahibere Ahaw" className="h-9 w-9 sm:h-12 sm:w-12 object-contain relative z-10 drop-shadow-sm" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-base sm:text-2xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent leading-none">MAHIBERE AHAW</span>
-                <span className="text-[8px] sm:text-[10px] uppercase font-bold tracking-[0.25em] text-[#2E5E99]/70 dark:text-[#7BA4D0]/80 mt-1">Digital Ministry</span>
-              </div>
+            <motion.div whileHover={{ scale: 1.04 }} className="group flex items-center cursor-pointer" onClick={() => scrollToSection('home')}>
+              <BrandMark size="md" showWordmark interactive />
             </motion.div>
-            <div className="hidden lg:flex items-center gap-8">
-              {['home', 'services', 'about', 'news', 'contact'].map((section) => (
-                <button key={section} onClick={() => scrollToSection(section)}
-                  className={`text-sm font-bold uppercase tracking-[0.2em] transition-all hover:text-[#2E5E99] ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#0D2440]'} opacity-70 hover:opacity-100`}>
-                  {(t.nav as any)[section]}
-                </button>
-              ))}
+            <div className="hidden lg:flex items-center gap-7">
+              {SECTIONS.map((section) => {
+                const isActive = activeSection === section;
+                return (
+                  <button key={section} onClick={() => scrollToSection(section)}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={`relative text-sm font-bold uppercase tracking-[0.2em] transition-all hover:text-[#2E5E99] hover:opacity-100 ${
+                      theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#0D2440]'
+                    } ${isActive ? 'opacity-100 text-[#2E5E99]' : 'opacity-70'}`}>
+                    {t.nav[section]}
+                    <span className={`absolute -bottom-1.5 left-0 h-0.5 rounded-full bg-[#2E5E99] transition-all duration-300 ${
+                      isActive ? 'w-full' : 'w-0'
+                    }`} />
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -153,34 +217,43 @@ const Home: React.FC = () => {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
             className={`fixed inset-0 z-[100] ${theme === 'dark' ? 'bg-[#0D2440]' : 'bg-[#E7F0FA]'} p-6 flex flex-col`}>
             <div className="flex items-center justify-between mb-12">
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-2xl bg-white/80 dark:bg-white/10 border border-[#2E5E99]/20 shadow-sm">
-                  <img src={logo} alt="Mahibere Ahaw" className="h-10 w-10 object-contain" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent leading-none">MAHIBERE AHAW</span>
-                  <span className="text-[9px] uppercase font-bold tracking-[0.25em] text-[#2E5E99]/70 dark:text-[#7BA4D0]/80 mt-1">Digital Ministry</span>
-                </div>
-              </div>
+              <BrandMark size="md" showWordmark />
               <button onClick={() => setMobileMenuOpen(false)} className="p-3 bg-red-500/10 text-red-500 rounded-2xl"><X className="h-6 w-6" /></button>
             </div>
             <div className="flex flex-col gap-6">
-              {['home', 'services', 'about', 'news', 'contact'].map((section) => (
-                <button key={section} onClick={() => { setMobileMenuOpen(false); scrollToSection(section); }}
-                  className={`text-2xl font-black uppercase text-left w-full py-4 border-b border-[#2E5E99]/10 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'} active:scale-95 transition-transform`}>
-                  {(t.nav as any)[section]}
-                </button>
-              ))}
+              {SECTIONS.map((section) => {
+                const isActive = activeSection === section;
+                return (
+                  <button key={section} onClick={() => { setMobileMenuOpen(false); scrollToSection(section); }}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={`flex items-center gap-3 text-2xl font-black uppercase text-left w-full py-4 border-b border-[#2E5E99]/10 active:scale-95 transition-transform ${
+                      isActive ? 'text-[#2E5E99]' : theme === 'dark' ? 'text-white' : 'text-[#0D2440]'
+                    }`}>
+                    <span className={`h-2 w-2 rounded-full bg-[#2E5E99] transition-opacity ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                    {t.nav[section]}
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* ── Hero ── */}
-      <section ref={heroRef} id="home" className="relative min-h-screen flex items-center justify-center pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 overflow-hidden">
+      <section ref={heroRef} id="home" className={`relative min-h-screen flex items-center justify-center pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 overflow-hidden ${SECTION_ANCHOR}`}>
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto relative z-10 grid lg:grid-cols-2 gap-8 sm:gap-16 items-center">
           <div className="text-left space-y-5 sm:space-y-8">
+            {/* The seal leads the page. It carries the church's identity —
+                the rim text, the cross, the dove, the open Bible — none of
+                which is legible at nav size, so it gets one place on the site
+                where it is shown large enough to actually be read. */}
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }} className="block">
+              <BrandMark size="xl" />
+            </motion.div>
+
             <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.05 }}
               className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#2E5E99]/10 border border-[#2E5E99]/20 text-[#2E5E99] text-[10px] sm:text-xs font-bold uppercase tracking-widest">
               <Sparkles className="h-3 w-3" />
               {hero.badge}
@@ -250,7 +323,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* ── Stats ── */}
-      <section className="py-12 sm:py-24 relative overflow-hidden bg-white/30 backdrop-blur-sm border-y border-[#2E5E99]/5">
+      <section id="stats" className={`py-12 sm:py-24 relative overflow-hidden bg-white/30 backdrop-blur-sm border-y border-[#2E5E99]/5 ${SECTION_ANCHOR}`}>
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
             {stats.map((s, i) => (
@@ -271,7 +344,7 @@ const Home: React.FC = () => {
 
       {/* ── Photo carousel ── */}
       {carousel.length > 0 && (
-        <section className="py-16 sm:py-24 relative overflow-hidden">
+        <section id="gallery" className={`py-16 sm:py-24 relative overflow-hidden ${SECTION_ANCHOR}`}>
           <div className="container mx-auto px-6">
             <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-[#2E5E99]/10 aspect-video max-h-[70vh] mx-auto">
               {carousel.map((url, i) => (
@@ -305,7 +378,7 @@ const Home: React.FC = () => {
       )}
 
       {/* ── Features ── */}
-      <section id="services" className="py-32 relative">
+      <section id="services" className={`py-32 relative ${SECTION_ANCHOR}`}>
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
             <div className="space-y-4 max-w-2xl">
@@ -314,18 +387,23 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {features.items.map((f, i) => (
+            {features.items.map((f, i) => {
+              /* An admin-uploaded photo wins; otherwise fall back to the
+                 bundled src/assets/pictures photo at this position, and to a
+                 plain icon tile when that directory is empty — so the card
+                 never depends on either source having contents. */
+              const photo = f.imageUrl ? optimized(f.imageUrl, 800)
+                : PICTURES.length > 0 ? PICTURES[i % PICTURES.length]
+                : null;
+              return (
               <motion.div key={f.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.2 }} viewport={{ once: true }}>
                 <Card className="h-full hover:shadow-[#2E5E99]/10 bg-white shadow-xl border-[#2E5E99]/5">
-                  {/* Photos come from src/assets/pictures by position. With none
-                      in the directory this falls back to the plain icon tile, so
-                      the page never depends on the folder having contents.
-                      The negative margins match the card's own p-8 so the image
+                  {/* The negative margins match the card's own p-8 so the image
                       bleeds to its edges; only the top corners are rounded. */}
-                  {PICTURES.length > 0 ? (
+                  {photo ? (
                     <div className="relative -mx-8 -mt-8 mb-8 aspect-video overflow-hidden rounded-t-3xl group/photo">
                       <img
-                        src={PICTURES[i % PICTURES.length]}
+                        src={photo}
                         alt=""
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover/photo:scale-105"
@@ -342,19 +420,20 @@ const Home: React.FC = () => {
                   )}
                   <h3 className="text-3xl font-bold mb-4 font-ethiopic text-[#0D2440]">{f.title}</h3>
                   <p className="text-lg text-[#0D2440]/70 font-ethiopic leading-relaxed mb-8">{f.description}</p>
-                  <div className="flex items-center gap-2 text-[#2E5E99] font-bold group/btn cursor-pointer" onClick={() => navigate(`/features#${f.id}`)}>
-                    {t.common.learnMore}
+                  <button type="button" className="flex items-center gap-2 text-[#2E5E99] font-bold group/btn" onClick={() => openFeatureLink(f)}>
+                    {f.learnMoreLabel?.trim() || t.common.learnMore}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-2" />
-                  </div>
+                  </button>
                 </Card>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ── About Us, Faith, Mission & Values ── */}
-      <section id="about" className="py-24 sm:py-32 relative bg-[#2E5E99]/5 backdrop-blur-md">
+      <section id="about" className={`py-24 sm:py-32 relative bg-[#2E5E99]/5 backdrop-blur-md ${SECTION_ANCHOR}`}>
         <div className="container mx-auto px-6 space-y-20">
           
           {/* Section Header */}
@@ -477,33 +556,38 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Ministerial Support & Bank Accounts */}
-          <div className="pt-12 border-t border-[#2E5E99]/10 space-y-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
-                  <Heart className="h-3 w-3" />
-                  {support.badge}
-                </div>
-                <h3 className={`text-3xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                  {support.title}
-                </h3>
-                <p className="text-base text-[#2E5E99] font-ethiopic max-w-xl">
-                  {support.description}
-                </p>
-              </div>
-            </div>
+        </div>
+      </section>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {support.banks.map((bank, i) => (
-                <motion.div key={i} whileHover={{ scale: 1.03 }} className={`p-4 rounded-2xl border shadow-sm transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-[#2E5E99] mb-1">{bank.name}</p>
-                  <p className={`text-sm font-bold font-mono ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{bank.account}</p>
-                </motion.div>
-              ))}
+      {/* ── Ministerial Support & Bank Accounts ──
+          Its own section rather than a block tucked inside About: it has its
+          own heading and the bank details visitors come looking for, so it
+          needs an anchor the navigation can point at. */}
+      <section id="support" className={`py-24 sm:py-32 relative ${SECTION_ANCHOR}`}>
+        <div className="container mx-auto px-6 space-y-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div className="space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
+                <Heart className="h-3 w-3" />
+                {support.badge}
+              </div>
+              <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+                {support.title}
+              </h2>
+              <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
+                {support.description}
+              </p>
             </div>
           </div>
 
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {support.banks.map((bank, i) => (
+              <motion.div key={i} whileHover={{ scale: 1.03 }} className={`p-4 rounded-2xl border shadow-sm transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+                <p className="text-[10px] font-black uppercase tracking-wider text-[#2E5E99] mb-1">{bank.name}</p>
+                <p className={`text-sm font-bold font-mono ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{bank.account}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -511,7 +595,7 @@ const Home: React.FC = () => {
       <NewsSection />
 
       {/* ── Contact ── */}
-      <section id="contact" className="py-32 relative">
+      <section id="contact" className={`py-32 relative ${SECTION_ANCHOR}`}>
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mb-16 space-y-4">
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
@@ -626,10 +710,7 @@ const Home: React.FC = () => {
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-4 gap-16 mb-24">
             <div className="col-span-1 lg:col-span-1 space-y-8">
-              <div className="flex items-center gap-3">
-                <img src={logo} alt="MahibereAhaw" className="h-12 w-12 rounded-2xl shadow-lg" />
-                <span className="text-2xl font-black text-[#2E5E99]">MAHIBERE AHAW</span>
-              </div>
+              <BrandMark size="lg" showWordmark tagline={null} />
               <p className={`font-ethiopic leading-loose ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70'}`}>{footer.description}</p>
               <div className="flex gap-4 flex-wrap">
                 {footer.youtube && (

@@ -9,6 +9,20 @@ export interface LandingFeature {
   title: string;
   description: string;
   icon: string; // lucide icon name
+  /**
+   * Card photo (Cloudinary, or any URL). Empty falls back to the bundled
+   * `PICTURES` photo at this card's position, which is what every card used
+   * before the field existed.
+   */
+  imageUrl?: string;
+  /** Overrides the shared `t.common.learnMore` label for this card only. */
+  learnMoreLabel?: string;
+  /**
+   * Where the card's link goes. Empty resolves to `/features#<id>`, the
+   * previous hard-coded behaviour. An `http(s)://` value opens in a new tab;
+   * anything else is treated as an in-app path.
+   */
+  learnMoreUrl?: string;
 }
 
 export interface LandingStat {
@@ -517,6 +531,22 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
     },
   },
 };
+
+// ─── Feature card links ───────────────────────────────────────────────────────
+
+/**
+ * Where a feature card's "Learn More" goes. Shared by the home page and the
+ * Landing Editor, so the hint an admin reads while typing is produced by the
+ * same code that does the navigating.
+ */
+export function featureLinkTarget(feature: LandingFeature): string {
+  return feature.learnMoreUrl?.trim() || `/features#${feature.id}`;
+}
+
+/** External links open in a new tab; everything else routes in-app. */
+export function isExternalLink(url: string): boolean {
+  return /^https?:\/\//i.test(url.trim());
+}
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────
 

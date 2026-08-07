@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sun, Moon, ArrowLeft } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import { BrandMark } from '@/components/BrandMark';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/pages/home-components/Button';
@@ -29,7 +29,7 @@ export const PublicChrome: React.FC<{ children: React.ReactNode; backTo?: string
           theme === 'dark' ? 'bg-[#0D2440]/85' : 'bg-[#E7F0FA]/85'}`}>
         <div className="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
           <button onClick={() => navigate('/')} className="flex items-center gap-3 group">
-            <img src={logo} alt="Mahibere Ahaw" className="h-9 w-9" />
+            <BrandMark size="sm" interactive />
             <span className="text-base sm:text-xl font-black tracking-tighter bg-gradient-to-r from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent">
               MAHIBERE AHAW
             </span>

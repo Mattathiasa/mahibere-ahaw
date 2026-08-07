@@ -19,7 +19,76 @@
   </head>
 
   <body>
+    <!--
+      Pre-boot splash. The app is a Vite SPA, so between first paint and the JS
+      bundle mounting there is nothing in #root — on a slow connection that is
+      a second or more of blank white, even in dark mode.
+
+      This is deliberately plain CSS with no build step, and it is removed by
+      src/main.tsx once React mounts. The background is chosen synchronously
+      from the same localStorage key ThemeContext seeds itself from, so the
+      splash can never flash the wrong colour before the app takes over.
+    -->
+    <style>
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e7f0fa;
+        transition: opacity 0.25s ease-out;
+      }
+      #boot-splash.is-dark { background: #0d2440; }
+      #boot-splash.is-hiding { opacity: 0; }
+      #boot-splash .seal {
+        position: relative;
+        width: 128px;
+        height: 128px;
+        padding: 6px;
+        border-radius: 9999px;
+        background: #fff;
+        box-shadow: 0 0 0 2px rgba(250, 187, 42, 0.6), 0 10px 30px rgba(13, 36, 64, 0.18);
+        animation: boot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      #boot-splash .seal::before {
+        content: "";
+        position: absolute;
+        inset: -16px;
+        border-radius: 9999px;
+        background: rgba(250, 187, 42, 0.3);
+        filter: blur(24px);
+        z-index: -1;
+      }
+      #boot-splash img {
+        width: 100%;
+        height: 100%;
+        border-radius: 9999px;
+        object-fit: contain;
+      }
+      @keyframes boot-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(0.96); opacity: 0.85; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash .seal { animation: none; }
+      }
+    </style>
     <div id="root"></div>
+    <!-- A sibling of #root, not a child: React clears its container on mount,
+         which would yank the splash away instead of letting it fade out. -->
+    <div id="boot-splash">
+      <div class="seal"><img src="/logo.png" alt="Mahibere Ahaw" /></div>
+    </div>
+    <script>
+      // Inline and synchronous: it has to run before the splash paints.
+      try {
+        if (localStorage.getItem('theme') === 'dark') {
+          document.getElementById('boot-splash').className = 'is-dark';
+        }
+      } catch (e) { /* private mode — the light default is fine */ }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -100,6 +100,12 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
+        // Indeterminate progress bar for BrandedLoader: there is no real
+        // percentage to report, so the bar sweeps rather than fills.
+        "loader-sweep": {
+          "0%": { transform: "translateX(-110%)" },
+          "100%": { transform: "translateX(320%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -110,6 +116,7 @@ export default {
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "slide-in-left": "slide-in-left 0.3s ease-out",
         "pulse-soft": "pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "loader-sweep": "loader-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite",
       },
     },
   },

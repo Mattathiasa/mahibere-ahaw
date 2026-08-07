@@ -10,6 +10,7 @@ import {
   landingContentService,
   DEFAULT_LANDING_CONTENT,
   deepMerge,
+  featureLinkTarget,
   type LandingContent,
   type LandingFeature,
   type LandingStat,
@@ -32,6 +33,7 @@ import { pageStringsService, type AllLanguageOverrides } from '@/services/pageSt
 import { integrationsService, DEFAULT_INTEGRATIONS, type IntegrationsConfig } from '@/services/integrations';
 import { uploadToCloudinary, optimized } from '@/services/cloudinary';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
+import { BrandedLoader } from '@/components/BrandedLoader';
 import { invalidateTranslationCache } from '@/hooks/useTranslation';
 import { translations, type Language } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
@@ -403,11 +405,7 @@ const LandingEditor: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <BrandedLoader variant="app" message="Loading site content…" />;
   }
 
   return (
@@ -859,7 +857,10 @@ const LandingEditor: React.FC = () => {
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>Features Section</CardTitle>
-                      <CardDescription>The 3-column feature cards grid.</CardDescription>
+                      <CardDescription>
+                        The “Everything You Need” cards on the home page — heading,
+                        text, photo and Learn More link for each card.
+                      </CardDescription>
                     </div>
                     <Button size="sm" variant="outline" onClick={addFeature}>
                       <Plus className="h-4 w-4 mr-1" /> Add Feature
@@ -893,9 +894,42 @@ const LandingEditor: React.FC = () => {
                         <Field label="Description">
                           <Textarea rows={2} value={feature.description} onChange={(e) => updateFeature(i, 'description', e.target.value)} />
                         </Field>
+
+                        <Field
+                          label="Card photo"
+                          hint="Shown across the top of the card. Leave empty to use the photo bundled with the app for this position."
+                        >
+                          <CloudinaryImageUpload
+                            value={feature.imageUrl}
+                            onChange={(url) => updateFeature(i, 'imageUrl', url)}
+                            folder="mahibere-ahaw/features"
+                            variant="wide"
+                          />
+                        </Field>
+
+                        <SectionDivider label="Learn More link" />
                         <Field label="Link anchor" hint="e.g. members, planning, reports">
                           <Input value={feature.id} onChange={(e) => updateFeature(i, 'id', e.target.value)} />
                         </Field>
+                        <div className="grid grid-cols-2 gap-4">
+                          <Field label="Button label" hint="Leave empty to use the shared “Learn More” translation.">
+                            <Input
+                              value={feature.learnMoreLabel ?? ''}
+                              onChange={(e) => updateFeature(i, 'learnMoreLabel', e.target.value)}
+                              placeholder={translations[activeLang].common.learnMore}
+                            />
+                          </Field>
+                          <Field
+                            label="Button link"
+                            hint={`Goes to ${featureLinkTarget(feature)}. Leave empty for the anchor above; an https:// address opens in a new tab.`}
+                          >
+                            <Input
+                              value={feature.learnMoreUrl ?? ''}
+                              onChange={(e) => updateFeature(i, 'learnMoreUrl', e.target.value)}
+                              placeholder={`/features#${feature.id || '…'}`}
+                            />
+                          </Field>
+                        </div>
                       </div>
                     ))}
                   </CardContent>

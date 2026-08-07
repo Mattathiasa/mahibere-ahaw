@@ -12,7 +12,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useFeaturesContent } from '@/hooks/useFeaturesContent';
 import { colorClass } from '@/services/featuresContent';
 import { optimized } from '@/services/cloudinary';
-import logo from '@/assets/logo.png';
+import { BrandMark } from '@/components/BrandMark';
 
 /** Icon name -> component, so an admin can change the icon from a text field. */
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -185,8 +185,8 @@ const AboutFeatures = () => {
 
             <footer className="py-12 border-t border-[#2E5E99]/10 relative z-10">
                 <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-2">
-                        <img src={logo} alt="Ahaw" className="h-8 w-8" />
+                    <div className="flex items-center gap-3">
+                        <BrandMark size="sm" />
                         <span className="font-bold text-[#2E5E99]">{content.brand}</span>
                     </div>
                     <p className="text-xs opacity-50 uppercase tracking-widest font-bold">

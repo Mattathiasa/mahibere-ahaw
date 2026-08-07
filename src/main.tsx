@@ -31,3 +31,18 @@ window.addEventListener('load', () => {
 });
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+/**
+ * Retire the pre-boot splash from index.html now that React has painted.
+ *
+ * It sits beside #root rather than inside it, so it survives the first render
+ * and can be crossfaded away: underneath is BrandedLoader on the same
+ * background, which means the visitor sees one continuous loading screen
+ * rather than a splash, a flash, and then a spinner.
+ */
+requestAnimationFrame(() => {
+  const splash = document.getElementById('boot-splash');
+  if (!splash) return;
+  splash.classList.add('is-hiding');
+  setTimeout(() => splash.remove(), 300);
+});
