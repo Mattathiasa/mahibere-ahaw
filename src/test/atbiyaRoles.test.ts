@@ -2,7 +2,9 @@
 // Pure logic, no DOM — and the shared jsdom environment currently fails to
 // start in this repo, which is why the rules tests pin node too.
 import { describe, expect, it, vi } from 'vitest';
-import { deriveFlags, reconcileRoles, SEED_ROLES, type Role } from '@/services/roleRegistry';
+import {
+  applyRenamedLabels, deriveFlags, reconcileRoles, SEED_ROLES, type Role,
+} from '@/services/roleRegistry';
 
 /**
  * The two pure pieces of the parish-administrator wiring.
@@ -32,6 +34,72 @@ vi.mock('firebase/firestore', () => ({
   serverTimestamp: () => null,
   Timestamp: class {},
 }));
+
+/**
+ * The rename from Zone/Atbiya to Diocese/Local Congregation.
+ *
+ * `reconcileRoles` preserves labels on purpose, so without this migration the
+ * new seed wording would never reach any installation that had already written
+ * `siteConfig/roles` — which is every installation whose admin has opened
+ * Software Control once.
+ */
+describe('applyRenamedLabels', () => {
+  /** A registry as it would have been stored before the rename shipped. */
+  const stored = (): Role[] => SEED_ROLES.map((r) => {
+    if (r.key === 'Zone') {
+      return { ...r, labels: { en: 'Zone', am: 'ዞን', om: 'Zoonii', ti: 'ዞባ' } };
+    }
+    if (r.key === 'Atbiya') {
+      return { ...r, labels: { en: 'Atbiya', am: 'አጥቢያ ቤተ ክርስቲያን', om: 'Waldaa Naannoo', ti: 'ኣጥቢያ' } };
+    }
+    return r;
+  });
+
+  const labelOf = (roles: Role[], key: string) => roles.find((r) => r.key === key)!.labels;
+
+  it('renames an untouched seed label in every language', () => {
+    const out = applyRenamedLabels(stored());
+    expect(labelOf(out, 'Zone').en).toBe('Diocese');
+    expect(labelOf(out, 'Zone').am).toBe('ሀገረ ስብከት');
+    expect(labelOf(out, 'Atbiya').en).toBe('Local Congregation');
+    expect(labelOf(out, 'Atbiya').am).toBe('አጥቢያ');
+  });
+
+  it('leaves a label the operator renamed themselves alone', () => {
+    const custom = stored().map((r) =>
+      r.key === 'Zone' ? { ...r, labels: { ...r.labels, en: 'Region Office' } } : r
+    );
+    const out = applyRenamedLabels(custom);
+    expect(labelOf(out, 'Zone').en).toBe('Region Office');
+    // The languages they did not touch still migrate.
+    expect(labelOf(out, 'Zone').am).toBe('ሀገረ ስብከት');
+  });
+
+  it('is idempotent', () => {
+    const once = applyRenamedLabels(stored());
+    expect(applyRenamedLabels(once)).toEqual(once);
+  });
+
+  it('does not touch roles it has no rename for', () => {
+    const out = applyRenamedLabels(stored());
+    expect(labelOf(out, 'Sinodos')).toEqual(labelOf(SEED_ROLES, 'Sinodos'));
+    expect(labelOf(out, 'HiyawanMahderat')).toEqual(labelOf(SEED_ROLES, 'HiyawanMahderat'));
+  });
+
+  it('leaves a non-system role alone even if its label collides', () => {
+    // An operator-created role named "Zone" is theirs, not ours to rewrite.
+    const custom: Role[] = [
+      ...stored(),
+      { ...SEED_ROLES[0], key: 'Zone2', isSystem: false, labels: { en: 'Zone' } },
+    ];
+    expect(labelOf(applyRenamedLabels(custom), 'Zone2').en).toBe('Zone');
+  });
+
+  it('keeps the role KEYS untouched, so stored user records still resolve', () => {
+    const out = applyRenamedLabels(stored());
+    expect(out.map((r) => r.key)).toEqual(SEED_ROLES.map((r) => r.key));
+  });
+});
 
 describe('deriveFlags', () => {
   const flags = deriveFlags(SEED_ROLES);

@@ -13,6 +13,7 @@ import {
   type MobileAuditRecord,
 } from '@/services/mobileAppControl';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +54,8 @@ function formatWhen(iso?: string): string {
 }
 
 const MobileControl: React.FC = () => {
+  const { t } = useLanguage();
+  const a = t.admin;
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -210,7 +213,7 @@ const MobileControl: React.FC = () => {
             {/* Version gate */}
             <Card>
               <CardHeader>
-                <CardTitle>Version Gate</CardTitle>
+                <CardTitle>{a.mcVersionGate}</CardTitle>
                 <CardDescription>
                   Force outdated installs to update before they can continue.
                 </CardDescription>
@@ -254,7 +257,7 @@ const MobileControl: React.FC = () => {
             {/* Feature flags */}
             <Card>
               <CardHeader>
-                <CardTitle>Feature Flags</CardTitle>
+                <CardTitle>{a.mcFeatureFlags}</CardTitle>
                 <CardDescription>
                   Turn individual modules on or off in the mobile app without shipping an update. Disabled modules disappear from the app menu.
                 </CardDescription>
@@ -283,7 +286,7 @@ const MobileControl: React.FC = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Mobile Devices & Sessions</CardTitle>
+                  <CardTitle>{a.mcDevices}</CardTitle>
                   <CardDescription>
                     Every mobile login reports its device, app version, and last activity here.
                   </CardDescription>

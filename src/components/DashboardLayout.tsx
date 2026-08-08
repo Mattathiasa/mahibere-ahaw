@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church, type LucideIcon } from 'lucide-react';
+import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church, UserPlus, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
@@ -24,14 +24,18 @@ const NAV_FALLBACK_LABELS: Record<string, string> = {
   news: 'News',
   landingEditor: 'Landing Page',
   softwareControl: 'Software Control',
-  atbiyaRegistry: 'Atbiya Registry',
-  myAtbiya: 'My Atbiya',
+  atbiyaRegistry: 'Congregation Registry',
+  myAtbiya: 'My Congregation',
+  membershipRequests: 'Membership Requests',
 };
 
 interface NavFlags {
   can: (permission: PermissionKey) => boolean;
   /** Belongs to a parish AND has a parish-level role — i.e. runs one. */
   runsAnAtbiya: boolean;
+  /** Sees data across the whole organisation, so has no single queue of its own. */
+  isHeadOffice: boolean;
+  mayApprove: boolean;
   isSuperAdmin: boolean;
   isAdmin: boolean;
 }
@@ -54,7 +58,9 @@ interface NavItem {
  * inventory and the strategic plan — pages their role never had permission to
  * act in. The permission keys mostly already existed; nothing was reading them.
  */
-const getNavigationItems = ({ can, runsAnAtbiya, isSuperAdmin, isAdmin }: NavFlags): NavItem[] => {
+const getNavigationItems = ({
+  can, runsAnAtbiya, isHeadOffice, mayApprove, isSuperAdmin, isAdmin,
+}: NavFlags): NavItem[] => {
   const items: NavItem[] = [
     { name: 'dashboard', href: '/dashboard', icon: Home, permission: 'canViewDashboard' },
     { name: 'announcements', href: '/announcements', icon: Bell, permission: 'canViewAnnouncements' },
@@ -76,6 +82,9 @@ const getNavigationItems = ({ can, runsAnAtbiya, isSuperAdmin, isAdmin }: NavFla
     { name: 'userManagement', href: '/user-management', icon: Users, permission: 'canViewUserManagement' },
     { name: 'hierarchy', href: '/hierarchy', icon: Network, permission: 'canViewHierarchy' },
     { name: 'myAtbiya', href: '/my-atbiya', icon: Church, show: runsAnAtbiya },
+    // Head office approves on any congregation's behalf but runs none itself,
+    // so /my-atbiya is empty for them and the queue needs its own home.
+    { name: 'membershipRequests', href: '/membership-requests', icon: UserPlus, show: isHeadOffice && mayApprove },
     { name: 'atbiyaRegistry', href: '/atbiya-registry', icon: Church, permission: 'canManageAtbiyas' },
     // The Landing Editor had no sidebar entry at all — it was reachable only via
     // a card buried in Settings, which is why it looked like it had been removed.
@@ -94,13 +103,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { language, setLanguage, t } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showNav } = useSoftwareControl();
-  const { can, isSuperAdmin, isAdminRole, scopeOf, myAtbiyaId } = usePermissions();
+  const { can, isSuperAdmin, isAdminRole, isApproverRole, isHeadOffice, scopeOf, myAtbiyaId } = usePermissions();
   const { count: pendingCount } = usePendingRequests();
   const navigationItems = getNavigationItems({
     // `can` is the permission matrix itself, so User Management is no longer
     // driven by a hardcoded `=== 'Memriya'` that had locked out Sinodos.
     can,
     runsAnAtbiya: !!myAtbiyaId && scopeOf(currentUser?.hierarchyLevel) === 'atbiya',
+    isHeadOffice,
+    // Same test MembershipRequests uses, so the entry never leads to a page
+    // that renders nothing.
+    mayApprove: isSuperAdmin || can('canApproveMembers') || isApproverRole(currentUser?.hierarchyLevel),
     isSuperAdmin,
     isAdmin: isAdminRole(currentUser?.hierarchyLevel),
   }).filter((item) => showNav(item.name));
@@ -126,7 +139,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         const translatedName = (t.nav as any)[item.name] ?? NAV_FALLBACK_LABELS[item.name] ?? item.name;
         // Requests waiting on this parish, shown where the administrator will
         // actually look rather than only inside the console itself.
-        const badge = item.name === 'myAtbiya' ? pendingCount : 0;
+        const badge = item.name === 'myAtbiya' || item.name === 'membershipRequests'
+          ? pendingCount : 0;
         return (
           <Link
             key={item.name}

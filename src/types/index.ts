@@ -46,11 +46,22 @@ export interface User {
   hasChildren?: boolean;
   childrenCount?: number;
   gender?: 'Male' | 'Female' | 'Other';
+  /**
+   * Home address. Region/zone/woreda are Ethiopian CIVIL divisions — unrelated
+   * to the church org tree, which uses `atbiyaId` and `hierarchyEntityId`.
+   *
+   * `lat`/`lng` are the member's own pin, captured at sign-up. They live inside
+   * this map rather than as new top-level fields so the self-sign-up
+   * `keys().hasOnly([...])` whitelist in firestore.rules needs no change —
+   * `hasOnly` inspects top-level keys only, and `address` is already listed.
+   */
   address?: {
     region?: string;
     zone?: string;
     woreda?: string;
     city?: string;
+    lat?: number;
+    lng?: number;
   };
   createdAt?: string;
   updatedAt?: string;

@@ -315,7 +315,7 @@ const Login = () => {
                   Create an account
                 </Link>
                 <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/30' : 'text-[#0D2440]/40'}`}>
-                  Your Atbiya approves the request before you can sign in.
+                  Your congregation approves the request before you can sign in.
                 </p>
               </motion.div>
 

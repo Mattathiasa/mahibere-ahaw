@@ -10,6 +10,7 @@ import {
   type ModuleConfig, type ModuleKey, type SingleModuleConfig, type FieldConfig,
 } from '@/services/moduleConfig';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,6 +40,8 @@ const MODULES: { key: ModuleKey; label: string }[] = [
 ];
 
 const ModuleConfigPage: React.FC = () => {
+  const { t } = useLanguage();
+  const a = t.admin;
   const navigate = useNavigate();
   const { user } = useAuth();
   const [config, setConfig] = useState<ModuleConfig>(DEFAULT_MODULE_CONFIG);
@@ -129,17 +132,17 @@ const ModuleConfigPage: React.FC = () => {
                 {/* Page header */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Page Header</CardTitle>
+                    <CardTitle>{a.mcPageHeader}</CardTitle>
                     <CardDescription>Overrides the title/description shown on the {m.label} page. Leave blank to use the translated default.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{a.title}</Label>
                       <Input value={mod.headerTitle} placeholder="(translated default)"
                         onChange={(e) => patch(m.key, (x) => ({ ...x, headerTitle: e.target.value }))} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{a.description}</Label>
                       <Textarea rows={2} value={mod.headerDescription} placeholder="(translated default)"
                         onChange={(e) => patch(m.key, (x) => ({ ...x, headerDescription: e.target.value }))} />
                     </div>
@@ -149,7 +152,7 @@ const ModuleConfigPage: React.FC = () => {
                 {/* Learn More */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Learn More Content</CardTitle>
+                    <CardTitle>{a.mcLearnMore}</CardTitle>
                     <CardDescription>Shown behind a "Learn More" button on the {m.label} page. Line breaks are preserved.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -162,7 +165,7 @@ const ModuleConfigPage: React.FC = () => {
                 {mod.fields.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Form Fields</CardTitle>
+                    <CardTitle>{a.mcFormFields}</CardTitle>
                     <CardDescription>Toggle which fields appear and whether they're required.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -198,7 +201,7 @@ const ModuleConfigPage: React.FC = () => {
                 {Object.keys(mod.options).length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Option Lists</CardTitle>
+                    <CardTitle>{a.mcOptionLists}</CardTitle>
                     <CardDescription>The selectable values used by this module's dropdowns.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-5">

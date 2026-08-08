@@ -64,8 +64,16 @@ function buildAll(
   };
 }
 
+/**
+ * Amharic is the church's own language and the language of nearly everyone who
+ * uses this. English remains the BASE of the merge in `buildLanguage` — that is
+ * a fallback for untranslated keys, not a preference — so a first-time visitor
+ * lands in Amharic and only sees English where no Amharic string exists yet.
+ */
+export const DEFAULT_LANGUAGE: Language = 'am';
+
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLangState] = useState<Language>('en');
+  const [language, setLangState] = useState<Language>(DEFAULT_LANGUAGE);
   const [activeTranslations, setActiveTranslations] = useState<Record<Language, Translations>>(
     () => buildAll({}, {})
   );

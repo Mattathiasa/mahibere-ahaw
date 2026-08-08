@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -57,6 +58,8 @@ interface AtbiyaFormProps {
 export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
   draft, setDraft, zones, showPlacement = true, showVisibility = true, disabled = false,
 }) => {
+  const { t } = useLanguage();
+  const a = t.admin;
   function set<K extends keyof AtbiyaInput>(key: K, value: AtbiyaInput[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
@@ -85,35 +88,35 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
 
   return (
     <div className="space-y-5 py-2">
-      <Divider label="Identity" />
+      <Divider label={a.identity} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Name (English) *">
+        <Field label={`${a.nameEnglish} *`}>
           <Input value={draft.name} onChange={(e) => set('name', e.target.value)}
-            disabled={disabled} placeholder="Bishoftu Atbiya" />
+            disabled={disabled} placeholder="Bishoftu Congregation" />
         </Field>
-        <Field label="Name (አማርኛ)">
+        <Field label={a.nameAmharic}>
           <Input value={draft.nameAmharic ?? ''} onChange={(e) => set('nameAmharic', e.target.value)}
             disabled={disabled} placeholder="ቢሾፍቱ አጥቢያ" />
         </Field>
-        <Field label="City (English)">
+        <Field label={a.cityEnglish}>
           <Input value={draft.cityEn ?? ''} onChange={(e) => set('cityEn', e.target.value)}
             disabled={disabled} placeholder="Bishoftu" />
         </Field>
-        <Field label="City (አማርኛ)">
+        <Field label={a.cityAmharic}>
           <Input value={draft.cityAm ?? ''} onChange={(e) => set('cityAm', e.target.value)}
             disabled={disabled} placeholder="ቢሾፍቱ" />
         </Field>
       </div>
       {showPlacement && (
-        <Field label="Zone" hint="The zone this parish reports to.">
+        <Field label={a.diocese} hint={a.dioceseHint}>
           <Select
             value={draft.parentId ?? 'none'}
             disabled={disabled}
             onValueChange={(v) => set('parentId', v === 'none' ? null : v)}
           >
-            <SelectTrigger><SelectValue placeholder="Select a zone" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={a.selectDiocese} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">— Not assigned —</SelectItem>
+              <SelectItem value="none">{a.notAssigned}</SelectItem>
               {zones.map((z) => (
                 <SelectItem key={z.id} value={z.id}>
                   {z.name}{z.nameAmharic ? ` / ${z.nameAmharic}` : ''}
@@ -124,53 +127,53 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
         </Field>
       )}
 
-      <Divider label="Address" />
-      <Field label="Address (English)">
+      <Divider label={a.address} />
+      <Field label={a.addressEnglish}>
         <Textarea rows={2} value={draft.address?.en ?? ''} onChange={(e) => setAddress('en', e.target.value)}
           disabled={disabled}
           placeholder="Around Zikuala Roundabout, in front of Awash Hotel, about 100m" />
       </Field>
-      <Field label="Address (አማርኛ)">
+      <Field label={a.addressAmharic}>
         <Textarea rows={2} value={draft.address?.am ?? ''} onChange={(e) => setAddress('am', e.target.value)}
           disabled={disabled}
           placeholder="ቢሾፍቱ ዝቋላ አደባባይ አካባቢ ከአዋሽ ሆቴል ፊት ለፊት 100 ላይ" />
       </Field>
-      <Field label="Map link" hint="Optional. Shown as an 'Open in Maps' link.">
+      <Field label={a.mapLink} hint={a.mapLinkHint}>
         <Input value={draft.mapUrl ?? ''} onChange={(e) => set('mapUrl', e.target.value)}
           disabled={disabled} placeholder="https://maps.app.goo.gl/…" />
       </Field>
 
-      <Divider label="Contact person" />
+      <Divider label={a.contactPerson} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Name (English)">
+        <Field label={a.contactNameEn}>
           <Input value={draft.contact?.nameEn ?? ''} onChange={(e) => setContact('nameEn', e.target.value)}
             disabled={disabled} placeholder="AddisHiwot Teshome Worku" />
         </Field>
-        <Field label="Name (አማርኛ)">
+        <Field label={a.contactNameAm}>
           <Input value={draft.contact?.nameAm ?? ''} onChange={(e) => setContact('nameAm', e.target.value)}
             disabled={disabled} placeholder="አዲስሕይወት ተሾመ ወርቁ" />
         </Field>
-        <Field label="Phone">
+        <Field label={a.phone}>
           <Input value={draft.contact?.phone ?? ''} onChange={(e) => setContact('phone', e.target.value)}
             disabled={disabled} placeholder="0938714929" />
         </Field>
-        <Field label="Alternate phone">
+        <Field label={a.altPhone}>
           <Input value={draft.contact?.phone2 ?? ''} onChange={(e) => setContact('phone2', e.target.value)}
             disabled={disabled} />
         </Field>
       </div>
-      <Field label="Email">
+      <Field label={a.email}>
         <Input type="email" value={draft.contact?.email ?? ''} onChange={(e) => setContact('email', e.target.value)}
           disabled={disabled} placeholder="AddishiwotJAM@gmail.com" />
       </Field>
 
-      <Divider label="Bank accounts" />
+      <Divider label={a.bankAccounts} />
       <div className="space-y-3">
         {(draft.bankAccounts ?? []).map((b, i) => (
           <div key={i} className="p-3 rounded-xl border border-border bg-muted/20 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Landmark className="h-3.5 w-3.5" /> Account {i + 1}
+                <Landmark className="h-3.5 w-3.5" /> {a.accountNumber} {i + 1}
               </span>
               <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-red-500"
                 disabled={disabled} onClick={() => removeBank(i)}>
@@ -185,23 +188,23 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
               <Input value={b.accountNumber} onChange={(e) => setBank(i, 'accountNumber', e.target.value)}
                 disabled={disabled} placeholder="1602420073978" className="font-mono" />
               <Input value={b.accountHolder ?? ''} onChange={(e) => setBank(i, 'accountHolder', e.target.value)}
-                disabled={disabled} placeholder="Account holder (optional)" />
+                disabled={disabled} placeholder={`${a.accountHolder} (${a.optional})`} />
             </div>
           </div>
         ))}
         <Button type="button" variant="outline" size="sm" onClick={addBank} disabled={disabled}>
-          <Plus className="h-4 w-4 mr-2" /> Add bank account
+          <Plus className="h-4 w-4 mr-2" /> {a.addBankAccount}
         </Button>
       </div>
 
-      <Divider label="Photo & notes" />
+      <Divider label={`${a.photo} & ${a.notes}`} />
       <CloudinaryImageUpload
         value={draft.photoUrl ?? ''}
         onChange={(url) => set('photoUrl', url)}
         folder="mahibere-ahaw/atbiya"
         variant="wide"
       />
-      <Field label="Notes">
+      <Field label={a.notes}>
         <Textarea rows={2} value={draft.description ?? ''} onChange={(e) => set('description', e.target.value)}
           disabled={disabled} />
       </Field>
@@ -210,9 +213,9 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
         <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/20">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-bold">Active</p>
+              <p className="text-sm font-bold">{a.active}</p>
               <p className="text-xs text-muted-foreground">
-                Inactive parishes are hidden everywhere but keep their records.
+                {a.activeToggleDesc}
               </p>
             </div>
             <Switch checked={draft.active !== false} disabled={disabled}
@@ -220,11 +223,9 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
           </div>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-bold">Show on the public sign-up form</p>
+              <p className="text-sm font-bold">{a.publicToggle}</p>
               <p className="text-xs text-muted-foreground">
-                Turn off if this parish should not accept new member requests.
-                Note that parish records are publicly readable, including the
-                bank details entered above.
+                {a.publicToggleDesc}
               </p>
             </div>
             <Switch checked={draft.isPublic !== false} disabled={disabled}

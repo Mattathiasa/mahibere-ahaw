@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore';
 import { userService } from '@/services/users';
 import { signupService, syntheticEmail } from '@/services/signup';
+import { isValidPhone, normalizeEthiopianPhone } from '@/lib/phone';
 import { auditLogService } from '@/services/auditLog';
 import type { User } from '@/types';
 
@@ -65,6 +66,9 @@ export function validateAdminDraft(d: AdminDraft): string | null {
   }
   if (d.email?.trim() && !/^\S+@\S+\.\S+$/.test(d.email.trim())) {
     return 'That email address is not valid. Leave it blank to sign in by username only.';
+  }
+  if (d.phone?.trim() && !isValidPhone(d.phone)) {
+    return 'That phone number does not look right. Enter it as 0911 22 33 44 or +251 911 22 33 44.';
   }
   if (d.password.length < 6) return 'The password must be at least 6 characters.';
   if (d.password !== d.confirmPassword) return 'The two passwords do not match.';
@@ -141,7 +145,7 @@ export const atbiyaAdminService = {
         fullNameEnglish: input.fullNameEnglish.trim(),
         fullNameAmharic: (input.fullNameAmharic ?? '').trim(),
         fullName: input.fullNameEnglish.trim(),
-        phone: (input.phone ?? '').trim(),
+        phone: normalizeEthiopianPhone(input.phone ?? '') ?? (input.phone ?? '').trim(),
         role: 'user',
         hierarchyLevel: roleKey,
         atbiyaId: atbiya.id,
@@ -168,6 +172,61 @@ export const atbiyaAdminService = {
       const err = e as { code?: string; message?: string };
       throw new Error(friendlyError(err.code ?? '', err.message ?? 'Could not create the administrator account.'));
     }
+  },
+
+  /**
+   * Promotes an existing member to administrator of this parish.
+   *
+   * No new account is created — the person already has one. "Administrator" is
+   * the pair (hierarchyLevel, atbiyaId), so promotion writes exactly that pair
+   * and nothing else. `firestore.rules` lets only an isAdmin() account change
+   * either field, which is why the callers gate these on isAdmin/isSuperAdmin.
+   */
+  async assign(
+    uid: string,
+    atbiya: { id: string; name: string },
+    roleKey: string
+  ): Promise<void> {
+    await updateDoc(doc(db, 'users', uid), {
+      hierarchyLevel: roleKey,
+      atbiyaId: atbiya.id,
+      atbiyaName: atbiya.name,
+      updatedAt: new Date().toISOString(),
+    });
+    auditLogService.dataChange(
+      'update', 'users', uid,
+      `Made ${uid} a ${roleKey} administrator of ${atbiya.name}`
+    );
+  },
+
+  /**
+   * Moves an administrator to a different parish, keeping their role.
+   *
+   * `atbiyaName` travels with the id because the requests queue and member
+   * lists read the denormalized name — leaving it behind would show the
+   * account against the parish it just left.
+   */
+  async transfer(uid: string, atbiya: { id: string; name: string }): Promise<void> {
+    await updateDoc(doc(db, 'users', uid), {
+      atbiyaId: atbiya.id,
+      atbiyaName: atbiya.name,
+      updatedAt: new Date().toISOString(),
+    });
+    auditLogService.dataChange('update', 'users', uid, `Transferred administrator to ${atbiya.name}`);
+  },
+
+  /**
+   * Steps an administrator down to an ordinary member of the same parish.
+   *
+   * Deliberately not a deletion or a suspension: the person stays a member and
+   * keeps their account, they simply stop deciding requests.
+   */
+  async demote(uid: string, memberRoleKey: string): Promise<void> {
+    await updateDoc(doc(db, 'users', uid), {
+      hierarchyLevel: memberRoleKey,
+      updatedAt: new Date().toISOString(),
+    });
+    auditLogService.dataChange('update', 'users', uid, 'Stepped down a parish administrator to member');
   },
 
   /**

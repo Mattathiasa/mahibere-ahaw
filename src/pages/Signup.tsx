@@ -11,6 +11,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { signupService, type SignupInput } from '@/services/signup';
+import { isValidPhone, normalizeEthiopianPhone } from '@/lib/phone';
+import { LocationPicker } from '@/components/LocationPicker';
+import type { LatLng } from '@/lib/geo';
 import { ETHIOPIAN_REGIONS } from '@/types';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 import { Button } from '@/components/ui/button';
@@ -26,12 +29,7 @@ const MINISTRY_OPTIONS = [
   'Deacon Service', 'Prayer Team', 'Media Ministry',
 ];
 
-const STEPS = [
-  { n: 1, label: 'Your details', icon: UserIcon },
-  { n: 2, label: 'Your Atbiya', icon: Church },
-  { n: 3, label: 'About you', icon: Briefcase },
-  { n: 4, label: 'Sign-in details', icon: MapPin },
-];
+const STEP_ICONS = [UserIcon, Church, Briefcase, MapPin];
 
 type Form = Omit<SignupInput, 'atbiyaName'> & { confirmPassword: string };
 
@@ -43,13 +41,16 @@ const blank: Form = {
   atbiyaId: '',
 };
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, hint, children }: {
+  label: string; required?: boolean; hint?: string; children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-bold uppercase tracking-wider text-[#2E5E99]">
         {label}{required && ' *'}
       </Label>
       {children}
+      {hint && <p className="text-[11px] text-muted-foreground leading-relaxed">{hint}</p>}
     </div>
   );
 }
@@ -57,8 +58,19 @@ function Field({ label, required, children }: { label: string; required?: boolea
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { language, setLanguage } = useLanguage();
+  // `t` is the merged tree: English is always the base, so a language that has
+  // not been translated yet renders English rather than `undefined`, and an
+  // admin can fill it in from Landing Editor → UI Translations → Sign-up Form.
+  const { language, setLanguage, t } = useLanguage();
+  const tx = t.signup;
   const moduleCfg = useModuleConfig('members');
+
+  const STEPS = [
+    { n: 1, label: tx.stepDetails, icon: STEP_ICONS[0] },
+    { n: 2, label: tx.stepCongregation, icon: STEP_ICONS[1] },
+    { n: 3, label: tx.stepAbout, icon: STEP_ICONS[2] },
+    { n: 4, label: tx.stepCredentials, icon: STEP_ICONS[3] },
+  ];
   const fieldVisible = (key: string) => moduleCfg.fields.find((f) => f.key === key)?.visible ?? true;
 
   const [step, setStep] = useState(1);
@@ -103,21 +115,30 @@ const Signup: React.FC = () => {
   /** Returns an error message for the current step, or null when it's valid. */
   function validateStep(n: number): string | null {
     if (n === 1) {
-      if (!form.fullNameEnglish.trim()) return 'Please enter your full name in English.';
-      if (!form.fullNameAmharic.trim()) return 'Please enter your full name in Amharic.';
-      if (!form.phone.trim()) return 'Please enter a phone number so your parish can reach you.';
+      if (!form.fullNameEnglish.trim()) return tx.errNameEnglish;
+      if (!form.fullNameAmharic.trim()) return tx.errNameAmharic;
+      // Phone is the only contact detail we insist on: it is how the parish
+      // reaches a member, and many members have no email address at all.
+      if (!form.phone.trim()) return tx.errPhoneMissing;
+      if (!isValidPhone(form.phone)) {
+        return tx.errPhoneInvalid;
+      }
     }
     if (n === 2 && !form.atbiyaId) {
-      return 'Please choose the Atbiya you attend — that parish reviews your request.';
+      return tx.errCongregation;
     }
     if (n === 4) {
-      if (!form.username.trim()) return 'Please choose a username.';
+      if (!form.username.trim()) return tx.errUsernameMissing;
       if (!/^[a-zA-Z0-9._-]{3,}$/.test(form.username.trim())) {
-        return 'Usernames must be at least 3 characters, using letters, digits, dot, dash or underscore.';
+        return tx.errUsernameFormat;
       }
-      if (!form.email.trim()) return 'Please enter an email address — it is how you will sign in.';
-      if (form.password.length < 6) return 'Your password must be at least 6 characters.';
-      if (form.password !== form.confirmPassword) return 'The two passwords do not match.';
+      // Email is optional — you sign in with your username either way. Same
+      // check the parish-administrator form uses, so both paths agree.
+      if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+        return tx.errEmail;
+      }
+      if (form.password.length < 6) return tx.errPassword;
+      if (form.password !== form.confirmPassword) return tx.errPasswordMatch;
     }
     return null;
   }
@@ -139,12 +160,15 @@ const Signup: React.FC = () => {
     try {
       if (await signupService.isUsernameTaken(form.username)) {
         setStep(4);
-        setError('That username is already taken. Please choose another.');
+        setError(tx.errUsernameTaken);
         return;
       }
       const { confirmPassword, ...input } = form;
       await signupService.register({
         ...input,
+        // Store one canonical shape, so a number typed as 0911… and the same
+        // number typed as +251911… are not two different members.
+        phone: normalizeEthiopianPhone(input.phone) ?? input.phone.trim(),
         atbiyaName: selectedAtbiya?.name ?? '',
       });
       navigate('/pending', {
@@ -152,7 +176,7 @@ const Signup: React.FC = () => {
         state: { atbiyaName: selectedAtbiya?.name, atbiyaId: selectedAtbiya?.id },
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Registration failed. Please try again.');
+      setError(e instanceof Error ? e.message : tx.errGeneric);
     } finally {
       setSubmitting(false);
     }
@@ -186,10 +210,9 @@ const Signup: React.FC = () => {
           <div className="p-6 sm:p-10 space-y-8">
             <div className="text-center space-y-2">
               <img src={logo} alt="Mahibere Ahaw" className="h-16 w-16 mx-auto" />
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight">Become a Member</h1>
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{tx.title}</h1>
               <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-                Fill in your details and choose the Atbiya you attend. Your request goes
-                to that parish — you will be able to sign in once they approve it.
+                {tx.intro}
               </p>
             </div>
 
@@ -215,31 +238,31 @@ const Signup: React.FC = () => {
             {step === 1 && (
               <div className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Full name (English)" required>
+                  <Field label={tx.fullNameEnglish} required>
                     <Input value={form.fullNameEnglish} onChange={(e) => set('fullNameEnglish', e.target.value)}
                       placeholder="Abebe Kebede" />
                   </Field>
-                  <Field label="Full name (አማርኛ)" required>
+                  <Field label={tx.fullNameAmharic} required>
                     <Input value={form.fullNameAmharic} onChange={(e) => set('fullNameAmharic', e.target.value)}
                       placeholder="አበበ ከበደ" />
                   </Field>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Phone number" required>
-                    <Input value={form.phone} onChange={(e) => set('phone', e.target.value)}
-                      placeholder="0911 22 33 44" />
+                  <Field label={tx.phone} required hint={tx.phoneHint}>
+                    <Input type="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)}
+                      autoComplete="tel" placeholder="0911 22 33 44" />
                   </Field>
-                  <Field label="Gender">
+                  <Field label={tx.gender}>
                     <Select value={form.gender} onValueChange={(v) => set('gender', v)}>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Male">{tx.male}</SelectItem>
+                        <SelectItem value="Female">{tx.female}</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
                 </div>
-                <Field label="Date of birth">
+                <Field label={tx.dateOfBirth}>
                   <EthiopianDatePicker
                     value={form.dateOfBirth}
                     onChange={(iso) => set('dateOfBirth', iso)}
@@ -251,9 +274,9 @@ const Signup: React.FC = () => {
             {/* ── Step 2: parish ── */}
             {step === 2 && (
               <div className="space-y-4">
-                <Field label="Search parishes">
+                <Field label={tx.searchCongregations}>
                   <Input value={atbiyaSearch} onChange={(e) => setAtbiyaSearch(e.target.value)}
-                    placeholder="Search by name or place…" />
+                    placeholder={tx.searchPlaceholder} />
                 </Field>
 
                 {loadingAtbiyas ? (
@@ -263,9 +286,9 @@ const Signup: React.FC = () => {
                 ) : atbiyas.length === 0 ? (
                   <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-[#2E5E99]/30">
                     <Church className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                    <p className="font-bold">No parishes are accepting requests yet</p>
+                    <p className="font-bold">{tx.noCongregations}</p>
                     <p className="text-sm text-muted-foreground">
-                      Please contact the head office, or try again later.
+                      {tx.noCongregationsHint}
                     </p>
                   </div>
                 ) : (
@@ -297,7 +320,7 @@ const Signup: React.FC = () => {
                     })}
                     {filteredAtbiyas.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-6">
-                        No parish matches "{atbiyaSearch}".
+                        {tx.noMatch} "{atbiyaSearch}".
                       </p>
                     )}
                   </div>
@@ -309,12 +332,12 @@ const Signup: React.FC = () => {
             {step === 3 && (
               <div className="space-y-4">
                 {fieldVisible('workSchool') && (
-                  <Field label="Work or school">
+                  <Field label={tx.workSchool}>
                     <Input value={form.workSchool} onChange={(e) => set('workSchool', e.target.value)} />
                   </Field>
                 )}
                 {fieldVisible('maritalStatus') && (
-                  <Field label="Marital status">
+                  <Field label={tx.maritalStatus}>
                     <Select value={form.maritalStatus} onValueChange={(v) => set('maritalStatus', v)}>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -328,16 +351,16 @@ const Signup: React.FC = () => {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox checked={form.hasChildren}
                     onCheckedChange={(v) => set('hasChildren', v === true)} />
-                  <span className="text-sm font-medium">I have children</span>
+                  <span className="text-sm font-medium">{tx.hasChildren}</span>
                 </label>
                 {form.hasChildren && (
-                  <Field label="Number of children">
+                  <Field label={tx.childrenCount}>
                     <Input type="number" min={0} value={form.childrenCount}
                       onChange={(e) => set('childrenCount', Number(e.target.value))} />
                   </Field>
                 )}
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <Field label="Region">
+                  <Field label={tx.region}>
                     <Select value={form.region} onValueChange={(v) => set('region', v)}>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -347,14 +370,25 @@ const Signup: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Zone">
+                  <Field label={tx.addressZone}>
                     <Input value={form.zone} onChange={(e) => set('zone', e.target.value)} />
                   </Field>
-                  <Field label="Woreda">
+                  <Field label={tx.addressWoreda}>
                     <Input value={form.woreda} onChange={(e) => set('woreda', e.target.value)} />
                   </Field>
                 </div>
-                <Field label="Ministries you would like to serve in">
+                <p className="text-[11px] text-muted-foreground -mt-2">
+                  {tx.addressHint}
+                </p>
+                <LocationPicker
+                  value={{ lat: form.lat, lng: form.lng }}
+                  onChange={(p: LatLng | null) =>
+                    setForm((f) => ({ ...f, lat: p?.lat, lng: p?.lng }))}
+                  label={tx.homeLocation}
+                  hint={tx.homeLocationHint}
+                  height={220}
+                />
+                <Field label={tx.ministries}>
                   <div className="flex flex-wrap gap-2">
                     {MINISTRY_OPTIONS.map((m) => {
                       const on = (form.ministryType ?? []).includes(m);
@@ -379,31 +413,31 @@ const Signup: React.FC = () => {
                   <div className="p-4 rounded-2xl bg-[#2E5E99]/5 border border-[#2E5E99]/15 flex items-start gap-3">
                     <Church className="h-5 w-5 text-[#2E5E99] mt-0.5 shrink-0" />
                     <div className="text-sm">
-                      <p className="font-bold">Your request goes to {selectedAtbiya.name}</p>
+                      <p className="font-bold">{tx.requestGoesTo} {selectedAtbiya.name}</p>
                       {selectedAtbiya.contact?.phone && (
                         <p className="text-muted-foreground text-xs mt-0.5">
-                          Contact: {selectedAtbiya.contact.nameEn ?? ''} {selectedAtbiya.contact.phone}
+                          {tx.contact}: {selectedAtbiya.contact.nameEn ?? ''} {selectedAtbiya.contact.phone}
                         </p>
                       )}
                     </div>
                   </div>
                 )}
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Username" required>
+                  <Field label={tx.username} required>
                     <Input value={form.username} onChange={(e) => set('username', e.target.value)}
                       autoComplete="username" placeholder="abebe.kebede" />
                   </Field>
-                  <Field label="Email" required>
+                  <Field label={tx.email} hint={tx.emailHint}>
                     <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)}
                       autoComplete="email" placeholder="you@example.com" />
                   </Field>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Password" required>
+                  <Field label={tx.password} required>
                     <Input type="password" value={form.password} onChange={(e) => set('password', e.target.value)}
-                      autoComplete="new-password" placeholder="At least 6 characters" />
+                      autoComplete="new-password" placeholder={tx.passwordPlaceholder} />
                   </Field>
-                  <Field label="Confirm password" required>
+                  <Field label={tx.confirmPassword} required>
                     <Input type="password" value={form.confirmPassword}
                       onChange={(e) => set('confirmPassword', e.target.value)} autoComplete="new-password" />
                   </Field>
@@ -421,23 +455,23 @@ const Signup: React.FC = () => {
             <div className="flex items-center justify-between gap-3 pt-2">
               <Button variant="outline" disabled={step === 1 || submitting}
                 onClick={() => { setError(null); setStep((s) => Math.max(1, s - 1)); }}>
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                <ArrowLeft className="h-4 w-4 mr-2" /> {tx.back}
               </Button>
               {step < STEPS.length ? (
                 <Button onClick={next} className="bg-[#2E5E99] hover:bg-[#204a7c]">
-                  Continue <ArrowRight className="h-4 w-4 ml-2" />
+                  {tx.continue} <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
                 <Button onClick={handleSubmit} disabled={submitting} className="bg-[#2E5E99] hover:bg-[#204a7c]">
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Send request
+                  {tx.submit}
                 </Button>
               )}
             </div>
 
             <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
-              <Link to="/login" className="font-bold text-[#2E5E99] hover:underline">Sign in</Link>
+              {tx.haveAccount}{' '}
+              <Link to="/login" className="font-bold text-[#2E5E99] hover:underline">{tx.signIn}</Link>
             </p>
           </div>
         </motion.div>

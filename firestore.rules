@@ -166,6 +166,22 @@ service cloud.firestore {
                      'hierarchyEntityId', 'mahderatId', 'approvedBy', 'approvedAt',
                      'rejectedBy', 'rejectedAt', 'rejectedReason', 'signupSource']);
 
+      // ── Joining a fellowship group ──────────────────────────────────────
+      // `mahderatId` is frozen above with the privilege fields, but it is not
+      // one — it grants nothing and is only a roster field. A member picks
+      // their own Mahedher, restricted to one belonging to THEIR congregation
+      // so nobody lists themselves under another parish's group.
+      //
+      // The get() is the price of that check and fires only on this one write
+      // path, never on an ordinary profile edit.
+      allow update: if isActive()
+        && request.auth.uid == userId
+        && changedOnly(['mahderatId', 'updatedAt'])
+        && request.resource.data.mahderatId is string
+        && request.resource.data.mahderatId.size() > 0
+        && get(/databases/$(database)/documents/hierarchy/$(request.resource.data.mahderatId))
+             .data.get('parentId', '') == resource.data.get('atbiyaId', '');
+
       // ── An approver deciding a pending request ──────────────────────────
       // Restricted to requests for their own parish unless they are global.
       //
@@ -239,21 +255,30 @@ service cloud.firestore {
       // Registering a parish is scoped to level == 'Atbiya', so the registry
       // permission never becomes a way to graft new Zones or Memriya
       // departments onto the org tree — those stay admin-only.
+      //
+      // A parish may additionally create its OWN Mahedherat (small Bible-study
+      // groups), which is the only kind of entity it can add. `parentId` is
+      // pinned to its own parish, so it cannot hang a group off someone else's.
       allow create: if isAdmin()
-        || (canRegisterAtbiya() && request.resource.data.level == 'Atbiya');
+        || (canRegisterAtbiya() && request.resource.data.level == 'Atbiya')
+        || (isOwnAtbiyaEditor()
+            && request.resource.data.level == 'Mahderat'
+            && request.resource.data.parentId == myAtbiya());
 
-      // Kept as ONE clause on purpose. Written as three separate `allow update`
+      // Kept as ONE clause on purpose. Written as separate `allow update`
       // statements, Firestore re-evaluates the whole helper chain per statement
       // and blows the 1000-expression cap, denying every parish edit.
       allow update: if isAdmin()
-        || (resource.data.level == 'Atbiya' && (
-              canRegisterAtbiya()
-              // A parish leader may maintain their own record, but cannot move
-              // it in the tree or change what kind of entity it is.
-              || (docId == myAtbiya()
-                  && isOwnAtbiyaEditor()
-                  && !changed(['level', 'parentId']))
-            ));
+        || (canRegisterAtbiya() && resource.data.level == 'Atbiya')
+        // A parish leader maintains its own record and its own groups, but can
+        // move neither in the tree nor change what kind of entity they are.
+        || (isOwnAtbiyaEditor()
+            && !changed(['level', 'parentId'])
+            && (
+                 (resource.data.level == 'Atbiya' && docId == myAtbiya())
+                 || (resource.data.level == 'Mahderat'
+                     && resource.data.get('parentId', '') == myAtbiya())
+               ));
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -322,7 +347,20 @@ service cloud.firestore {
     //  Application data — everything here requires an APPROVED account.
     //  A pending user can authenticate but every read and write below fails.
     // ════════════════════════════════════════════════════════════════════════
-    match /meetings/{docId}                { allow read, write: if isActive(); }
+    // Meetings were `read, write: if isActive()` — any approved member could
+    // edit or delete anyone's meeting. Now they are owned by whoever scheduled
+    // them.
+    //
+    // Meetings created before `createdBy` existed read as '' and so are
+    // editable by admins only. That is the right direction to fail, but it IS a
+    // behaviour change on existing data.
+    match /meetings/{docId} {
+      allow read: if isActive();
+      allow create: if isActive() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isActive()
+        && (resource.data.get('createdBy', '') == request.auth.uid || isAdmin());
+    }
+
     match /announcements/{docId}           { allow read, write: if isActive(); }
     match /plans/{docId}                   { allow read, write: if isActive(); }
     match /reports/{docId}                 { allow read, write: if isActive(); }

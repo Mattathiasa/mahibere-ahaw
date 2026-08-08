@@ -83,7 +83,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
       return null;
     }
     if (!isHeadOffice && !myAtbiyaId) {
-      setError('Your account has no parish assigned, so a parish post cannot be attributed. Ask an administrator to set your Atbiya.');
+      setError('Your account has no congregation assigned, so a congregation post cannot be attributed. Ask an administrator to set it.');
       return null;
     }
     return {
@@ -133,7 +133,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
             <Badge variant={scope === 'global' ? 'default' : 'secondary'} className="gap-1 text-[10px]">
               {scope === 'global'
                 ? <><Globe className="h-3 w-3" /> Head office</>
-                : <><Church className="h-3 w-3" /> {user?.atbiyaName || 'Your parish'}</>}
+                : <><Church className="h-3 w-3" /> {user?.atbiyaName || 'Your congregation'}</>}
             </Badge>
           </DialogTitle>
           <DialogDescription>

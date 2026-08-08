@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuthContext } from './AuthContext';
+import { useLanguage } from './LanguageContext';
 import {
   resolvePermissions,
   ALL_PERMISSIONS,
@@ -70,6 +71,7 @@ let cachedRegistry: RoleRegistry | null = null;
 
 export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuthContext();
+  const { language } = useLanguage();
   const [roleOverrides, setRoleOverrides] = useState<RolePermissionOverrides>(cachedRoleOverrides ?? {});
   const [userOverrides, setUserOverrides] = useState<UserPermissionOverrides>(cachedUserOverrides ?? {});
   const [superAdmins, setSuperAdmins] = useState<string[]>(cachedSuperAdmins ?? []);
@@ -136,7 +138,12 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return permissions.has(permission);
   };
 
-  const roleLabel = (key: string | undefined, lang: Language = 'en') =>
+  /**
+   * Defaults to the language the user is actually reading in. It used to
+   * default to 'en', and since every call site omits the argument, role names
+   * rendered English on an otherwise Amharic page.
+   */
+  const roleLabel = (key: string | undefined, lang: Language = language) =>
     key ? pickRoleLabel(roleByKey.get(key), lang) || key : '';
 
   const isAdminRole = (key: string | undefined) => !!key && roleByKey.get(key)?.isAdmin === true;

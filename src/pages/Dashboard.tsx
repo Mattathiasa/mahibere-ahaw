@@ -23,6 +23,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { MembershipRequests } from '@/components/MembershipRequests';
+import { ChooseMahderCard } from '@/components/ChooseMahderCard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -224,6 +225,12 @@ const Dashboard = () => {
           Renders itself only for approvers, and sits high on the page so a
           parish sees waiting requests as soon as they sign in. */}
       <MembershipRequests />
+
+      {/* ── Choose a Mahedher ──
+          Renders itself only for a newly approved member who has not joined a
+          group yet. This is where the nearest-first suggestion lands, rather
+          than during sign-up, so the group pins never become public. */}
+      <ChooseMahderCard />
 
       {/* ── Comprehensive Quick Actions Grid (Quickboard Actions) ── */}
       {permissions.dashboardView !== 'basic' && (

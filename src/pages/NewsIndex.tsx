@@ -45,7 +45,7 @@ const NewsIndex: React.FC = () => {
             News &amp; Updates
           </h1>
           <p className="text-lg text-[#2E5E99] font-ethiopic max-w-2xl">
-            Announcements from the head office and from parishes across the church.
+            Announcements from the head office and from congregations across the church.
           </p>
         </div>
 

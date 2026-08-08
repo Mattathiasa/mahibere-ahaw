@@ -9,9 +9,11 @@ import {
 import { userService } from '@/services/users';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { MembershipRequests } from '@/components/MembershipRequests';
+import { MahderatManager } from '@/components/MahderatManager';
 import { AtbiyaForm } from '@/components/AtbiyaForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +34,8 @@ import type { User } from '@/types';
 const MyAtbiya: React.FC = () => {
   const { user } = useAuth();
   const { can, isSuperAdmin, myAtbiyaId, myScope, roleLabel, isApproverRole } = usePermissions();
+  const { t } = useLanguage();
+  const a = t.admin;
 
   const [atbiya, setAtbiya] = useState<Atbiya | null>(null);
   const [draft, setDraft] = useState<AtbiyaInput>(emptyAtbiya());
@@ -60,12 +64,12 @@ const MyAtbiya: React.FC = () => {
         setDraft({ ...emptyAtbiya(), ...rest });
       }
     } catch {
-      setError('Could not load your parish record.');
+      setError(a.congregationLoadFailed);
       setAtbiya(null);
     } finally {
       setLoading(false);
     }
-  }, [myAtbiyaId]);
+  }, [myAtbiyaId, a]);
 
   const loadMembers = useCallback(async () => {
     if (!myAtbiyaId) return;
@@ -86,7 +90,7 @@ const MyAtbiya: React.FC = () => {
 
   async function handleSave() {
     if (!atbiya) return;
-    if (!draft.name.trim()) return setError('An English name is required.');
+    if (!draft.name.trim()) return setError(a.englishNameRequired);
     setSaving(true);
     setError(null);
     setNotice(null);
@@ -96,13 +100,13 @@ const MyAtbiya: React.FC = () => {
       // affectedKeys() check on some Firestore versions.
       const { parentId, ...rest } = draft;
       await hierarchyService.updateAtbiya(atbiya.id, { ...rest, name: draft.name.trim() });
-      setNotice('Parish details saved.');
+      setNotice(a.congregationSaved);
       await load();
     } catch (e) {
       const code = (e as { code?: string })?.code ?? '';
       setError(code === 'permission-denied'
-        ? 'Firestore denied that change. Your role may not include permission to edit this parish record.'
-        : e instanceof Error ? e.message : 'Could not save the parish.');
+        ? a.permissionDenied
+        : e instanceof Error ? e.message : a.congregationSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -113,15 +117,15 @@ const MyAtbiya: React.FC = () => {
       <div className="space-y-6">
         <ConfigurablePageHeader
           module="hierarchy"
-          defaultTitle="My Atbiya"
-          defaultDescription="Your parish, its members and their requests."
-          badge="Parish"
+          defaultTitle={a.myCongregationTitle}
+          defaultDescription={a.myCongregationDesc}
+          badge={a.congregationBadge}
         />
-        <SectionCard title="No parish assigned" icon={Church}>
+        <SectionCard title={a.noCongregationTitle} icon={Church}>
           <p className="text-muted-foreground">
             {belongsToParish
-              ? 'Your role does not include parish administration. Ask an administrator if you should have it.'
-              : 'Your account is not linked to an Atbiya, so there is no parish to show. Ask an administrator to set your Atbiya in User Management.'}
+              ? a.noCongregationRole
+              : a.noCongregationLink}
           </p>
         </SectionCard>
       </div>
@@ -139,9 +143,9 @@ const MyAtbiya: React.FC = () => {
     <div className="space-y-6">
       <ConfigurablePageHeader
         module="hierarchy"
-        defaultTitle={atbiya?.name ? `${atbiya.name} Atbiya` : 'My Atbiya'}
-        defaultDescription="Your parish, its members and their membership requests."
-        badge="Parish"
+        defaultTitle={atbiya?.name ? `${atbiya.name}` : a.myCongregationTitle}
+        defaultDescription={a.myCongregationDesc}
+        badge={a.congregationBadge}
       />
 
       {error && (
@@ -162,10 +166,9 @@ const MyAtbiya: React.FC = () => {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : !atbiya ? (
-        <SectionCard title="Parish not found" icon={Church}>
+        <SectionCard title={a.congregationNotFound} icon={Church}>
           <p className="text-muted-foreground">
-            Your account points at a parish record that no longer exists. Ask an
-            administrator to reassign your Atbiya.
+            {a.congregationNotFoundDesc}
           </p>
         </SectionCard>
       ) : (
@@ -182,9 +185,9 @@ const MyAtbiya: React.FC = () => {
                     {atbiya.nameAmharic}
                   </span>
                 )}
-                {atbiya.active === false && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
+                {atbiya.active === false && <Badge variant="outline" className="text-[10px]">{a.inactive}</Badge>}
                 {atbiya.isPublic === false && (
-                  <Badge variant="secondary" className="text-[10px]">Hidden from sign-up</Badge>
+                  <Badge variant="secondary" className="text-[10px]">{a.hidden}</Badge>
                 )}
               </CardTitle>
               <CardDescription className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
@@ -200,11 +203,11 @@ const MyAtbiya: React.FC = () => {
                 )}
                 {(atbiya.bankAccounts ?? []).length > 0 && (
                   <span className="flex items-center gap-1.5">
-                    <Landmark className="h-3 w-3" /> {(atbiya.bankAccounts ?? []).length} bank account(s)
+                    <Landmark className="h-3 w-3" /> {(atbiya.bankAccounts ?? []).length} {a.bankAccountCount}
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                  Signed in as {user?.fullName ?? user?.username} · {roleLabel(user?.hierarchyLevel)}
+                  {a.signedInAs} {user?.fullName ?? user?.username} · {roleLabel(user?.hierarchyLevel)}
                 </span>
               </CardDescription>
             </CardHeader>
@@ -215,13 +218,16 @@ const MyAtbiya: React.FC = () => {
           }}>
             <TabsList className="mb-6 w-full flex-wrap h-auto">
               <TabsTrigger value="requests" className="flex-1 gap-2">
-                <UserPlus className="h-4 w-4" /> Requests
+                <UserPlus className="h-4 w-4" /> {a.tabRequests}
               </TabsTrigger>
               <TabsTrigger value="members" className="flex-1 gap-2">
-                <UsersIcon className="h-4 w-4" /> Members
+                <UsersIcon className="h-4 w-4" /> {a.tabMembers}
+              </TabsTrigger>
+              <TabsTrigger value="mahderat" className="flex-1 gap-2">
+                <UsersIcon className="h-4 w-4" /> {a.tabMahderat}
               </TabsTrigger>
               <TabsTrigger value="profile" className="flex-1 gap-2">
-                <Church className="h-4 w-4" /> Parish details
+                <Church className="h-4 w-4" /> {a.tabDetails}
               </TabsTrigger>
             </TabsList>
 
@@ -229,10 +235,9 @@ const MyAtbiya: React.FC = () => {
               {isApproverRole(user?.hierarchyLevel) || can('canApproveMembers') || isSuperAdmin ? (
                 <MembershipRequests />
               ) : (
-                <SectionCard title="Not an approver" icon={UserPlus}>
+                <SectionCard title={a.notApprover} icon={UserPlus}>
                   <p className="text-muted-foreground">
-                    Your role cannot decide membership requests. Someone with the
-                    "Approve Member Requests" permission handles them for this parish.
+                    {a.notApproverDesc}
                   </p>
                 </SectionCard>
               )}
@@ -241,15 +246,14 @@ const MyAtbiya: React.FC = () => {
             <TabsContent value="members">
               <Card>
                 <CardHeader>
-                  <CardTitle>Members of {atbiya.name}</CardTitle>
+                  <CardTitle>{a.membersOf}{atbiya.name} — {a.tabMembers}</CardTitle>
                   <CardDescription>
-                    Everyone whose account is linked to this parish, including those
-                    still waiting for a decision.
+                    {a.membersOfDesc}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Input
-                    placeholder="Search members…"
+                    placeholder={a.searchMembers}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="max-w-sm"
@@ -262,12 +266,12 @@ const MyAtbiya: React.FC = () => {
                     <div className="text-center py-12 text-muted-foreground">
                       <UsersIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
                       <p className="font-medium">
-                        {members.length === 0 ? 'No members yet' : 'No member matches that search'}
+                        {members.length === 0 ? a.noMembersYet : a.noMemberMatch}
                       </p>
                       <p className="text-sm">
                         {members.length === 0
-                          ? 'People who choose this parish when they sign up appear here.'
-                          : 'Try a different name, username or phone number.'}
+                          ? a.noMembersYetDesc
+                          : a.noMemberMatchDesc}
                       </p>
                     </div>
                   ) : filteredMembers.map((m) => {
@@ -304,20 +308,38 @@ const MyAtbiya: React.FC = () => {
               </Card>
             </TabsContent>
 
+            <TabsContent value="mahderat">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{a.mahderatTitle}{atbiya.name} — {a.tabMahderat}</CardTitle>
+                  <CardDescription>
+                    {a.mahderatDesc}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MahderatManager
+                    atbiyaId={atbiya.id}
+                    atbiyaName={atbiya.name}
+                    canEdit={mayEdit}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="profile">
               <Card>
                 <CardHeader className="flex flex-row items-start justify-between gap-4">
                   <div>
-                    <CardTitle>Parish details</CardTitle>
+                    <CardTitle>{a.tabDetails}</CardTitle>
                     <CardDescription>
-                      These appear on the public sign-up form and to your members.
-                      {!mayEdit && ' Your role can view them but not change them.'}
+                      {a.detailsPublicNote}
+                      {!mayEdit && ` ${a.detailsReadOnly}`}
                     </CardDescription>
                   </div>
                   {mayEdit && (
                     <Button size="sm" onClick={handleSave} disabled={saving}>
                       {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                      Save
+                      {a.save}
                     </Button>
                   )}
                 </CardHeader>

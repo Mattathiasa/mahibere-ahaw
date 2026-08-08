@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Lock, AlertCircle } from 'lucide-react';
 import type { Role, RoleScope } from '@/services/roleRegistry';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,11 +15,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 
-const SCOPES: { value: RoleScope; label: string; hint: string }[] = [
-  { value: 'global', label: 'Global (head office)', hint: 'Sees data for the whole organisation.' },
-  { value: 'zone', label: 'Zone', hint: 'Sees the parishes in its zone.' },
-  { value: 'atbiya', label: 'Atbiya (parish)', hint: 'Sees only its own parish.' },
-  { value: 'mahder', label: 'Mahder (fellowship)', hint: 'Narrowest scope — its own group.' },
+type ScopeStringKey = 'scopeGlobal' | 'scopeDiocese' | 'scopeCongregation' | 'scopeMahder';
+type ScopeHintKey = 'scopeGlobalHint' | 'scopeDioceseHint' | 'scopeCongregationHint' | 'scopeMahderHint';
+
+const SCOPES: { value: RoleScope; labelKey: ScopeStringKey; hintKey: ScopeHintKey }[] = [
+  { value: 'global', labelKey: 'scopeGlobal', hintKey: 'scopeGlobalHint' },
+  { value: 'zone', labelKey: 'scopeDiocese', hintKey: 'scopeDioceseHint' },
+  { value: 'atbiya', labelKey: 'scopeCongregation', hintKey: 'scopeCongregationHint' },
+  { value: 'mahder', labelKey: 'scopeMahder', hintKey: 'scopeMahderHint' },
 ];
 
 const COLORS = ['indigo', 'violet', 'blue', 'cyan', 'emerald', 'amber', 'rose', 'slate'];
@@ -50,6 +54,8 @@ interface RoleEditorDialogProps {
 export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
   open, role, existingKeys, userCount = 0, onSave, onClose,
 }) => {
+  const { t } = useLanguage();
+  const a = t.admin;
   const [draft, setDraft] = useState<Role>(BLANK);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,12 +75,12 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
 
   function handleSubmit() {
     const key = draft.key.trim();
-    if (!key) return setError('A role key is required.');
+    if (!key) return setError(a.roleKeyRequired);
     if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(key)) {
-      return setError('The key must start with a letter and contain only letters, digits, dash or underscore.');
+      return setError(a.roleKeyFormat);
     }
     if (isNew && existingKeys.includes(key)) return setError(`The key "${key}" is already in use.`);
-    if (!draft.labels.en?.trim()) return setError('An English label is required.');
+    if (!draft.labels.en?.trim()) return setError(a.englishLabelRequired);
     onSave({ ...draft, key });
   }
 
@@ -83,23 +89,22 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isNew ? 'Add role' : `Edit role`}
+            {isNew ? a.addRole : a.editRole}
             {draft.isSystem && (
               <Badge variant="secondary" className="gap-1 text-[10px]">
-                <Lock className="h-3 w-3" /> Built-in
+                <Lock className="h-3 w-3" /> {a.builtIn}
               </Badge>
             )}
           </DialogTitle>
           <DialogDescription>
-            Permissions are edited in the matrix below the role list. This dialog covers
-            the role's identity, scope and access flags.
+            {a.roleDialogDesc}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Role key
+              {a.roleKey}
             </Label>
             <Input
               value={draft.key}
@@ -127,7 +132,7 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
 
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Description
+              {a.description}
             </Label>
             <Textarea rows={2} value={draft.description} onChange={(e) => set('description', e.target.value)} />
           </div>
@@ -135,23 +140,23 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Data scope
+                {a.dataScope}
               </Label>
               <Select value={draft.scope} onValueChange={(v) => set('scope', v as RoleScope)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {SCOPES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    <SelectItem key={s.value} value={s.value}>{a[s.labelKey]}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground">
-                {SCOPES.find((s) => s.value === draft.scope)?.hint}
+                {(() => { const k = SCOPES.find((s) => s.value === draft.scope)?.hintKey; return k ? a[k] : ''; })()}
               </p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Badge colour
+                {a.badgeColour}
               </Label>
               <Select value={draft.color} onValueChange={(v) => set('color', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -167,18 +172,18 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
           <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/20">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-bold">Administrator access</p>
+                <p className="text-sm font-bold">{a.adminAccess}</p>
                 <p className="text-xs text-muted-foreground">
-                  Can open the /admin control centers and write site configuration.
+                  {a.adminAccessDesc}
                 </p>
               </div>
               <Switch checked={draft.isAdmin} onCheckedChange={(v) => set('isAdmin', v)} />
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-bold">Approve membership requests</p>
+                <p className="text-sm font-bold">{a.approveRequests}</p>
                 <p className="text-xs text-muted-foreground">
-                  Sees sign-up requests for their parish and can approve or reject them.
+                  {a.canApproveHint}
                 </p>
               </div>
               <Switch checked={draft.canApproveMembers} onCheckedChange={(v) => set('canApproveMembers', v)} />

@@ -1258,7 +1258,7 @@ const LandingEditor: React.FC = () => {
                       <Field label="Head-office attribution" hint="Shown on posts published centrally.">
                         <Input value={content.news.headOfficeLabel} onChange={(e) => setNews('headOfficeLabel', e.target.value)} />
                       </Field>
-                      <Field label="Parish attribution" hint="Fallback when a parish has no name in this language.">
+                      <Field label="Congregation attribution" hint="Fallback when a congregation has no name in this language.">
                         <Input value={content.news.parishLabel} onChange={(e) => setNews('parishLabel', e.target.value)} />
                       </Field>
                     </div>

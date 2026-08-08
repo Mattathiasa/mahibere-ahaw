@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { permissionService } from '@/services/permissionService';
 import { userService } from '@/services/users';
 import {
@@ -45,6 +46,8 @@ const COLOR_CLASSES: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const PermissionControl: React.FC = () => {
+  const { t } = useLanguage();
+  const a = t.admin;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { reload: reloadPermissions, roles, roleLabel } = usePermissions();
@@ -207,7 +210,7 @@ const PermissionControl: React.FC = () => {
           <TabsContent value="roles">
             <Card>
               <CardHeader>
-                <CardTitle>Role Permissions</CardTitle>
+                <CardTitle>{a.pcRoles}</CardTitle>
                 <CardDescription>
                   Role permissions moved to Software Control, which is now the single
                   editor for them. Two matrices writing the same document used to
@@ -246,11 +249,11 @@ const PermissionControl: React.FC = () => {
               {/* User list */}
               <Card className="lg:col-span-1">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Select User</CardTitle>
+                  <CardTitle className="text-base">{a.pcSelectUser}</CardTitle>
                   <div className="relative mt-2">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search users…"
+                      placeholder={a.pcSearchUsers}
                       value={searchUser}
                       onChange={e => setSearchUser(e.target.value)}
                       className="pl-9"

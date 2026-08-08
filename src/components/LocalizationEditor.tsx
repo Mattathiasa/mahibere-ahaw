@@ -87,6 +87,8 @@ const SECTION_LABELS: Record<string, string> = {
   footer: 'Footer',
   settings: 'Settings',
   pages: 'Page Titles & Descriptions',
+  signup: 'Sign-up Form',
+  admin: 'Admin Screens',
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────

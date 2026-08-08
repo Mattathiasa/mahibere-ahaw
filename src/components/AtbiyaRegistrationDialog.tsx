@@ -9,6 +9,7 @@ import {
   atbiyaAdminService, emptyAdminDraft, validateAdminDraft, type AdminDraft,
 } from '@/services/atbiyaAdmins';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { AtbiyaForm, Field, type ZoneOption } from '@/components/AtbiyaForm';
 import { AtbiyaAdminFields } from '@/components/AtbiyaAdminFields';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ interface AtbiyaRegistrationDialogProps {
 export const AtbiyaRegistrationDialog: React.FC<AtbiyaRegistrationDialogProps> = ({
   open, onSaved, onClose,
 }) => {
+  const { t } = useLanguage();
+  const a = t.admin;
   const { roles, roleLabel } = usePermissions();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -156,7 +159,7 @@ export const AtbiyaRegistrationDialog: React.FC<AtbiyaRegistrationDialogProps> =
 
             <Field label="Role" hint="Determines what this account can do. Parish-level roles can approve their own members.">
               <Select value={roleKey} onValueChange={setRoleKey} disabled={saving}>
-                <SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={a.selectRole} /></SelectTrigger>
                 <SelectContent>
                   {parishRoles.map((r) => (
                     <SelectItem key={r.key} value={r.key}>{roleLabel(r.key)}</SelectItem>

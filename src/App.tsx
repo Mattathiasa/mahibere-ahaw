@@ -40,7 +40,9 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const NewsManager = lazy(() => import("./pages/NewsManager"));
 const AtbiyaRegistry = lazy(() => import("./pages/AtbiyaRegistry"));
 const MyAtbiya = lazy(() => import("./pages/MyAtbiya"));
+const MembershipRequestsPage = lazy(() => import("./pages/MembershipRequestsPage"));
 const NewsIndex = lazy(() => import("./pages/NewsIndex"));
+const About = lazy(() => import("./pages/About"));
 const NewsPostPage = lazy(() => import("./pages/NewsPost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -79,8 +81,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <PermissionProvider>
+        {/* Language sits ABOVE Permission so `roleLabel` can localise role
+            names to the selected language. Language depends on nothing from
+            Permission, so this order is the only one that works. */}
         <LanguageProvider>
+        <PermissionProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -93,6 +98,8 @@ const App = () => (
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/pending" element={<PendingApproval />} />
                   <Route path="/news" element={<Suspense fallback={publicFallback}><NewsIndex /></Suspense>} />
+                  {/* Public: the long-form history the homepage summary links to. */}
+                  <Route path="/about" element={<Suspense fallback={publicFallback}><About /></Suspense>} />
                   <Route path="/news/:slug" element={<Suspense fallback={publicFallback}><NewsPostPage /></Suspense>} />
                   <Route path="/admin/landing-editor" element={<AdminRoute><LandingEditor /></AdminRoute>} />
                   <Route path="/admin/permissions" element={<AdminRoute superAdminOnly><PermissionControl /></AdminRoute>} />
@@ -119,6 +126,10 @@ const App = () => (
                       can hold without being an admin role. */}
                   <Route path="/atbiya-registry" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><AtbiyaRegistry /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/my-atbiya" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><MyAtbiya /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  {/* Gated inside the page rather than by RequirePermission: a
+                      super admin's own role may hold no permission at all, and
+                      it is `isSuperAdmin` that grants their reach here. */}
+                  <Route path="/membership-requests" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><MembershipRequestsPage /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><HigeDenb /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/church-rules" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><ChurchLaws /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Notifications /></Suspense></DashboardLayout></ProtectedRoute>} />
@@ -140,8 +151,8 @@ const App = () => (
               </BrowserRouter>
             </ErrorBoundary>
           </TooltipProvider>
-        </LanguageProvider>
         </PermissionProvider>
+        </LanguageProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

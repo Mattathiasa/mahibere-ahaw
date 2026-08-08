@@ -107,7 +107,7 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   meetings: {
     headerTitle: '', headerDescription: '',
     learnMore:
-      'Schedule and coordinate leadership meetings and events. Attendees are notified, and upcoming/past meetings are tracked automatically.',
+      'Schedule and coordinate meetings and events. Choose who is notified — a whole diocese, one congregation, or only particular roles — and upcoming/past meetings are tracked automatically.',
     fields: [f('title', 'Meeting Title', true, true), f('scheduledDate', 'Date & Time', true, true), f('location', 'Location'), f('description', 'Description')],
     options: {},
   },

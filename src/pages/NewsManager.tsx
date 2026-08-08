@@ -111,7 +111,7 @@ const NewsManager: React.FC = () => {
           defaultDescription={
             isHeadOffice
               ? 'Write and publish news for the public homepage.'
-              : 'Write news for your parish. Published posts appear on the homepage with your parish name.'
+              : 'Write news for your congregation. Published posts appear on the homepage with its name.'
           }
           badge="Publishing"
         />

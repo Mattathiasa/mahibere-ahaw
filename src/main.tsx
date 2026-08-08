@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+// Leaflet ships its layout as CSS; without this the map panes stack and the
+// tiles render as a scrambled column rather than a map.
+import "leaflet/dist/leaflet.css";
 
 /**
  * Recover from a stale tab after a deploy.

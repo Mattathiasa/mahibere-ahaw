@@ -123,14 +123,33 @@ beforeEach(async () => {
     await setDoc(doc(db, 'users/super-1'), {
       username: 'super', hierarchyLevel: 'HiyawanMahderat', role: 'user', status: 'active',
     });
+    // An ordinary member of Bishoftu, for the Mahedher join rule.
+    await setDoc(doc(db, 'users/member-1'), {
+      username: 'member', hierarchyLevel: 'HiyawanMahderat', role: 'user',
+      status: 'active', atbiyaId: 'atbiya-bishoftu',
+    });
 
     // ── Parishes ──────────────────────────────────────────────────────────
     await setDoc(doc(db, 'hierarchy/atbiya-bishoftu'), {
       name: 'Bishoftu Atbiya', nameAmharic: 'ቢሾፍቱ አጥቢያ', level: 'Atbiya',
       parentId: 'zone-1', active: true, isPublic: true,
     });
+    await setDoc(doc(db, 'hierarchy/atbiya-adama'), {
+      name: 'Adama Atbiya', level: 'Atbiya', parentId: 'zone-1',
+      active: true, isPublic: true,
+    });
     await setDoc(doc(db, 'hierarchy/zone-1'), {
       name: 'Central Zone', level: 'Zone', parentId: null,
+    });
+
+    // ── Mahedherat ────────────────────────────────────────────────────────
+    await setDoc(doc(db, 'hierarchy/mahder-bole'), {
+      name: 'Bole Mahedher', level: 'Mahderat', parentId: 'atbiya-bishoftu',
+      lat: 8.995, lng: 38.789, active: true,
+    });
+    await setDoc(doc(db, 'hierarchy/mahder-adama'), {
+      name: 'Adama Mahedher', level: 'Mahderat', parentId: 'atbiya-adama',
+      active: true,
     });
 
     // ── News ──────────────────────────────────────────────────────────────
@@ -144,6 +163,10 @@ beforeEach(async () => {
     });
 
     await setDoc(doc(db, 'meetings/m1'), { title: 'Council' });
+    // Owned by parish-1, for the meeting-ownership rules.
+    await setDoc(doc(db, 'meetings/mtg-owned'), {
+      title: 'Parish council', scheduledDate: '2026-09-01T09:00', createdBy: 'parish-1',
+    });
     await setDoc(doc(db, 'siteConfig/landingPage'), { en: {} });
 
     // ── Notifications ─────────────────────────────────────────────────────
@@ -211,7 +234,11 @@ describe('legacy accounts (no status field)', () => {
   });
 
   it('5b. can still write application data', async () => {
-    await assertSucceeds(setDoc(doc(as('legacy-1'), 'meetings/m2'), { title: 'New' }));
+    // `createdBy` is required on meetings since they became owned; the point of
+    // this case is unchanged — a status-less legacy account is still active.
+    await assertSucceeds(setDoc(doc(as('legacy-1'), 'meetings/m2'), {
+      title: 'New', createdBy: 'legacy-1',
+    }));
   });
 
   it('5c. can still read the member directory', async () => {
@@ -314,6 +341,110 @@ describe('privilege escalation', () => {
   });
 });
 
+/**
+ * Mahedherat — small Bible-study groups, stored as `hierarchy` documents with
+ * `level: 'Mahderat'` and parented to a congregation. A congregation controls
+ * its own; a member joins one of its own congregation's.
+ */
+describe('mahedherat', () => {
+  it('a congregation can create a group under itself', async () => {
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'hierarchy/new-mahder'), {
+      name: 'Bole Mahedher', level: 'Mahderat', parentId: 'atbiya-bishoftu',
+      lat: 8.995, lng: 38.789,
+    }));
+  });
+
+  it('cannot create a group under a DIFFERENT congregation', async () => {
+    await assertFails(setDoc(doc(as('parish-1'), 'hierarchy/sneaky-mahder'), {
+      name: 'Not mine', level: 'Mahderat', parentId: 'atbiya-adama',
+    }));
+  });
+
+  // Otherwise the group permission becomes a way to graft new parishes on.
+  it('cannot use the group permission to create a congregation', async () => {
+    await assertFails(setDoc(doc(as('parish-1'), 'hierarchy/sneaky-atbiya'), {
+      name: 'Mine now', level: 'Atbiya', parentId: 'zone-1',
+    }));
+  });
+
+  it('a congregation can edit and pin its own group', async () => {
+    await assertSucceeds(updateDoc(doc(as('parish-1'), 'hierarchy/mahder-bole'), {
+      name: 'Bole Mahedher', lat: 9.01, lng: 38.79,
+    }));
+  });
+
+  it('cannot re-parent a group to another congregation', async () => {
+    await assertFails(updateDoc(doc(as('parish-1'), 'hierarchy/mahder-bole'), {
+      parentId: 'atbiya-adama',
+    }));
+  });
+
+  it('another congregation cannot touch it', async () => {
+    await assertFails(updateDoc(doc(as('parish-2'), 'hierarchy/mahder-bole'), { name: 'Hijacked' }));
+  });
+
+  it('a member can join a group belonging to their own congregation', async () => {
+    await assertSucceeds(updateDoc(doc(as('member-1'), 'users/member-1'), {
+      mahderatId: 'mahder-bole',
+    }));
+  });
+
+  it('a member cannot join another congregation’s group', async () => {
+    await assertFails(updateDoc(doc(as('member-1'), 'users/member-1'), {
+      mahderatId: 'mahder-adama',
+    }));
+  });
+
+  // The narrow join rule must not become a general self-edit escape hatch.
+  it('the join path cannot smuggle in a role change', async () => {
+    await assertFails(updateDoc(doc(as('member-1'), 'users/member-1'), {
+      mahderatId: 'mahder-bole', hierarchyLevel: 'Sinodos',
+    }));
+  });
+
+  it('the join path cannot smuggle in a congregation change', async () => {
+    await assertFails(updateDoc(doc(as('member-1'), 'users/member-1'), {
+      mahderatId: 'mahder-bole', atbiyaId: 'atbiya-adama',
+    }));
+  });
+});
+
+/**
+ * Meetings used to be `read, write: if isActive()`, so any approved member
+ * could delete anyone's meeting. Ownership now runs through `createdBy`.
+ */
+describe('meetings', () => {
+  it('an approved member can schedule a meeting in their own name', async () => {
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'meetings/mtg-new'), {
+      title: 'Parish council', scheduledDate: '2026-09-01T09:00', createdBy: 'parish-1',
+    }));
+  });
+
+  it('cannot schedule a meeting in somebody else’s name', async () => {
+    await assertFails(setDoc(doc(as('parish-1'), 'meetings/mtg-forged'), {
+      title: 'Forged', scheduledDate: '2026-09-01T09:00', createdBy: 'admin-1',
+    }));
+  });
+
+  it('the organiser can edit and delete their own meeting', async () => {
+    await assertSucceeds(updateDoc(doc(as('parish-1'), 'meetings/mtg-owned'), { title: 'Moved' }));
+    await assertSucceeds(deleteDoc(doc(as('parish-1'), 'meetings/mtg-owned')));
+  });
+
+  it('another member cannot edit or delete it', async () => {
+    await assertFails(updateDoc(doc(as('parish-2'), 'meetings/mtg-owned'), { title: 'Hijacked' }));
+    await assertFails(deleteDoc(doc(as('parish-2'), 'meetings/mtg-owned')));
+  });
+
+  it('an admin can still clean up any meeting', async () => {
+    await assertSucceeds(deleteDoc(doc(as('admin-1'), 'meetings/mtg-owned')));
+  });
+
+  it('every approved member can still read the calendar', async () => {
+    await assertSucceeds(getDoc(doc(as('parish-2'), 'meetings/mtg-owned')));
+  });
+});
+
 describe('membership approval', () => {
   it('the matching parish can approve its own pending request', async () => {
     await assertSucceeds(updateDoc(doc(as('parish-1'), 'users/pending-1'), {
@@ -337,6 +468,29 @@ describe('membership approval', () => {
     await assertSucceeds(updateDoc(doc(as('admin-1'), 'users/pending-1'), {
       status: 'active', approvedBy: 'admin-1',
     }));
+  });
+
+  /**
+   * A super admin is defined by `siteConfig/superAdmins.uids`, NOT by their
+   * role — `super-1` carries the narrowest role there is and belongs to no
+   * congregation at all. Their reach has to come from isSuperAdmin() flowing
+   * through isAdmin() into both isApprover() and hasGlobalScope(); if either
+   * link were broken they could see the queue and not act on it.
+   */
+  it('a super admin with only a member role can approve any congregation request', async () => {
+    await assertSucceeds(updateDoc(doc(as('super-1'), 'users/pending-1'), {
+      status: 'active', approvedBy: 'super-1', approvedAt: '2026-08-01T00:00:00.000Z',
+    }));
+  });
+
+  it('a super admin can reject any congregation request', async () => {
+    await assertSucceeds(updateDoc(doc(as('super-1'), 'users/pending-1'), {
+      status: 'rejected', rejectedBy: 'super-1', rejectedReason: 'Duplicate account',
+    }));
+  });
+
+  it('a super admin can list the pending queue across every congregation', async () => {
+    await assertSucceeds(getDocs(collection(as('super-1'), 'users')));
   });
 
   it('the approval path cannot be reused on an already-active account', async () => {

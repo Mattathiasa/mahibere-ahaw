@@ -7,12 +7,17 @@ import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { atbiyaAdminService } from '@/services/atbiyaAdmins';
 import { userService } from '@/services/users';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { AtbiyaEditorDialog } from '@/components/AtbiyaEditorDialog';
 import { AtbiyaRegistrationDialog } from '@/components/AtbiyaRegistrationDialog';
 import { AtbiyaAdminsDialog } from '@/components/AtbiyaAdminsDialog';
+import { MahderatManager } from '@/components/MahderatManager';
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +35,8 @@ const AtbiyaRegistry: React.FC = () => {
   const { can, isSuperAdmin, roles, isApproverRole } = usePermissions();
   const { showElement } = useSoftwareControl();
 
+  const { t } = useLanguage();
+  const tx = t.admin;
   const canManage = isSuperAdmin || can('canManageAtbiyas');
 
   const [atbiyas, setAtbiyas] = useState<Atbiya[]>([]);
@@ -42,6 +49,7 @@ const AtbiyaRegistry: React.FC = () => {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editing, setEditing] = useState<Atbiya | null>(null);
   const [managingAdmins, setManagingAdmins] = useState<Atbiya | null>(null);
+  const [managingGroups, setManagingGroups] = useState<Atbiya | null>(null);
 
   /**
    * Member and administrator counts in one pass over `users`.
@@ -76,13 +84,13 @@ const AtbiyaRegistry: React.FC = () => {
     } catch (e) {
       const code = (e as { code?: string })?.code ?? '';
       setError(code === 'permission-denied'
-        ? 'Firestore denied access to the parish registry. If the rules were just changed they still need to be deployed (firebase deploy --only firestore:rules).'
-        : 'Could not load the parish registry. Please try again.');
+        ? tx.registryRulesNotDeployed
+        : tx.registryLoadFailed);
       setAtbiyas([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tx]);
 
   useEffect(() => {
     if (!canManage) { setLoading(false); return; }
@@ -96,7 +104,7 @@ const AtbiyaRegistry: React.FC = () => {
       await hierarchyService.deactivateAtbiya(a.id, a.active === false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update the parish.');
+      setError(e instanceof Error ? e.message : tx.congregationUpdateFailed);
     }
   }
 
@@ -105,14 +113,13 @@ const AtbiyaRegistry: React.FC = () => {
       <div className="space-y-6">
         <ConfigurablePageHeader
           module="hierarchy"
-          defaultTitle="Atbiya Registry"
-          defaultDescription="Parishes, their details and their administrators."
-          badge="Administration"
+          defaultTitle={tx.registryTitle}
+          defaultDescription={tx.registryDesc}
+          badge={tx.registryTitle}
         />
-        <SectionCard title="Access Denied" icon={Church}>
+        <SectionCard title={tx.registryNoPermission} icon={Church}>
           <p className="text-muted-foreground">
-            Your role does not include the "Manage Atbiya Registry" permission. A
-            super admin can grant it in Software Control → Roles.
+            {tx.registryNoPermission}
           </p>
         </SectionCard>
       </div>
@@ -132,9 +139,9 @@ const AtbiyaRegistry: React.FC = () => {
     <div className="space-y-6">
       <ConfigurablePageHeader
         module="hierarchy"
-        defaultTitle="Atbiya Registry"
-        defaultDescription="Parishes, their details and their administrators."
-        badge="Administration"
+        defaultTitle={tx.registryTitle}
+        defaultDescription={tx.registryDesc}
+        badge={tx.registryTitle}
       />
 
       {error && (
@@ -149,10 +156,9 @@ const AtbiyaRegistry: React.FC = () => {
           <TriangleAlert className="h-4 w-4 mt-0.5 shrink-0" />
           <span>
             {withoutAdmin.length === 1
-              ? <><strong>{withoutAdmin[0].name}</strong> has no administrator.</>
-              : <><strong>{withoutAdmin.length} parishes</strong> have no administrator.</>}
-            {' '}Membership requests they receive have nobody to approve them — open
-            a parish and add one.
+              ? <><strong>{withoutAdmin[0].name}</strong> {tx.withoutAdminWarningOne}</>
+              : <><strong>{withoutAdmin.length}</strong> {tx.withoutAdminWarning}</>}
+            {' '}{tx.withoutAdminAction}
           </span>
         </div>
       )}
@@ -160,16 +166,14 @@ const AtbiyaRegistry: React.FC = () => {
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
-            <CardTitle>Registered parishes</CardTitle>
+            <CardTitle>{tx.registeredCongregations}</CardTitle>
             <CardDescription>
-              Every parish, with its address, bank accounts and contact person.
-              This list is what a new member picks from on the public sign-up
-              form, and it is the parish that receives their request.
+              {tx.registeredCongregationsDesc}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={() => { load(); loadCounts(); }} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
+              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> {tx.refresh}
             </Button>
             {showElement('atbiya.add') && (
               <Button size="sm" onClick={() => setRegisterOpen(true)}>
@@ -180,7 +184,7 @@ const AtbiyaRegistry: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <Input
-            placeholder="Search parishes…"
+            placeholder={tx.searchCongregations}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-sm"
@@ -194,7 +198,7 @@ const AtbiyaRegistry: React.FC = () => {
             <div className="text-center py-12 text-muted-foreground">
               <Church className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p className="font-medium">
-                {atbiyas.length === 0 ? 'No parishes registered yet' : 'No parish matches that search'}
+                {atbiyas.length === 0 ? tx.noCongregationsYet : tx.noCongregationMatch}
               </p>
               <p className="text-sm">
                 {atbiyas.length === 0
@@ -215,7 +219,7 @@ const AtbiyaRegistry: React.FC = () => {
                     )}
                     {a.active === false && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
                     {a.isPublic === false && (
-                      <Badge variant="secondary" className="text-[10px]">Hidden from sign-up</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{tx.hiddenFromSignup}</Badge>
                     )}
                     {a.active !== false && admins === 0 && (
                       <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/40">
@@ -245,20 +249,24 @@ const AtbiyaRegistry: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="gap-1 text-[10px]" title="Members">
+                  <Badge variant="outline" className="gap-1 text-[10px]" title={tx.membersCount}>
                     <UsersIcon className="h-2.5 w-2.5" /> {memberCounts[a.id] ?? 0}
                   </Badge>
                   <Button size="sm" variant="outline" className="text-xs"
                     onClick={() => setManagingAdmins(a)}>
-                    <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Administrators ({admins})
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1" /> {tx.administrators} ({admins})
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8" title="Edit parish"
+                  <Button size="sm" variant="outline" className="text-xs"
+                    onClick={() => setManagingGroups(a)}>
+                    <UsersIcon className="h-3.5 w-3.5 mr-1" /> {tx.tabMahderat}
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" title={tx.editCongregation}
                     onClick={() => setEditing(a)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
                   <Button size="sm" variant="outline" className="text-xs"
                     onClick={() => toggleActive(a)}>
-                    {a.active === false ? 'Reactivate' : 'Deactivate'}
+                    {a.active === false ? tx.reactivate : tx.deactivate}
                   </Button>
                 </div>
               </div>
@@ -266,8 +274,7 @@ const AtbiyaRegistry: React.FC = () => {
           })}
 
           <p className="text-[11px] text-muted-foreground pt-2">
-            Parishes are never deleted — member and news records reference them by
-            id. Deactivate instead.
+            {tx.neverDeletedNote}
           </p>
         </CardContent>
       </Card>
@@ -289,6 +296,28 @@ const AtbiyaRegistry: React.FC = () => {
         onChanged={loadCounts}
         onClose={() => setManagingAdmins(null)}
       />
+
+      {/* The same manager the congregation itself uses on /my-atbiya, so head
+          office and the congregation never see two different pictures. */}
+      <Dialog open={managingGroups !== null} onOpenChange={(o) => !o && setManagingGroups(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UsersIcon className="h-5 w-5" /> {tx.tabMahderat} — {managingGroups?.name}
+            </DialogTitle>
+            <DialogDescription>
+              {tx.mahderatDesc}
+            </DialogDescription>
+          </DialogHeader>
+          {managingGroups && (
+            <MahderatManager
+              atbiyaId={managingGroups.id}
+              atbiyaName={managingGroups.name}
+              canEdit={canManage}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

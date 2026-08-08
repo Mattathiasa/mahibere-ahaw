@@ -3,6 +3,7 @@ import type { AdminDraft } from '@/services/atbiyaAdmins';
 import { syntheticEmail } from '@/services/signup';
 import { Field } from '@/components/AtbiyaForm';
 import { Input } from '@/components/ui/input';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 /**
  * The administrator credential fields, shared by the registration wizard's
@@ -21,6 +22,8 @@ interface AtbiyaAdminFieldsProps {
 export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
   draft, setDraft, disabled = false,
 }) => {
+  const { t } = useLanguage();
+  const a = t.admin;
   function set<K extends keyof AdminDraft>(key: K, value: AdminDraft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
@@ -28,22 +31,22 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Full name (English) *">
+        <Field label={`${a.fullNameEnglish} *`}>
           <Input value={draft.fullNameEnglish} disabled={disabled}
             onChange={(e) => set('fullNameEnglish', e.target.value)}
             placeholder="Abebe Kebede Worku" />
         </Field>
-        <Field label="Full name (አማርኛ)">
+        <Field label={a.fullNameAmharic}>
           <Input value={draft.fullNameAmharic ?? ''} disabled={disabled}
             onChange={(e) => set('fullNameAmharic', e.target.value)}
             placeholder="አበበ ከበደ ወርቁ" />
         </Field>
-        <Field label="Username *" hint="What they type to sign in.">
+        <Field label={`${a.username} *`} hint={a.usernameHint}>
           <Input value={draft.username} disabled={disabled}
             onChange={(e) => set('username', e.target.value)}
             autoComplete="off" placeholder="abebe.k" />
         </Field>
-        <Field label="Phone">
+        <Field label={a.phone}>
           <Input value={draft.phone ?? ''} disabled={disabled}
             onChange={(e) => set('phone', e.target.value)}
             placeholder="0938714929" />
@@ -51,11 +54,11 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
       </div>
 
       <Field
-        label="Email"
+        label={a.email}
         hint={
           draft.username.trim()
             ? `Optional. Left blank, the account signs in as ${syntheticEmail(draft.username.trim())} — which has no inbox, so password reset links cannot be sent to it.`
-            : 'Optional, but without one no password reset link can ever be sent to this account.'
+            : a.emailBlankHint
         }
       >
         <Input type="email" value={draft.email ?? ''} disabled={disabled}
@@ -64,12 +67,12 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
       </Field>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Password *">
+        <Field label={`${a.password} *`}>
           <Input type="password" value={draft.password} disabled={disabled}
             onChange={(e) => set('password', e.target.value)}
-            autoComplete="new-password" placeholder="At least 6 characters" />
+            autoComplete="new-password" placeholder={a.passwordPlaceholder} />
         </Field>
-        <Field label="Confirm password *">
+        <Field label={`${a.confirmPassword} *`}>
           <Input type="password" value={draft.confirmPassword} disabled={disabled}
             onChange={(e) => set('confirmPassword', e.target.value)}
             autoComplete="new-password" />
@@ -77,8 +80,7 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Share these credentials with the administrator directly and ask them to
-        change the password after their first sign-in.
+        {a.shareCredentialsNote}
       </p>
     </div>
   );

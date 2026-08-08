@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { ETHIOPIAN_REGIONS } from '@/types';
+import { isValidPhone, normalizeEthiopianPhone } from '@/lib/phone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +15,7 @@ import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MemberWizardProps {
   onClose: () => void;
@@ -45,6 +48,8 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
   const moduleCfg = useModuleConfig('members');
   // Roles come from the registry rather than a local copy of the old 7-value list.
   const { roles, roleLabel } = usePermissions();
+  const { t: tt } = useLanguage();
+  const a = tt.admin;
   const hierarchyLevels = roles.filter((r) => r.active !== false).map((r) => r.key);
   const fieldVisible = (key: string) => moduleCfg.fields.find((f) => f.key === key)?.visible ?? true;
   const [step, setStep] = useState(1);
@@ -78,19 +83,54 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
     }));
   };
 
+  /**
+   * Returns a problem to show, or null when the form is sound.
+   *
+   * The asterisks on this wizard used to be decoration — nothing checked them,
+   * so a member could be saved with no name and no phone number at all.
+   */
+  const validate = (): string | null => {
+    if (!formData.fullNameEnglish.trim()) return a.needNameEn;
+    if (!formData.fullNameAmharic.trim()) return a.needNameAm;
+    if (!initialData) {
+      if (!/^[a-zA-Z0-9._-]{3,}$/.test(formData.username.trim())) {
+        return a.needUsername;
+      }
+      if (formData.password.length < 6) return a.needPassword;
+    }
+    // Email stays optional — the member signs in with their username, and many
+    // members have no address at all.
+    if (formData.email.trim() && !/^\S+@\S+\.\S+$/.test(formData.email.trim())) {
+      return a.badEmail;
+    }
+    if (!formData.phoneNumber.trim()) return a.needPhone;
+    if (!isValidPhone(formData.phoneNumber)) {
+      return a.badPhoneWizard;
+    }
+    return null;
+  };
+
   const handleSubmit = () => {
-    onSubmit(formData);
+    const problem = validate();
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    onSubmit({
+      ...formData,
+      phoneNumber: normalizeEthiopianPhone(formData.phoneNumber) ?? formData.phoneNumber.trim(),
+    });
     onClose();
   };
 
   // If editing, we can skip the credentials step (Step 2)
   const baseSteps = [
-    { number: 1, title: 'Identity', icon: User },
-    ...(initialData ? [] : [{ number: 2, title: 'Credentials', icon: Shield }]),
-    { number: 3, title: 'Status', icon: Heart },
-    { number: 4, title: 'Location', icon: MapPin },
-    { number: 5, title: 'Service', icon: Briefcase },
-    { number: 6, title: 'Review', icon: Check },
+    { number: 1, title: a.stepIdentity, icon: User },
+    ...(initialData ? [] : [{ number: 2, title: a.stepCredentials, icon: Shield }]),
+    { number: 3, title: a.stepStatus, icon: Heart },
+    { number: 4, title: a.stepLocation, icon: MapPin },
+    { number: 5, title: a.stepService, icon: Briefcase },
+    { number: 6, title: a.stepReview, icon: Check },
   ];
 
   // Adjust numbers for the UI
@@ -155,13 +195,13 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
           {step === 1 && (
             <Card className="border-none shadow-none bg-transparent">
               <CardHeader className="px-0">
-                <CardTitle className="text-2xl font-black italic tracking-tight uppercase transition-all">Identity Details</CardTitle>
-                <p className="text-sm text-muted-foreground font-medium">Sacred names and birth record.</p>
+                <CardTitle className="text-2xl font-black italic tracking-tight uppercase transition-all">{a.identityDetails}</CardTitle>
+                <p className="text-sm text-muted-foreground font-medium">{a.identityDetailsSub}</p>
               </CardHeader>
               <CardContent className="space-y-6 px-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Full Name (English) *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.fullNameEnglish} *</Label>
                     <Input
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.fullNameEnglish}
@@ -170,7 +210,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Full Name (Amharic) *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.fullNameAmharic} *</Label>
                     <Input
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.fullNameAmharic}
@@ -181,7 +221,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Date of Birth (የትውልድ ቀን) *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.dateOfBirth} *</Label>
                     <EthiopianDatePicker
                       value={formData.dateOfBirth}
                       onChange={(isoDate) => setFormData({ ...formData, dateOfBirth: isoDate })}
@@ -189,17 +229,17 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Gender *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.gender} *</Label>
                     <Select
                       value={formData.gender}
                       onValueChange={(value) => setFormData({ ...formData, gender: value })}
                     >
                       <SelectTrigger className="h-14 rounded-2xl border-2 bg-white/50">
-                        <SelectValue placeholder="Select Gender" />
+                        <SelectValue placeholder={a.gender} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Male">{a.male}</SelectItem>
+                        <SelectItem value="Female">{a.female}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -212,13 +252,13 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
           {step === 2 && (
             <Card className="border-none shadow-none bg-transparent">
               <CardHeader className="px-0">
-                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">System Credentials</CardTitle>
-                <p className="text-sm text-muted-foreground font-medium">Digital access and communication.</p>
+                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">{a.systemCredentials}</CardTitle>
+                <p className="text-sm text-muted-foreground font-medium">{a.systemCredentialsSub}</p>
               </CardHeader>
               <CardContent className="space-y-6 px-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Username *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.username} *</Label>
                     <Input
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.username}
@@ -227,7 +267,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Password *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.password} *</Label>
                     <Input
                       type="password"
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
@@ -239,7 +279,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Email Address</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.email}</Label>
                     <Input
                       type="email"
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
@@ -249,7 +289,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Phone Number *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.phoneNumber} *</Label>
                     <Input
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.phoneNumber}
@@ -266,14 +306,14 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
           {step === 3 && (
             <Card className="border-none shadow-none bg-transparent">
               <CardHeader className="px-0">
-                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">Life Stewardship</CardTitle>
-                <p className="text-sm text-muted-foreground font-medium">Family and daily occupation.</p>
+                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">{a.lifeStewardship}</CardTitle>
+                <p className="text-sm text-muted-foreground font-medium">{a.lifeStewardshipSub}</p>
               </CardHeader>
               <CardContent className="space-y-8 px-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {fieldVisible('workSchool') && (
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Work / School</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.workSchool}</Label>
                       <Input
                         className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                         value={formData.workSchool}
@@ -284,19 +324,19 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                   )}
                   {fieldVisible('maritalStatus') && (
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Marital Status</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.maritalStatus}</Label>
                       <Select
                         value={formData.maritalStatus}
                         onValueChange={(value) => setFormData({ ...formData, maritalStatus: value })}
                       >
                         <SelectTrigger className="h-14 rounded-2xl border-2 bg-white/50">
-                          <SelectValue placeholder="Select Status" />
+                          <SelectValue placeholder={a.maritalStatus} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Single">Single</SelectItem>
-                          <SelectItem value="Married">Married</SelectItem>
-                          <SelectItem value="Divorced">Divorced</SelectItem>
-                          <SelectItem value="Widowed">Widowed</SelectItem>
+                          <SelectItem value="Single">{a.single}</SelectItem>
+                          <SelectItem value="Married">{a.married}</SelectItem>
+                          <SelectItem value="Divorced">{a.divorced}</SelectItem>
+                          <SelectItem value="Widowed">{a.widowed}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -306,8 +346,8 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                 <div className="bg-slate-50/50 p-6 rounded-3xl border-2 border-dashed border-slate-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="space-y-1">
-                      <Label className="text-xs font-black uppercase tracking-wider">Children</Label>
-                      <p className="text-[10px] text-muted-foreground">Does the member have any children?</p>
+                      <Label className="text-xs font-black uppercase tracking-wider">{a.children}</Label>
+                      <p className="text-[10px] text-muted-foreground">{a.hasChildrenQ}</p>
                     </div>
                     <Checkbox
                       checked={formData.hasChildren}
@@ -322,7 +362,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                       animate={{ height: 'auto', opacity: 1 }}
                       className="mt-4 pt-4 border-t border-slate-200"
                     >
-                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Number of Children</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.childrenCount}</Label>
                       <Input
                         type="number"
                         className="h-14 rounded-2xl border-2 mt-2 bg-white"
@@ -341,18 +381,18 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
           {step === 4 && (
             <Card className="border-none shadow-none bg-transparent">
               <CardHeader className="px-0">
-                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">Local Presence</CardTitle>
-                <p className="text-sm text-muted-foreground font-medium">Physical address and region.</p>
+                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">{a.localPresence}</CardTitle>
+                <p className="text-sm text-muted-foreground font-medium">{a.localPresenceSub}</p>
               </CardHeader>
               <CardContent className="space-y-6 px-0">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Region *</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.region}</Label>
                   <Select
                     value={formData.region}
                     onValueChange={(value) => setFormData({ ...formData, region: value })}
                   >
                     <SelectTrigger className="h-14 rounded-2xl border-2 bg-white/50">
-                      <SelectValue placeholder="Select Region" />
+                      <SelectValue placeholder={a.selectRegion} />
                     </SelectTrigger>
                     <SelectContent>
                       {ETHIOPIAN_REGIONS.map((region) => (
@@ -363,7 +403,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Zone *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.zone}</Label>
                     <Input
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.zone}
@@ -372,7 +412,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Woreda *</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.woreda}</Label>
                     <Input
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.woreda}
@@ -389,18 +429,18 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
           {step === 5 && (
             <Card className="border-none shadow-none bg-transparent">
               <CardHeader className="px-0">
-                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">Divine Service</CardTitle>
-                <p className="text-sm text-muted-foreground font-medium">Organizational level and spiritual roles.</p>
+                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">{a.divineService}</CardTitle>
+                <p className="text-sm text-muted-foreground font-medium">{a.divineServiceSub}</p>
               </CardHeader>
               <CardContent className="space-y-10 px-0">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Hierarchy Level *</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.hierarchyLevel} *</Label>
                   <Select
                     value={formData.hierarchyLevel}
                     onValueChange={(value) => setFormData({ ...formData, hierarchyLevel: value })}
                   >
                     <SelectTrigger className="h-14 rounded-2xl border-2 bg-white/50">
-                      <SelectValue placeholder="Select Level" />
+                      <SelectValue placeholder={a.hierarchyLevel} />
                     </SelectTrigger>
                     <SelectContent>
                       {hierarchyLevels.map((level) => (
@@ -411,7 +451,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                 </div>
 
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Church Roles</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.churchRoles}</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {churchRoles.map((role) => (
                       <div
@@ -430,7 +470,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                 </div>
 
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">Ministry Teams</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-70">{a.ministryTeams}</Label>
                   <div className="flex flex-wrap gap-3">
                     {ministryOptions.map((ministry) => (
                       <div
@@ -454,8 +494,8 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
           {step === 6 && (
             <Card className="border-none shadow-none bg-transparent">
               <CardHeader className="px-0">
-                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">Holy Record Verification</CardTitle>
-                <p className="text-sm text-muted-foreground font-medium">Finalizing the member profile.</p>
+                <CardTitle className="text-2xl font-black italic tracking-tight uppercase">{a.reviewTitle}</CardTitle>
+                <p className="text-sm text-muted-foreground font-medium">{a.reviewSub}</p>
               </CardHeader>
               <CardContent className="space-y-10 px-0">
                 <div className="flex items-center gap-6 p-8 rounded-[3rem] bg-white shadow-2xl">
@@ -511,13 +551,13 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
           className="h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50"
           onClick={step === 1 ? onClose : prevStep}
         >
-          {step === 1 ? 'Discard' : 'Go Back'}
+          {step === 1 ? a.discard : a.goBack}
         </Button>
         <Button
           className="h-14 px-12 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-[#2E5E99]/20"
           onClick={step === steps[steps.length - 1].number ? handleSubmit : nextStep}
         >
-          {step === steps[steps.length - 1].number ? 'Secure Profile' : 'Continue'}
+          {step === steps[steps.length - 1].number ? a.secureProfile : a.continue}
         </Button>
       </div>
     </div>

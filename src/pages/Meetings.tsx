@@ -4,7 +4,10 @@ import { Calendar, MapPin, Plus, Trash2, Clock } from 'lucide-react';
 import { format, isPast, isFuture, isToday } from 'date-fns';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { meetingService } from '@/services/meetings';
+import { meetingService, everyoneAudience, type MeetingAudience } from '@/services/meetings';
+import { MeetingAudiencePicker } from '@/components/MeetingAudiencePicker';
+import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -29,10 +32,14 @@ const Meetings = () => {
     title: '',
     description: '',
     scheduledDate: '',
+    location: '',
   });
+  const [audience, setAudience] = useState<MeetingAudience>(everyoneAudience());
   const queryClient = useQueryClient();
   const permissions = useRolePermissions();
   const { showElement } = useSoftwareControl();
+  const { user } = useAuth();
+  const { isSuperAdmin } = usePermissions();
 
   const { data: meetingsData, isLoading } = useQuery({
     queryKey: ['meetings'],
@@ -40,14 +47,41 @@ const Meetings = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { title: string; description: string; scheduledDate: string }) =>
-      meetingService.createMeeting(data),
-    onSuccess: () => {
+    // Create then broadcast, so a failure to notify cannot lose the meeting
+    // itself. The count comes back from the broadcast so the toast can report
+    // what actually happened rather than assuming.
+    mutationFn: async (data: typeof formData) => {
+      const created = await meetingService.createMeeting({
+        ...data,
+        audience,
+        createdBy: user?.id,
+        createdByName: user?.fullName ?? user?.username,
+      });
+      let notified = 0;
+      try {
+        notified = await meetingService.broadcast(
+          { ...created, id: created.id },
+          audience,
+          { id: user?.id, name: user?.fullName ?? user?.username }
+        );
+      } catch {
+        notified = -1; // delivered nothing; say so rather than claiming success
+      }
+      return notified;
+    },
+    onSuccess: (notified: number) => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Meeting scheduled and notifications sent!');
+      if (notified < 0) {
+        toast.warning('Meeting scheduled, but notifications could not be sent.');
+      } else if (notified === 0) {
+        toast.success('Meeting scheduled. Nobody matched the audience, so no notifications were sent.');
+      } else {
+        toast.success(`Meeting scheduled and ${notified} ${notified === 1 ? 'person' : 'people'} notified.`);
+      }
       setShowCreateDialog(false);
-      setFormData({ title: '', description: '', scheduledDate: '' });
+      setFormData({ title: '', description: '', scheduledDate: '', location: '' });
+      setAudience(everyoneAudience());
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to schedule meeting');
@@ -100,6 +134,7 @@ const Meetings = () => {
       `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
       `SUMMARY:${meeting.title}`,
       `DESCRIPTION:${meeting.description}`,
+      ...(meeting.location ? [`LOCATION:${meeting.location}`] : []),
       'END:VEVENT',
       'END:VCALENDAR',
     ].join('\r\n');
@@ -158,7 +193,7 @@ const Meetings = () => {
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-black text-[#0D2440]">{t('scheduleMeeting')}</DialogTitle>
                   <DialogDescription className="text-[#2E5E99]/60">
-                    Create a new leadership meeting and notify all relevant members
+                    Schedule a meeting and choose who is notified
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -176,6 +211,17 @@ const Meetings = () => {
                     <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter meeting description and agenda" rows={6} required={moduleCfg.fields.find((f) => f.key === 'description')?.required ?? true} />
                   </div>
                   )}
+                  {showField('location') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="location">{t('meetingLocation')}</Label>
+                    <Input id="location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Where the meeting is held" />
+                  </div>
+                  )}
+                  <MeetingAudiencePicker
+                    value={audience}
+                    onChange={setAudience}
+                    disabled={createMutation.isPending}
+                  />
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>{t('cancel')}</Button>
                     <Button type="submit" disabled={createMutation.isPending}>
@@ -223,6 +269,12 @@ const Meetings = () => {
                                 <Clock className="h-4 w-4" />
                                 <span>{format(new Date(meeting.scheduledDate), 'p')}</span>
                               </div>
+                              {meeting.location && (
+                                <div className="flex items-center gap-2 text-sm font-bold text-[#2E5E99] bg-[#2E5E99]/10 px-3 py-1.5 rounded-xl border border-[#2E5E99]/10">
+                                  <MapPin className="h-4 w-4" />
+                                  <span>{meeting.location}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <Badge className={`${status.color} rounded-full px-4 py-1.5 border-none shadow-sm uppercase tracking-widest text-[10px] font-black`}>
@@ -241,7 +293,7 @@ const Meetings = () => {
                             <Calendar className="mr-2 h-4 w-4" />
                             {t('addToCalendar')}
                           </Button>
-                          {permissions.canScheduleMeeting && showElement('meetings.schedule') && (
+                          {(permissions.canDeleteMeeting || isSuperAdmin) && showElement('meetings.schedule') && (
                             <Button
                               variant="destructive"
                               className="h-12 w-12 rounded-2xl shadow-lg hover:rotate-12 transition-transform"

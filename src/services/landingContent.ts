@@ -81,7 +81,18 @@ export interface LandingContent {
     sectionDescription: string;
     whoWeAreTitle: string;
     whoWeAreDescription: string;
+    /**
+     * Sends the reader to the full history. The homepage carries a summary
+     * because the complete account runs to about 1,800 words — long enough
+     * that putting it here would bury the vision and mission below it.
+     */
+    historyLinkLabel?: string;
+    historyUrl?: string;
     missionTitle: string;
+    /**
+     * A blank line separates items — rendered as a list when there is more
+     * than one, and as a paragraph when there is not.
+     */
     missionDescription: string;
     visionTitle: string;
     visionDescription: string;
@@ -196,7 +207,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
   en: {
     hero: {
       badge: 'Revolutionizing Ministry',
-      title: 'Mahibere Ahaw Yekiristos Betekerstian',
+      title: 'Ahaw Orthodox Reformed Church',
       titleHighlight: '',
       description:
         "A renewed Orthodox Church that serves according to God's will revealed in the Holy Scripture, fulfilling its mission throughout the world through His Word and Spirit.",
@@ -221,30 +232,46 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       ],
     },
     about: {
-      badge: 'Who We Are',
+      badge: 'About Us',
       sectionTitle: 'About Us & Our Faith',
-      sectionDescription: 'Rooted in Holy Scripture and ancient spiritual heritage, serving the Body of Christ with truth, love, and modern dedication.',
-      whoWeAreTitle: 'Our Identity',
-      whoWeAreDescription: 'Mahibere Ahaw is a Christ-centered Orthodox church institution dedicated to spiritual renewal, biblical teaching, and equipping congregations worldwide through God\'s Word and Holy Spirit.',
+      sectionDescription: 'Founded on Holy Scripture, receiving Orthodox tradition, and living in continual renewal through His Word and His Spirit.',
+      whoWeAreTitle: 'Our Origin',
+      whoWeAreDescription: 'The founding members of the Ahaw Orthodox Reformed Church are Orthodox servants and believers of Christ who faced exile. The association was formed in 1998 E.C. from several prayer and fellowship groups, whose servants taught, trained and built up others for years without pay. At a general assembly held 2–4 Tir 2010 E.C. we resolved to establish ourselves on biblical truth and to organise as one church. We serve today by receiving with an open heart all exiled Orthodox believers in Christ, and by standing as a witness to the vision of Orthodox renewal.',
+      historyLinkLabel: 'Read our full history',
+      historyUrl: '/about',
       missionTitle: 'Our Mission',
-      missionDescription: 'To proclaim the Gospel of Jesus Christ, nurture believers into spiritual maturity, prepare church leaders, and advance digital ministry across all parishes.',
+      missionDescription: [
+        'To preach the Gospel;',
+        'To worship God in spirit and in truth;',
+        'To train and send messengers of the Gospel;',
+        'To make our members disciples of Christ;',
+        'To lead ourselves in continual renewal, and to work for the renewal of other churches;',
+        'To carry out apologetic work that guards us from false teaching;',
+        'To raise up and equip leaders for the church of Christ.',
+      ].join('\n'),
       visionTitle: 'Our Vision',
-      visionDescription: 'To see a vibrant, scripture-anchored, and spiritually revived church that transforms lives and serves every community with love and divine unity.',
+      visionDescription: 'To see an Orthodox church that serves the purpose of God revealed in Holy Scripture, renewed by His Word and His Spirit, fulfilling its mission throughout the world.',
       beliefsEyebrow: 'Statement of Faith',
       beliefsTitle: 'What We Believe',
       beliefs: [
-        { title: 'The Holy Scriptures', description: 'The Bible is the inspired, infallible Word of God, serving as the supreme authority for faith, doctrine, and daily life.', icon: 'BookOpen' },
-        { title: 'The Holy Trinity', description: 'We confess One God in three co-equal persons: the Father, the Son, and the Holy Spirit.', icon: 'Church' },
-        { title: 'Salvation in Jesus Christ', description: 'Eternal salvation is by grace through faith in the crucified and resurrected Lord Jesus Christ.', icon: 'Heart' },
-        { title: 'One Holy Apostolic Church', description: 'The Church is the body of Christ, united in faith, sacraments, holy tradition, and spiritual fellowship.', icon: 'Shield' },
+        { title: 'The Supremacy of Scripture', description: 'The Bible alone is the source, measure and standard of all our teaching. It is the Word of God and the highest authority over our position of faith.', icon: 'BookOpen' },
+        { title: 'Testing by the Word', description: 'Any Christian teaching is accepted or rejected only as it is weighed against Holy Scripture.', icon: 'Scale' },
+        { title: 'The Trinity and Christ', description: 'We believe in the Holy Trinity, in the full humanity and full divinity of Christ, and in Jesus Christ as the perfect and only Saviour.', icon: 'Church' },
+        { title: 'The Historic Creeds', description: 'We receive the Apostles\', the Nicene, the Epiphanian, the Athanasian and Emperor Gelawdewos\' statements of faith, weighing each against Scripture.', icon: 'Shield' },
+        { title: 'Shared Confessions', description: 'We receive the confessions issued by the fellowship of Gospel ministry associations, on the foundation of Scripture.', icon: 'Users' },
       ],
-      valuesEyebrow: 'Our Culture',
-      valuesTitle: 'Our Core Values',
+      valuesEyebrow: 'Our Core Values',
+      valuesTitle: 'Our Values',
       values: [
-        { title: 'Biblical Integrity', description: 'Unwavering faithfulness to the teachings of Holy Scripture and Christian truth.', icon: 'Shield' },
-        { title: 'Love & Christian Unity', description: 'Serving one another in genuine fellowship, compassion, and divine love.', icon: 'Users' },
-        { title: 'Spiritual Discipleship', description: 'Guiding every member to grow in holiness, prayer, and spiritual wisdom.', icon: 'Sparkles' },
-        { title: 'Servant Leadership', description: 'Leading by example with humility, diligence, and stewardship.', icon: 'CheckCircle2' },
+        { title: 'Honouring the authority of Scripture', description: 'The Old and New Testaments are the only source of our teaching and our spiritual practice.', icon: 'BookOpen' },
+        { title: 'Testing conciliar decisions by the Word', description: 'We make use of the creeds of Nicaea, Constantinople and Ephesus, examining each against Scripture.', icon: 'Scale' },
+        { title: 'Christ-centred service', description: 'Christ is the centre of our ministry.', icon: 'Church' },
+        { title: 'Apostolic mission', description: 'Bringing the Gospel to all who have not heard it, in their own language and culture.', icon: 'Send' },
+        { title: 'Valuing holiness and righteous living', description: 'Living in righteousness and holiness so as to be a good influence on society.', icon: 'Sparkles' },
+        { title: 'Guarding fellowship', description: 'Keeping our unity with other Christians and the ecumenical spirit of cooperation among churches.', icon: 'Users' },
+        { title: 'Working for spiritual renewal', description: 'Because renewal by God\'s Word and Spirit turns the church back from error, we live in continual renewal and help others to do the same.', icon: 'Heart' },
+        { title: 'Valuing accountability', description: 'Being accountable to God and to His people in our teaching, our lives and our administration.', icon: 'CheckCircle2' },
+        { title: 'Carrying social responsibility', description: 'Honouring national laws and regulations, and working sincerely for the good of society.', icon: 'Handshake' },
       ],
     },
     news: {
@@ -254,7 +281,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       seeAllLabel: 'See all news',
       readMoreLabel: 'Read more',
       headOfficeLabel: 'Head Office',
-      parishLabel: 'Parish',
+      parishLabel: 'Local Congregation',
       emptyTitle: 'News & Updates',
       emptyDescription: 'Stay tuned! News stories and updates from our ministry will appear here soon.',
       maxPosts: 4,
@@ -308,6 +335,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       ],
       supportHeading: 'Support',
       supportLinks: [
+        { label: 'About Us', url: '/about' },
         { label: 'Documentation', url: '' },
         { label: 'API Reference', url: '' },
         { label: 'Help Center', url: '' },
@@ -325,7 +353,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
   am: {
     hero: {
       badge: 'አገልግሎትን እያሳደጉ',
-      title: 'ማኅበረ አኀው የክርስቶስ ቤተክርስቲያን',
+      title: 'አኀው ኦርቶዶክሳዊት ተሐድሶ ቤተ ክርስቲያን',
       titleHighlight: '',
       description: 'በመጽሐፍ ቅዱስ የተገለጠውን የእግዚአብሔርን ሃሳብ የምታገለግል በቃሉና በመንፈሱ የታደሰች ኦርቶዶክሳዊት ቤ/ክ በመላው ዓለም ተልዕኮዋን ስትፈጽም ማየት።',
       ctaPrimary: 'ጀምር',
@@ -351,28 +379,44 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
     about: {
       badge: 'ስለ እኛ',
       sectionTitle: 'ስለ እኛ እና እምነታችን',
-      sectionDescription: 'በመጽሐፍ ቅዱስ እና በጥንታዊ መንፈሳዊ ቅርስ ላይ የተመሠረተች፣ የክርስቶስን አካል በእውነት፣ በፍቅርና በትጋት የምታገለግል ቤተክርስቲያን።',
-      whoWeAreTitle: 'ማነነታችን',
-      whoWeAreDescription: 'ማኅበረ አኀው በክርስቶስ ላይ የተመሰረተች ኦርቶዶክሳዊት ቤተክርስቲያን ስትሆን፣ በመንፈሳዊ ተሐድሶ፣ በመጽሐፍ ቅዱስ ትምህርትና በቃሉ ብርሃን ምዕመናንን በዓለም ዙሪያ የምታገለግል ማኅበር ናት።',
-      missionTitle: 'ተልዕኮአችን',
-      missionDescription: 'የኢየሱስ ክርስቶስን ወንጌል መስበክ፣ ምዕመናንን በመንፈሳዊ ሕይወት ማነጽ፣ የአገልግሎት መሪዎችን ማዘጋጀትና ዲጂታል አገልግሎትን ማሳደግ።',
-      visionTitle: 'ራዕያችን',
-      visionDescription: 'በእግዚአብሔር ቃል ላይ የተመሠረተች፣ በመንፈስ ቅዱስ የታደሰችና እያንዳንዱን ነፍስ በፍቅር፣ በቅድስናና በአንድነት የምታገለግል ቤተክርስቲያንን ማየት።',
+      sectionDescription: 'በመጽሐፍ ቅዱስ ላይ ተመሥርተን፣ ኦርቶዶክሳዊ ትውፊትን ተቀብለን፣ በቃሉና በመንፈሱ በማያቋርጥ ተሐድሶ የምንኖር ቤተ ክርስቲያን ነን።',
+      whoWeAreTitle: 'መነሻችን',
+      whoWeAreDescription: 'የአኀው ኦርቶዶክሳዊት ተሐድሶ ቤተ ክርስቲያን መሥራች አባላት ስደት የገጠማቸው ኦርቶዶክሳውያን የክርስቶስ አገልጋዮችና ምእመናን ናቸው። ማኅበሩ በ1998 ዓ.ም ከተለያዩ የጸሎትና የጽዋ ማኅበራት በአንድነት ተመሥርቶ፣ አገልጋዮች ያለ ደሞዝ በትምህርት፣ በሥልጠናና በተለያዩ መንፈሳዊ አገልግሎቶች ሰዎችን ሲያንፁ ቆይተዋል። ከጥር 2–4 ቀን 2010 ዓ.ም. በተደረገ አጠቃላይ ስብሰባ፣ ራሳችንን በመጽሐፍ ቅዱሳዊ እውነት ላይ መሥርተን በአንዲት ቤተ ክርስቲያን ለመደራጀት ወስነናል። ከቤተ ክርስቲያኒቱ የተሰደዱ በክርስቶስ ያመኑ ኦርቶዶክሳውያንን ሁሉ በሰፊ ልብ በመቀበል ለኦርቶዶክሳዊ ተሐድሶ ራእይ ማሳያ በመሆን በማገልገል ላይ እንገኛለን።',
+      historyLinkLabel: 'ሙሉ ታሪካችንን ያንብቡ',
+      historyUrl: '/about',
+      missionTitle: 'ተልእኮአችን',
+      missionDescription: [
+        'ወንጌልን መስበክ፤',
+        'እግዚአብሔርን በእውነትና በመንፈስ ማምለክ፤',
+        'የወንጌል መልእክተኞችን ማሠልጠንና መላክ፤',
+        'አባላቷን የክርስቶስ ደቀ መዛሙርት ማድረግ፤',
+        'ራሷን በማያቋርጥ ተሐድሶ ውስጥ መምራትና ለሌሎች አብያተ ክርስቲያናት ተሐድሶ መሥራት፤',
+        'ራሷን ከስሕተት ትምህርቶች ለመጠበቅ የዕቅበተ እምነት ሥራዎችን መሥራት፤',
+        'ለክርስቶስ ቤተ ክርስቲያን መሪዎችን ማፍራትና ማብቃት።',
+      ].join('\n'),
+      visionTitle: 'ራእያችን',
+      visionDescription: 'በመጽሐፍ ቅዱስ የተገለጠውን የእግዚአብሔርን ሀሳብ የምታገለግል፣ በቃሉና በመንፈሱ የታደሰች፣ ኦርቶዶክሳዊት ቤተ ክርስቲያን በመላው ዓለም ተልእኮዋን ስትፈጽም ማየት።',
       beliefsEyebrow: 'የእምነት መግለጫ',
-      beliefsTitle: 'የምናምንበት እምነታችን',
+      beliefsTitle: 'እምነታችን',
       beliefs: [
-        { title: 'ቅዱሳት መጻሕፍት', description: 'መጽሐፍ ቅዱስ በእግዚአብሔር መንፈስ የተጻፈ፣ ለእምነትና ለሕይወት ሁሉ የበላይ መመሪያና መሠረት ነው።', icon: 'BookOpen' },
-        { title: 'ቅድስት ሥላሴ', description: 'በአንድ አምላክነት በሦስት አካላት፡ በአብ፣ በወልድ፣ በመንፈስ ቅዱስ እናምናለን።', icon: 'Church' },
-        { title: 'ድኅነት በክርስቶስ', description: 'የዘላለም ድኅነትና ሕይወት በኢየሱስ ክርስቶስ ሞትና ትንሣኤ በማመን የሚገኝ ጸጋ ነው።', icon: 'Heart' },
-        { title: 'አንዲት ቅድስት ቤተክርስቲያን', description: 'ቤተክርስቲያን በእምነት፣ በምሥጢራትና በመንፈሳዊ ኅብረት የተሳሰረች የክርስቶስ አካል ናት።', icon: 'Shield' },
+        { title: 'የመጽሐፍ ቅዱስ የበላይነት', description: 'የትምህርታችን ሁሉ ምንጭ፣ መለኪያና መመዘኛ መጽሐፍ ቅዱስ ብቻ ነው። መጽሐፍ ቅዱስ የእግዚአብሔር ቃልና የሃይማኖታዊ አቋማችን የበላይ ባለሥልጣን ነው።', icon: 'BookOpen' },
+        { title: 'ምዘና', description: 'ማንኛውም ክርስቲያናዊ ትምህርት ተቀባይነት የሚያገኘው ወይም ውድቅ የሚደረገው በመጽሐፍ ቅዱስ ሲመዘን ብቻ ነው።', icon: 'Scale' },
+        { title: 'ሥላሴና ክርስቶስ', description: 'በቅድስት ሥላሴ፣ በክርስቶስ ፍጹም ሰውነትና አምላክነት፣ እንዲሁም በክርስቶስ ኢየሱስ ፍጹም እና ብቸኛ አዳኝነት እናምናለን።', icon: 'Church' },
+        { title: 'የእምነት መግለጫዎች', description: 'የሐዋርያትን፣ የሠለስቱ ምእትን (የኒቂያ)፣ የኤጲፋንዮስን፣ የአትናቴዎስንና የአፄ ገላውዴዎስን የእምነት መግለጫዎች በመጽሐፍ ቅዱስ እየመዘንን እንቀበላቸዋለን።', icon: 'Shield' },
+        { title: 'ኅብረታዊ አቋሞች', description: 'የወንጌል አገልግሎት ማኅበራት ኅብረት የሚያወጣቸውን የእምነት አቋሞች በመጽሐፍ ቅዱስ መሠረትነት እንቀበላለን።', icon: 'Users' },
       ],
-      valuesEyebrow: 'ባህላችን',
-      valuesTitle: 'መሠረታዊ እሴቶቻችን',
+      valuesEyebrow: 'መሠረታዊ እሴቶቻችን',
+      valuesTitle: 'እሴቶቻችን',
       values: [
-        { title: 'የመጽሐፍ ቅዱስ ታማኝነት', description: 'በሁሉም ትምህርቶችና አሠራሮች የእግዚአብሔርን ቃል መሠረት ማድረግ።', icon: 'Shield' },
-        { title: 'ፍቅርና አንድነት', description: 'እርስ በርሳችን በአንድነት፣ በሩኅሩኄ እና በክርስቲያናዊ ፍቅር መደጋገፍ።', icon: 'Users' },
-        { title: 'መንፈሳዊ ደቀ መዝሙርነት', description: 'ምዕመናን በጸሎት፣ በቅድስናና በመንፈሳዊ ጥበብ እንዲያድጉ ማነጽ።', icon: 'Sparkles' },
-        { title: 'የአገልጋይነት አመራር', description: 'በትህትና፣ በትጋትና በታማኝነት እግዚአብሔርንና ሕዝቡን ማገልገል።', icon: 'CheckCircle2' },
+        { title: 'የመጽሐፍ ቅዱስን ሥልጣን ማክበር', description: 'ብሉያትና ሐዲሳት የትምህርታችንና የመንፈሳዊ ልምምዶቻችን ብቸኛ ምንጭ ናቸው።', icon: 'BookOpen' },
+        { title: 'የጉባኤያት ውሳኔዎችን በቃሉ መመርመር', description: 'የኒቂያ፣ የቁስጠንጥንያና የኤፌሶን ጉባኤያት የደነገጓቸውን የእምነት መግለጫዎች በቃሉ እየፈተሽን እንገለገልባቸዋለን።', icon: 'Scale' },
+        { title: 'ክርስቶስን ያማከለ አገልግሎት', description: 'የአገልግሎታችን ማዕከል ክርስቶስ ነው።', icon: 'Church' },
+        { title: 'ሐዋርያዊ ተልእኮ', description: 'ወንጌልን ላልሰሙት ሁሉ እንደ ቋንቋቸውና ባህላቸው ማድረስ።', icon: 'Send' },
+        { title: 'ለቅድስና እና ለጽድቅ ኑሮ ቦታ መስጠት', description: 'በጽድቅና በቅድስና በመኖር በኅብረተሰቡ ላይ መልካም ተጽዕኖ ማሳደር።', icon: 'Sparkles' },
+        { title: 'ኅብረትን መጠበቅ', description: 'ከሌሎች ክርስቲያኖች ጋር ያለንን አንድነትና የኢኩሜኒዝም መንፈስ መጠበቅ።', icon: 'Users' },
+        { title: 'ለመንፈሳዊ ተሐድሶ መሥራት', description: 'በእግዚአብሔር ቃልና በመንፈሱ የሚከናወን ተሐድሶ ቤተ ክርስቲያንን ከስሕተት ስለሚመልስ በማያቋርጥ ተሐድሶ ውስጥ መኖርና ሌሎችንም መርዳት።', icon: 'Heart' },
+        { title: 'ለተጠያቂነት ዋጋ መስጠት', description: 'በትምህርታችን፣ በሕይወታችንና በአስተዳደራችን ለእግዚአብሔርና ለሕዝቡ ተጠያቂ መሆን።', icon: 'CheckCircle2' },
+        { title: 'ማኅበራዊ ኃላፊነትን መወጣት', description: 'ሀገራዊ ሕጎችንና ደንቦችን በማክበር ለኅብረተሰቡ በጎ መስተጋብር በቅንነት መሥራት።', icon: 'Handshake' },
       ],
     },
     news: {
@@ -436,6 +480,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       ],
       supportHeading: 'ድጋፍ',
       supportLinks: [
+        { label: 'ስለ እኛ', url: '/about' },
         { label: 'ሰነዶች', url: '' },
         { label: 'የኤፒአይ ማጣቀሻ', url: '' },
         { label: 'የእገዛ ማዕከል', url: '' },
@@ -482,6 +527,8 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       sectionDescription: 'Macaafa Qulqulluu fi aadaa hafuuraa durii irratti hundaa\'ee, qaama Kiristoos dhugaadhaan, jaalalaan fi kutannoodhaan kan tajaajilu.',
       whoWeAreTitle: 'Eenyummaa Keenya',
       whoWeAreDescription: 'Mahibere Ahaw dhaabbata waldaa kiristaanaa Ortodoksii kan haroomsa hafuuraa, barsiisa Macaafa Qulqulluu fi miseensota addunyaa guutuurra jiran tajaajiluu irratti fuulleffateedha.',
+      historyLinkLabel: 'Seenaa keenya guutuu dubbisaa',
+      historyUrl: '/about',
       missionTitle: 'Ergama Keenya',
       missionDescription: 'Wangeela Yesuus Kiristoos lallabuu, amantoota hafuuraan guddisuu, hoggantoota tajaajilaa qopheessuu fi tajaajila dijitaalaa guddisuu.',
       visionTitle: 'Mul\'ata Keenya',
@@ -564,6 +611,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       ],
       supportHeading: 'Deggersa',
       supportLinks: [
+        { label: "Waa'ee Keenya", url: '/about' },
         { label: 'Sanadoota', url: '' },
         { label: 'API', url: '' },
         { label: 'Giddu-gala Gargaarsaa', url: '' },
@@ -610,6 +658,8 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       sectionDescription: 'ኣብ መጽሓፍ ቅዱስን ጥንታዊ መንፈሳዊ ቅርሲን ዝተመሠረተት፣ ንኣካል ክርስቶስ ብሓቂ፣ ብፍቕርን ብትጋህን እተገልግል ቤተክርስቲያን።',
       whoWeAreTitle: 'መንነትና',
       whoWeAreDescription: 'ማሕበረ ኣኀው ኣብ ክርስቶስ ዝተመሠረተት ኦርቶዶክሳዊት ቤተክርስቲያን ኮይና፣ ብመንፈሳዊ ተሓድሶ፣ ብትምህርቲ መጽሓፍ ቅዱስን ብብርሃን ቃሉን ንምእመናን ኣብ ምሉእ ዓለም እተገልግል ማሕበር እያ።',
+      historyLinkLabel: 'ምሉእ ታሪኽና ኣንብቡ',
+      historyUrl: '/about',
       missionTitle: 'ተልእኾና',
       missionDescription: 'ወንጌል ኢየሱስ ክርስቶስ መስበኽ፣ ምእመናን ብመንፈሳዊ ሕይወት ምህናጽ፣ መራሕቲ ኣገልግሎት ምድላውን ዲጂታላዊ ኣገልግሎት ምዕባይን።',
       visionTitle: 'ራእይና',
@@ -692,6 +742,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       ],
       supportHeading: 'ደገፍ',
       supportLinks: [
+        { label: 'ብዛዕባና', url: '/about' },
         { label: 'ሰነዳት', url: '' },
         { label: 'ናይ API መወከሲ', url: '' },
         { label: 'ማእከል ሓገዝ', url: '' },

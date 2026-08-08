@@ -5,6 +5,7 @@ import {
   LayoutPanelLeft, MousePointerClick, ExternalLink, ScrollText, RefreshCw,
   LogIn, LogOut, FilePlus2, FilePen, FileX2, Smartphone, Monitor,
   ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon, UserPlus,
+  CalendarClock,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -25,7 +26,9 @@ import { userService } from '@/services/users';
 import { PermissionMatrix } from '@/components/PermissionMatrix';
 import { RoleEditorDialog } from '@/components/RoleEditorDialog';
 import { MembershipRequests } from '@/components/MembershipRequests';
+import { MeetingPresetsEditor } from '@/components/MeetingPresetsEditor';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +45,8 @@ const SoftwareControl: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { reload: reloadPermissions, isSuperAdmin } = usePermissions();
+  const { t } = useLanguage();
+  const a = t.admin;
   const [config, setConfig] = useState<SoftwareControlConfig>(DEFAULT_SOFTWARE_CONTROL);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -315,7 +320,7 @@ const SoftwareControl: React.FC = () => {
             { label: 'Mobile App Control', desc: 'Kill switch, versions, flags', href: '/admin/mobile-control' },
             { label: 'Site Content Editor', desc: 'Landing page & UI text', href: '/admin/landing-editor' },
             { label: 'Module Configuration', desc: 'Members, Plans, Reports', href: '/admin/module-config' },
-            { label: 'Atbiya Registry', desc: 'Parishes & their administrators', href: '/atbiya-registry' },
+            { label: 'Congregation Registry', desc: 'Congregations & their administrators', href: '/atbiya-registry' },
           ].map((l) => (
             <button key={l.href} onClick={() => navigate(l.href)}
               className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition-colors text-left">
@@ -334,19 +339,22 @@ const SoftwareControl: React.FC = () => {
         }}>
           <TabsList className="mb-6 w-full flex-wrap h-auto">
             <TabsTrigger value="roles" className="flex-1 gap-2">
-              <ShieldCheck className="h-4 w-4" /> Roles &amp; Access
+              <ShieldCheck className="h-4 w-4" /> {a.scRoles}
             </TabsTrigger>
             <TabsTrigger value="tabs" className="flex-1 gap-2">
-              <LayoutPanelLeft className="h-4 w-4" /> Navigation Tabs
+              <LayoutPanelLeft className="h-4 w-4" /> {a.scTabs}
             </TabsTrigger>
             <TabsTrigger value="buttons" className="flex-1 gap-2">
-              <MousePointerClick className="h-4 w-4" /> Buttons & Actions
+              <MousePointerClick className="h-4 w-4" /> {a.scButtons}
             </TabsTrigger>
             <TabsTrigger value="requests" className="flex-1 gap-2">
-              <UserPlus className="h-4 w-4" /> Requests
+              <UserPlus className="h-4 w-4" /> {a.scRequests}
+            </TabsTrigger>
+            <TabsTrigger value="meetings" className="flex-1 gap-2">
+              <CalendarClock className="h-4 w-4" /> {a.scMeetings}
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex-1 gap-2">
-              <ScrollText className="h-4 w-4" /> Audit Logs
+              <ScrollText className="h-4 w-4" /> {a.scAudit}
             </TabsTrigger>
           </TabsList>
 
@@ -355,7 +363,7 @@ const SoftwareControl: React.FC = () => {
             <Card>
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
-                  <CardTitle>Roles</CardTitle>
+                  <CardTitle>{a.scRolesTitle}</CardTitle>
                   <CardDescription>
                     Every role in the system. The seven built-in roles come from the church
                     bylaws — their labels, permissions and flags are editable, but their keys
@@ -441,7 +449,7 @@ const SoftwareControl: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Permissions</CardTitle>
+                <CardTitle>{a.scPermissions}</CardTitle>
                 <CardDescription>
                   What each role may do. Columns follow the role list above. Per-user
                   exceptions live in Permission Control.
@@ -461,7 +469,7 @@ const SoftwareControl: React.FC = () => {
           <TabsContent value="tabs">
             <Card>
               <CardHeader>
-                <CardTitle>Sidebar Tab Access</CardTitle>
+                <CardTitle>{a.scSidebar}</CardTitle>
                 <CardDescription>
                   Check which hierarchy levels can see each tab. All boxes checked (or untouched) = visible to everyone. Super admins always see everything.
                 </CardDescription>
@@ -502,7 +510,7 @@ const SoftwareControl: React.FC = () => {
           <TabsContent value="buttons">
             <Card>
               <CardHeader>
-                <CardTitle>Buttons & Actions</CardTitle>
+                <CardTitle>{a.scButtonsTitle}</CardTitle>
                 <CardDescription>
                   Hide an action completely with the switch, or restrict it to specific hierarchy levels. Super admins always see everything.
                 </CardDescription>
@@ -544,6 +552,11 @@ const SoftwareControl: React.FC = () => {
           </TabsContent>
 
           {/* ════════ MEMBERSHIP REQUESTS ════════ */}
+          {/* ════════ MEETING AUDIENCES ════════ */}
+          <TabsContent value="meetings">
+            <MeetingPresetsEditor />
+          </TabsContent>
+
           <TabsContent value="requests">
             <MembershipRequests />
           </TabsContent>
@@ -553,7 +566,7 @@ const SoftwareControl: React.FC = () => {
             <Card>
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
-                  <CardTitle>Audit Logs</CardTitle>
+                  <CardTitle>{a.scAuditTitle}</CardTitle>
                   <CardDescription>
                     Every login, logout, and data change across web and mobile — with the device used. Newest first (last 250).
                   </CardDescription>
@@ -579,7 +592,7 @@ const SoftwareControl: React.FC = () => {
                   ))}
                   <div className="relative ml-auto w-full sm:w-64">
                     <Input
-                      placeholder="Search user / description…"
+                      placeholder={a.scAuditSearch}
                       value={logSearch}
                       onChange={(e) => setLogSearch(e.target.value)}
                       className="h-9"

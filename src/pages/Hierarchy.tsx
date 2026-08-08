@@ -148,7 +148,7 @@ const Hierarchy = () => {
           { label: 'Governing Document', val: 'ቁ. 001/2018', sub: '5th revised bylaws' },
           { label: 'Top Body', val: 'ሲኖዶስ', sub: 'Supreme assembly' },
           {
-            label: 'Registered Parishes',
+            label: 'Registered Congregations',
             val: parishesLoading ? '…' : String(parishes.length),
             sub: 'አጥቢያ — live in the registry',
           },
@@ -176,22 +176,22 @@ const Hierarchy = () => {
       <div className="space-y-4">
         <div>
           <h2 className="text-xl font-black text-[#2E5E99] font-ethiopic">
-            አጥቢያዎች · Registered Parishes
+            አጥቢያዎች · Registered Congregations
           </h2>
           <p className="text-sm text-muted-foreground">
-            The parishes that exist in the system today. New members choose one of
+            The congregations that exist in the system today. New members choose one of
             these when they sign up.
           </p>
         </div>
 
         {parishesLoading ? (
-          <p className="text-sm text-muted-foreground">Loading parishes…</p>
+          <p className="text-sm text-muted-foreground">Loading congregations…</p>
         ) : parishes.length === 0 ? (
           <Card className="rounded-2xl border-dashed p-8 text-center bg-white/40 dark:bg-slate-900/40">
             <Church className="h-8 w-8 mx-auto mb-3 opacity-40" />
-            <p className="font-semibold">No parishes registered yet</p>
+            <p className="font-semibold">No congregations registered yet</p>
             <p className="text-sm text-muted-foreground">
-              A super admin can add them in Software Control → Atbiya Registry.
+              A super admin can add them in Software Control → Congregation Registry.
             </p>
           </Card>
         ) : (

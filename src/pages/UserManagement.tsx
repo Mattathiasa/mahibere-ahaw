@@ -12,10 +12,12 @@ import { Users, UserPlus, History, Search, Pencil, Trash2, Building2 } from 'luc
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '@/services/users';
 import { hierarchyService } from '@/services/hierarchy';
+import { isValidPhone, normalizeEthiopianPhone } from '@/lib/phone';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { InviteUsersDialog } from '@/components/InviteUsersDialog';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
@@ -72,6 +74,8 @@ const ETHIOPIAN_REGIONS = [
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
   const { can, roles, roleLabel, scopeOf } = usePermissions();
+  const { t } = useLanguage();
+  const a = t.admin;
   const assignableRoles = roles.filter((r) => r.active !== false);
   /**
    * Which roles need a parish assigned. Previously only HiyawanMahderat was
@@ -82,6 +86,9 @@ const UserManagement = () => {
     const s = scopeOf(roleKey);
     return s === 'atbiya' || s === 'mahder';
   };
+  /** Only a 'mahder'-scoped role sits inside a small group. */
+  const needsMahderat = (roleKey: string) => scopeOf(roleKey) === 'mahder';
+
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -141,8 +148,29 @@ const UserManagement = () => {
   const { data: mahderatData } = useQuery({
     queryKey: ['mahderat', formData.atbiyaId],
     queryFn: () => hierarchyService.getEntitiesByParent(formData.atbiyaId),
-    enabled: !!formData.atbiyaId && formData.hierarchyLevel === 'HiyawanMahderat',
+    enabled: !!formData.atbiyaId && needsMahderat(formData.hierarchyLevel),
   });
+
+  /**
+   * The parish placement fields to write, for both create and update.
+   *
+   * Every key is always present, and empty when the role does not need it.
+   * These used to be added only when non-blank and only for the hardcoded
+   * 'HiyawanMahderat' role, so an Atbiya-level account could never be given a
+   * parish at all, and a reassignment could set a new parish but never clear
+   * the old one. `atbiyaName` is denormalized alongside the id because the
+   * requests queue and member lists read the name without joining.
+   */
+  const atbiyaFields = (f: UserFormData) => {
+    const atbiyaId = needsAtbiya(f.hierarchyLevel) ? f.atbiyaId.trim() : '';
+    const match = (atbiyaData as { id: string; name?: string }[] | undefined)
+      ?.find((a) => a.id === atbiyaId);
+    return {
+      atbiyaId,
+      atbiyaName: match?.name ?? '',
+      mahderatId: needsMahderat(f.hierarchyLevel) ? f.mahderatId.trim() : '',
+    };
+  };
 
   // Fetch parent entities for entity creation
   const { data: parentEntitiesData } = useQuery({
@@ -173,7 +201,7 @@ const UserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['atbiya'] });
       queryClient.invalidateQueries({ queryKey: ['mahderat'] });
       queryClient.invalidateQueries({ queryKey: ['parentEntities'] });
-      toast.success('Entity created successfully!');
+      toast.success(a.entityCreated);
       setShowCreateEntityDialog(false);
       setEntityFormData({
         name: '',
@@ -185,7 +213,7 @@ const UserManagement = () => {
       });
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to create entity';
+      const message = error.response?.data?.message || a.createEntityFailed;
       toast.error(message);
     },
   });
@@ -203,12 +231,12 @@ const UserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('User created successfully!');
+      toast.success(a.userCreated);
       setShowCreateDialog(false);
       resetForm();
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to create user';
+      const message = error.response?.data?.message || a.createUserFailed;
       toast.error(message);
     },
   });
@@ -219,12 +247,12 @@ const UserManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('User updated successfully!');
+      toast.success(a.userUpdated);
       setShowEditDialog(false);
       setSelectedUser(null);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to update user';
+      const message = error.response?.data?.message || a.updateUserFailed;
       toast.error(message);
     },
   });
@@ -236,7 +264,7 @@ const UserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('User deleted successfully!');
+      toast.success(a.userDeleted);
       setShowDeleteDialog(false);
       setSelectedUser(null);
     },
@@ -249,17 +277,21 @@ const UserManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate hierarchyEntityId
-    const hierarchyEntityId = formData.hierarchyEntityId || currentUser?.hierarchyEntityId;
-
-    if (!hierarchyEntityId || hierarchyEntityId.trim() === '') {
-      toast.error('Hierarchy entity is required. Please create a Zone first or ensure you are logged in properly.');
+    // Phone is the one contact detail the church relies on, so it is checked
+    // rather than merely marked with an asterisk.
+    if (!isValidPhone(formData.phone)) {
+      toast.error(a.badPhone);
       return;
     }
 
-    // Use current user's hierarchyEntityId if not provided
+    // Optional: an account's data scope comes from its atbiyaId, not from this
+    // field, and requiring it meant no user at all could be created until
+    // somebody had created a Zone entity first.
+    const hierarchyEntityId = formData.hierarchyEntityId || currentUser?.hierarchyEntityId || '';
+
     const userData: any = {
       ...formData,
+      phone: normalizeEthiopianPhone(formData.phone),
       hierarchyEntityId,
       address: {
         region: formData.region,
@@ -268,15 +300,7 @@ const UserManagement = () => {
       },
     };
 
-    // Include Atbiya and Mahderat for HiyawanMahderat users (only if they have valid values)
-    if (formData.hierarchyLevel === 'HiyawanMahderat') {
-      if (formData.atbiyaId && formData.atbiyaId.trim() !== '') {
-        userData.atbiyaId = formData.atbiyaId;
-      }
-      if (formData.mahderatId && formData.mahderatId.trim() !== '') {
-        userData.mahderatId = formData.mahderatId;
-      }
-    }
+    Object.assign(userData, atbiyaFields(formData));
 
     createUserMutation.mutate(userData);
   };
@@ -316,10 +340,15 @@ const UserManagement = () => {
 
     if (!selectedUser) return;
 
+    if (!isValidPhone(formData.phone)) {
+      toast.error(a.badPhone);
+      return;
+    }
+
     const updateData: any = {
       fullName: formData.fullName,
       fullNameAmharic: formData.fullNameAmharic,
-      phone: formData.phone,
+      phone: normalizeEthiopianPhone(formData.phone),
       address: {
         region: formData.region,
         zone: formData.zone,
@@ -344,15 +373,7 @@ const UserManagement = () => {
       updateData.profilePicture = formData.profilePicture;
     }
 
-    // Include Atbiya and Mahderat for HiyawanMahderat users (only if they have values)
-    if (formData.hierarchyLevel === 'HiyawanMahderat') {
-      if (formData.atbiyaId && formData.atbiyaId.trim() !== '') {
-        updateData.atbiyaId = formData.atbiyaId;
-      }
-      if (formData.mahderatId && formData.mahderatId.trim() !== '') {
-        updateData.mahderatId = formData.mahderatId;
-      }
-    }
+    Object.assign(updateData, atbiyaFields(formData));
 
     updateUserMutation.mutate({ id: selectedUser.id, data: updateData });
   };
@@ -412,10 +433,10 @@ const UserManagement = () => {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">User Management</h1>
-          <p className="text-muted-foreground mt-1">Manage system users and roles</p>
+          <h1 className="text-3xl font-bold text-foreground">{a.usersTitle}</h1>
+          <p className="text-muted-foreground mt-1">{a.manageUsersRoles}</p>
         </div>
-        <SectionCard title="Access Denied" icon={Users}>
+        <SectionCard title={a.accessDenied} icon={Users}>
           <p className="text-muted-foreground">
             Your role does not include the "View User Management" permission. A super
             admin can grant it in Software Control → Roles.
@@ -429,7 +450,7 @@ const UserManagement = () => {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">User Management</h1>
+          <h1 className="text-3xl font-bold text-foreground">{a.usersTitle}</h1>
           <p className="text-muted-foreground mt-1">Create and manage system users</p>
         </div>
         <LoadingSkeleton type="table" />
@@ -441,22 +462,22 @@ const UserManagement = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">User Management</h1>
-          <p className="text-muted-foreground mt-1">Create and manage system users and organizational entities</p>
+          <h1 className="text-3xl font-bold text-foreground">{a.usersTitle}</h1>
+          <p className="text-muted-foreground mt-1">{a.usersDesc}</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={showCreateEntityDialog} onOpenChange={setShowCreateEntityDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" className="gap-2">
                 <Building2 className="h-4 w-4" />
-                Create Entity
+                {a.createEntity}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create Organizational Entity</DialogTitle>
+                <DialogTitle>{a.createEntityTitle}</DialogTitle>
                 <DialogDescription>
-                  Create a new Zone, Atbiya (Church), Enkesekase Maikel, or Mahderat (Small Group)
+                  {a.createEntityDesc}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={(e) => {
@@ -480,17 +501,17 @@ const UserManagement = () => {
               }} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="entity-name">Name (English) *</Label>
+                    <Label htmlFor="entity-name">{a.entityName} *</Label>
                     <Input
                       id="entity-name"
                       value={entityFormData.name}
                       onChange={(e) => setEntityFormData({ ...entityFormData, name: e.target.value })}
-                      placeholder="East Shewa Zone"
+                      placeholder="East Shewa Diocese"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="entity-nameAmharic">Name (Amharic) * / ስም (አማርኛ) *</Label>
+                    <Label htmlFor="entity-nameAmharic">{a.entityNameAm} *</Label>
                     <Input
                       id="entity-nameAmharic"
                       value={entityFormData.nameAmharic}
@@ -500,7 +521,7 @@ const UserManagement = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="entity-type">Entity Type *</Label>
+                    <Label htmlFor="entity-type">{a.entityType} *</Label>
                     <Select
                       value={entityFormData.entityType}
                       onValueChange={(value: any) => setEntityFormData({
@@ -514,8 +535,8 @@ const UserManagement = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Zone">Zone / ዞን</SelectItem>
-                        <SelectItem value="Atbiya">Atbiya (Church) / አትብያ (ቤተክርስቲያን)</SelectItem>
+                        <SelectItem value="Zone">{a.scopeDiocese}</SelectItem>
+                        <SelectItem value="Atbiya">{a.scopeCongregation}</SelectItem>
                         <SelectItem value="EnkesekaseMaikel">Enkesekase Maikel / እንቀሰቃሴ ማዕከል</SelectItem>
                         <SelectItem value="Mahderat">Mahderat (Small Group) / ማህደራት (ትንሽ ቡድን)</SelectItem>
                       </SelectContent>
@@ -523,13 +544,13 @@ const UserManagement = () => {
                   </div>
                   {entityFormData.entityType !== 'Zone' && (
                     <div className="space-y-2">
-                      <Label htmlFor="entity-parent">Parent Entity *</Label>
+                      <Label htmlFor="entity-parent">{a.parentEntity} *</Label>
                       <Select
                         value={entityFormData.parentEntityId}
                         onValueChange={(value) => setEntityFormData({ ...entityFormData, parentEntityId: value })}
                       >
                         <SelectTrigger id="entity-parent">
-                          <SelectValue placeholder="Select parent entity" />
+                          <SelectValue placeholder={a.selectParentEntity} />
                         </SelectTrigger>
                         <SelectContent>
                           {parentEntitiesData?.map((entity: any) => (
@@ -540,22 +561,22 @@ const UserManagement = () => {
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        {entityFormData.entityType === 'Atbiya' && 'Atbiya belongs to a Zone'}
+                        {entityFormData.entityType === 'Atbiya' && a.belongsToDiocese}
                         {entityFormData.entityType === 'EnkesekaseMaikel' && 'Enkesekase Maikel belongs to Atbiya'}
-                        {entityFormData.entityType === 'Mahderat' && 'Mahderat belongs to Atbiya'}
+                        {entityFormData.entityType === 'Mahderat' && a.belongsToCongregation}
                       </p>
                     </div>
                   )}
                   {entityFormData.entityType === 'Zone' && (
                     <div className="space-y-2">
-                      <Label>Parent Entity</Label>
+                      <Label>{a.parentEntity}</Label>
                       <div className="p-3 border rounded-md bg-muted/50">
-                        <p className="text-sm text-muted-foreground">Zone belongs directly to Memriya (no selection needed)</p>
+                        <p className="text-sm text-muted-foreground">{a.dioceseUnderMemriya}</p>
                       </div>
                     </div>
                   )}
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="entity-location">Location</Label>
+                    <Label htmlFor="entity-location">{a.entityLocation}</Label>
                     <Input
                       id="entity-location"
                       value={entityFormData.location}
@@ -564,12 +585,12 @@ const UserManagement = () => {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="entity-description">Description</Label>
+                    <Label htmlFor="entity-description">{a.entityDescription}</Label>
                     <Input
                       id="entity-description"
                       value={entityFormData.description}
                       onChange={(e) => setEntityFormData({ ...entityFormData, description: e.target.value })}
-                      placeholder="Brief description of the entity"
+                      placeholder={a.entityDescPlaceholder}
                     />
                   </div>
                 </div>
@@ -578,7 +599,7 @@ const UserManagement = () => {
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createEntityMutation.isPending}>
-                    {createEntityMutation.isPending ? 'Creating...' : 'Create Entity'}
+                    {createEntityMutation.isPending ? a.creating : a.createEntity}
                   </Button>
                 </div>
               </form>
@@ -593,15 +614,15 @@ const UserManagement = () => {
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
+                <DialogTitle>{a.createNewUser}</DialogTitle>
                 <DialogDescription>
-                  Add a new user to the system. All fields are required.
+                  {a.addUserDesc}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username *</Label>
+                    <Label htmlFor="username">{a.username} *</Label>
                     <Input
                       id="username"
                       value={formData.username}
@@ -611,19 +632,19 @@ const UserManagement = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password *</Label>
+                    <Label htmlFor="password">{a.password} *</Label>
                     <Input
                       id="password"
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="Min 6 characters"
+                      placeholder={a.minChars}
                       required
                       minLength={6}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name (English) *</Label>
+                    <Label htmlFor="fullName">{a.fullNameEnglish} *</Label>
                     <Input
                       id="fullName"
                       value={formData.fullName}
@@ -633,7 +654,7 @@ const UserManagement = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="fullNameAmharic">Full Name (Amharic) * / ሙሉ ስም (አማርኛ) *</Label>
+                    <Label htmlFor="fullNameAmharic">{a.fullNameAmharic} *</Label>
                     <Input
                       id="fullNameAmharic"
                       value={formData.fullNameAmharic}
@@ -643,7 +664,7 @@ const UserManagement = () => {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="profilePicture">Profile Picture (Optional)</Label>
+                    <Label htmlFor="profilePicture">{a.profilePicture}</Label>
                     <Input
                       id="profilePicture"
                       type="file"
@@ -660,7 +681,7 @@ const UserManagement = () => {
                       }}
                       className="cursor-pointer"
                     />
-                    <p className="text-xs text-muted-foreground">Upload JPG, PNG, or GIF. Max size 2MB.</p>
+                    <p className="text-xs text-muted-foreground">{a.uploadHint}</p>
                     {formData.profilePicture && (
                       <div className="mt-2">
                         <img src={formData.profilePicture} alt="Preview" className="h-20 w-20 rounded-full object-cover border-2 border-primary" />
@@ -668,7 +689,7 @@ const UserManagement = () => {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Label htmlFor="phone">{a.phoneNumber} *</Label>
                     <Input
                       id="phone"
                       value={formData.phone}
@@ -685,33 +706,33 @@ const UserManagement = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="gender">Gender *</Label>
+                    <Label htmlFor="gender">{a.gender} *</Label>
                     <Select value={formData.gender} onValueChange={(value: 'Male' | 'Female') => setFormData({ ...formData, gender: value })}>
                       <SelectTrigger id="gender">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Male">{a.male}</SelectItem>
+                        <SelectItem value="Female">{a.female}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="maritalStatus">Marital Status</Label>
+                    <Label htmlFor="maritalStatus">{a.maritalStatus}</Label>
                     <Select value={formData.maritalStatus} onValueChange={(value: any) => setFormData({ ...formData, maritalStatus: value })}>
                       <SelectTrigger id="maritalStatus">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married">Married</SelectItem>
-                        <SelectItem value="Widowed">Widowed</SelectItem>
-                        <SelectItem value="Divorced">Divorced</SelectItem>
+                        <SelectItem value="Single">{a.single}</SelectItem>
+                        <SelectItem value="Married">{a.married}</SelectItem>
+                        <SelectItem value="Widowed">{a.widowed}</SelectItem>
+                        <SelectItem value="Divorced">{a.divorced}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="work">Work / Occupation</Label>
+                    <Label htmlFor="work">{a.work}</Label>
                     <Input
                       id="work"
                       value={formData.work}
@@ -720,7 +741,7 @@ const UserManagement = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="skill">Special Skill / Liyu Muya</Label>
+                    <Label htmlFor="skill">{a.specialSkill}</Label>
                     <Input
                       id="skill"
                       value={formData.skill}
@@ -736,11 +757,11 @@ const UserManagement = () => {
                       onChange={(e) => setFormData({ ...formData, hasChildren: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300"
                     />
-                    <Label htmlFor="hasChildren">Has Children?</Label>
+                    <Label htmlFor="hasChildren">{a.hasChildren}</Label>
                   </div>
                   {formData.hasChildren && (
                     <div className="space-y-2">
-                      <Label htmlFor="numberOfChildren">Number of Children</Label>
+                      <Label htmlFor="numberOfChildren">{a.childrenCount}</Label>
                       <Input
                         id="numberOfChildren"
                         type="number"
@@ -751,7 +772,7 @@ const UserManagement = () => {
                     </div>
                   )}
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Volunteer Ministries</Label>
+                    <Label>{a.volunteerMinistries}</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {['Ebet Metreg', 'Natanim Agelgelot', 'Choir', 'Ushering', 'Sunday School', 'Charity', 'Evangelism'].map((ministry) => (
                         <div key={ministry} className="flex items-center gap-2">
@@ -776,16 +797,18 @@ const UserManagement = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hierarchyLevel">Hierarchy Level *</Label>
+                    <Label htmlFor="hierarchyLevel">{a.hierarchyLevel} *</Label>
                     <Select
                       value={formData.hierarchyLevel}
                       onValueChange={(value) => {
                         setFormData({
                           ...formData,
                           hierarchyLevel: value,
-                          // Reset Atbiya and Mahderat when changing hierarchy level
-                          atbiyaId: value === 'HiyawanMahderat' ? formData.atbiyaId : '',
-                          mahderatId: value === 'HiyawanMahderat' ? formData.mahderatId : '',
+                          // Keep the placement only while the new role still
+                          // uses it, so switching to a head-office role clears
+                          // the parish rather than leaving a stale one behind.
+                          atbiyaId: needsAtbiya(value) ? formData.atbiyaId : '',
+                          mahderatId: needsMahderat(value) ? formData.mahderatId : '',
                         });
                       }}
                     >
@@ -801,13 +824,13 @@ const UserManagement = () => {
                   </div>
                   {formData.hierarchyLevel === 'Memriya' && (
                     <div className="space-y-2">
-                      <Label htmlFor="memriyaRole">Memriya Role (Optional)</Label>
+                      <Label htmlFor="memriyaRole">{a.memriyaRole}</Label>
                       <Select
                         value={formData.memriyaRole}
                         onValueChange={(value) => setFormData({ ...formData, memriyaRole: value })}
                       >
                         <SelectTrigger id="memriyaRole">
-                          <SelectValue placeholder="Select Role" />
+                          <SelectValue placeholder={a.selectRole} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Administrator">Administrator</SelectItem>
@@ -820,34 +843,34 @@ const UserManagement = () => {
                     </div>
                   )}
                   <div className="space-y-2">
-                    <Label htmlFor="hierarchyEntityId">Assign to Zone *</Label>
+                    <Label htmlFor="hierarchyEntityId">{a.assignToDiocese}</Label>
                     <Select
-                      value={formData.hierarchyEntityId}
-                      onValueChange={(value) => setFormData({ ...formData, hierarchyEntityId: value })}
+                      value={formData.hierarchyEntityId || 'none'}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, hierarchyEntityId: value === 'none' ? '' : value })}
                     >
                       <SelectTrigger id="hierarchyEntityId">
-                        <SelectValue placeholder="Select a Zone" />
+                        <SelectValue placeholder={a.notAssigned} />
                       </SelectTrigger>
                       <SelectContent>
-                        {zonesData?.length > 0 ? (
-                          zonesData.map((zone: any) => (
-                            <SelectItem key={zone.id} value={zone.id}>
-                              {zone.name} / {zone.nameAmharic}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="" disabled>No Zones available - Create one first</SelectItem>
-                        )}
+                        {/* Radix rejects an empty-string item value, so absence
+                            is carried by this sentinel rather than by ''. */}
+                        <SelectItem value="none">{a.notAssigned}</SelectItem>
+                        {zonesData?.map((zone: any) => (
+                          <SelectItem key={zone.id} value={zone.id}>
+                            {zone.name} / {zone.nameAmharic}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      Select which Zone this user belongs to. Create a Zone first if none exist.
+                      {a.assignToDioceseHint}
                     </p>
                   </div>
                   {needsAtbiya(formData.hierarchyLevel) && (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor="atbiyaId">Atbiya (Church) * / አትብያ (ቤተክርስቲያን) *</Label>
+                        <Label htmlFor="atbiyaId">{a.scopeCongregation} *</Label>
                         <Select
                           value={formData.atbiyaId}
                           onValueChange={(value) => {
@@ -859,7 +882,7 @@ const UserManagement = () => {
                           }}
                         >
                           <SelectTrigger id="atbiyaId">
-                            <SelectValue placeholder="Select Atbiya" />
+                            <SelectValue placeholder={a.selectCongregation} />
                           </SelectTrigger>
                           <SelectContent>
                             {atbiyaData?.map((atbiya: any) => (
@@ -872,17 +895,17 @@ const UserManagement = () => {
                       </div>
                     </>
                   )}
-                  {formData.hierarchyLevel === 'HiyawanMahderat' && (
+                  {needsMahderat(formData.hierarchyLevel) && (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor="mahderatId">Mahderat (Small Group) * / ማህደራት (ትንሽ ቡድን) *</Label>
+                        <Label htmlFor="mahderatId">{a.tabMahderat} *</Label>
                         <Select
                           value={formData.mahderatId}
                           onValueChange={(value) => setFormData({ ...formData, mahderatId: value })}
                           disabled={!formData.atbiyaId}
                         >
                           <SelectTrigger id="mahderatId">
-                            <SelectValue placeholder={formData.atbiyaId ? "Select Mahderat" : "Select Atbiya first"} />
+                            <SelectValue placeholder={formData.atbiyaId ? a.selectMahderat : a.selectCongregationFirst} />
                           </SelectTrigger>
                           <SelectContent>
                             {mahderatData?.map((mahderat: any) => (
@@ -893,13 +916,13 @@ const UserManagement = () => {
                           </SelectContent>
                         </Select>
                         <p className="text-xs text-muted-foreground">
-                          Mahderat are small groups within Atbiya for people living close to each other
+                          {a.mahderatHint}
                         </p>
                       </div>
                     </>
                   )}
                   <div className="space-y-2">
-                    <Label htmlFor="ministryType">Ministry Type *</Label>
+                    <Label htmlFor="ministryType">{a.ministryType} *</Label>
                     <Select value={formData.ministryType} onValueChange={(value) => setFormData({ ...formData, ministryType: value })}>
                       <SelectTrigger id="ministryType">
                         <SelectValue />
@@ -918,13 +941,13 @@ const UserManagement = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="region">Region *</Label>
+                    <Label htmlFor="region">{a.region}</Label>
                     <Select
                       value={formData.region}
                       onValueChange={(value) => setFormData({ ...formData, region: value })}
                     >
                       <SelectTrigger id="region">
-                        <SelectValue placeholder="Select Region" />
+                        <SelectValue placeholder={a.selectRegion} />
                       </SelectTrigger>
                       <SelectContent>
                         {ETHIOPIAN_REGIONS.map((region) => (
@@ -936,23 +959,21 @@ const UserManagement = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="zone">Zone *</Label>
+                    <Label htmlFor="zone">{a.zone}</Label>
                     <Input
                       id="zone"
                       value={formData.zone}
                       onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
                       placeholder="Bole"
-                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="woreda">Woreda *</Label>
+                    <Label htmlFor="woreda">{a.woreda}</Label>
                     <Input
                       id="woreda"
                       value={formData.woreda}
                       onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
                       placeholder="Bole Sub City"
-                      required
                     />
                   </div>
                 </div>
@@ -961,7 +982,7 @@ const UserManagement = () => {
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createUserMutation.isPending}>
-                    {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                    {createUserMutation.isPending ? a.creating : a.createUser}
                   </Button>
                 </div>
               </form>
@@ -985,7 +1006,7 @@ const UserManagement = () => {
               {users.length || 1}
             </span>
             <p className="text-xs uppercase font-bold tracking-wider text-[#2E5E99] dark:text-[#7BA4D0] mt-4">
-              Total Users
+              {a.totalUsers}
             </p>
           </div>
           <div className="p-3 bg-[#2E5E99]/20 rounded-full">
@@ -1004,7 +1025,7 @@ const UserManagement = () => {
               : 'text-white/80 hover:text-white hover:bg-white/10'
           }`}
         >
-          System Admins
+          {a.systemAdmins}
         </button>
         <button
           onClick={() => setActiveTab('logs')}
@@ -1029,12 +1050,12 @@ const UserManagement = () => {
       </div>
 
       {activeTab === 'admins' && (
-        <SectionCard title={`All Users (${filteredUsers.length})`} icon={Users} description="View and manage all system users">
+        <SectionCard title={`All Users (${filteredUsers.length})`} icon={Users} description={a.viewManageUsers}>
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search users by name..."
+                placeholder={a.searchUsersByName}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="max-w-sm"
@@ -1046,18 +1067,18 @@ const UserManagement = () => {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Last Logged on system</TableHead>
+                    <TableHead>{a.lastLoggedOn}</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Active</TableHead>
-                    <TableHead className="text-right">Operations</TableHead>
+                    <TableHead className="text-right">{a.operations}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No users found
+                        {a.noUsersFound}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1123,11 +1144,11 @@ const UserManagement = () => {
       )}
 
       {activeTab === 'logs' && (
-        <SectionCard title="Audit Log" icon={History} description="Track of all user management activities">
+        <SectionCard title={a.auditLog} icon={History} description={a.auditLogDesc}>
           {isLoadingAudit ? (
-            <div className="text-center py-4 text-muted-foreground">Loading audit logs...</div>
+            <div className="text-center py-4 text-muted-foreground">{a.loadingAuditLogs}</div>
           ) : auditLogs.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">No audit logs available</div>
+            <div className="text-center py-4 text-muted-foreground">{a.noAuditLogs}</div>
           ) : (
             <div className="space-y-3">
               {auditLogs.map((log: any, index: number) => (
@@ -1148,9 +1169,9 @@ const UserManagement = () => {
       )}
 
       {activeTab === 'roles' && (
-        <SectionCard title="Role Management" icon={Users} description="System permissions and role configurations">
+        <SectionCard title={a.roleManagement} icon={Users} description={a.roleManagementDesc}>
           <div className="p-6 text-slate-600 dark:text-slate-400 text-sm border-2 border-dashed rounded-xl text-center">
-            Role management rules & permission matrix are active.
+            {a.roleManagementActive}
           </div>
         </SectionCard>
       )}
@@ -1165,9 +1186,9 @@ const UserManagement = () => {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>{a.editUser}</DialogTitle>
             <DialogDescription>
-              Update user information. Username cannot be changed.
+              {a.editUserDesc}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdate} className="space-y-4">
@@ -1208,7 +1229,7 @@ const UserManagement = () => {
                   }}
                   className="cursor-pointer"
                 />
-                <p className="text-xs text-muted-foreground">Upload JPG, PNG, or GIF. Max size 2MB.</p>
+                <p className="text-xs text-muted-foreground">{a.uploadHint}</p>
                 {formData.profilePicture && (
                   <div className="mt-2">
                     <img src={formData.profilePicture} alt="Preview" className="h-20 w-20 rounded-full object-cover border-2 border-primary" />
@@ -1216,7 +1237,7 @@ const UserManagement = () => {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-phone">Phone Number *</Label>
+                <Label htmlFor="edit-phone">{a.phoneNumber} *</Label>
                 <Input
                   id="edit-phone"
                   value={formData.phone}
@@ -1232,27 +1253,27 @@ const UserManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-gender">Gender *</Label>
+                <Label htmlFor="edit-gender">{a.gender} *</Label>
                 <Select value={formData.gender} onValueChange={(value: 'Male' | 'Female') => setFormData({ ...formData, gender: value })}>
                   <SelectTrigger id="edit-gender">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Male">{a.male}</SelectItem>
+                    <SelectItem value="Female">{a.female}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-hierarchyLevel">Hierarchy Level *</Label>
+                <Label htmlFor="edit-hierarchyLevel">{a.hierarchyLevel} *</Label>
                 <Select
                   value={formData.hierarchyLevel}
                   onValueChange={(value) => {
                     setFormData({
                       ...formData,
                       hierarchyLevel: value,
-                      atbiyaId: value === 'HiyawanMahderat' ? formData.atbiyaId : '',
-                      mahderatId: value === 'HiyawanMahderat' ? formData.mahderatId : '',
+                      atbiyaId: needsAtbiya(value) ? formData.atbiyaId : '',
+                      mahderatId: needsMahderat(value) ? formData.mahderatId : '',
                     });
                   }}
                 >
@@ -1268,13 +1289,13 @@ const UserManagement = () => {
               </div>
               {formData.hierarchyLevel === 'Memriya' && (
                 <div className="space-y-2">
-                  <Label htmlFor="edit-memriyaRole">Memriya Role (Optional)</Label>
+                  <Label htmlFor="edit-memriyaRole">{a.memriyaRole}</Label>
                   <Select
                     value={formData.memriyaRole}
                     onValueChange={(value) => setFormData({ ...formData, memriyaRole: value })}
                   >
                     <SelectTrigger id="edit-memriyaRole">
-                      <SelectValue placeholder="Select Role" />
+                      <SelectValue placeholder={a.selectRole} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Administrator">Administrator</SelectItem>
@@ -1287,7 +1308,7 @@ const UserManagement = () => {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="edit-ministryType">Ministry Type *</Label>
+                <Label htmlFor="edit-ministryType">{a.ministryType} *</Label>
                 <Select value={formData.ministryType} onValueChange={(value) => setFormData({ ...formData, ministryType: value })}>
                   <SelectTrigger id="edit-ministryType">
                     <SelectValue />
@@ -1308,7 +1329,7 @@ const UserManagement = () => {
               {needsAtbiya(formData.hierarchyLevel) && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-atbiyaId">Atbiya (Church) * / አትብያ (ቤተክርስቲያን) *</Label>
+                    <Label htmlFor="edit-atbiyaId">{a.scopeCongregation} *</Label>
                     <Select
                       value={formData.atbiyaId}
                       onValueChange={(value) => {
@@ -1320,7 +1341,7 @@ const UserManagement = () => {
                       }}
                     >
                       <SelectTrigger id="edit-atbiyaId">
-                        <SelectValue placeholder="Select Atbiya" />
+                        <SelectValue placeholder={a.selectCongregation} />
                       </SelectTrigger>
                       <SelectContent>
                         {atbiyaData?.map((atbiya: any) => (
@@ -1333,17 +1354,17 @@ const UserManagement = () => {
                   </div>
                 </>
               )}
-              {formData.hierarchyLevel === 'HiyawanMahderat' && (
+              {needsMahderat(formData.hierarchyLevel) && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-mahderatId">Mahderat (Small Group) * / ማህደራት (ትንሽ ቡድን) *</Label>
+                    <Label htmlFor="edit-mahderatId">{a.tabMahderat} *</Label>
                     <Select
                       value={formData.mahderatId}
                       onValueChange={(value) => setFormData({ ...formData, mahderatId: value })}
                       disabled={!formData.atbiyaId}
                     >
                       <SelectTrigger id="edit-mahderatId">
-                        <SelectValue placeholder={formData.atbiyaId ? "Select Mahderat" : "Select Atbiya first"} />
+                        <SelectValue placeholder={formData.atbiyaId ? a.selectMahderat : a.selectCongregationFirst} />
                       </SelectTrigger>
                       <SelectContent>
                         {mahderatData?.map((mahderat: any) => (
@@ -1357,13 +1378,13 @@ const UserManagement = () => {
                 </>
               )}
               <div className="space-y-2">
-                <Label htmlFor="edit-region">Region *</Label>
+                <Label htmlFor="edit-region">{a.region}</Label>
                 <Select
                   value={formData.region}
                   onValueChange={(value) => setFormData({ ...formData, region: value })}
                 >
                   <SelectTrigger id="edit-region">
-                    <SelectValue placeholder="Select Region" />
+                    <SelectValue placeholder={a.selectRegion} />
                   </SelectTrigger>
                   <SelectContent>
                     {ETHIOPIAN_REGIONS.map((region) => (
@@ -1375,21 +1396,19 @@ const UserManagement = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-zone">Zone *</Label>
+                <Label htmlFor="edit-zone">{a.zone}</Label>
                 <Input
                   id="edit-zone"
                   value={formData.zone}
                   onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
-                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-woreda">Woreda *</Label>
+                <Label htmlFor="edit-woreda">{a.woreda}</Label>
                 <Input
                   id="edit-woreda"
                   value={formData.woreda}
                   onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
-                  required
                 />
               </div>
             </div>
@@ -1398,7 +1417,7 @@ const UserManagement = () => {
                 Cancel
               </Button>
               <Button type="submit" disabled={updateUserMutation.isPending}>
-                {updateUserMutation.isPending ? 'Updating...' : 'Update User'}
+                {updateUserMutation.isPending ? a.updating : a.updateUser}
               </Button>
             </div>
           </form>
@@ -1409,7 +1428,7 @@ const UserManagement = () => {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Suspend this account?</AlertDialogTitle>
+            <AlertDialogTitle>{a.suspendAccount}</AlertDialogTitle>
             <AlertDialogDescription>
               <strong>{selectedUser?.fullName}</strong> will immediately lose access to
               everything in the system and will not be able to sign in. Their record is

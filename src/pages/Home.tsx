@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Users, FileText, BarChart3, Sun, Moon,
   Languages, Mail, MapPin, CheckCircle2, Sparkles, Menu, X,
   ArrowRight, Heart, Calendar, MessageSquare, Bell, Shield, Youtube, Send, Phone,
   Clock, Globe, Church, Facebook, Music2, ExternalLink, BookOpen, Compass, Award, Target,
+  Scale, Handshake,
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Button } from './home-components/Button';
@@ -31,7 +32,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Users, FileText, BarChart3, Calendar, MapPin, Shield, Heart,
   Languages, Bell, CheckCircle2, Mail, ArrowRight, Sparkles,
   Youtube, Send, Phone, Clock, Globe, Church, MessageSquare,
-  BookOpen, Compass, Award, Target,
+  BookOpen, Compass, Award, Target, Scale, Handshake,
 };
 
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
@@ -50,7 +51,10 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
  * The keys index into `t.nav`, so adding one here means adding it to all four
  * languages in src/i18n/translations.ts.
  */
-const SECTIONS = ['home', 'services', 'about', 'support', 'news', 'contact'] as const;
+// Order matches the page. `about` sits directly under the hero: who the
+// church is answers the first question a visitor actually has, and the
+// feature tour means nothing before it.
+const SECTIONS = ['home', 'about', 'services', 'support', 'news', 'contact'] as const;
 
 /**
  * Keeps a section's heading clear of the fixed navigation when it is scrolled
@@ -415,61 +419,6 @@ const Home: React.FC = () => {
         </section>
       )}
 
-      {/* ── Features ── */}
-      <section id="services" className={`py-32 relative ${SECTION_ANCHOR}`}>
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
-            <div className="space-y-4 max-w-2xl">
-              <h2 className="text-4xl md:text-6xl font-black font-ethiopic text-[#0D2440]">{features.sectionTitle}</h2>
-              <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">{features.sectionDescription}</p>
-            </div>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.items.map((f, i) => {
-              /* An admin-uploaded photo wins; otherwise fall back to the
-                 bundled src/assets/pictures photo at this position, and to a
-                 plain icon tile when that directory is empty — so the card
-                 never depends on either source having contents. */
-              const photo = f.imageUrl ? optimized(f.imageUrl, 800)
-                : PICTURES.length > 0 ? PICTURES[i % PICTURES.length]
-                : null;
-              return (
-              <motion.div key={f.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.2 }} viewport={{ once: true }}>
-                <Card className="h-full hover:shadow-[#2E5E99]/10 bg-white shadow-xl border-[#2E5E99]/5">
-                  {/* The negative margins match the card's own p-8 so the image
-                      bleeds to its edges; only the top corners are rounded. */}
-                  {photo ? (
-                    <div className="relative -mx-8 -mt-8 mb-8 aspect-video overflow-hidden rounded-t-3xl group/photo">
-                      <img
-                        src={photo}
-                        alt=""
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover/photo:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0D2440]/50 to-transparent" />
-                      <div className="absolute bottom-4 left-4 w-12 h-12 rounded-xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center shadow-2xl">
-                        <DynamicIcon name={f.icon} className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center mb-8 shadow-2xl">
-                      <DynamicIcon name={f.icon} className="h-8 w-8 text-white" />
-                    </div>
-                  )}
-                  <h3 className="text-3xl font-bold mb-4 font-ethiopic text-[#0D2440]">{f.title}</h3>
-                  <p className="text-lg text-[#0D2440]/70 font-ethiopic leading-relaxed mb-8">{f.description}</p>
-                  <button type="button" className="flex items-center gap-2 text-[#2E5E99] font-bold group/btn" onClick={() => openFeatureLink(f)}>
-                    {f.learnMoreLabel?.trim() || t.common.learnMore}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-2" />
-                  </button>
-                </Card>
-              </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* ── About Us, Faith, Mission & Values ── */}
       <section id="about" className={`py-24 sm:py-32 relative bg-[#2E5E99]/5 backdrop-blur-md ${SECTION_ANCHOR}`}>
         <div className="container mx-auto px-6 space-y-20">
@@ -504,6 +453,14 @@ const Home: React.FC = () => {
                   {about?.whoWeAreDescription ?? 'Mahibere Ahaw is a Christ-centered Orthodox church institution dedicated to spiritual renewal, biblical teaching, and equipping congregations worldwide.'}
                 </p>
               </div>
+              {about?.historyLinkLabel && (
+                <Link
+                  to={about.historyUrl || '/about'}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[#2E5E99] text-white font-ethiopic font-bold shadow-lg shadow-[#2E5E99]/20 hover:bg-[#204a7c] hover:gap-3 transition-all"
+                >
+                  {about.historyLinkLabel} <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} viewport={{ once: true }}
@@ -516,9 +473,29 @@ const Home: React.FC = () => {
                 <h3 className="text-2xl font-black font-ethiopic text-white">
                   {about?.missionTitle ?? 'Our Mission'}
                 </h3>
-                <p className="font-ethiopic leading-relaxed text-base text-white/90">
-                  {about?.missionDescription ?? 'To preach the Gospel of Jesus Christ, nurture believers into spiritual maturity, prepare church leaders, and advance digital ministry.'}
-                </p>
+                {/* The mission is a list of commitments, not a paragraph —
+                    rendered as one when the content supplies several lines. */}
+                {(() => {
+                  const lines = (about?.missionDescription ?? '')
+                    .split('\n').map((l) => l.trim()).filter(Boolean);
+                  if (lines.length > 1) {
+                    return (
+                      <ul className="space-y-2 font-ethiopic text-base text-white/90">
+                        {lines.map((line, i) => (
+                          <li key={i} className="flex gap-2 leading-relaxed">
+                            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/70 shrink-0" />
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return (
+                    <p className="font-ethiopic leading-relaxed text-base text-white/90">
+                      {lines[0] ?? 'To preach the Gospel of Jesus Christ, nurture believers into spiritual maturity, prepare church leaders, and advance digital ministry.'}
+                    </p>
+                  );
+                })()}
               </div>
             </motion.div>
 
@@ -594,6 +571,78 @@ const Home: React.FC = () => {
             </div>
           </div>
 
+        </div>
+      </section>
+
+      {/* Full history CTA — the About section above is a summary, so the way
+          through to the complete account has to be impossible to miss. */}
+      {content.about?.historyLinkLabel && (
+        <div className="pb-20 sm:pb-24 -mt-8 sm:-mt-12 relative bg-[#2E5E99]/5 backdrop-blur-md">
+          <div className="container mx-auto px-6 flex justify-center">
+            <Link
+              to={content.about.historyUrl || '/about'}
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-3xl border-2 border-[#2E5E99]/30 font-ethiopic font-black text-[#2E5E99] hover:bg-[#2E5E99] hover:text-white hover:border-transparent transition-all"
+            >
+              <BookOpen className="h-5 w-5" />
+              {content.about.historyLinkLabel}
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── Features ── */}
+      <section id="services" className={`py-32 relative ${SECTION_ANCHOR}`}>
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+            <div className="space-y-4 max-w-2xl">
+              <h2 className="text-4xl md:text-6xl font-black font-ethiopic text-[#0D2440]">{features.sectionTitle}</h2>
+              <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">{features.sectionDescription}</p>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.items.map((f, i) => {
+              /* An admin-uploaded photo wins; otherwise fall back to the
+                 bundled src/assets/pictures photo at this position, and to a
+                 plain icon tile when that directory is empty — so the card
+                 never depends on either source having contents. */
+              const photo = f.imageUrl ? optimized(f.imageUrl, 800)
+                : PICTURES.length > 0 ? PICTURES[i % PICTURES.length]
+                : null;
+              return (
+              <motion.div key={f.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.2 }} viewport={{ once: true }}>
+                <Card className="h-full hover:shadow-[#2E5E99]/10 bg-white shadow-xl border-[#2E5E99]/5">
+                  {/* The negative margins match the card's own p-8 so the image
+                      bleeds to its edges; only the top corners are rounded. */}
+                  {photo ? (
+                    <div className="relative -mx-8 -mt-8 mb-8 aspect-video overflow-hidden rounded-t-3xl group/photo">
+                      <img
+                        src={photo}
+                        alt=""
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/photo:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0D2440]/50 to-transparent" />
+                      <div className="absolute bottom-4 left-4 w-12 h-12 rounded-xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center shadow-2xl">
+                        <DynamicIcon name={f.icon} className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2E5E99] to-[#7BA4D0] flex items-center justify-center mb-8 shadow-2xl">
+                      <DynamicIcon name={f.icon} className="h-8 w-8 text-white" />
+                    </div>
+                  )}
+                  <h3 className="text-3xl font-bold mb-4 font-ethiopic text-[#0D2440]">{f.title}</h3>
+                  <p className="text-lg text-[#0D2440]/70 font-ethiopic leading-relaxed mb-8">{f.description}</p>
+                  <button type="button" className="flex items-center gap-2 text-[#2E5E99] font-bold group/btn" onClick={() => openFeatureLink(f)}>
+                    {f.learnMoreLabel?.trim() || t.common.learnMore}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-2" />
+                  </button>
+                </Card>
+              </motion.div>
+              );
+            })}
+          </div>
         </div>
       </section>
 

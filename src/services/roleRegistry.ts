@@ -108,14 +108,14 @@ const SEED_SPECS: SeedSpec[] = [
   },
   {
     key: 'Zone',
-    labels: { en: 'Zone', am: 'ዞን', om: 'Zoonii', ti: 'ዞባ' },
-    description: 'Regional zone overseeing a group of parishes.',
+    labels: { en: 'Diocese', am: 'ሀገረ ስብከት', om: 'Diyoosiisii', ti: 'ሃገረ ስብከት' },
+    description: 'Diocese overseeing a group of local congregations.',
     scope: 'zone', isAdmin: false, canApproveMembers: true, color: 'cyan',
   },
   {
     key: 'Atbiya',
-    labels: { en: 'Atbiya', am: 'አጥቢያ ቤተ ክርስቲያን', om: 'Waldaa Naannoo', ti: 'ኣጥቢያ' },
-    description: 'Local parish church — the base unit of the structure.',
+    labels: { en: 'Local Congregation', am: 'አጥቢያ', om: 'Waldaa Naannoo', ti: 'ኣጥቢያ' },
+    description: 'Local congregation — the base unit of the structure.',
     scope: 'atbiya', isAdmin: false, canApproveMembers: true, color: 'emerald',
   },
   {
@@ -218,6 +218,53 @@ export function reconcileRoles(roles: Role[]): Role[] {
   });
 }
 
+/**
+ * Built-in labels that have been superseded, keyed by role.
+ *
+ * `reconcileRoles` deliberately preserves `labels` — an operator who renamed a
+ * role should keep their name. That is right, but it also means shipping a new
+ * seed label changes nothing on any installation that has ever opened Software
+ * Control, because `siteConfig/roles` already exists with the old text.
+ *
+ * So a rename that has to reach everybody is recorded here instead, and applied
+ * only where the stored label is still EXACTLY the old seed value. An operator's
+ * own wording never matches, so it is never touched.
+ */
+const RENAMED_LABELS: Record<string, Array<{ lang: Language; from: string; to: string }>> = {
+  Zone: [
+    { lang: 'en', from: 'Zone', to: 'Diocese' },
+    { lang: 'am', from: 'ዞን', to: 'ሀገረ ስብከት' },
+    { lang: 'om', from: 'Zoonii', to: 'Diyoosiisii' },
+    { lang: 'ti', from: 'ዞባ', to: 'ሃገረ ስብከት' },
+  ],
+  Atbiya: [
+    { lang: 'en', from: 'Atbiya', to: 'Local Congregation' },
+    { lang: 'am', from: 'አጥቢያ ቤተ ክርስቲያን', to: 'አጥቢያ' },
+    { lang: 'ti', from: 'ኣጥቢያ', to: 'ኣጥቢያ' },
+  ],
+};
+
+/**
+ * Applies `RENAMED_LABELS`. Pure and idempotent — once a label has moved on it
+ * no longer matches `from`, so re-running is a no-op.
+ */
+export function applyRenamedLabels(roles: Role[]): Role[] {
+  return roles.map((role) => {
+    const renames = RENAMED_LABELS[role.key];
+    if (!renames || !role.isSystem) return role;
+
+    let labels = role.labels;
+    for (const { lang, from, to } of renames) {
+      if (labels[lang] === from && from !== to) {
+        // Copy on first hit only, so untouched roles keep their identity.
+        if (labels === role.labels) labels = { ...role.labels };
+        labels[lang] = to;
+      }
+    }
+    return labels === role.labels ? role : { ...role, labels };
+  });
+}
+
 /** Legacy mirror so pre-upgrade browser tabs keep resolving permissions. */
 export function deriveRolePermissions(roles: Role[]): RolePermissionOverrides {
   const out: RolePermissionOverrides = {};
@@ -291,7 +338,11 @@ function normalize(raw: unknown): RoleRegistry | null {
     version: typeof data.version === 'number' ? data.version : 1,
     // A document saved before this version predates permission changes that
     // shipped since, so the built-in roles are brought back in line here.
-    roles: storedPermissionsVersion < PERMISSIONS_VERSION ? reconcileRoles(parsed) : parsed,
+    // The label migration runs unconditionally: it is version-independent and
+    // a no-op once applied.
+    roles: applyRenamedLabels(
+      storedPermissionsVersion < PERMISSIONS_VERSION ? reconcileRoles(parsed) : parsed
+    ),
     permissionsVersion: storedPermissionsVersion,
     meta: data.meta,
   };

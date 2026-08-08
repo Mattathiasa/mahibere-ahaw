@@ -55,7 +55,7 @@ const PendingApproval: React.FC = () => {
               <p className="text-muted-foreground leading-relaxed">
                 {name
                   ? <>Your membership request is with <strong>{name}</strong>. Once they approve it you will be able to sign in with the username and password you just chose.</>
-                  : <>Your membership request has been sent to your Atbiya. Once they approve it you will be able to sign in with the username and password you just chose.</>}
+                  : <>Your membership request has been sent to your congregation. Once they approve it you will be able to sign in with the username and password you just chose.</>}
               </p>
             </div>
 
@@ -104,7 +104,7 @@ const PendingApproval: React.FC = () => {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Wrong parish?{' '}
+              Wrong congregation?{' '}
               <Link to="/signup" className="font-bold text-[#2E5E99] hover:underline">
                 Start a new request
               </Link>

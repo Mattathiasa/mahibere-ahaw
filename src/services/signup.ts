@@ -33,6 +33,9 @@ export interface SignupInput {
   region?: string;
   zone?: string;
   woreda?: string;
+  /** The member's own home pin, used later to suggest the nearest Mahedher. */
+  lat?: number;
+  lng?: number;
   ministryType?: string[];
   churchRoles?: string[];
   /** hierarchy doc id of the parish the member is requesting to join. */
@@ -106,10 +109,16 @@ export const signupService = {
         hasChildren: input.hasChildren ?? false,
         childrenCount: input.childrenCount ?? 0,
         workSchool: input.workSchool ?? '',
+        // Coordinates ride inside `address` rather than as new top-level
+        // fields: the `keys().hasOnly([...])` whitelist in firestore.rules
+        // checks top-level keys only, and `address` is already listed there.
         address: {
           region: input.region ?? '',
           zone: input.zone ?? '',
           woreda: input.woreda ?? '',
+          ...(typeof input.lat === 'number' && typeof input.lng === 'number'
+            ? { lat: input.lat, lng: input.lng }
+            : {}),
         },
         ministryType: input.ministryType ?? [],
         churchRoles: input.churchRoles ?? [],

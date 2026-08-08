@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   UserPlus, Check, X, Loader2, RefreshCw, Church, Phone, Mail,
   MapPin, Calendar, AlertCircle, CheckCircle2, XCircle,
@@ -10,6 +10,7 @@ import {
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +32,8 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
     can, isHeadOffice, myAtbiyaId, roles, roleLabel, isApproverRole, isSuperAdmin,
   } = usePermissions();
   const { showElement } = useSoftwareControl();
+  const { t } = useLanguage();
+  const a = t.admin;
 
   const [requests, setRequests] = useState<MembershipRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +43,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [roleChoice, setRoleChoice] = useState<Record<string, string>>({});
+  const [congregationFilter, setCongregationFilter] = useState('all');
 
   const mayApprove =
     isSuperAdmin || can('canApproveMembers') || isApproverRole(user?.hierarchyLevel);
@@ -51,6 +55,24 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
     (r) => r.active !== false && (isHeadOffice ? true : !r.isAdmin)
   );
 
+  /**
+   * Congregations that actually have someone waiting, derived from the loaded
+   * requests rather than fetched. Head office sees every congregation's queue
+   * in one list, which is unreadable once there are more than a handful — and
+   * a congregation with nothing pending is not worth offering as a filter.
+   */
+  const congregationOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const r of requests) {
+      if (r.atbiyaId) seen.set(r.atbiyaId, r.atbiyaName || r.atbiyaId);
+    }
+    return [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [requests]);
+
+  const visible = congregationFilter === 'all'
+    ? requests
+    : requests.filter((r) => r.atbiyaId === congregationFilter);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -59,14 +81,14 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
     } catch (e) {
       setError(
         e instanceof Error && e.message.includes('index')
-          ? 'The membership request index is still building in Firestore. Try again in a minute.'
-          : 'Could not load membership requests.'
+          ? a.requestsIndexBuilding
+          : a.requestsLoadFailed
       );
       setRequests([]);
     } finally {
       setLoading(false);
     }
-  }, [isHeadOffice, myAtbiyaId]);
+  }, [isHeadOffice, myAtbiyaId, a]);
 
   useEffect(() => {
     if (mayApprove) load();
@@ -89,10 +111,10 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
         { id: user?.id ?? '', name: user?.fullName ?? user?.username ?? '' },
         role
       );
-      setNotice(`${req.fullNameEnglish ?? 'Member'} approved. They can sign in now.`);
+      setNotice(`${req.fullNameEnglish ?? a.member} ${a.approvedNotice}`);
       setRequests((r) => r.filter((x) => x.id !== req.id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not approve this request.');
+      setError(e instanceof Error ? e.message : a.approveFailed);
       load();
     } finally {
       setBusyId(null);
@@ -108,12 +130,12 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
         { id: user?.id ?? '', name: user?.fullName ?? user?.username ?? '' },
         reason
       );
-      setNotice(`${req.fullNameEnglish ?? 'Request'} rejected.`);
+      setNotice(`${req.fullNameEnglish ?? ''} ${a.rejectedNotice}`);
       setRequests((r) => r.filter((x) => x.id !== req.id));
       setRejecting(null);
       setReason('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not reject this request.');
+      setError(e instanceof Error ? e.message : a.rejectFailed);
       load();
     } finally {
       setBusyId(null);
@@ -126,20 +148,41 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
         <div>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5" />
-            Membership Requests
+            {a.requestsTitle}
             {requests.length > 0 && (
-              <Badge className="bg-amber-500 hover:bg-amber-500">{requests.length}</Badge>
+              <Badge className="bg-amber-500 hover:bg-amber-500">
+                {congregationFilter === 'all'
+                  ? requests.length
+                  : `${visible.length} of ${requests.length}`}
+              </Badge>
             )}
           </CardTitle>
           <CardDescription>
             {isHeadOffice
-              ? 'People who signed up and are waiting for approval, across every parish.'
-              : 'People who chose your Atbiya when they signed up. Approving lets them sign in.'}
+              ? a.requestsDescHeadOffice
+              : a.requestsDescCongregation}
           </CardDescription>
         </div>
-        <Button size="sm" variant="outline" onClick={load} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {isHeadOffice && congregationOptions.length > 1 && (
+            <Select value={congregationFilter} onValueChange={setCongregationFilter}>
+              <SelectTrigger className="w-56 h-9 text-xs">
+                <SelectValue placeholder={a.allCongregations} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{a.allCongregations} ({requests.length})</SelectItem>
+                {congregationOptions.map(([id, name]) => (
+                  <SelectItem key={id} value={id}>
+                    {name} ({requests.filter((r) => r.atbiyaId === id).length})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button size="sm" variant="outline" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> {a.refresh}
+          </Button>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-3">
@@ -159,25 +202,32 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
         {missingParish ? (
           <div className="text-center py-10 text-muted-foreground">
             <Church className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium">No parish assigned to your account</p>
+            <p className="font-medium">{a.noCongregationAssigned}</p>
             <p className="text-sm max-w-md mx-auto">
-              Requests are matched to a parish. Ask an administrator to set your Atbiya
-              in User Management so this list can find yours.
+              {a.noCongregationAssignedDesc}
             </p>
           </div>
         ) : loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : requests.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="text-center py-10 text-muted-foreground">
             <UserPlus className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium">No pending requests</p>
-            <p className="text-sm">New sign-ups will appear here for review.</p>
+            <p className="font-medium">
+              {requests.length === 0
+                ? a.noPendingRequests
+                : a.noPendingForCongregation}
+            </p>
+            <p className="text-sm">
+              {requests.length === 0
+                ? a.noPendingRequestsDesc
+                : a.noPendingForCongregationDesc}
+            </p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
-            {requests.map((req) => (
+            {visible.map((req) => (
               <motion.div key={req.id}
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
                 className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
@@ -187,6 +237,11 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
                       <span className="font-bold">{req.fullNameEnglish ?? req.username}</span>
                       {req.fullNameAmharic && (
                         <span className="text-sm text-muted-foreground font-ethiopic">{req.fullNameAmharic}</span>
+                      )}
+                      {/* Head office is acting on someone else's behalf, so
+                          which congregation must be unmissable, not a footnote. */}
+                      {isHeadOffice && req.atbiyaName && (
+                        <Badge variant="outline" className="text-[10px]">{req.atbiyaName}</Badge>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground space-y-0.5">
@@ -208,7 +263,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
                       {req.requestedAt && (
                         <p className="flex items-center gap-1.5">
                           <Calendar className="h-3 w-3" />
-                          Requested {new Date(req.requestedAt).toLocaleDateString()}
+                          {a.requested} {new Date(req.requestedAt).toLocaleDateString()}
                         </p>
                       )}
                     </div>
@@ -228,7 +283,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
                         onValueChange={(v) => setRoleChoice((c) => ({ ...c, [req.id]: v }))}
                       >
                         <SelectTrigger className="w-44 h-9 text-xs">
-                          <SelectValue placeholder="Assign role" />
+                          <SelectValue placeholder={a.assignRole} />
                         </SelectTrigger>
                         <SelectContent>
                           {assignableRoles.map((r) => (
@@ -239,7 +294,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
                       <Button size="sm" variant="outline" disabled={busyId === req.id}
                         className="text-rose-600 border-rose-500/30 hover:bg-rose-500/10"
                         onClick={() => { setRejecting(req.id); setReason(''); }}>
-                        <XCircle className="h-4 w-4 mr-1" /> Reject
+                        <XCircle className="h-4 w-4 mr-1" /> {a.reject}
                       </Button>
                       <Button size="sm" disabled={busyId === req.id}
                         className="bg-emerald-600 hover:bg-emerald-700"
@@ -247,7 +302,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
                         {busyId === req.id
                           ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                           : <Check className="h-4 w-4 mr-1" />}
-                        Approve
+                        {a.approve}
                       </Button>
                     </div>
                   )}
@@ -259,17 +314,17 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
                       rows={2}
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
-                      placeholder="Why is this request being rejected? The member will see this."
+                      placeholder={a.rejectionReason}
                     />
                     <div className="flex justify-end gap-2">
                       <Button size="sm" variant="ghost"
                         onClick={() => { setRejecting(null); setReason(''); }}>
-                        <X className="h-4 w-4 mr-1" /> Cancel
+                        <X className="h-4 w-4 mr-1" /> {a.cancel}
                       </Button>
                       <Button size="sm" variant="destructive" disabled={busyId === req.id}
                         onClick={() => handleReject(req)}>
                         {busyId === req.id && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                        Confirm rejection
+                        {a.confirmRejection}
                       </Button>
                     </div>
                   </div>
