@@ -10,7 +10,11 @@
         "preview": "vite preview",
         "test": "vitest",
         "test:ui": "vitest --ui",
-        "test:rules": "firebase emulators:exec --only firestore --project mahibere-ahaw-rules-test \"vitest run src/test/firestore.rules.test.ts\""
+        "test:run": "vitest run --exclude '**/firestore.rules.test.ts'",
+        "test:rules": "firebase emulators:exec --only firestore --project mahibere-ahaw-rules-test \"vitest run src/test/firestore.rules.test.ts\"",
+        "lint:i18n": "node scripts/check-hardcoded-strings.mjs",
+        "lint:i18n:update": "node scripts/check-hardcoded-strings.mjs --update",
+        "check": "tsc --noEmit && npm run lint:i18n && npm run test:run"
     },
     "dependencies": {
         "@hookform/resolvers": "^3.10.0",

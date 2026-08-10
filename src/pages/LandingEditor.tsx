@@ -37,7 +37,6 @@ import { integrationsService, DEFAULT_INTEGRATIONS, type IntegrationsConfig } fr
 import { uploadToCloudinary, optimized } from '@/services/cloudinary';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
 import { BrandedLoader } from '@/components/BrandedLoader';
-import { invalidateTranslationCache } from '@/hooks/useTranslation';
 import { translations, type Language } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -484,11 +483,10 @@ const LandingEditor: React.FC = () => {
     setSavingStrings(true);
     try {
       await pageStringsService.save(pageStrings, user?.email ?? 'admin');
-      // Two caches read this document: the flat `t('key')` map, and the nested
-      // tree LanguageContext hands to `useLanguage().t` — which is what the
-      // landing page renders. Both have to be told, or the save appears to do
-      // nothing until a full reload.
-      invalidateTranslationCache();
+      // One cache now reads this document: the tree LanguageContext hands to
+      // `useLanguage().t`. `useTranslation`'s flat `t('key')` map is derived
+      // from that same tree, so refreshing the context propagates the save to
+      // both APIs. Without this the save appears to do nothing until a reload.
       await refreshTranslations();
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 3000);

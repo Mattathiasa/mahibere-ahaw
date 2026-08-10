@@ -59,11 +59,16 @@ function flattenSection(section: string, obj: Record<string, unknown>): StringEn
 /**
  * Every section and key an admin can translate, for one language.
  *
- * The key set comes from English, not from the selected language: `pages` has
- * 233 keys in English and 71 in the other three, and enumerating the selected
- * language would hide the remaining 162 from the very editor meant to
- * translate them. Where a language has no string of its own, the English one
- * is shown as the placeholder — matching what the page actually renders.
+ * The key set comes from English, not from the selected language. Amharic is
+ * complete and enforced by the type system, but Afaan Oromoo and Tigrinya are
+ * partial — `pages` has 234 keys in English and 71 in those two, and they have
+ * no `admin` section at all — so enumerating the selected language would hide
+ * the untranslated keys from the very editor meant to translate them. Where a
+ * language has no string of its own the English one is shown as the
+ * placeholder, matching what the page actually renders.
+ *
+ * Sections with no keys are filtered out, so a section module that has been
+ * created but not yet populated does not show up as an empty tab.
  */
 function getSections(lang: Language): Array<{ section: string; entries: StringEntry[] }> {
   const englishData = translations.en as Record<string, unknown>;
@@ -89,6 +94,18 @@ const SECTION_LABELS: Record<string, string> = {
   pages: 'Page Titles & Descriptions',
   signup: 'Sign-up Form',
   admin: 'Admin Screens',
+  status: 'Statuses & Choices',
+  errors: 'Error Messages',
+  forms: 'Form Fields & Validation',
+  permissions: 'Permissions & Roles',
+  structure: 'Church Structure',
+  modules: 'Module Defaults',
+  finance: 'Finance',
+  hr: 'Human Resources',
+  inventory: 'Inventory',
+  people: 'Members & Users',
+  content: 'News & Teachings',
+  geo: 'Places',
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────

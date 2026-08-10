@@ -1,0 +1,75 @@
+export const commonEn = {
+  search: 'Search...',
+  profile: 'Profile',
+  helpSupport: 'Help & Support',
+  save: 'Save',
+  cancel: 'Cancel',
+  edit: 'Edit',
+  delete: 'Delete',
+  submit: 'Submit',
+  viewAll: 'View All',
+  loading: 'Loading...',
+  learnMore: 'Learn More',
+  openInMaps: 'Open in Maps',
+  website: 'Website',
+  emailAction: 'Email',
+  callAction: 'Call',
+};
+
+/**
+ * Amharic is the default language, so a missing key here is a bug, not a
+ * fallback. `Record` rather than `Partial<Record>` makes that a compile error.
+ */
+export const commonAm: Record<keyof typeof commonEn, string> = {
+  search: 'ፈልግ...',
+  profile: 'መገለጫ',
+  helpSupport: 'እገዛ እና ድጋፍ',
+  save: 'አስቀምጥ',
+  cancel: 'ሰርዝ',
+  edit: 'አርትዕ',
+  delete: 'ሰርዝ',
+  submit: 'አስገባ',
+  viewAll: 'ሁሉንም ይመልከቱ',
+  loading: 'በመጫን ላይ...',
+  learnMore: 'ተጨማሪ ይመልከቱ',
+  openInMaps: 'በካርታ ላይ ክፈት',
+  website: 'ድረ-ገጽ',
+  emailAction: 'ኢሜይል',
+  callAction: 'ደውል',
+};
+
+export const commonOm: Partial<Record<keyof typeof commonEn, string>> = {
+  search: 'Barbaadi...',
+  profile: 'Piroofayilii',
+  helpSupport: 'Gargaarsa',
+  save: 'Olkaayi',
+  cancel: 'Haqi',
+  edit: 'Gulaali',
+  delete: 'Haqi',
+  submit: 'Galchi',
+  viewAll: 'Hunda Ilaali',
+  loading: 'Fe\'amaa jira...',
+  learnMore: 'Dabalata Baradhu',
+  openInMaps: 'Kaartaa irratti bani',
+  website: 'Marsariitii',
+  emailAction: 'Imeelii',
+  callAction: 'Bilbili',
+};
+
+export const commonTi: Partial<Record<keyof typeof commonEn, string>> = {
+  search: 'ድለ...',
+  profile: 'ፕሮፋይል',
+  helpSupport: 'ሓገዝን ደገፍን',
+  save: 'ኣቐምጥ',
+  cancel: 'ሰርዝ',
+  edit: 'ኣርም',
+  delete: 'ደምስስ',
+  submit: 'ኣቕርብ',
+  viewAll: 'ኩሉ ርአ',
+  loading: 'ይጽዕን ኣሎ...',
+  learnMore: 'ተወሳኺ ፍለጥ',
+  openInMaps: 'ኣብ ካርታ ክፈት',
+  website: 'ወብ ሳይት',
+  emailAction: 'ኢመይል',
+  callAction: 'ደውል',
+};

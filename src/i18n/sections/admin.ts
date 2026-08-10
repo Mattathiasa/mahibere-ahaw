@@ -551,8 +551,11 @@ export const adminEn = {
   roleDialogDesc: "Permissions are edited in the matrix below the role list. This dialog covers the role's identity, scope and access flags.",
 };
 
-/** Amharic. Keys the church has not translated fall back to English. */
-export const adminAm: Partial<Record<keyof typeof adminEn, string>> = {
+/**
+ * Amharic is the default language, so a missing key here is a bug, not a
+ * fallback. `Record` rather than `Partial<Record>` makes that a compile error.
+ */
+export const adminAm: Record<keyof typeof adminEn, string> = {
   save: 'አስቀምጥ',
   saving: 'በማስቀመጥ ላይ…',
   cancel: 'ተወው',
@@ -1073,3 +1076,11 @@ export const adminAm: Partial<Record<keyof typeof adminEn, string>> = {
   editRole: 'ኃላፊነት አርትዕ',
   roleDialogDesc: 'ፈቃዶች ከኃላፊነት ዝርዝሩ በታች ባለው ማትሪክስ ውስጥ ይስተካከላሉ። ይህ መገናኛ የኃላፊነቱን ማንነት፣ ክልልና የመዳረሻ ምልክቶች ይሸፍናል።',
 };
+
+/**
+ * Afaan Oromoo and Tigrinya have not been translated for the admin surface.
+ * Every key falls through to English via the merge base in `buildLanguage`,
+ * and every one is listed in the Localization Editor for a translator.
+ */
+export const adminOm: Partial<Record<keyof typeof adminEn, string>> = {};
+export const adminTi: Partial<Record<keyof typeof adminEn, string>> = {};
