@@ -150,7 +150,9 @@ function scan(source) {
     for (const m of line.matchAll(TEXT_PROPS)) add(m[3]);
     for (const m of line.matchAll(TOAST)) add(m[2]);
     for (const m of line.matchAll(THROWN)) add(m[2]);
-    for (const m of line.matchAll(JSX_TEXT)) add(m[1]);
+    // `<code>MapPin</code>` is an identifier the admin must type verbatim.
+    const withoutCode = line.replace(/<code[^>]*>.*?<\/code>/g, '<code/>');
+    for (const m of withoutCode.matchAll(JSX_TEXT)) add(m[1]);
 
     for (const m of line.matchAll(LABEL_PROP)) add(m[2]);
 

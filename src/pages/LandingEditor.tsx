@@ -51,14 +51,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LocalizationEditor } from '@/components/LocalizationEditor';
 
 import { useFormatters } from '@/lib/formatters';
+import { LANGUAGE_CYCLE, LANGUAGE_ENDONYM } from '@/i18n/languages';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const LANGUAGES: { value: Language; label: string; flag: string }[] = [
-  { value: 'en', label: 'English', flag: '🇬🇧' },
-  { value: 'am', label: 'አማርኛ', flag: '🇪🇹' },
-  { value: 'om', label: 'Afaan Oromoo', flag: '🇪🇹' },
-  { value: 'ti', label: 'ትግርኛ', flag: '🇪🇹' },
-];
+/** The editing-language picker. Names come from the shared endonym table. */
+const LANGUAGES: { value: Language; label: string; flag: string }[] = LANGUAGE_CYCLE.map(
+  (value) => ({ value, label: LANGUAGE_ENDONYM[value], flag: value === 'en' ? '🇬🇧' : '🇪🇹' })
+);
 
 // ─── Tiny field wrapper ───────────────────────────────────────────────────────
 
@@ -100,23 +99,25 @@ function FooterLinkEditor({
   onAdd: () => void;
   onRemove: (i: number) => void;
 }) {
+  const { t } = useLanguage();
+  const a = t.admin;
   return (
     <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <Badge variant="secondary">{title}</Badge>
         <Button size="sm" variant="outline" onClick={onAdd}>
-          <Plus className="h-4 w-4 mr-1" /> Add link
+          <Plus className="h-4 w-4 mr-1" /> {a.leAddLink}
         </Button>
       </div>
-      <Field label="Column heading">
+      <Field label={a.leColumnHeading}>
         <Input value={heading} onChange={(e) => onHeading(e.target.value)} />
       </Field>
       {(links ?? []).map((link, i) => (
         <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
-          <Field label="Label">
+          <Field label={a.leLabel}>
             <Input value={link.label} onChange={(e) => onChange(i, 'label', e.target.value)} />
           </Field>
-          <Field label="Link">
+          <Field label={a.leLink}>
             <Input value={link.url} onChange={(e) => onChange(i, 'url', e.target.value)} placeholder="/dashboard" />
           </Field>
           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"
@@ -135,7 +136,8 @@ const LandingEditor: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { formatDateTime } = useFormatters();
-  const { refreshTranslations } = useLanguage();
+  const { refreshTranslations, t } = useLanguage();
+  const a = t.admin;
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [allContent, setAllContent] = useState<MultiLangLandingContent>({});
@@ -261,7 +263,7 @@ const LandingEditor: React.FC = () => {
     patchFeatures((c) => ({
       ...c,
       sections: [...c.sections, {
-        id: `section-${Date.now()}`, title: 'New Section', subtitle: '', description: '',
+        id: `section-${Date.now()}`, title: a.leNewSection, subtitle: '', description: '',
         icon: 'Sparkles', color: 'blue', bullets: [], imageUrl: '',
         ctaLabel: 'Experience This Feature',
       }],
@@ -408,7 +410,7 @@ const LandingEditor: React.FC = () => {
     });
   }
   function addStat() {
-    patch((c) => ({ ...c, stats: [...c.stats, { label: 'New Stat', value: '0', icon: 'Shield' }] }));
+    patch((c) => ({ ...c, stats: [...c.stats, { label: a.leNewStat, value: '0', icon: 'Shield' }] }));
   }
   function removeStat(i: number) {
     patch((c) => ({ ...c, stats: c.stats.filter((_, idx) => idx !== i) }));
@@ -427,7 +429,7 @@ const LandingEditor: React.FC = () => {
       ...c,
       features: {
         ...c.features,
-        items: [...c.features.items, { id: `feature-${Date.now()}`, title: 'New Feature', description: '', icon: 'Sparkles' }],
+        items: [...c.features.items, { id: `feature-${Date.now()}`, title: a.leNewFeature, description: '', icon: 'Sparkles' }],
       },
     }));
   }
@@ -444,7 +446,7 @@ const LandingEditor: React.FC = () => {
     });
   }
   function addBank() {
-    patch((c) => ({ ...c, support: { ...c.support, banks: [...c.support.banks, { name: 'Bank Name', account: '' }] } }));
+    patch((c) => ({ ...c, support: { ...c.support, banks: [...c.support.banks, { name: a.leBankNameHeading, account: '' }] } }));
   }
   function removeBank(i: number) {
     patch((c) => ({ ...c, support: { ...c.support, banks: c.support.banks.filter((_, idx) => idx !== i) } }));
@@ -522,7 +524,7 @@ const LandingEditor: React.FC = () => {
               <ArrowLeft className="h-4 w-4 mr-1" /> Back
             </Button>
             <div>
-              <h1 className="text-lg font-bold">Site Content Editor</h1>
+              <h1 className="text-lg font-bold">{a.leSiteContentEditor}</h1>
               {allContent.meta?.updatedAt && (
                 <p className="text-xs text-muted-foreground">
                   Last saved: {formatDateTime(allContent.meta.updatedAt)} by {allContent.meta.updatedBy}
@@ -601,7 +603,7 @@ const LandingEditor: React.FC = () => {
             {/* Language switcher */}
             <div className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-muted/40 border border-border">
               <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-sm font-semibold text-muted-foreground">Editing language:</span>
+              <span className="text-sm font-semibold text-muted-foreground">{a.leEditingLanguage}</span>
               <div className="flex gap-2 flex-wrap">
                 {LANGUAGES.map(({ value, label, flag }) => (
                   <button
@@ -625,16 +627,16 @@ const LandingEditor: React.FC = () => {
             {/* Section tabs */}
             <Tabs defaultValue="hero">
               <TabsList className="mb-6 flex-wrap h-auto gap-1">
-                <TabsTrigger value="hero">Hero</TabsTrigger>
-                <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                <TabsTrigger value="stats">Stats</TabsTrigger>
-                <TabsTrigger value="features">Features</TabsTrigger>
-                <TabsTrigger value="about">About & Faith</TabsTrigger>
-                <TabsTrigger value="news">News</TabsTrigger>
-                <TabsTrigger value="support">Support & Banks</TabsTrigger>
-                <TabsTrigger value="contact">Contact</TabsTrigger>
-                <TabsTrigger value="footer">Footer</TabsTrigger>
-                <TabsTrigger value="featuresPage">Features Page</TabsTrigger>
+                <TabsTrigger value="hero">{a.leHero}</TabsTrigger>
+                <TabsTrigger value="gallery">{a.leGallery}</TabsTrigger>
+                <TabsTrigger value="stats">{a.leStats}</TabsTrigger>
+                <TabsTrigger value="features">{a.leFeatures}</TabsTrigger>
+                <TabsTrigger value="about">{a.leAboutFaith}</TabsTrigger>
+                <TabsTrigger value="news">{a.leNews}</TabsTrigger>
+                <TabsTrigger value="support">{a.leSupportBanks}</TabsTrigger>
+                <TabsTrigger value="contact">{a.leContact}</TabsTrigger>
+                <TabsTrigger value="footer">{a.leFooter}</TabsTrigger>
+                <TabsTrigger value="featuresPage">{a.leFeaturesPage}</TabsTrigger>
               </TabsList>
 
               {/* ── /features page ── */}
@@ -642,7 +644,7 @@ const LandingEditor: React.FC = () => {
                 <Card>
                   <CardHeader className="flex flex-row items-start justify-between gap-4">
                     <div>
-                      <CardTitle>Features Page</CardTitle>
+                      <CardTitle>{a.leFeaturesPage}</CardTitle>
                       <CardDescription>
                         Everything on the public /features page, in{' '}
                         {LANGUAGES.find((l) => l.value === activeLang)?.label}. The
@@ -656,13 +658,13 @@ const LandingEditor: React.FC = () => {
                   <CardContent className="space-y-6">
                     <div className="grid gap-4 pb-4 border-b border-border">
                       <div className="grid grid-cols-2 gap-4">
-                        <Field label="Badge"><Input value={fp.badge} onChange={(e) => setFp('badge', e.target.value)} /></Field>
-                        <Field label="Brand"><Input value={fp.brand} onChange={(e) => setFp('brand', e.target.value)} /></Field>
-                        <Field label="Heading"><Input value={fp.title} onChange={(e) => setFp('title', e.target.value)} /></Field>
-                        <Field label="Heading highlight" hint="The gradient second line."><Input value={fp.titleHighlight} onChange={(e) => setFp('titleHighlight', e.target.value)} /></Field>
-                        <Field label="Back link label"><Input value={fp.backLabel} onChange={(e) => setFp('backLabel', e.target.value)} /></Field>
+                        <Field label={a.leBadge}><Input value={fp.badge} onChange={(e) => setFp('badge', e.target.value)} /></Field>
+                        <Field label={a.leBrand}><Input value={fp.brand} onChange={(e) => setFp('brand', e.target.value)} /></Field>
+                        <Field label={a.leHeading}><Input value={fp.title} onChange={(e) => setFp('title', e.target.value)} /></Field>
+                        <Field label={a.leHeadingHighlight} hint={a.leGradientSecondLine}><Input value={fp.titleHighlight} onChange={(e) => setFp('titleHighlight', e.target.value)} /></Field>
+                        <Field label={a.leBackLinkLabel}><Input value={fp.backLabel} onChange={(e) => setFp('backLabel', e.target.value)} /></Field>
                       </div>
-                      <Field label="Subtitle"><Textarea rows={2} value={fp.subtitle} onChange={(e) => setFp('subtitle', e.target.value)} /></Field>
+                      <Field label={a.leSubtitle}><Textarea rows={2} value={fp.subtitle} onChange={(e) => setFp('subtitle', e.target.value)} /></Field>
                     </div>
 
                     {fp.sections.map((section, i) => (
@@ -677,12 +679,12 @@ const LandingEditor: React.FC = () => {
                           </Button>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <Field label="Title"><Input value={section.title} onChange={(e) => updateFeatureSection(i, 'title', e.target.value)} /></Field>
-                          <Field label="Subtitle"><Input value={section.subtitle} onChange={(e) => updateFeatureSection(i, 'subtitle', e.target.value)} /></Field>
-                          <Field label="Icon name (Lucide)" hint="Users, Calendar, BarChart3, Shield, Zap…">
+                          <Field label={a.leTitle}><Input value={section.title} onChange={(e) => updateFeatureSection(i, 'title', e.target.value)} /></Field>
+                          <Field label={a.leSubtitle}><Input value={section.subtitle} onChange={(e) => updateFeatureSection(i, 'subtitle', e.target.value)} /></Field>
+                          <Field label={a.leIconNameLucide} hint="Users, Calendar, BarChart3, Shield, Zap…">
                             <Input value={section.icon} onChange={(e) => updateFeatureSection(i, 'icon', e.target.value)} />
                           </Field>
-                          <Field label="Accent colour">
+                          <Field label={a.leAccentColour}>
                             <Select value={section.color} onValueChange={(v) => updateFeatureSection(i, 'color', v)}>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -693,14 +695,14 @@ const LandingEditor: React.FC = () => {
                             </Select>
                           </Field>
                         </div>
-                        <Field label="Description"><Textarea rows={3} value={section.description} onChange={(e) => updateFeatureSection(i, 'description', e.target.value)} /></Field>
+                        <Field label={a.leDescription}><Textarea rows={3} value={section.description} onChange={(e) => updateFeatureSection(i, 'description', e.target.value)} /></Field>
                         <Field
-                          label="Link anchor"
+                          label={a.leLinkAnchor}
                           hint={`Reached as /features#${section.id || '…'}. Must match a feature's anchor on the home page, or that card will scroll nowhere.`}
                         >
                           <Input value={section.id} onChange={(e) => updateFeatureSection(i, 'id', e.target.value)} />
                         </Field>
-                        <Field label="Button label"><Input value={section.ctaLabel} onChange={(e) => updateFeatureSection(i, 'ctaLabel', e.target.value)} /></Field>
+                        <Field label={a.leButtonLabel}><Input value={section.ctaLabel} onChange={(e) => updateFeatureSection(i, 'ctaLabel', e.target.value)} /></Field>
 
                         <div className="space-y-2">
                           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -720,7 +722,7 @@ const LandingEditor: React.FC = () => {
                           </Button>
                         </div>
 
-                        <Field label="Photo" hint="Leave empty to show the section's icon instead.">
+                        <Field label={a.lePhoto} hint={a.leLeaveEmptyForIcon}>
                           <CloudinaryImageUpload
                             value={section.imageUrl}
                             onChange={(url) => updateFeatureSection(i, 'imageUrl', url)}
@@ -732,14 +734,14 @@ const LandingEditor: React.FC = () => {
                     ))}
 
                     <div className="grid gap-4 pt-4 border-t border-border">
-                      <SectionDivider label="Closing call to action" />
-                      <Field label="Title"><Input value={fp.cta.title} onChange={(e) => setFpCta('title', e.target.value)} /></Field>
-                      <Field label="Description"><Textarea rows={2} value={fp.cta.description} onChange={(e) => setFpCta('description', e.target.value)} /></Field>
+                      <SectionDivider label={a.leClosingCta} />
+                      <Field label={a.leTitle}><Input value={fp.cta.title} onChange={(e) => setFpCta('title', e.target.value)} /></Field>
+                      <Field label={a.leDescription}><Textarea rows={2} value={fp.cta.description} onChange={(e) => setFpCta('description', e.target.value)} /></Field>
                       <div className="grid grid-cols-2 gap-4">
-                        <Field label="Primary button"><Input value={fp.cta.primaryLabel} onChange={(e) => setFpCta('primaryLabel', e.target.value)} /></Field>
-                        <Field label="Secondary button"><Input value={fp.cta.secondaryLabel} onChange={(e) => setFpCta('secondaryLabel', e.target.value)} /></Field>
+                        <Field label={a.lePrimaryButton}><Input value={fp.cta.primaryLabel} onChange={(e) => setFpCta('primaryLabel', e.target.value)} /></Field>
+                        <Field label={a.leSecondaryButton}><Input value={fp.cta.secondaryLabel} onChange={(e) => setFpCta('secondaryLabel', e.target.value)} /></Field>
                       </div>
-                      <Field label="Footer line"><Input value={fp.footer} onChange={(e) => setFp('footer', e.target.value)} /></Field>
+                      <Field label={a.leFooterLine}><Input value={fp.footer} onChange={(e) => setFp('footer', e.target.value)} /></Field>
                     </div>
                   </CardContent>
                 </Card>
@@ -749,7 +751,7 @@ const LandingEditor: React.FC = () => {
               <TabsContent value="gallery">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Photo Gallery</CardTitle>
+                    <CardTitle>{a.lePhotoGallery}</CardTitle>
                     <CardDescription>
                       The photographs shown on the home page. These are shared
                       across all four languages — only the captions differ — so
@@ -762,7 +764,7 @@ const LandingEditor: React.FC = () => {
                       onChange={() => { /* handled by onUploaded, which also carries the publicId */ }}
                       onUploaded={addGalleryImage}
                       folder="mahibere-ahaw/gallery"
-                      label="Add photos"
+                      label={a.leAddPhotos}
                       variant="wide"
                       multiple
                     />
@@ -770,7 +772,7 @@ const LandingEditor: React.FC = () => {
                     {gallery.images.length === 0 ? (
                       <div className="text-center py-10 text-muted-foreground border border-dashed border-border rounded-xl">
                         <ImageIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                        <p className="font-medium">No photos yet</p>
+                        <p className="font-medium">{a.leNoPhotos}</p>
                         <p className="text-sm">
                           Until you add some, the home page falls back to the
                           pictures bundled with the app.
@@ -787,11 +789,11 @@ const LandingEditor: React.FC = () => {
                               className="h-24 w-36 object-cover rounded-lg border border-border shrink-0"
                             />
                             <div className="flex-1 min-w-[220px] space-y-2">
-                              <Field label={`Caption (${activeLang.toUpperCase()})`} hint="Optional. Shown over the photo.">
+                              <Field label={`Caption (${activeLang.toUpperCase()})`} hint={a.leOptionalOverPhoto}>
                                 <Input
                                   value={image.caption?.[activeLang] ?? ''}
                                   onChange={(e) => setGalleryCaption(i, activeLang, e.target.value)}
-                                  placeholder="Sunday service, Bishoftu"
+                                  placeholder={a.leCaptionExample}
                                 />
                               </Field>
                               {/* Shown so the file can be found in Cloudinary:
@@ -802,18 +804,18 @@ const LandingEditor: React.FC = () => {
                             </div>
                             <div className="flex items-start gap-1">
                               <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
-                                title="Move earlier" disabled={i === 0}
+                                title={a.leMoveEarlier} disabled={i === 0}
                                 onClick={() => moveGalleryImage(i, -1)}>
                                 <ArrowUp className="h-4 w-4" />
                               </Button>
                               <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
-                                title="Move later" disabled={i === gallery.images.length - 1}
+                                title={a.leMoveLater} disabled={i === gallery.images.length - 1}
                                 onClick={() => moveGalleryImage(i, 1)}>
                                 <ArrowDown className="h-4 w-4" />
                               </Button>
                               <Button type="button" variant="ghost" size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
-                                title="Remove from the site"
+                                title={a.leRemoveFromSite}
                                 onClick={() => removeGalleryImage(i)}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -837,49 +839,49 @@ const LandingEditor: React.FC = () => {
               <TabsContent value="hero">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Hero Section</CardTitle>
-                    <CardDescription>The main banner visitors see first.</CardDescription>
+                    <CardTitle>{a.leHeroSection}</CardTitle>
+                    <CardDescription>{a.leHeroSectionHint}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-5">
-                    <Field label="Badge text" hint="Small pill above the title">
+                    <Field label={a.leBadgeText} hint={a.lePillAboveTitle}>
                       <Input value={content.hero.badge} onChange={(e) => setHero('badge', e.target.value)} />
                     </Field>
-                    <Field label="Main title">
+                    <Field label={a.leMainTitle}>
                       <Input value={content.hero.title} onChange={(e) => setHero('title', e.target.value)} />
                     </Field>
-                    <Field label="Highlighted title (gradient, optional)" hint="Appears below main title in gradient color">
-                      <Input value={content.hero.titleHighlight} onChange={(e) => setHero('titleHighlight', e.target.value)} placeholder="Leave blank to hide" />
+                    <Field label={a.leHighlightedTitle} hint={a.leGradientHint}>
+                      <Input value={content.hero.titleHighlight} onChange={(e) => setHero('titleHighlight', e.target.value)} placeholder={a.leLeaveBlankToHide} />
                     </Field>
-                    <Field label="Description">
+                    <Field label={a.leDescription}>
                       <Textarea rows={4} value={content.hero.description} onChange={(e) => setHero('description', e.target.value)} />
                     </Field>
                     <div className="grid grid-cols-2 gap-4">
-                      <Field label="Primary button label">
+                      <Field label={a.lePrimaryButtonLabel}>
                         <Input value={content.hero.ctaPrimary} onChange={(e) => setHero('ctaPrimary', e.target.value)} />
                       </Field>
-                      <Field label="Secondary button label">
+                      <Field label={a.leSecondaryButtonLabel}>
                         <Input value={content.hero.ctaSecondary} onChange={(e) => setHero('ctaSecondary', e.target.value)} />
                       </Field>
-                      <Field label="Primary button link" hint={LINK_HINT}>
+                      <Field label={a.lePrimaryButtonLink} hint={LINK_HINT}>
                         <Input value={content.hero.ctaPrimaryUrl ?? ''} onChange={(e) => setHero('ctaPrimaryUrl', e.target.value)} placeholder="/login" />
                       </Field>
-                      <Field label="Secondary button link" hint={LINK_HINT}>
+                      <Field label={a.leSecondaryButtonLink} hint={LINK_HINT}>
                         <Input value={content.hero.ctaSecondaryUrl ?? ''} onChange={(e) => setHero('ctaSecondaryUrl', e.target.value)} placeholder="#about" />
                       </Field>
                     </div>
 
-                    <SectionDivider label="Hero image (Cloudinary)" />
+                    <SectionDivider label={a.leHeroImage} />
                     <div className="space-y-3">
                       {content.hero.imageUrl ? (
                         <div className="relative w-full max-w-md">
-                          <img src={optimized(content.hero.imageUrl, 600)} alt="Hero" className="w-full rounded-xl border border-border" />
+                          <img src={optimized(content.hero.imageUrl, 600)} alt={a.leHero} className="w-full rounded-xl border border-border" />
                           <Button type="button" variant="outline" size="sm" className="mt-2"
                             onClick={() => setHero('imageUrl', '')}>
                             Remove image
                           </Button>
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">No custom image — the bundled default is shown. Upload one to override (web &amp; mobile).</p>
+                        <p className="text-sm text-muted-foreground">{a.leNoCustomImage}</p>
                       )}
                       <div className="flex items-center gap-3">
                         <input
@@ -891,7 +893,7 @@ const LandingEditor: React.FC = () => {
                           {uploadingHero ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                           {uploadingHero ? 'Uploading…' : 'Upload hero image'}
                         </Button>
-                        <span className="text-xs text-muted-foreground">Stored on Cloudinary, optimized on delivery.</span>
+                        <span className="text-xs text-muted-foreground">{a.leCloudinaryHint}</span>
                       </div>
                       {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
 
@@ -900,12 +902,12 @@ const LandingEditor: React.FC = () => {
                           Cloudinary settings
                         </summary>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                          <Field label="Cloud name">
+                          <Field label={a.leCloudName}>
                             <Input value={integrations.cloudinaryCloudName}
                               onChange={(e) => setIntegrations({ ...integrations, cloudinaryCloudName: e.target.value })}
                               placeholder="your-cloud-name" />
                           </Field>
-                          <Field label="Upload preset (unsigned)">
+                          <Field label={a.leUploadPreset}>
                             <Input value={integrations.cloudinaryUploadPreset}
                               onChange={(e) => setIntegrations({ ...integrations, cloudinaryUploadPreset: e.target.value })}
                               placeholder="mahibere-ahaw" />
@@ -913,10 +915,10 @@ const LandingEditor: React.FC = () => {
                         </div>
                         <Button type="button" size="sm" className="mt-3" disabled={savingIntegrations} onClick={handleSaveIntegrations}>
                           {savingIntegrations ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                          Save Cloudinary settings
+                          {a.leSaveCloudinary}
                         </Button>
                         <p className="text-[11px] text-muted-foreground mt-2">
-                          In Cloudinary: Settings → Upload → set the <b>mahibere-ahaw</b> preset's Signing Mode to <b>Unsigned</b>, then paste its name and your cloud name here.
+                          {a.leCloudinaryHelp.replace('{preset}', 'mahibere-ahaw')}
                         </p>
                       </details>
                     </div>
@@ -938,8 +940,8 @@ const LandingEditor: React.FC = () => {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle>Statistics Bar</CardTitle>
-                      <CardDescription>The 4-column numbers strip below the hero.</CardDescription>
+                      <CardTitle>{a.leStatisticsBar}</CardTitle>
+                      <CardDescription>{a.leStatsHint}</CardDescription>
                     </div>
                     <Button size="sm" variant="outline" onClick={addStat}>
                       <Plus className="h-4 w-4 mr-1" /> Add Stat
@@ -947,17 +949,17 @@ const LandingEditor: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-xs text-muted-foreground">
-                      Icon must be a Lucide icon name: <code className="bg-muted px-1 rounded">MapPin</code>, <code className="bg-muted px-1 rounded">Shield</code>, <code className="bg-muted px-1 rounded">Heart</code>, <code className="bg-muted px-1 rounded">Languages</code>, <code className="bg-muted px-1 rounded">Users</code>…
+                      {a.leIconMustBeLucide} <code className="bg-muted px-1 rounded">MapPin</code>, <code className="bg-muted px-1 rounded">Shield</code>, <code className="bg-muted px-1 rounded">Heart</code>, <code className="bg-muted px-1 rounded">Languages</code>, <code className="bg-muted px-1 rounded">Users</code>…
                     </p>
                     {content.stats.map((stat, i) => (
                       <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end p-4 rounded-xl border border-border bg-muted/20">
-                        <Field label="Label">
+                        <Field label={a.leLabel}>
                           <Input value={stat.label} onChange={(e) => updateStat(i, 'label', e.target.value)} />
                         </Field>
-                        <Field label="Value">
+                        <Field label={a.leValue}>
                           <Input value={stat.value} onChange={(e) => updateStat(i, 'value', e.target.value)} />
                         </Field>
-                        <Field label="Icon name">
+                        <Field label={a.leIconName}>
                           <Input value={stat.icon} onChange={(e) => updateStat(i, 'icon', e.target.value)} />
                         </Field>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => removeStat(i)}>
@@ -974,7 +976,7 @@ const LandingEditor: React.FC = () => {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle>Features Section</CardTitle>
+                      <CardTitle>{a.leFeaturesSection}</CardTitle>
                       <CardDescription>
                         The “Everything You Need” cards on the home page — heading,
                         text, photo and Learn More link for each card.
@@ -986,10 +988,10 @@ const LandingEditor: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="grid gap-4 pb-4 border-b border-border">
-                      <Field label="Section title">
+                      <Field label={a.leSectionTitle}>
                         <Input value={content.features.sectionTitle} onChange={(e) => setFeaturesSection('sectionTitle', e.target.value)} />
                       </Field>
-                      <Field label="Section description">
+                      <Field label={a.leSectionDescription}>
                         <Textarea rows={2} value={content.features.sectionDescription} onChange={(e) => setFeaturesSection('sectionDescription', e.target.value)} />
                       </Field>
                     </div>
@@ -1002,20 +1004,20 @@ const LandingEditor: React.FC = () => {
                           </Button>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <Field label="Title">
+                          <Field label={a.leTitle}>
                             <Input value={feature.title} onChange={(e) => updateFeature(i, 'title', e.target.value)} />
                           </Field>
-                          <Field label="Icon name (Lucide)" hint="e.g. Users, Calendar, BarChart3">
+                          <Field label={a.leIconNameLucide} hint="e.g. Users, Calendar, BarChart3">
                             <Input value={feature.icon} onChange={(e) => updateFeature(i, 'icon', e.target.value)} />
                           </Field>
                         </div>
-                        <Field label="Description">
+                        <Field label={a.leDescription}>
                           <Textarea rows={2} value={feature.description} onChange={(e) => updateFeature(i, 'description', e.target.value)} />
                         </Field>
 
                         <Field
-                          label="Card photo"
-                          hint="Shown across the top of the card. Leave empty to use the photo bundled with the app for this position."
+                          label={a.leCardPhoto}
+                          hint={a.leCardPhotoHint}
                         >
                           <CloudinaryImageUpload
                             value={feature.imageUrl}
@@ -1025,8 +1027,8 @@ const LandingEditor: React.FC = () => {
                           />
                         </Field>
 
-                        <SectionDivider label="Learn More link" />
-                        <Field label="Link anchor" hint="e.g. members, planning, reports">
+                        <SectionDivider label={a.leLearnMoreLink} />
+                        <Field label={a.leLinkAnchor} hint="e.g. members, planning, reports">
                           <Input value={feature.id} onChange={(e) => updateFeature(i, 'id', e.target.value)} />
                         </Field>
                         {brokenFeatureLinks.some((b) => b.index === i) && (
@@ -1037,7 +1039,7 @@ const LandingEditor: React.FC = () => {
                           </p>
                         )}
                         <div className="grid grid-cols-2 gap-4">
-                          <Field label="Button label" hint="Leave empty to use the shared “Learn More” translation.">
+                          <Field label={a.leButtonLabel} hint={a.leLeaveEmptyForShared}>
                             <Input
                               value={feature.learnMoreLabel ?? ''}
                               onChange={(e) => updateFeature(i, 'learnMoreLabel', e.target.value)}
@@ -1045,7 +1047,7 @@ const LandingEditor: React.FC = () => {
                             />
                           </Field>
                           <Field
-                            label="Button link"
+                            label={a.leButtonLink}
                             hint={`Goes to ${featureLinkTarget(feature)}. Leave empty for the anchor above; an https:// address opens in a new tab.`}
                           >
                             <Input
@@ -1066,38 +1068,38 @@ const LandingEditor: React.FC = () => {
                 <div className="space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>About Us Section</CardTitle>
-                      <CardDescription>The section header, identity, mission, and vision cards.</CardDescription>
+                      <CardTitle>{a.leAboutSection}</CardTitle>
+                      <CardDescription>{a.leAboutHint}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Field label="Badge text" hint="Small pill above the section title">
+                      <Field label={a.leBadgeText} hint={a.lePillAboveSectionTitle}>
                         <Input value={content.about?.badge ?? ''} onChange={(e) => setAbout('badge', e.target.value)} />
                       </Field>
-                      <Field label="Section title">
+                      <Field label={a.leSectionTitle}>
                         <Input value={content.about?.sectionTitle ?? ''} onChange={(e) => setAbout('sectionTitle', e.target.value)} />
                       </Field>
-                      <Field label="Section description">
+                      <Field label={a.leSectionDescription}>
                         <Textarea rows={3} value={content.about?.sectionDescription ?? ''} onChange={(e) => setAbout('sectionDescription', e.target.value)} />
                       </Field>
-                      <SectionDivider label="Identity Card" />
-                      <Field label="Identity card title">
+                      <SectionDivider label={a.leIdentityCard} />
+                      <Field label={a.leIdentityCardTitle}>
                         <Input value={content.about?.whoWeAreTitle ?? ''} onChange={(e) => setAbout('whoWeAreTitle', e.target.value)} />
                       </Field>
-                      <Field label="Identity card description">
+                      <Field label={a.leIdentityCardDesc}>
                         <Textarea rows={3} value={content.about?.whoWeAreDescription ?? ''} onChange={(e) => setAbout('whoWeAreDescription', e.target.value)} />
                       </Field>
-                      <SectionDivider label="Mission Card" />
-                      <Field label="Mission card title">
+                      <SectionDivider label={a.leMissionCard} />
+                      <Field label={a.leMissionCardTitle}>
                         <Input value={content.about?.missionTitle ?? ''} onChange={(e) => setAbout('missionTitle', e.target.value)} />
                       </Field>
-                      <Field label="Mission card description">
+                      <Field label={a.leMissionCardDesc}>
                         <Textarea rows={3} value={content.about?.missionDescription ?? ''} onChange={(e) => setAbout('missionDescription', e.target.value)} />
                       </Field>
-                      <SectionDivider label="Vision Card" />
-                      <Field label="Vision card title">
+                      <SectionDivider label={a.leVisionCard} />
+                      <Field label={a.leVisionCardTitle}>
                         <Input value={content.about?.visionTitle ?? ''} onChange={(e) => setAbout('visionTitle', e.target.value)} />
                       </Field>
-                      <Field label="Vision card description">
+                      <Field label={a.leVisionCardDesc}>
                         <Textarea rows={3} value={content.about?.visionDescription ?? ''} onChange={(e) => setAbout('visionDescription', e.target.value)} />
                       </Field>
                     </CardContent>
@@ -1105,18 +1107,18 @@ const LandingEditor: React.FC = () => {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Statement of Faith</CardTitle>
-                      <CardDescription>The "What We Believe" belief cards (icon, title, description).</CardDescription>
+                      <CardTitle>{a.leStatementOfFaith}</CardTitle>
+                      <CardDescription>{a.leFaithHint}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Field label="Eyebrow" hint="The small line above the heading, e.g. Statement of Faith">
+                      <Field label={a.leEyebrow} hint={a.leEyebrowHintFaith}>
                         <Input value={content.about?.beliefsEyebrow ?? ''} onChange={(e) => setAbout('beliefsEyebrow', e.target.value)} />
                       </Field>
-                      <Field label="Section title" hint="e.g. What We Believe / የምናምንበት እምነታችን">
+                      <Field label={a.leSectionTitle} hint="e.g. What We Believe / የምናምንበት እምነታችን">
                         <Input value={content.about?.beliefsTitle ?? ''} onChange={(e) => setAbout('beliefsTitle', e.target.value)} />
                       </Field>
                       <p className="text-xs text-muted-foreground">
-                        Icon must be a Lucide icon name: <code className="bg-muted px-1 rounded">BookOpen</code>, <code className="bg-muted px-1 rounded">Church</code>, <code className="bg-muted px-1 rounded">Heart</code>, <code className="bg-muted px-1 rounded">Shield</code>…
+                        {a.leIconMustBeLucide} <code className="bg-muted px-1 rounded">BookOpen</code>, <code className="bg-muted px-1 rounded">Church</code>, <code className="bg-muted px-1 rounded">Heart</code>, <code className="bg-muted px-1 rounded">Shield</code>…
                       </p>
                       {(content.about?.beliefs ?? []).map((belief, i) => (
                         <div key={i} className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
@@ -1131,14 +1133,14 @@ const LandingEditor: React.FC = () => {
                             </Button>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
-                            <Field label="Title">
+                            <Field label={a.leTitle}>
                               <Input value={belief.title} onChange={(e) => {
                                 const beliefs = [...(content.about?.beliefs ?? [])];
                                 beliefs[i] = { ...beliefs[i], title: e.target.value };
                                 setAbout('beliefs', beliefs);
                               }} />
                             </Field>
-                            <Field label="Icon name (Lucide)">
+                            <Field label={a.leIconNameLucide}>
                               <Input value={belief.icon} onChange={(e) => {
                                 const beliefs = [...(content.about?.beliefs ?? [])];
                                 beliefs[i] = { ...beliefs[i], icon: e.target.value };
@@ -1146,7 +1148,7 @@ const LandingEditor: React.FC = () => {
                               }} />
                             </Field>
                           </div>
-                          <Field label="Description">
+                          <Field label={a.leDescription}>
                             <Textarea rows={2} value={belief.description} onChange={(e) => {
                               const beliefs = [...(content.about?.beliefs ?? [])];
                               beliefs[i] = { ...beliefs[i], description: e.target.value };
@@ -1156,7 +1158,7 @@ const LandingEditor: React.FC = () => {
                         </div>
                       ))}
                       <Button size="sm" variant="outline" onClick={() => {
-                        const beliefs = [...(content.about?.beliefs ?? []), { title: 'New Belief', description: '', icon: 'BookOpen' }];
+                        const beliefs = [...(content.about?.beliefs ?? []), { title: a.leNewBelief, description: '', icon: 'BookOpen' }];
                         setAbout('beliefs', beliefs);
                       }}>
                         <Plus className="h-4 w-4 mr-1" /> Add Belief
@@ -1166,14 +1168,14 @@ const LandingEditor: React.FC = () => {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Core Values</CardTitle>
-                      <CardDescription>The value cards displayed in a 4-column grid.</CardDescription>
+                      <CardTitle>{a.leCoreValues}</CardTitle>
+                      <CardDescription>{a.leValuesHint}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Field label="Eyebrow" hint="The small line above the heading, e.g. Our Culture">
+                      <Field label={a.leEyebrow} hint={a.leEyebrowHintCulture}>
                         <Input value={content.about?.valuesEyebrow ?? ''} onChange={(e) => setAbout('valuesEyebrow', e.target.value)} />
                       </Field>
-                      <Field label="Section title" hint="e.g. Our Core Values / መሠረታዊ እሴቶቻችን">
+                      <Field label={a.leSectionTitle} hint="e.g. Our Core Values / መሠረታዊ እሴቶቻችን">
                         <Input value={content.about?.valuesTitle ?? ''} onChange={(e) => setAbout('valuesTitle', e.target.value)} />
                       </Field>
                       {(content.about?.values ?? []).map((val, i) => (
@@ -1189,14 +1191,14 @@ const LandingEditor: React.FC = () => {
                             </Button>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
-                            <Field label="Title">
+                            <Field label={a.leTitle}>
                               <Input value={val.title} onChange={(e) => {
                                 const values = [...(content.about?.values ?? [])];
                                 values[i] = { ...values[i], title: e.target.value };
                                 setAbout('values', values);
                               }} />
                             </Field>
-                            <Field label="Icon name (Lucide)">
+                            <Field label={a.leIconNameLucide}>
                               <Input value={val.icon} onChange={(e) => {
                                 const values = [...(content.about?.values ?? [])];
                                 values[i] = { ...values[i], icon: e.target.value };
@@ -1204,7 +1206,7 @@ const LandingEditor: React.FC = () => {
                               }} />
                             </Field>
                           </div>
-                          <Field label="Description">
+                          <Field label={a.leDescription}>
                             <Textarea rows={2} value={val.description} onChange={(e) => {
                               const values = [...(content.about?.values ?? [])];
                               values[i] = { ...values[i], description: e.target.value };
@@ -1214,7 +1216,7 @@ const LandingEditor: React.FC = () => {
                         </div>
                       ))}
                       <Button size="sm" variant="outline" onClick={() => {
-                        const values = [...(content.about?.values ?? []), { title: 'New Value', description: '', icon: 'Shield' }];
+                        const values = [...(content.about?.values ?? []), { title: a.leNewValue, description: '', icon: 'Shield' }];
                         setAbout('values', values);
                       }}>
                         <Plus className="h-4 w-4 mr-1" /> Add Value
@@ -1228,7 +1230,7 @@ const LandingEditor: React.FC = () => {
               <TabsContent value="news">
                 <Card>
                   <CardHeader>
-                    <CardTitle>News Section</CardTitle>
+                    <CardTitle>{a.leNewsSection}</CardTitle>
                     <CardDescription>
                       Everything the homepage news feed says around the posts.
                       The posts themselves are managed in News Manager.
@@ -1236,43 +1238,43 @@ const LandingEditor: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Badge text" hint="Small pill above the heading">
+                      <Field label={a.leBadgeText} hint={a.lePillAboveHeading}>
                         <Input value={content.news.badge} onChange={(e) => setNews('badge', e.target.value)} />
                       </Field>
-                      <Field label="Section title">
+                      <Field label={a.leSectionTitle}>
                         <Input value={content.news.sectionTitle} onChange={(e) => setNews('sectionTitle', e.target.value)} />
                       </Field>
                     </div>
-                    <Field label="Section description">
+                    <Field label={a.leSectionDescription}>
                       <Textarea rows={2} value={content.news.sectionDescription} onChange={(e) => setNews('sectionDescription', e.target.value)} />
                     </Field>
 
-                    <SectionDivider label="Labels" />
+                    <SectionDivider label={a.leLabels} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="“See all” button">
+                      <Field label={a.leSeeAllButton}>
                         <Input value={content.news.seeAllLabel} onChange={(e) => setNews('seeAllLabel', e.target.value)} />
                       </Field>
-                      <Field label="“Read more” link">
+                      <Field label={a.leReadMoreLink}>
                         <Input value={content.news.readMoreLabel} onChange={(e) => setNews('readMoreLabel', e.target.value)} />
                       </Field>
-                      <Field label="Head-office attribution" hint="Shown on posts published centrally.">
+                      <Field label={a.leHeadOfficeAttribution} hint={a.leHeadOfficeHint}>
                         <Input value={content.news.headOfficeLabel} onChange={(e) => setNews('headOfficeLabel', e.target.value)} />
                       </Field>
-                      <Field label="Congregation attribution" hint="Fallback when a congregation has no name in this language.">
+                      <Field label={a.leCongregationAttribution} hint={a.leCongregationFallbackHint}>
                         <Input value={content.news.parishLabel} onChange={(e) => setNews('parishLabel', e.target.value)} />
                       </Field>
                     </div>
 
-                    <SectionDivider label="When nothing is published" />
-                    <Field label="Empty-state title">
+                    <SectionDivider label={a.leWhenNothingPublished} />
+                    <Field label={a.leEmptyStateTitle}>
                       <Input value={content.news.emptyTitle} onChange={(e) => setNews('emptyTitle', e.target.value)} />
                     </Field>
-                    <Field label="Empty-state message">
+                    <Field label={a.leEmptyStateMessage}>
                       <Textarea rows={2} value={content.news.emptyDescription} onChange={(e) => setNews('emptyDescription', e.target.value)} />
                     </Field>
 
-                    <SectionDivider label="Feed" />
-                    <Field label="Posts to show" hint="The newest post leads; the rest form the list beside it.">
+                    <SectionDivider label={a.leFeed} />
+                    <Field label={a.lePostsToShow} hint={a.leFeedHint}>
                       <Input type="number" min={1} max={12} value={content.news.maxPosts}
                         onChange={(e) => setNews('maxPosts', Math.max(1, Math.min(12, Number(e.target.value) || 1)))} />
                     </Field>
@@ -1285,23 +1287,23 @@ const LandingEditor: React.FC = () => {
                 <div className="space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Support Section Text</CardTitle>
-                      <CardDescription>The giving / mission section.</CardDescription>
+                      <CardTitle>{a.leSupportSectionText}</CardTitle>
+                      <CardDescription>{a.leSupportHint}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Field label="Badge text">
+                      <Field label={a.leBadgeText}>
                         <Input value={content.support.badge} onChange={(e) => setSupport('badge', e.target.value)} />
                       </Field>
-                      <Field label="Section title">
+                      <Field label={a.leSectionTitle}>
                         <Input value={content.support.title} onChange={(e) => setSupport('title', e.target.value)} />
                       </Field>
-                      <Field label="Description">
+                      <Field label={a.leDescription}>
                         <Textarea rows={3} value={content.support.description} onChange={(e) => setSupport('description', e.target.value)} />
                       </Field>
-                      <Field label="Mission card title">
+                      <Field label={a.leMissionCardTitle}>
                         <Input value={content.support.missionTitle} onChange={(e) => setSupport('missionTitle', e.target.value)} />
                       </Field>
-                      <Field label="Mission statement (shown in quotes)">
+                      <Field label={a.leMissionStatement}>
                         <Textarea rows={3} value={content.support.missionStatement} onChange={(e) => setSupport('missionStatement', e.target.value)} />
                       </Field>
                     </CardContent>
@@ -1310,8 +1312,8 @@ const LandingEditor: React.FC = () => {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                       <div>
-                        <CardTitle>Bank Accounts</CardTitle>
-                        <CardDescription>Displayed as cards in the support section.</CardDescription>
+                        <CardTitle>{a.leBankAccounts}</CardTitle>
+                        <CardDescription>{a.leBankAccountsHint}</CardDescription>
                       </div>
                       <Button size="sm" variant="outline" onClick={addBank}>
                         <Plus className="h-4 w-4 mr-1" /> Add Bank
@@ -1320,10 +1322,10 @@ const LandingEditor: React.FC = () => {
                     <CardContent className="space-y-3">
                       {content.support.banks.map((bank, i) => (
                         <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end p-3 rounded-xl border border-border bg-muted/20">
-                          <Field label="Bank name">
+                          <Field label={a.leBankName}>
                             <Input value={bank.name} onChange={(e) => updateBank(i, 'name', e.target.value)} />
                           </Field>
-                          <Field label="Account number">
+                          <Field label={a.leAccountNumber}>
                             <Input value={bank.account} onChange={(e) => updateBank(i, 'account', e.target.value)} />
                           </Field>
                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => removeBank(i)}>
@@ -1340,7 +1342,7 @@ const LandingEditor: React.FC = () => {
               <TabsContent value="contact">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Contact Section</CardTitle>
+                    <CardTitle>{a.leContactSection}</CardTitle>
                     <CardDescription>
                       The public "Contact Us" section on the homepage. The nav bar's
                       Contact link scrolls here.
@@ -1348,32 +1350,32 @@ const LandingEditor: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Badge text" hint="Small pill above the title">
+                      <Field label={a.leBadgeText} hint={a.lePillAboveTitle}>
                         <Input value={content.contact.badge} onChange={(e) => setContact('badge', e.target.value)} />
                       </Field>
-                      <Field label="Section title">
+                      <Field label={a.leSectionTitle}>
                         <Input value={content.contact.sectionTitle} onChange={(e) => setContact('sectionTitle', e.target.value)} />
                       </Field>
                     </div>
-                    <Field label="Section description">
+                    <Field label={a.leSectionDescription}>
                       <Textarea rows={2} value={content.contact.sectionDescription} onChange={(e) => setContact('sectionDescription', e.target.value)} />
                     </Field>
 
-                    <SectionDivider label="Address" />
+                    <SectionDivider label={a.leAddress} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Address card label">
+                      <Field label={a.leAddressCardLabel}>
                         <Input value={content.contact.addressLabel} onChange={(e) => setContact('addressLabel', e.target.value)} />
                       </Field>
-                      <Field label="Google Maps link (optional)">
+                      <Field label={a.leMapsLink}>
                         <Input value={content.contact.mapUrl ?? ''} onChange={(e) => setContact('mapUrl', e.target.value)} placeholder="https://maps.app.goo.gl/…" />
                       </Field>
                     </div>
-                    <Field label="Address">
+                    <Field label={a.leAddress}>
                       <Textarea rows={3} value={content.contact.address} onChange={(e) => setContact('address', e.target.value)} />
                     </Field>
 
-                    <SectionDivider label="Phone numbers" />
-                    <Field label="Phone card label">
+                    <SectionDivider label={a.lePhoneNumbers} />
+                    <Field label={a.lePhoneCardLabel}>
                       <Input value={content.contact.phoneLabel} onChange={(e) => setContact('phoneLabel', e.target.value)} />
                     </Field>
                     <div className="space-y-2">
@@ -1390,14 +1392,14 @@ const LandingEditor: React.FC = () => {
                       </Button>
                     </div>
 
-                    <SectionDivider label="Email addresses" />
-                    <Field label="Email card label">
+                    <SectionDivider label={a.leEmailAddresses} />
+                    <Field label={a.leEmailCardLabel}>
                       <Input value={content.contact.emailLabel} onChange={(e) => setContact('emailLabel', e.target.value)} />
                     </Field>
                     <div className="space-y-2">
                       {(content.contact.emails ?? []).map((em, i) => (
                         <div key={i} className="flex gap-2">
-                          <Input type="email" value={em} onChange={(e) => setContactListItem('emails', i, e.target.value)} placeholder="name@example.com" />
+                          <Input type="email" value={em} onChange={(e) => setContactListItem('emails', i, e.target.value)} placeholder={t.forms.emailPlaceholder} />
                           <Button type="button" variant="outline" size="icon" onClick={() => removeContactListItem('emails', i)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -1408,34 +1410,34 @@ const LandingEditor: React.FC = () => {
                       </Button>
                     </div>
 
-                    <SectionDivider label="Office hours" />
+                    <SectionDivider label={a.leOfficeHours} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Hours card label">
+                      <Field label={a.leHoursCardLabel}>
                         <Input value={content.contact.hoursLabel} onChange={(e) => setContact('hoursLabel', e.target.value)} />
                       </Field>
-                      <Field label="Office hours">
+                      <Field label={a.leOfficeHours}>
                         <Input value={content.contact.hours} onChange={(e) => setContact('hours', e.target.value)} />
                       </Field>
                     </div>
 
-                    <SectionDivider label="Social links" />
-                    <Field label="Socials heading">
+                    <SectionDivider label={a.leSocialLinks} />
+                    <Field label={a.leSocialsHeading}>
                       <Input value={content.contact.socialsLabel} onChange={(e) => setContact('socialsLabel', e.target.value)} />
                     </Field>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="YouTube URL">
+                      <Field label={a.leYoutubeUrl}>
                         <Input value={content.contact.youtube ?? ''} onChange={(e) => setContact('youtube', e.target.value)} placeholder="https://youtube.com/@…" />
                       </Field>
-                      <Field label="Telegram URL">
+                      <Field label={a.leTelegramUrl}>
                         <Input value={content.contact.telegram ?? ''} onChange={(e) => setContact('telegram', e.target.value)} placeholder="https://t.me/…" />
                       </Field>
-                      <Field label="Facebook URL">
+                      <Field label={a.leFacebookUrl}>
                         <Input value={content.contact.facebook ?? ''} onChange={(e) => setContact('facebook', e.target.value)} placeholder="https://facebook.com/…" />
                       </Field>
-                      <Field label="TikTok URL">
+                      <Field label={a.leTiktokUrl}>
                         <Input value={content.contact.tiktok ?? ''} onChange={(e) => setContact('tiktok', e.target.value)} placeholder="https://tiktok.com/@…" />
                       </Field>
-                      <Field label="Website URL">
+                      <Field label={a.leWebsiteUrl}>
                         <Input value={content.contact.website ?? ''} onChange={(e) => setContact('website', e.target.value)} placeholder="https://…" />
                       </Field>
                     </div>
@@ -1447,45 +1449,45 @@ const LandingEditor: React.FC = () => {
               <TabsContent value="footer">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Footer</CardTitle>
-                    <CardDescription>Bottom section of the landing page.</CardDescription>
+                    <CardTitle>{a.leFooter}</CardTitle>
+                    <CardDescription>{a.leFooterHint}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Field label="Description text">
+                    <Field label={a.leDescriptionText}>
                       <Textarea rows={3} value={content.footer.description} onChange={(e) => setFooter('description', e.target.value)} />
                     </Field>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Contact email">
+                      <Field label={a.leContactEmail}>
                         <Input type="email" value={content.footer.email} onChange={(e) => setFooter('email', e.target.value)} />
                       </Field>
-                      <Field label="Email label" hint="Prefixes the address, e.g. “Email: …”">
+                      <Field label={a.leEmailLabel} hint={a.leEmailPrefixHint}>
                         <Input value={content.footer.emailLabel} onChange={(e) => setFooter('emailLabel', e.target.value)} />
                       </Field>
                     </div>
-                    <Field label="Copyright line">
+                    <Field label={a.leCopyrightLine}>
                       <Input value={content.footer.copyright} onChange={(e) => setFooter('copyright', e.target.value)} />
                     </Field>
-                    <SectionDivider label="Social & contact links" />
+                    <SectionDivider label={a.leSocialContactLinks} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="YouTube URL">
+                      <Field label={a.leYoutubeUrl}>
                         <Input value={content.footer.youtube ?? ''} onChange={(e) => setFooter('youtube', e.target.value)} placeholder="https://youtube.com/@…" />
                       </Field>
-                      <Field label="Telegram URL">
+                      <Field label={a.leTelegramUrl}>
                         <Input value={content.footer.telegram ?? ''} onChange={(e) => setFooter('telegram', e.target.value)} placeholder="https://t.me/…" />
                       </Field>
-                      <Field label="Phone number">
+                      <Field label={a.lePhoneNumber}>
                         <Input value={content.footer.phone ?? ''} onChange={(e) => setFooter('phone', e.target.value)} placeholder="+251…" />
                       </Field>
                     </div>
 
-                    <SectionDivider label="Link columns" />
+                    <SectionDivider label={a.leLinkColumns} />
                     <p className="text-[11px] text-muted-foreground">
                       These two columns used to be fixed labels pointing at
                       nothing. A row with no link shows as plain text instead of
                       a link that does nothing. {LINK_HINT}
                     </p>
                     <FooterLinkEditor
-                      title="Platform column"
+                      title={a.lePlatformColumn}
                       heading={content.footer.platformHeading}
                       onHeading={(v) => setFooter('platformHeading', v)}
                       links={content.footer.platformLinks}
@@ -1494,7 +1496,7 @@ const LandingEditor: React.FC = () => {
                       onRemove={(i) => removeFooterLink('platformLinks', i)}
                     />
                     <FooterLinkEditor
-                      title="Support column"
+                      title={a.leSupportColumn}
                       heading={content.footer.supportHeading}
                       onHeading={(v) => setFooter('supportHeading', v)}
                       links={content.footer.supportLinks}
@@ -1503,7 +1505,7 @@ const LandingEditor: React.FC = () => {
                       onRemove={(i) => removeFooterLink('supportLinks', i)}
                     />
 
-                    <SectionDivider label="Stay Connected" />
+                    <SectionDivider label={a.leStayConnected} />
                     <label className="flex items-center gap-2 text-sm">
                       <input type="checkbox" checked={content.footer.newsletterEnabled}
                         onChange={(e) => setFooter('newsletterEnabled', e.target.checked)} />
@@ -1515,29 +1517,29 @@ const LandingEditor: React.FC = () => {
                       email above rather than discarding what they typed.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Heading">
+                      <Field label={a.leHeading}>
                         <Input value={content.footer.newsletterHeading} onChange={(e) => setFooter('newsletterHeading', e.target.value)} />
                       </Field>
-                      <Field label="Input placeholder">
+                      <Field label={a.leInputPlaceholder}>
                         <Input value={content.footer.newsletterPlaceholder} onChange={(e) => setFooter('newsletterPlaceholder', e.target.value)} />
                       </Field>
                     </div>
 
-                    <SectionDivider label="Legal links" />
+                    <SectionDivider label={a.leLegalLinks} />
                     <p className="text-[11px] text-muted-foreground">
                       Each link is hidden until it has a destination.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Privacy label">
+                      <Field label={a.lePrivacyLabel}>
                         <Input value={content.footer.privacyLabel} onChange={(e) => setFooter('privacyLabel', e.target.value)} />
                       </Field>
-                      <Field label="Privacy link" hint={LINK_HINT}>
+                      <Field label={a.lePrivacyLink} hint={LINK_HINT}>
                         <Input value={content.footer.privacyUrl ?? ''} onChange={(e) => setFooter('privacyUrl', e.target.value)} placeholder="/privacy" />
                       </Field>
-                      <Field label="Terms label">
+                      <Field label={a.leTermsLabel}>
                         <Input value={content.footer.termsLabel} onChange={(e) => setFooter('termsLabel', e.target.value)} />
                       </Field>
-                      <Field label="Terms link" hint={LINK_HINT}>
+                      <Field label={a.leTermsLink} hint={LINK_HINT}>
                         <Input value={content.footer.termsUrl ?? ''} onChange={(e) => setFooter('termsUrl', e.target.value)} placeholder="/terms" />
                       </Field>
                     </div>
