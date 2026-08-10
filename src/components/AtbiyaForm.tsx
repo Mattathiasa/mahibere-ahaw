@@ -42,12 +42,14 @@ export function Divider({ label }: { label: string }) {
   );
 }
 
-export interface ZoneOption { id: string; name?: string; nameAmharic?: string }
+export interface ZoneOption { id: string; name?: string; nameAmharic?: string; parentId?: string | null }
 
 interface AtbiyaFormProps {
   draft: AtbiyaInput;
   setDraft: React.Dispatch<React.SetStateAction<AtbiyaInput>>;
   zones: ZoneOption[];
+  /** Woredas to choose from. Empty hides the field entirely. */
+  woredas?: ZoneOption[];
   /** The parish console hides these: the rules reject moving a parish in the tree. */
   showPlacement?: boolean;
   /** The parish console hides these: they are head-office decisions. */
@@ -56,7 +58,7 @@ interface AtbiyaFormProps {
 }
 
 export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
-  draft, setDraft, zones, showPlacement = true, showVisibility = true, disabled = false,
+  draft, setDraft, zones, woredas = [], showPlacement = true, showVisibility = true, disabled = false,
 }) => {
   const { t } = useLanguage();
   const a = t.admin;
@@ -126,6 +128,29 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
                   {z.name}{z.nameAmharic ? ` / ${z.nameAmharic}` : ''}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </Field>
+      )}
+      {showPlacement && woredas.length > 0 && (
+        <Field label={a.woredaOffice} hint={a.woredaOfficeHint}>
+          <Select
+            value={draft.woredaId ?? 'none'}
+            disabled={disabled}
+            onValueChange={(v) => set('woredaId', v === 'none' ? null : v)}
+          >
+            <SelectTrigger><SelectValue placeholder={a.notAssigned} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">{a.notAssigned}</SelectItem>
+              {/* Only the Woredas of the chosen Diocese — offering every
+                  Woreda in the church would invite a mismatched pair. */}
+              {woredas
+                .filter((w) => !draft.parentId || w.parentId === draft.parentId)
+                .map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {w.name}{w.nameAmharic ? ` / ${w.nameAmharic}` : ''}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </Field>

@@ -12,7 +12,7 @@ export const NAV_KEYS = [
   'finance', 'hr', 'inventory', 'churchRules', 'higeDenb', 'strategicPlan',
   'documents', 'userManagement', 'hierarchy', 'settings',
   'news', 'missionary', 'teachings', 'volunteer', 'notifications', 'softwareControl',
-  'atbiyaRegistry', 'myAtbiya',
+  'myAtbiya', 'organisation',
 ] as const;
 
 export const NAV_LABELS: Record<string, string> = {
@@ -24,7 +24,7 @@ export const NAV_LABELS: Record<string, string> = {
   hierarchy: 'Hierarchy', settings: 'Settings', news: 'News',
   missionary: 'Missionary', teachings: 'Teachings', volunteer: 'Volunteer',
   notifications: 'Notifications', softwareControl: 'Software Control',
-  atbiyaRegistry: 'Atbiya Registry', myAtbiya: 'My Atbiya',
+  myAtbiya: 'My Congregation', organisation: 'Organisation Structure',
 };
 
 /** UI elements (buttons/actions) that can be toggled or role-restricted.

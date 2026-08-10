@@ -45,6 +45,7 @@ export const AtbiyaRegistrationDialog: React.FC<AtbiyaRegistrationDialogProps> =
   const [parish, setParish] = useState<AtbiyaInput>(emptyAtbiya());
   const [admin, setAdmin] = useState<AdminDraft>(emptyAdminDraft());
   const [zones, setZones] = useState<ZoneOption[]>([]);
+  const [woredas, setWoredas] = useState<ZoneOption[]>([]);
   const [roleKey, setRoleKey] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +70,10 @@ export const AtbiyaRegistrationDialog: React.FC<AtbiyaRegistrationDialogProps> =
     hierarchyService.getEntitiesByLevel('Zone')
       .then((z) => setZones(z as ZoneOption[]))
       .catch(() => setZones([]));
+    // Woredas are optional; an installation with none simply hides the field.
+    hierarchyService.getEntitiesByLevel('Woreda')
+      .then((w) => setWoredas(w as ZoneOption[]))
+      .catch(() => setWoredas([]));
   }, [open]);
 
   useEffect(() => {
@@ -141,7 +146,7 @@ export const AtbiyaRegistrationDialog: React.FC<AtbiyaRegistrationDialogProps> =
         </DialogHeader>
 
         {step === 1 ? (
-          <AtbiyaForm draft={parish} setDraft={setParish} zones={zones} />
+          <AtbiyaForm draft={parish} setDraft={setParish} zones={zones} woredas={woredas} />
         ) : (
           <div className="space-y-5 py-2">
             {orphanedParish && (

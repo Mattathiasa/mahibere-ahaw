@@ -43,8 +43,15 @@ export interface Atbiya {
   name: string;
   nameAmharic?: string;
   level: 'Atbiya';
-  /** The Zone this parish belongs to. */
+  /** The Diocese this congregation belongs to. */
   parentId?: string | null;
+  /**
+   * Optional Woreda (የወረዳ ሰበካ ጉባኤ ጽሕፈት ቤት) this congregation reports through.
+   * A side-link rather than part of the parent chain: `parentId` stays on the
+   * Diocese, so congregations recorded before Woredas existed are unaffected
+   * and the field can be filled in as that data arrives.
+   */
+  woredaId?: string | null;
   address?: { en?: string; am?: string };
   cityEn?: string;
   cityAm?: string;
@@ -72,6 +79,7 @@ export const emptyAtbiya = (): AtbiyaInput => ({
   name: '',
   nameAmharic: '',
   parentId: null,
+  woredaId: null,
   address: { en: '', am: '' },
   cityEn: '',
   cityAm: '',

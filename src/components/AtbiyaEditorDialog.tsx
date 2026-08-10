@@ -23,6 +23,7 @@ export const AtbiyaEditorDialog: React.FC<AtbiyaEditorDialogProps> = ({
 }) => {
   const [draft, setDraft] = useState<AtbiyaInput>(emptyAtbiya());
   const [zones, setZones] = useState<ZoneOption[]>([]);
+  const [woredas, setWoredas] = useState<ZoneOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +39,10 @@ export const AtbiyaEditorDialog: React.FC<AtbiyaEditorDialogProps> = ({
     hierarchyService.getEntitiesByLevel('Zone')
       .then((z) => setZones(z as ZoneOption[]))
       .catch(() => setZones([]));
+    // Woredas are optional; an installation with none simply hides the field.
+    hierarchyService.getEntitiesByLevel('Woreda')
+      .then((w) => setWoredas(w as ZoneOption[]))
+      .catch(() => setWoredas([]));
   }, [open, atbiya]);
 
   async function handleSubmit() {
@@ -71,7 +76,7 @@ export const AtbiyaEditorDialog: React.FC<AtbiyaEditorDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <AtbiyaForm draft={draft} setDraft={setDraft} zones={zones} />
+        <AtbiyaForm draft={draft} setDraft={setDraft} zones={zones} woredas={woredas} />
 
         {error && (
           <div className="flex items-start gap-2 text-sm text-red-600 bg-red-500/10 border border-red-500/20 rounded-lg p-3">

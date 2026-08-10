@@ -64,8 +64,8 @@ const SoftwareControl: React.FC = () => {
   /** roleKey → how many accounts carry it, so deletes can warn and reassign. */
   const [roleUsage, setRoleUsage] = useState<Record<string, number>>({});
 
-  // The Atbiya registry moved to its own page at /atbiya-registry, so that
-  // roles holding `canManageAtbiyas` can reach it without being super admins.
+  // The congregation registry is a tab on /organisation alongside every other
+  // level; roles holding `canManageAtbiyas` reach it without being super admins.
 
   // Audit logs
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -320,7 +320,7 @@ const SoftwareControl: React.FC = () => {
             { label: 'Mobile App Control', desc: 'Kill switch, versions, flags', href: '/admin/mobile-control' },
             { label: 'Site Content Editor', desc: 'Landing page & UI text', href: '/admin/landing-editor' },
             { label: 'Module Configuration', desc: 'Members, Plans, Reports', href: '/admin/module-config' },
-            { label: 'Congregation Registry', desc: 'Congregations & their administrators', href: '/atbiya-registry' },
+            { label: 'Organisation Structure', desc: 'Every level, congregations included', href: '/organisation' },
           ].map((l) => (
             <button key={l.href} onClick={() => navigate(l.href)}
               className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition-colors text-left">

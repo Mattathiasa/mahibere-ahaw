@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church, UserPlus, type LucideIcon } from 'lucide-react';
+import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church, UserPlus, Building2, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
@@ -27,6 +27,7 @@ const NAV_FALLBACK_LABELS: Record<string, string> = {
   atbiyaRegistry: 'Congregation Registry',
   myAtbiya: 'My Congregation',
   membershipRequests: 'Membership Requests',
+  organisation: 'Organisation Structure',
 };
 
 interface NavFlags {
@@ -81,11 +82,12 @@ const getNavigationItems = ({
     { name: 'news', href: '/news-manager', icon: Newspaper, permission: 'canViewNews' },
     { name: 'userManagement', href: '/user-management', icon: Users, permission: 'canViewUserManagement' },
     { name: 'hierarchy', href: '/hierarchy', icon: Network, permission: 'canViewHierarchy' },
+    // Every org level, congregations included, behind one entry.
+    { name: 'organisation', href: '/organisation', icon: Building2, show: can('canViewHierarchy') || can('canManageAtbiyas') },
     { name: 'myAtbiya', href: '/my-atbiya', icon: Church, show: runsAnAtbiya },
     // Head office approves on any congregation's behalf but runs none itself,
     // so /my-atbiya is empty for them and the queue needs its own home.
     { name: 'membershipRequests', href: '/membership-requests', icon: UserPlus, show: isHeadOffice && mayApprove },
-    { name: 'atbiyaRegistry', href: '/atbiya-registry', icon: Church, permission: 'canManageAtbiyas' },
     // The Landing Editor had no sidebar entry at all — it was reachable only via
     // a card buried in Settings, which is why it looked like it had been removed.
     { name: 'landingEditor', href: '/admin/landing-editor', icon: Layout, show: isAdmin || isSuperAdmin },

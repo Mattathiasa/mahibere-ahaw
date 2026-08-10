@@ -41,6 +41,7 @@ const NewsManager = lazy(() => import("./pages/NewsManager"));
 const AtbiyaRegistry = lazy(() => import("./pages/AtbiyaRegistry"));
 const MyAtbiya = lazy(() => import("./pages/MyAtbiya"));
 const MembershipRequestsPage = lazy(() => import("./pages/MembershipRequestsPage"));
+const Organisation = lazy(() => import("./pages/Organisation"));
 const NewsIndex = lazy(() => import("./pages/NewsIndex"));
 const About = lazy(() => import("./pages/About"));
 const NewsPostPage = lazy(() => import("./pages/NewsPost"));
@@ -130,6 +131,9 @@ const App = () => (
                       super admin's own role may hold no permission at all, and
                       it is `isSuperAdmin` that grants their reach here. */}
                   <Route path="/membership-requests" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><MembershipRequestsPage /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  {/* Gated in-page: writing an org unit needs isAdmin(), but
+                      anyone who may see the hierarchy can read it. */}
+                  <Route path="/organisation" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Organisation /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><HigeDenb /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/church-rules" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><ChurchLaws /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Notifications /></Suspense></DashboardLayout></ProtectedRoute>} />

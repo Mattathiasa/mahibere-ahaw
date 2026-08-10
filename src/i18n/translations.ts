@@ -26,6 +26,7 @@ export const translations = {
       hierarchy: 'Hierarchy',
       atbiyaRegistry: 'Congregation Registry',
       myAtbiya: 'My Congregation',
+      organisation: 'Organisation Structure',
       settings: 'Settings',
       softwareControl: 'Software Control',
       logout: 'Log Out',
@@ -460,6 +461,7 @@ export const translations = {
       hierarchy: 'ተዋረድ',
       atbiyaRegistry: 'የአጥቢያ መዝገብ',
       myAtbiya: 'የእኔ አጥቢያ',
+      organisation: 'ተቋማዊ መዋቅር',
       settings: 'ቅንብሮች',
       softwareControl: 'የሶፍትዌር ቁጥጥር',
       logout: 'ውጣ',
@@ -867,6 +869,7 @@ export const translations = {
       hierarchy: 'Sadarkaa',
       atbiyaRegistry: 'Galmee Waldaa Naannoo',
       myAtbiya: 'Waldaa Naannoo Koo',
+      organisation: 'Caasaa Dhaabbataa',
       // om/ti keep their existing wording — it already reads "local
       // congregation" rather than transliterating "Atbiya".
       settings: 'Sajoo',
@@ -1043,6 +1046,7 @@ export const translations = {
       hierarchy: 'ተዋረድ',
       atbiyaRegistry: 'መዝገብ ኣጥቢያ',
       myAtbiya: 'ናተይ ኣጥቢያ',
+      organisation: 'ትካላዊ ኣቃውማ',
       settings: 'ቅንብራት',
       softwareControl: 'ቁጽጽር ሶፍትዌር',
       logout: 'ውጻእ',
