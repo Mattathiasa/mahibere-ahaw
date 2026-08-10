@@ -77,6 +77,8 @@ const UserManagement = () => {
   const { formatDateTime } = useFormatters();
   const { can, roles, roleLabel, scopeOf } = usePermissions();
   const { t } = useLanguage();
+  const pe = t.people;
+  const f = t.forms;
   const a = t.admin;
   const assignableRoles = roles.filter((r) => r.active !== false);
   /**
@@ -453,7 +455,7 @@ const UserManagement = () => {
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-bold text-foreground">{a.usersTitle}</h1>
-          <p className="text-muted-foreground mt-1">Create and manage system users</p>
+          <p className="text-muted-foreground mt-1">{pe.umSubtitle}</p>
         </div>
         <LoadingSkeleton type="table" />
       </div>
@@ -508,7 +510,7 @@ const UserManagement = () => {
                       id="entity-name"
                       value={entityFormData.name}
                       onChange={(e) => setEntityFormData({ ...entityFormData, name: e.target.value })}
-                      placeholder="East Shewa Diocese"
+                      placeholder={pe.dioceseExample}
                       required
                     />
                   </div>
@@ -583,7 +585,7 @@ const UserManagement = () => {
                       id="entity-location"
                       value={entityFormData.location}
                       onChange={(e) => setEntityFormData({ ...entityFormData, location: e.target.value })}
-                      placeholder="Addis Ababa, Bole"
+                      placeholder={pe.addressExampleShort}
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -629,7 +631,7 @@ const UserManagement = () => {
                       id="username"
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      placeholder="john.doe"
+                      placeholder={pe.usernameExampleShort}
                       required
                     />
                   </div>
@@ -651,7 +653,7 @@ const UserManagement = () => {
                       id="fullName"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      placeholder="John Doe"
+                      placeholder={pe.personNameExample}
                       required
                     />
                   </div>
@@ -686,7 +688,7 @@ const UserManagement = () => {
                     <p className="text-xs text-muted-foreground">{a.uploadHint}</p>
                     {formData.profilePicture && (
                       <div className="mt-2">
-                        <img src={formData.profilePicture} alt="Preview" className="h-20 w-20 rounded-full object-cover border-2 border-primary" />
+                        <img src={formData.profilePicture} alt={pe.umPreview} className="h-20 w-20 rounded-full object-cover border-2 border-primary" />
                       </div>
                     )}
                   </div>
@@ -739,7 +741,7 @@ const UserManagement = () => {
                       id="work"
                       value={formData.work}
                       onChange={(e) => setFormData({ ...formData, work: e.target.value })}
-                      placeholder="Teacher, Engineer..."
+                      placeholder={pe.professionPlaceholder}
                     />
                   </div>
                   <div className="space-y-2">
@@ -748,7 +750,7 @@ const UserManagement = () => {
                       id="skill"
                       value={formData.skill}
                       onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
-                      placeholder="Music, IT, Painting..."
+                      placeholder={pe.interestsPlaceholder}
                     />
                   </div>
                   <div className="space-y-2 flex items-center gap-2">
@@ -835,11 +837,11 @@ const UserManagement = () => {
                           <SelectValue placeholder={a.selectRole} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Administrator">Administrator</SelectItem>
-                          <SelectItem value="Secretary">Secretary</SelectItem>
+                          <SelectItem value="Administrator">{pe.roleAdministrator}</SelectItem>
+                          <SelectItem value="Secretary">{pe.roleSecretary}</SelectItem>
                           <SelectItem value="FinanceHead">Finance Head</SelectItem>
                           <SelectItem value="DepartmentHead">Department Head</SelectItem>
-                          <SelectItem value="Staff">Staff</SelectItem>
+                          <SelectItem value="Staff">{pe.roleStaff}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -930,15 +932,15 @@ const UserManagement = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Priest">Priest</SelectItem>
-                        <SelectItem value="Deacon">Deacon</SelectItem>
-                        <SelectItem value="Sunday School Teacher">Sunday School Teacher</SelectItem>
-                        <SelectItem value="Choir Member">Choir Member</SelectItem>
-                        <SelectItem value="Youth Leader">Youth Leader</SelectItem>
-                        <SelectItem value="Women Ministry">Women Ministry</SelectItem>
-                        <SelectItem value="Men Ministry">Men Ministry</SelectItem>
-                        <SelectItem value="Elder">Elder</SelectItem>
-                        <SelectItem value="General Member">General Member</SelectItem>
+                        <SelectItem value="Priest">{pe.rolePriest}</SelectItem>
+                        <SelectItem value="Deacon">{pe.roleDeacon}</SelectItem>
+                        <SelectItem value="Sunday School Teacher">{pe.roleSundaySchoolTeacher}</SelectItem>
+                        <SelectItem value="Choir Member">{pe.roleChoirMember}</SelectItem>
+                        <SelectItem value="Youth Leader">{pe.roleYouthLeader}</SelectItem>
+                        <SelectItem value="Women Ministry">{pe.roleWomenMinistry}</SelectItem>
+                        <SelectItem value="Men Ministry">{pe.roleMenMinistry}</SelectItem>
+                        <SelectItem value="Elder">{pe.roleElder}</SelectItem>
+                        <SelectItem value="General Member">{pe.roleGeneralMember}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -966,7 +968,7 @@ const UserManagement = () => {
                       id="zone"
                       value={formData.zone}
                       onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
-                      placeholder="Bole"
+                      placeholder={pe.woredaExample}
                     />
                   </div>
                   <div className="space-y-2">
@@ -975,7 +977,7 @@ const UserManagement = () => {
                       id="woreda"
                       value={formData.woreda}
                       onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
-                      placeholder="Bole Sub City"
+                      placeholder={pe.subCityExample}
                     />
                   </div>
                 </div>
@@ -1067,12 +1069,12 @@ const UserManagement = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>{pe.umColName}</TableHead>
+                    <TableHead>{pe.umColRole}</TableHead>
                     <TableHead>{a.lastLoggedOn}</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Active</TableHead>
+                    <TableHead>{f.phoneNumber}</TableHead>
+                    <TableHead>{f.email}</TableHead>
+                    <TableHead>{pe.umColActive}</TableHead>
                     <TableHead className="text-right">{a.operations}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1196,7 +1198,7 @@ const UserManagement = () => {
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-fullName">Full Name (English) *</Label>
+                <Label htmlFor="edit-fullName">{pe.umFullNameEnRequired}</Label>
                 <Input
                   id="edit-fullName"
                   value={formData.fullName}
@@ -1214,7 +1216,7 @@ const UserManagement = () => {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="edit-profilePicture">Profile Picture (Optional)</Label>
+                <Label htmlFor="edit-profilePicture">{pe.umProfilePictureOptional}</Label>
                 <Input
                   id="edit-profilePicture"
                   type="file"
@@ -1234,7 +1236,7 @@ const UserManagement = () => {
                 <p className="text-xs text-muted-foreground">{a.uploadHint}</p>
                 {formData.profilePicture && (
                   <div className="mt-2">
-                    <img src={formData.profilePicture} alt="Preview" className="h-20 w-20 rounded-full object-cover border-2 border-primary" />
+                    <img src={formData.profilePicture} alt={pe.umPreview} className="h-20 w-20 rounded-full object-cover border-2 border-primary" />
                   </div>
                 )}
               </div>
@@ -1300,11 +1302,11 @@ const UserManagement = () => {
                       <SelectValue placeholder={a.selectRole} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Administrator">Administrator</SelectItem>
-                      <SelectItem value="Secretary">Secretary</SelectItem>
+                      <SelectItem value="Administrator">{pe.roleAdministrator}</SelectItem>
+                      <SelectItem value="Secretary">{pe.roleSecretary}</SelectItem>
                       <SelectItem value="FinanceHead">Finance Head</SelectItem>
                       <SelectItem value="DepartmentHead">Department Head</SelectItem>
-                      <SelectItem value="Staff">Staff</SelectItem>
+                      <SelectItem value="Staff">{pe.roleStaff}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1316,15 +1318,15 @@ const UserManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Priest">Priest</SelectItem>
-                    <SelectItem value="Deacon">Deacon</SelectItem>
-                    <SelectItem value="Sunday School Teacher">Sunday School Teacher</SelectItem>
-                    <SelectItem value="Choir Member">Choir Member</SelectItem>
-                    <SelectItem value="Youth Leader">Youth Leader</SelectItem>
-                    <SelectItem value="Women Ministry">Women Ministry</SelectItem>
-                    <SelectItem value="Men Ministry">Men Ministry</SelectItem>
-                    <SelectItem value="Elder">Elder</SelectItem>
-                    <SelectItem value="General Member">General Member</SelectItem>
+                    <SelectItem value="Priest">{pe.rolePriest}</SelectItem>
+                    <SelectItem value="Deacon">{pe.roleDeacon}</SelectItem>
+                    <SelectItem value="Sunday School Teacher">{pe.roleSundaySchoolTeacher}</SelectItem>
+                    <SelectItem value="Choir Member">{pe.roleChoirMember}</SelectItem>
+                    <SelectItem value="Youth Leader">{pe.roleYouthLeader}</SelectItem>
+                    <SelectItem value="Women Ministry">{pe.roleWomenMinistry}</SelectItem>
+                    <SelectItem value="Men Ministry">{pe.roleMenMinistry}</SelectItem>
+                    <SelectItem value="Elder">{pe.roleElder}</SelectItem>
+                    <SelectItem value="General Member">{pe.roleGeneralMember}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1438,7 +1440,7 @@ const UserManagement = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={deleteUserMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleteUserMutation.isPending ? 'Suspending…' : 'Suspend'}
             </AlertDialogAction>

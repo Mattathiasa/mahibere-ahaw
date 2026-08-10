@@ -38,6 +38,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFormatters } from '@/lib/formatters';
+import type { Translations } from '@/i18n/translations';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -150,7 +151,7 @@ const SoftwareControl: React.FC = () => {
     if (count > 0) {
       setErrorMsg(
         `"${roleLabel(role, 'en')}" still has ${count} account${count === 1 ? '' : 's'}. ` +
-        'Move those accounts to another role in User Management first — deleting it now would leave them with no permissions.'
+        a.scRoleInUse
       );
       setStatus('error');
       return;
@@ -307,7 +308,7 @@ const SoftwareControl: React.FC = () => {
             <span>
               This app version updated the built-in roles. Everyone already sees
               the corrected permissions, but the security rules still read the
-              previous ones — press <strong>Save &amp; Publish</strong> once to bring
+              previous ones — press <strong>{a.scSavePublish}</strong> once to bring
               them up to date.
             </span>
           </div>
@@ -318,11 +319,11 @@ const SoftwareControl: React.FC = () => {
         {/* Related control centers */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: 'Permission Control', desc: 'Role & per-user permissions', href: '/admin/permissions' },
-            { label: 'Mobile App Control', desc: 'Kill switch, versions, flags', href: '/admin/mobile-control' },
-            { label: 'Site Content Editor', desc: 'Landing page & UI text', href: '/admin/landing-editor' },
-            { label: 'Module Configuration', desc: 'Members, Plans, Reports', href: '/admin/module-config' },
-            { label: 'Organisation Structure', desc: 'Every level, congregations included', href: '/organisation' },
+            { label: 'Permission Control', desc: a.scPermissionControlDesc, href: '/admin/permissions' },
+            { label: 'Mobile App Control', desc: a.scMobileControlDesc, href: '/admin/mobile-control' },
+            { label: a.scSiteContentEditor, desc: a.scSiteContentDesc, href: '/admin/landing-editor' },
+            { label: a.scModuleConfiguration, desc: a.scModuleConfigDesc, href: '/admin/module-config' },
+            { label: 'Organisation Structure', desc: a.scOrganisationDesc, href: '/organisation' },
           ].map((l) => (
             <button key={l.href} onClick={() => navigate(l.href)}
               className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition-colors text-left">
@@ -408,7 +409,7 @@ const SoftwareControl: React.FC = () => {
                       <Badge variant="outline" className="text-[10px] capitalize">{role.scope}</Badge>
                       {role.isAdmin && <Badge className="text-[10px]">Admin</Badge>}
                       {role.canApproveMembers && (
-                        <Badge variant="secondary" className="text-[10px]">Approver</Badge>
+                        <Badge variant="secondary" className="text-[10px]">{a.scApprover}</Badge>
                       )}
                       <Badge variant="outline" className="gap-1 text-[10px]">
                         <UsersIcon className="h-2.5 w-2.5" /> {roleUsage[role.key] ?? 0}
@@ -432,7 +433,7 @@ const SoftwareControl: React.FC = () => {
 
                 <div className="pt-4 border-t border-border flex items-center gap-3 flex-wrap">
                   <div className="space-y-1">
-                    <p className="text-sm font-bold">Role for new sign-ups</p>
+                    <p className="text-sm font-bold">{a.scRoleForNewSignups}</p>
                     <p className="text-xs text-muted-foreground">
                       Assigned automatically when someone registers from the public sign-up page.
                     </p>
@@ -480,7 +481,7 @@ const SoftwareControl: React.FC = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="py-2 pr-4 text-xs uppercase tracking-wider text-muted-foreground">Tab</th>
+                      <th className="py-2 pr-4 text-xs uppercase tracking-wider text-muted-foreground">{a.scTab}</th>
                       {roles.map((role) => (
                         <th key={role.key} className="py-2 px-2 text-[10px] uppercase tracking-wide text-muted-foreground text-center whitespace-nowrap">
                           {roleLabel(role, 'en')}
@@ -616,8 +617,8 @@ const SoftwareControl: React.FC = () => {
                     return (
                       <div className="text-center py-12 text-muted-foreground">
                         <ScrollText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                        <p className="font-medium">No audit entries</p>
-                        <p className="text-sm">Activity will appear here as users sign in and change data.</p>
+                        <p className="font-medium">{a.scNoAudit}</p>
+                        <p className="text-sm">{a.scNoAuditHint}</p>
                       </div>
                     );
                   }
@@ -626,11 +627,11 @@ const SoftwareControl: React.FC = () => {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
-                            <th className="py-2 pr-4">When</th>
-                            <th className="py-2 pr-4">User</th>
-                            <th className="py-2 pr-4">Action</th>
-                            <th className="py-2 pr-4">Details</th>
-                            <th className="py-2">Device</th>
+                            <th className="py-2 pr-4">{a.scColWhen}</th>
+                            <th className="py-2 pr-4">{a.scColUser}</th>
+                            <th className="py-2 pr-4">{a.scColAction}</th>
+                            <th className="py-2 pr-4">{a.scColDetails}</th>
+                            <th className="py-2">{a.scColDevice}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -643,7 +644,7 @@ const SoftwareControl: React.FC = () => {
                                 <div className="font-medium">{l.userName ?? '—'}</div>
                                 <div className="text-xs text-muted-foreground">{l.userEmail ?? l.userId}</div>
                               </td>
-                              <td className="py-2.5 pr-4">{renderAction(l.action)}</td>
+                              <td className="py-2.5 pr-4">{renderAction(a, l.action)}</td>
                               <td className="py-2.5 pr-4">
                                 <div>{l.description ?? '—'}</div>
                                 {l.targetType && <div className="text-xs text-muted-foreground">{l.targetType}{l.targetId ? ` · ${l.targetId.slice(0, 8)}` : ''}</div>}
@@ -681,20 +682,22 @@ const SoftwareControl: React.FC = () => {
   );
 };
 
-const ACTION_STYLES: Record<AuditAction, { label: string; cls: string; Icon: typeof LogIn }> = {
-  login: { label: 'Login', cls: 'bg-green-500/10 text-green-700 border-green-500/30', Icon: LogIn },
-  logout: { label: 'Logout', cls: 'bg-slate-500/10 text-slate-600 border-slate-500/30', Icon: LogOut },
-  create: { label: 'Create', cls: 'bg-blue-500/10 text-blue-700 border-blue-500/30', Icon: FilePlus2 },
-  update: { label: 'Update', cls: 'bg-amber-500/10 text-amber-700 border-amber-500/30', Icon: FilePen },
-  delete: { label: 'Delete', cls: 'bg-red-500/10 text-red-700 border-red-500/30', Icon: FileX2 },
+/** Audit action styling. `labelKey` resolves at render — this sits outside the component. */
+const ACTION_STYLES: Record<AuditAction, { labelKey: keyof Translations['admin']; cls: string; Icon: typeof LogIn }> = {
+  login: { labelKey: 'scActionLogin', cls: 'bg-green-500/10 text-green-700 border-green-500/30', Icon: LogIn },
+  logout: { labelKey: 'scActionLogout', cls: 'bg-slate-500/10 text-slate-600 border-slate-500/30', Icon: LogOut },
+  create: { labelKey: 'scActionCreate', cls: 'bg-blue-500/10 text-blue-700 border-blue-500/30', Icon: FilePlus2 },
+  update: { labelKey: 'scActionUpdate', cls: 'bg-amber-500/10 text-amber-700 border-amber-500/30', Icon: FilePen },
+  delete: { labelKey: 'scActionDelete', cls: 'bg-red-500/10 text-red-700 border-red-500/30', Icon: FileX2 },
 };
 
-function renderAction(action: AuditAction) {
+function renderAction(a: Translations['admin'], action: AuditAction) {
   const s = ACTION_STYLES[action] ?? ACTION_STYLES.update;
+  const label = a[s.labelKey];
   const { Icon } = s;
   return (
     <Badge variant="outline" className={`gap-1 ${s.cls}`}>
-      <Icon className="h-3 w-3" /> {s.label}
+      <Icon className="h-3 w-3" /> {label}
     </Badge>
   );
 }

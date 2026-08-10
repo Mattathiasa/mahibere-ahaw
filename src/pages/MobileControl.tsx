@@ -236,7 +236,7 @@ const MobileControl: React.FC = () => {
                     value={config.minBuildNumber}
                     onChange={(e) => setConfig((c) => ({ ...c, minBuildNumber: parseInt(e.target.value || '1', 10) }))}
                   />
-                  <p className="text-[11px] text-muted-foreground">Builds below this are blocked.</p>
+                  <p className="text-[11px] text-muted-foreground">{a.mobBuildsBlocked}</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -311,15 +311,15 @@ const MobileControl: React.FC = () => {
                 {audit.length === 0 && !auditError ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Smartphone className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                    <p className="font-medium">No mobile sessions reported yet</p>
-                    <p className="text-sm">Records appear after users sign in on the updated app.</p>
+                    <p className="font-medium">{a.mobNoSessions}</p>
+                    <p className="text-sm">{a.mobNoSessionsHint}</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                          <th className="py-2 pr-4">User</th>
+                          <th className="py-2 pr-4">{a.scColUser}</th>
                           <th className="py-2 pr-4">Level</th>
                           <th className="py-2 pr-4">Device</th>
                           <th className="py-2 pr-4">App</th>

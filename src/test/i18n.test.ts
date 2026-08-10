@@ -42,6 +42,7 @@ const SAME_IN_BOTH_LANGUAGES = new Set<string>([
   'people.adminEmailExample', // addishiwot@example.com
   'people.personEmailExample', // abebe@example.com
   'people.usernameExample', // abebe.k — a username, not words
+  'people.usernameExampleShort', // john.doe — likewise
 ]);
 
 describe('translation tree shape', () => {
