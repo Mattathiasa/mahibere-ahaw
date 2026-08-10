@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { getTransactions, getBudgets, getFinancialReports, getMemberTithes, DEFAULT_CHURCH_BANKS, MemberTithe } from '@/services/finance';
@@ -32,6 +33,8 @@ import { toEthiopianDateString } from '@/lib/date-utils';
 
 export default function Finance() {
   const { t } = useTranslation();
+  const { t: tree } = useLanguage();
+  const fin = tree.finance;
   const [searchParams] = useSearchParams();
 
   const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
@@ -169,8 +172,8 @@ export default function Finance() {
     <div className="space-y-10 animate-in fade-in duration-700 ease-out pb-20">
       <ConfigurablePageHeader
         module="finance"
-        defaultTitle="Finances"
-        defaultDescription="Comprehensive financial management, member tithes, budget allocations, and reporting."
+        defaultTitle={fin.title}
+        defaultDescription={fin.subtitle}
         badge="Finance"
       />
 
@@ -218,7 +221,7 @@ export default function Finance() {
               <Users className="h-5 w-5" />
             </div>
           </div>
-          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">Total Members</span>
+          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">{fin.totalMembers}</span>
         </div>
 
         <div className="bg-[#2A757C] text-white p-6 rounded-2xl flex flex-col justify-between shadow-lg backdrop-blur-xl">
@@ -228,7 +231,7 @@ export default function Finance() {
               <Layers className="h-5 w-5" />
             </div>
           </div>
-          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">Total Teams</span>
+          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">{fin.totalTeams}</span>
         </div>
 
         <div className="bg-sky-600 text-white p-6 rounded-2xl flex flex-col justify-between shadow-lg backdrop-blur-xl">
@@ -238,7 +241,7 @@ export default function Finance() {
               <MessageSquare className="h-5 w-5" />
             </div>
           </div>
-          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">SMS Sent</span>
+          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">{fin.smsSent}</span>
         </div>
 
         <div className="bg-emerald-600 text-white p-6 rounded-2xl flex flex-col justify-between shadow-lg backdrop-blur-xl">
@@ -250,7 +253,7 @@ export default function Finance() {
               <Wallet className="h-5 w-5" />
             </div>
           </div>
-          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">Total Balance</span>
+          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">{fin.totalBalance}</span>
         </div>
 
         <div className="bg-amber-600 text-white p-6 rounded-2xl flex flex-col justify-between shadow-lg backdrop-blur-xl">
@@ -260,7 +263,7 @@ export default function Finance() {
               <UserCheck className="h-5 w-5" />
             </div>
           </div>
-          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">System Users</span>
+          <span className="text-xs uppercase tracking-wider font-bold mt-6 opacity-90">{fin.systemUsers}</span>
         </div>
       </div>
 
@@ -277,7 +280,7 @@ export default function Finance() {
               <div key={b.id} className="border p-4 rounded-xl space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="flex justify-between items-start">
                   <h5 className="font-bold text-xs text-[#0D2440] dark:text-white">{b.bankName}</h5>
-                  <Badge variant="outline" className="text-[10px] bg-sky-500/10 text-sky-600">Active</Badge>
+                  <Badge variant="outline" className="text-[10px] bg-sky-500/10 text-sky-600">{fin.accountActive}</Badge>
                 </div>
                 <p className="text-xs font-mono text-muted-foreground">{b.accountNumber}</p>
                 <div className="pt-2 flex justify-between items-center text-xs">
@@ -312,11 +315,11 @@ export default function Finance() {
           </CardHeader>
           <CardContent className="pt-4 space-y-2.5">
             {[
-              { label: 'Sales', cat: 'Sales' },
-              { label: 'Tithe', cat: 'Tithe' },
-              { label: 'Special Gift', cat: 'Special Gift' },
-              { label: 'Donation', cat: 'Donation' },
-              { label: 'Project contribution', cat: 'Project Contribution' },
+              { label: fin.catSales, cat: 'Sales' },
+              { label: fin.catTithe, cat: 'Tithe' },
+              { label: fin.catSpecialGift, cat: 'Special Gift' },
+              { label: fin.catDonation, cat: 'Donation' },
+              { label: fin.catProjectContribution, cat: 'Project Contribution' },
             ].map((item, idx) => {
               const catSum = getCategoryTotal(item.cat);
               return (
@@ -352,9 +355,9 @@ export default function Finance() {
           </CardHeader>
           <CardContent className="pt-4 space-y-2.5">
             {[
-              { label: 'Payroll', cat: 'Payroll' },
-              { label: 'PT Cash', cat: 'Petty Cash' },
-              { label: 'Utility Fees', cat: 'Utility Fees' },
+              { label: fin.catPayroll, cat: 'Payroll' },
+              { label: fin.catPettyCash, cat: 'Petty Cash' },
+              { label: fin.catUtilityFees, cat: 'Utility Fees' },
             ].map((item, idx) => {
               const catSum = getCategoryTotal(item.cat);
               return (
@@ -390,11 +393,11 @@ export default function Finance() {
           </CardHeader>
           <CardContent className="pt-4 space-y-2.5">
             {[
-              'Bank Integration',
-              'Ministry Budget',
-              'Leadership Budget',
-              'Teams Budget',
-              'Total church Budget',
+              fin.bankIntegration,
+              fin.ministryBudget,
+              fin.leadershipBudget,
+              fin.teamsBudget,
+              fin.totalChurchBudget,
             ].map((item, idx) => (
               <button
                 key={idx}
@@ -422,10 +425,10 @@ export default function Finance() {
           </CardHeader>
           <CardContent className="pt-4 space-y-2.5">
             {[
-              'Custom Finance Report',
-              '3 Month Finance Report',
-              '6 Month Finance Report',
-              'Yearly Finance report',
+              fin.customReport,
+              fin.threeMonthReport,
+              fin.sixMonthReport,
+              fin.yearlyReport,
             ].map((item, idx) => (
               <button
                 key={idx}
@@ -479,11 +482,11 @@ export default function Finance() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50 dark:bg-slate-900">
-                    <TableHead className="font-bold text-xs uppercase">Description</TableHead>
-                    <TableHead className="font-bold text-xs uppercase">Category</TableHead>
-                    <TableHead className="font-bold text-xs uppercase">Type</TableHead>
-                    <TableHead className="font-bold text-xs uppercase">Ethiopian Date</TableHead>
-                    <TableHead className="font-bold text-xs uppercase text-right">Amount (ETB)</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colDescription}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colCategory}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colType}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colEthiopianDate}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase text-right">{fin.colAmount}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -525,12 +528,12 @@ export default function Finance() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50 dark:bg-slate-900">
-                    <TableHead className="font-bold text-xs uppercase">Receipt #</TableHead>
-                    <TableHead className="font-bold text-xs uppercase">Member Name</TableHead>
-                    <TableHead className="font-bold text-xs uppercase">Type</TableHead>
-                    <TableHead className="font-bold text-xs uppercase">Method</TableHead>
-                    <TableHead className="font-bold text-xs uppercase">Ethiopian Date</TableHead>
-                    <TableHead className="font-bold text-xs uppercase text-right">Amount (ETB)</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colReceiptNo}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colMemberName}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colType}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colMethod}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase">{fin.colEthiopianDate}</TableHead>
+                    <TableHead className="font-bold text-xs uppercase text-right">{fin.colAmount}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -564,7 +567,7 @@ export default function Finance() {
           <Card className="rounded-2xl border">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold">Monthly Budgets</h3>
+                <h3 className="text-lg font-bold">{fin.monthlyBudgets}</h3>
                 {canCreateBudget && <Button onClick={() => setShowBudgetDialog(true)} size="sm">
                   <Plus className="mr-2 h-4 w-4" /> Add Budget
                 </Button>}
@@ -572,10 +575,10 @@ export default function Finance() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Month/Year</TableHead>
-                    <TableHead>Planned Income</TableHead>
-                    <TableHead>Planned Expenses</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
+                    <TableHead>{fin.colMonthYear}</TableHead>
+                    <TableHead>{fin.colPlannedIncome}</TableHead>
+                    <TableHead>{fin.colPlannedExpenses}</TableHead>
+                    <TableHead className="text-right">{fin.colStatus}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -607,13 +610,13 @@ export default function Finance() {
           <Card className="rounded-2xl border">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold">Financial Reports</h3>
+                <h3 className="text-lg font-bold">{fin.financialReports}</h3>
                 {canGenerateReport && <Button onClick={() => setShowReportDialog(true)} size="sm">
                   <Plus className="mr-2 h-4 w-4" /> Generate Report
                 </Button>}
               </div>
               {reports.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">No financial reports generated yet.</p>
+                <p className="text-center py-8 text-muted-foreground">{fin.noReports}</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {reports.map((rep) => (
@@ -621,8 +624,8 @@ export default function Finance() {
                       <h4 className="font-bold text-base">{rep.title}</h4>
                       <p className="text-xs text-muted-foreground">{rep.reportType}</p>
                       <div className="mt-4 flex justify-between text-sm">
-                        <span>Income: <strong className="text-emerald-600">{(rep.totalIncome || 0).toLocaleString()} ETB</strong></span>
-                        <span>Expenses: <strong className="text-rose-600">{(rep.totalExpenses || 0).toLocaleString()} ETB</strong></span>
+                        <span>{fin.incomeLabel} <strong className="text-emerald-600">{(rep.totalIncome || 0).toLocaleString()} ETB</strong></span>
+                        <span>{fin.expensesLabel} <strong className="text-rose-600">{(rep.totalExpenses || 0).toLocaleString()} ETB</strong></span>
                       </div>
                     </Card>
                   ))}
@@ -643,7 +646,7 @@ export default function Finance() {
             type: transactionPresetType,
             category: transactionCategoryDefault || data.category,
           }).then(() => {
-            toast.success('Transaction recorded successfully!');
+            toast.success(fin.transactionRecorded);
             setShowTransactionDialog(false);
             loadData();
           });
@@ -655,7 +658,7 @@ export default function Finance() {
         onOpenChange={setShowBudgetDialog}
         onSubmit={(data) => {
           createBudget(data).then(() => {
-            toast.success('Budget created successfully!');
+            toast.success(fin.budgetCreated);
             setShowBudgetDialog(false);
             loadData();
           });
@@ -667,7 +670,7 @@ export default function Finance() {
         onOpenChange={setShowReportDialog}
         onSubmit={(data) => {
           createFinancialReport(data).then(() => {
-            toast.success('Financial report generated successfully!');
+            toast.success(fin.reportGenerated);
             setShowReportDialog(false);
             loadData();
           });

@@ -50,6 +50,13 @@ const SKIP_PATHS = [
   'src/services/landingContent.ts',
   'src/services/featuresContent.ts',
   'src/services/aboutContent.ts',
+  // Unreachable. Neither is imported anywhere — Landing.tsx was superseded by
+  // Home.tsx and Index.tsx is leftover create-app scaffold ("Welcome to Your
+  // Blank App"). Their ~43 English strings cannot render, so translating them
+  // would be busywork and counting them would misreport how much is left.
+  // Left in place rather than deleted; delete them and drop these two lines.
+  'src/pages/Landing.tsx',
+  'src/pages/Index.tsx',
 ];
 
 /** Props whose value is rendered to the reader. */

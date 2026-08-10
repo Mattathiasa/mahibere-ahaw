@@ -22,6 +22,12 @@ import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { AssetDetailsDialog } from '@/components/AssetDetailsDialog';
 import { ImportAssetsDialog } from '@/components/ImportAssetsDialog';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useFormatters } from '@/lib/formatters';
+import {
+  ASSET_TYPES, ASSET_STATUSES, ASSET_CONDITIONS, ACQUISITION_TYPES,
+  assetTypeLabel, assetStatusLabel, assetConditionLabel, acquisitionTypeLabel,
+} from '@/i18n/enums';
 
 const invHumanize = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2');
 
@@ -62,6 +68,9 @@ export default function Inventory() {
   const [searchParams] = useSearchParams();
   const { showElement } = useSoftwareControl();
   const moduleCfg = useModuleConfig('inventory');
+  const { t } = useLanguage();
+  const inv = t.inventory;
+  const { formatNumber } = useFormatters();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -97,16 +106,16 @@ export default function Inventory() {
       toast.success(editing ? 'Asset updated' : 'Asset registered');
       setDialogOpen(false);
     },
-    onError: () => toast.error('Failed to save asset'),
+    onError: () => toast.error(inv.saveFailed),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => inventoryService.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast.success('Asset removed');
+      toast.success(inv.removed);
     },
-    onError: () => toast.error('Failed to remove asset'),
+    onError: () => toast.error(inv.removeFailed),
   });
 
   function openCreate() {
@@ -144,9 +153,9 @@ export default function Inventory() {
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       <ConfigurablePageHeader
         module="inventory"
-        defaultTitle="Asset Management"
-        defaultDescription="Track church assets, equipment, property, and valuations."
-        badge="Assets"
+        defaultTitle={inv.title}
+        defaultDescription={inv.subtitle}
+        badge={inv.badge}
       />
 
       {/* Top 3 Stat Cards Banner */}
@@ -159,7 +168,7 @@ export default function Inventory() {
                   {assets.length || 1}
                 </p>
                 <p className="text-xs uppercase font-bold tracking-wider text-[#2E5E99] dark:text-[#7BA4D0] mt-4">
-                  Total Asset
+                  {inv.totalAssets}
                 </p>
               </div>
               <div className="p-3 bg-[#2E5E99]/20 rounded-full">
@@ -177,7 +186,7 @@ export default function Inventory() {
                   {totalValue > 0 ? totalValue.toLocaleString() : '24,000'}
                 </p>
                 <p className="text-xs uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400 mt-4">
-                  Total Value Of Asset (ETB)
+                  {inv.totalValue}
                 </p>
               </div>
               <div className="p-3 bg-emerald-500/20 rounded-full">
@@ -195,7 +204,7 @@ export default function Inventory() {
                   {totalDisposed}
                 </p>
                 <p className="text-xs uppercase font-bold tracking-wider text-amber-600 dark:text-amber-400 mt-4">
-                  Total Disposed
+                  {inv.totalDisposed}
                 </p>
               </div>
               <div className="p-3 bg-amber-500/20 rounded-full">
@@ -211,7 +220,7 @@ export default function Inventory() {
         <div className="flex items-center gap-2">
           {showElement('inventory.add') && (
             <Button onClick={openCreate} className="gap-2 bg-[#2E5E99] hover:bg-[#204a7c] text-white font-semibold rounded-xl">
-              <Plus className="h-4 w-4" /> Register Asset
+              <Plus className="h-4 w-4" /> {inv.registerAsset}
             </Button>
           )}
           <Button
@@ -234,7 +243,7 @@ export default function Inventory() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             className="pl-9 bg-white text-slate-900 placeholder:text-slate-400 border-none h-10 rounded-lg text-sm"
-            placeholder="Search..."
+            placeholder={t.common.search}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -250,8 +259,8 @@ export default function Inventory() {
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
             <Boxes className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium">No assets found</p>
-            <p className="text-sm">Register your first asset to get started.</p>
+            <p className="font-medium">{inv.emptyTitle}</p>
+            <p className="text-sm">{inv.emptyHint}</p>
           </CardContent>
         </Card>
       ) : (
@@ -260,13 +269,13 @@ export default function Inventory() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  <th className="py-3.5 px-4">Asset ID</th>
-                  <th className="py-3.5 px-4">Asset Name</th>
-                  <th className="py-3.5 px-4">Asset Type</th>
-                  <th className="py-3.5 px-4">Quantity</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Condition</th>
-                  <th className="py-3.5 px-4 text-right">Operations</th>
+                  <th className="py-3.5 px-4">{inv.colId}</th>
+                  <th className="py-3.5 px-4">{inv.colName}</th>
+                  <th className="py-3.5 px-4">{inv.colType}</th>
+                  <th className="py-3.5 px-4">{inv.colQuantity}</th>
+                  <th className="py-3.5 px-4">{inv.colStatus}</th>
+                  <th className="py-3.5 px-4">{inv.colCondition}</th>
+                  <th className="py-3.5 px-4 text-right">{inv.colActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -286,12 +295,12 @@ export default function Inventory() {
                     </td>
                     <td className="py-4 px-4">
                       <Badge variant="outline" className={`px-2.5 py-0.5 font-bold uppercase text-[10px] ${STATUS_COLORS[asset.status] ?? STATUS_COLORS.ACTIVE}`}>
-                        {asset.status === 'InUse' ? 'ACTIVE' : asset.status.toUpperCase()}
+                        {assetStatusLabel(t, asset.status)}
                       </Badge>
                     </td>
                     <td className="py-4 px-4">
                       <Badge variant="outline" className={`px-2.5 py-0.5 font-bold uppercase text-[10px] ${CONDITION_COLORS[asset.condition] ?? ''}`}>
-                        {asset.condition.toUpperCase()}
+                        {assetConditionLabel(t, asset.condition)}
                       </Badge>
                     </td>
                     <td className="py-4 px-4 text-right whitespace-nowrap">
@@ -300,11 +309,11 @@ export default function Inventory() {
                         size="icon"
                         onClick={() => openDetails(asset)}
                         className="text-slate-600 hover:text-teal-600"
-                        title="View Details"
+                        title={inv.viewDetails}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(asset)} title="Edit Asset">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(asset)} title={inv.editAsset}>
                         <Pencil className="h-4 w-4 text-slate-600" />
                       </Button>
                       {showElement('inventory.delete') && (
@@ -315,14 +324,14 @@ export default function Inventory() {
                           onClick={() => {
                             if (confirm(`Remove ${asset.name}?`)) deleteMutation.mutate(asset.id);
                           }}
-                          title="Delete Asset"
+                          title={inv.deleteAsset}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                     </td>
                   </tr>
-                ))}
+                  ))}
               </tbody>
             </table>
           </CardContent>
@@ -333,79 +342,75 @@ export default function Inventory() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit Asset' : 'Register Asset'}</DialogTitle>
+            <DialogTitle>{editing ? inv.editAsset : inv.registerAsset}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Asset ID Code</Label>
-              <Input value={form.assetId} onChange={(e) => setForm({ ...form, assetId: e.target.value })} placeholder="e.g. MA-EQU-220" />
+              <Label>{inv.fieldIdCode}</Label>
+              <Input value={form.assetId} onChange={(e) => setForm({ ...form, assetId: e.target.value })} placeholder={inv.fieldIdCodePlaceholder} />
             </div>
             <div className="space-y-1.5">
-              <Label>Asset Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Computer" />
+              <Label>{inv.fieldName}</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={inv.fieldNamePlaceholder} />
             </div>
             <div className="space-y-1.5">
-              <Label>Asset Type</Label>
+              <Label>{inv.fieldType}</Label>
               <Select value={form.assetType} onValueChange={(v) => setForm({ ...form, assetType: v as AssetInput['assetType'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Equipment">Equipment</SelectItem>
-                  <SelectItem value="Furniture">Furniture</SelectItem>
-                  <SelectItem value="Vehicle">Vehicle</SelectItem>
-                  <SelectItem value="Electronics">Electronics</SelectItem>
-                  <SelectItem value="RealEstate">Real Estate / Property</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Quantity</Label>
-              <Input type="number" min={1} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Math.max(1, Number(e.target.value) || 1) })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Location</Label>
-              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Assigned To</Label>
-              <Input value={form.assignedTo ?? ''} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Condition</Label>
-              <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v as AssetInput['condition'] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(moduleCfg.options.conditions ?? ['New', 'Good', 'Fair', 'Poor']).map((v) => (
-                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  {ASSET_TYPES.map((v) => (
+                    <SelectItem key={v} value={v}>{assetTypeLabel(t, v)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{inv.fieldQuantity}</Label>
+              <Input type="number" min={1} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Math.max(1, Number(e.target.value) || 1) })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{inv.fieldLocation}</Label>
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{inv.fieldAssignedTo}</Label>
+              <Input value={form.assignedTo ?? ''} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{inv.fieldCondition}</Label>
+              <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v as AssetInput['condition'] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(moduleCfg.options.conditions ?? [...ASSET_CONDITIONS]).map((v) => (
+                    <SelectItem key={v} value={v}>{assetConditionLabel(t, v)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{inv.fieldStatus}</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as AssetInput['status'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="InUse">Active / In Use</SelectItem>
-                  <SelectItem value="InStorage">In Storage</SelectItem>
-                  <SelectItem value="Maintenance">Under Maintenance</SelectItem>
-                  <SelectItem value="Retired">Retired</SelectItem>
-                  <SelectItem value="Disposed">Disposed</SelectItem>
+                  {ASSET_STATUSES.map((v) => (
+                    <SelectItem key={v} value={v}>{assetStatusLabel(t, v)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Acquisition</Label>
+              <Label>{inv.fieldAcquisition}</Label>
               <Select value={form.acquisitionType} onValueChange={(v) => setForm({ ...form, acquisitionType: v as AssetInput['acquisitionType'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Purchased">Purchased</SelectItem>
-                  <SelectItem value="Rented">Rented</SelectItem>
+                  {ACQUISITION_TYPES.map((v) => (
+                    <SelectItem key={v} value={v}>{acquisitionTypeLabel(t, v)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Unit Value (ETB)</Label>
+              <Label>{inv.fieldUnitValue}</Label>
               <Input
                 type="number"
                 value={form.value ?? ''}
@@ -420,19 +425,19 @@ export default function Inventory() {
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label>Notes</Label>
+              <Label>{inv.fieldNotes}</Label>
               <Textarea rows={2} value={form.notes ?? ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t.common.cancel}</Button>
             <Button
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending || !form.name.trim()}
               className="bg-teal-600 hover:bg-teal-700 text-white"
             >
               {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editing ? 'Save Changes' : 'Register Asset'}
+              {editing ? inv.saveChanges : inv.registerAsset}
             </Button>
           </DialogFooter>
         </DialogContent>

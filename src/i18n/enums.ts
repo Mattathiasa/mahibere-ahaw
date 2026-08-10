@@ -36,6 +36,16 @@ import type { Translations } from './translations';
 /** `AssetRecord.status` — src/services/inventory.ts */
 export const ASSET_STATUSES = ['InUse', 'InStorage', 'Maintenance', 'Retired', 'Disposed'] as const;
 
+/** `AssetRecord.assetType` */
+export const ASSET_TYPES = [
+  'Equipment',
+  'Furniture',
+  'Vehicle',
+  'Electronics',
+  'RealEstate',
+  'Other',
+] as const;
+
 /** `AssetRecord.condition` */
 export const ASSET_CONDITIONS = ['New', 'Good', 'Fair', 'Poor'] as const;
 
@@ -90,6 +100,7 @@ export function statusKey(prefix: string, value: string): string {
 }
 
 export const assetStatusLabel = (t: Translations, v: string) => label(t, 'assetStatus', v);
+export const assetTypeLabel = (t: Translations, v: string) => label(t, 'assetType', v);
 export const assetConditionLabel = (t: Translations, v: string) => label(t, 'assetCondition', v);
 export const acquisitionTypeLabel = (t: Translations, v: string) => label(t, 'acquisitionType', v);
 export const employmentStatusLabel = (t: Translations, v: string) => label(t, 'employmentStatus', v);
@@ -109,6 +120,7 @@ export const genderLabel = (t: Translations, v: string) => label(t, 'gender', v)
  */
 export const ENUM_REGISTRY: ReadonlyArray<{ prefix: string; values: readonly string[] }> = [
   { prefix: 'assetStatus', values: ASSET_STATUSES },
+  { prefix: 'assetType', values: ASSET_TYPES },
   { prefix: 'assetCondition', values: ASSET_CONDITIONS },
   { prefix: 'acquisitionType', values: ACQUISITION_TYPES },
   { prefix: 'employmentStatus', values: EMPLOYMENT_STATUSES },

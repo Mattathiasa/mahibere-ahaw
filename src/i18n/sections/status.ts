@@ -19,6 +19,14 @@ export const statusEn = {
   assetStatusRetired: 'Retired',
   assetStatusDisposed: 'Disposed',
 
+  // ── Asset type ────────────────────────────────────────────────────────────
+  assetTypeEquipment: 'Equipment',
+  assetTypeFurniture: 'Furniture',
+  assetTypeVehicle: 'Vehicle',
+  assetTypeElectronics: 'Electronics',
+  assetTypeRealEstate: 'Real estate / property',
+  assetTypeOther: 'Other',
+
   // ── Asset condition ───────────────────────────────────────────────────────
   assetConditionNew: 'New',
   assetConditionGood: 'Good',
@@ -92,6 +100,13 @@ export const statusAm: Record<keyof typeof statusEn, string> = {
   assetStatusMaintenance: 'በጥገና ላይ',
   assetStatusRetired: 'ከአገልግሎት የወጣ',
   assetStatusDisposed: 'የተወገደ',
+
+  assetTypeEquipment: 'መሣሪያ',
+  assetTypeFurniture: 'የቤት ዕቃ',
+  assetTypeVehicle: 'ተሽከርካሪ',
+  assetTypeElectronics: 'ኤሌክትሮኒክስ',
+  assetTypeRealEstate: 'ቋሚ ንብረት / ሕንፃ',
+  assetTypeOther: 'ሌላ',
 
   assetConditionNew: 'አዲስ',
   assetConditionGood: 'ጥሩ',
