@@ -124,7 +124,7 @@ export const signupAm: Record<keyof typeof signupEn, string> = {
   continue: 'ቀጥል',
   submit: 'ጥያቄ ላክ',
   haveAccount: 'አስቀድሞ መለያ አለዎት?',
-  signIn: 'ግባ',
+  signIn: 'ይግቡ',
 
   errNameEnglish: 'እባክዎ ሙሉ ስምዎን በእንግሊዝኛ ያስገቡ።',
   errNameAmharic: 'እባክዎ ሙሉ ስምዎን በአማርኛ ያስገቡ።',
