@@ -12,7 +12,7 @@ import {
   softwareControlService,
   DEFAULT_SOFTWARE_CONTROL,
   NAV_KEYS,
-  NAV_LABELS,
+  navLabel,
   ELEMENT_KEYS,
   type SoftwareControlConfig,
 } from '@/services/softwareControl';
@@ -491,7 +491,7 @@ const SoftwareControl: React.FC = () => {
                   <tbody>
                     {NAV_KEYS.map((navKey) => (
                       <tr key={navKey} className="border-b border-border/50">
-                        <td className="py-2.5 pr-4 font-semibold whitespace-nowrap">{NAV_LABELS[navKey] ?? navKey}</td>
+                        <td className="py-2.5 pr-4 font-semibold whitespace-nowrap">{navLabel(t, navKey)}</td>
                         {roles.map((role) => (
                           <td key={role.key} className="py-2.5 px-2 text-center">
                             <Checkbox
@@ -518,16 +518,16 @@ const SoftwareControl: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {ELEMENT_KEYS.map(({ key, label, page }) => {
+                {ELEMENT_KEYS.map(({ key, labelKey, pageKey }) => {
                   const rule = config.elements[key] ?? {};
                   const visible = rule.visible !== false;
                   return (
                     <div key={key} className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
                       <div className="flex items-center justify-between gap-4">
                         <div>
-                          <p className="text-sm font-bold">{label}</p>
+                          <p className="text-sm font-bold">{t.modules[labelKey]}</p>
                           <p className="text-xs text-muted-foreground">
-                            <Badge variant="secondary" className="mr-2 text-[10px]">{page}</Badge>
+                            <Badge variant="secondary" className="mr-2 text-[10px]">{navLabel(t, pageKey)}</Badge>
                             <code className="text-[10px]">{key}</code>
                           </p>
                         </div>

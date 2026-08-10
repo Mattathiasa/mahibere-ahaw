@@ -1,4 +1,6 @@
 import { db } from '@/lib/firebase';
+import type { Translations } from '@/i18n/translations';
+import type { modulesEn } from '@/i18n/sections/modules';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // ─── Central UI control: which roles see which tabs and buttons ──────────────
@@ -15,39 +17,50 @@ export const NAV_KEYS = [
   'myAtbiya', 'organisation',
 ] as const;
 
-export const NAV_LABELS: Record<string, string> = {
-  dashboard: 'Dashboard', announcements: 'Announcements', plans: 'Plans',
-  reports: 'Reports', members: 'Members', meetings: 'Meetings',
-  finance: 'Finance', hr: 'Human Resources', inventory: 'Inventory',
-  churchRules: 'Church Rules', higeDenb: 'HigeDenb', strategicPlan: 'Strategic Plan',
-  documents: 'Documents', userManagement: 'User Management',
-  hierarchy: 'Hierarchy', settings: 'Settings', news: 'News',
-  missionary: 'Missionary', teachings: 'Teachings', volunteer: 'Volunteer',
-  notifications: 'Notifications', softwareControl: 'Software Control',
-  myAtbiya: 'My Congregation', organisation: 'Organisation Structure',
-};
+/**
+ * A navigation entry's name in the reader's language.
+ *
+ * There used to be a NAV_LABELS map here that restated every nav label in
+ * English — a second copy of `translations.en.nav` that could not be translated
+ * and drifted from the real one. Resolving through the dictionary means the
+ * Software Control table shows the same words as the sidebar it controls.
+ */
+export function navLabel(t: Translations, key: string): string {
+  const nav = t.nav as Record<string, string | undefined>;
+  const pages = t.pages as Record<string, string | undefined>;
+  return nav[key] ?? pages[key] ?? key;
+}
 
-/** UI elements (buttons/actions) that can be toggled or role-restricted.
- *  Add a key here + a useElementControl() call at the button to gate it. */
-export const ELEMENT_KEYS: { key: string; label: string; page: string }[] = [
-  { key: 'announcements.create', label: 'New Announcement button', page: 'Announcements' },
-  { key: 'plans.create', label: 'New Plan button', page: 'Plans' },
-  { key: 'reports.create', label: 'New Report button', page: 'Reports' },
-  { key: 'members.add', label: 'Add Member button', page: 'Members' },
-  { key: 'members.export', label: 'Export button', page: 'Members' },
-  { key: 'meetings.schedule', label: 'Schedule Meeting button', page: 'Meetings' },
-  { key: 'finance.addTransaction', label: 'Add Transaction button', page: 'Finance' },
-  { key: 'finance.createBudget', label: 'Create Budget button', page: 'Finance' },
-  { key: 'finance.generateReport', label: 'Generate Report button', page: 'Finance' },
-  { key: 'hr.add', label: 'Add Employee button', page: 'HR' },
-  { key: 'hr.delete', label: 'Delete Employee button', page: 'HR' },
-  { key: 'inventory.add', label: 'Add Asset button', page: 'Inventory' },
-  { key: 'inventory.delete', label: 'Delete Asset button', page: 'Inventory' },
-  { key: 'teachings.create', label: 'Create Teaching button', page: 'Teachings' },
-  { key: 'news.create', label: 'New Post button', page: 'News' },
-  { key: 'atbiya.add', label: 'Register Atbiya button', page: 'Atbiya Registry' },
-  { key: 'atbiya.addAdmin', label: 'Add Administrator button', page: 'Atbiya Registry' },
-  { key: 'members.approve', label: 'Approve / Reject buttons', page: 'Membership Requests' },
+/**
+ * UI elements (buttons/actions) that can be toggled or role-restricted.
+ * Add a key here + a useElementControl() call at the button to gate it.
+ *
+ * `key` is the identity: it is persisted in `siteConfig/softwareControl` and
+ * must never change. `labelKey` and `pageKey` are display only.
+ */
+export const ELEMENT_KEYS: {
+  key: string;
+  labelKey: keyof typeof modulesEn;
+  pageKey: string;
+}[] = [
+  { key: 'announcements.create', labelKey: 'elAnnouncementsCreate', pageKey: 'announcements' },
+  { key: 'plans.create', labelKey: 'elPlansCreate', pageKey: 'plans' },
+  { key: 'reports.create', labelKey: 'elReportsCreate', pageKey: 'reports' },
+  { key: 'members.add', labelKey: 'elMembersAdd', pageKey: 'members' },
+  { key: 'members.export', labelKey: 'elMembersExport', pageKey: 'members' },
+  { key: 'meetings.schedule', labelKey: 'elMeetingsSchedule', pageKey: 'meetings' },
+  { key: 'finance.addTransaction', labelKey: 'elFinanceAddTransaction', pageKey: 'finance' },
+  { key: 'finance.createBudget', labelKey: 'elFinanceCreateBudget', pageKey: 'finance' },
+  { key: 'finance.generateReport', labelKey: 'elFinanceGenerateReport', pageKey: 'finance' },
+  { key: 'hr.add', labelKey: 'elHrAdd', pageKey: 'hr' },
+  { key: 'hr.delete', labelKey: 'elHrDelete', pageKey: 'hr' },
+  { key: 'inventory.add', labelKey: 'elInventoryAdd', pageKey: 'inventory' },
+  { key: 'inventory.delete', labelKey: 'elInventoryDelete', pageKey: 'inventory' },
+  { key: 'teachings.create', labelKey: 'elTeachingsCreate', pageKey: 'teachings' },
+  { key: 'news.create', labelKey: 'elNewsCreate', pageKey: 'news' },
+  { key: 'atbiya.add', labelKey: 'elAtbiyaAdd', pageKey: 'atbiyaRegistry' },
+  { key: 'atbiya.addAdmin', labelKey: 'elAtbiyaAddAdmin', pageKey: 'atbiyaRegistry' },
+  { key: 'members.approve', labelKey: 'elMembersApprove', pageKey: 'membershipRequests' },
 ];
 
 export interface ElementRule {

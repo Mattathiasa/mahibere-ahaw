@@ -5,142 +5,144 @@
 // Each node carries the Amharic structure name, an English rendering, the
 // governing bylaw article, and that body's key roles/responsibilities.
 
+import type { Translations } from '@/i18n/translations';
+
 export interface StructureNode {
+  /**
+   * Stable identity. Also the prefix of this body's translation keys —
+   * `sinodos` -> `structure.sinodosName`, `structure.sinodosRole1..N` — with
+   * kebab-case converted to camelCase.
+   */
   id: string;
-  /** Amharic structure name as written in the bylaws. */
+  /**
+   * Amharic structure name as written in the bylaws.
+   *
+   * Kept on the node, not only in the dictionary, because it is a citation from
+   * the መተዳደሪያ ደንብ rather than UI copy: a reader in any language should be able
+   * to see the name the bylaws actually use.
+   */
   name: string;
   /** English rendering for non-Amharic readers. */
   nameEn: string;
-  /** Bylaw article/section this structure is defined in. */
+  /** Bylaw article number, e.g. '11' or '11.3'. The word "Article" is translated. */
   article?: string;
-  /** Key powers & duties (ሥልጣንና ተግባር) summarised from the bylaws. */
-  roles: string[];
+  /**
+   * How many powers & duties (ሥልጣንና ተግባር) this body has.
+   *
+   * The duty text itself lives in the `structure` translation section as
+   * `<id>Role1`..`<id>RoleN`. It used to be a `string[]` of English sentences
+   * here, which rendered straight onto the Hierarchy page in English and — being
+   * an array — could not have been translated by an admin even if it had been in
+   * the dictionary, since `applyStringOverrides` skips arrays.
+   */
+  roleCount: number;
   children?: StructureNode[];
+}
+
+/** `sec-apostolic-mission` -> `secApostolicMission`, the translation key prefix. */
+function keyPrefix(id: string): string {
+  return id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+/** This body's name in the reader's language, falling back to the bylaw Amharic. */
+export function structureName(t: Translations, node: StructureNode): string {
+  const section = t.structure as unknown as Record<string, string | undefined>;
+  return section[`${keyPrefix(node.id)}Name`] ?? node.name;
+}
+
+/** This body's powers & duties in the reader's language. */
+export function structureRoles(t: Translations, node: StructureNode): string[] {
+  const section = t.structure as unknown as Record<string, string | undefined>;
+  const prefix = keyPrefix(node.id);
+  return Array.from({ length: node.roleCount }, (_, i) => section[`${prefix}Role${i + 1}`]).filter(
+    (v): v is string => Boolean(v)
+  );
+}
+
+/** A bylaw citation, e.g. "አንቀጽ 11.3". */
+export function structureArticle(t: Translations, node: StructureNode): string | undefined {
+  return node.article ? `${t.structure.articlePrefix} ${node.article}` : undefined;
 }
 
 export const CHURCH_STRUCTURE: StructureNode = {
   id: 'sinodos',
   name: 'ሲኖዶስ ዘአኀው',
   nameEn: 'Synod of Ahaw',
-  article: 'Article 11',
-  roles: [
-    'Supreme general assembly and final decision-making body of the church.',
-    'Approves the appointment of the General Manager and institution managers.',
-    'Decides the policy direction of the church.',
-    'Approves new members and removes membership; full authority to ordain priests.',
-    'Amends the bylaws and other regulations as the church grows.',
-    'Approves the strategic plan; reviews service and performance against it.',
-    'Reviews and approves the annual work and audit reports.',
-    'Meets in regular session twice a year, plus emergency sessions.',
-  ],
+  article: '11',
+  roleCount: 8,
   children: [
     {
       id: 'chairman-priest',
       name: 'ሰብሳቢ ቄስ',
       nameEn: 'Chairman Priest',
-      article: 'Article 11.3',
-      roles: [
-        'Serves as chairman of both the Synod and the Standing Synod.',
-        'Delivers opening/closing addresses and exhortation at church programs.',
-        'Oversees the life and service of Synod members.',
-        'Ensures Synod directives, policies and decisions are properly implemented.',
-        'Safeguards the foundational faith and represents the church externally.',
-      ],
+      article: '11.3',
+      roleCount: 5,
     },
     {
       id: 'synod-secretary',
       name: 'የሲኖዶስ ጸሐፊ',
       nameEn: 'Synod Secretary',
-      article: 'Article 11.4',
-      roles: [
-        'Prepares agendas for the Synod and Standing Synod with the chairman and manager.',
-        'Records, reads, ratifies and archives meeting minutes.',
-        'Transmits ratified decisions to the relevant bodies.',
-        'Receives and routes correspondence; calls regular and emergency meetings.',
-      ],
+      article: '11.4',
+      roleCount: 4,
     },
     {
       id: 'audit-committee',
       name: 'ኦዲትና የሥራ ምርመራ ኮሚቴ',
       nameEn: 'Audit & Work Inspection Committee',
-      article: 'Article 11.5',
-      roles: [
-        'Audits the accuracy of the church\'s finance and property administration.',
-        'Verifies operations are carried out per the bylaws, Synod decisions and approved plan.',
-        'Confirms the existence and condition of church assets.',
-        'Accountable directly to the Synod.',
-      ],
+      article: '11.5',
+      roleCount: 4,
     },
     {
       id: 'standing-synod',
       name: 'ቋሚ ሲኖዶስ',
       nameEn: 'Standing Synod',
-      article: 'Article 12',
-      roles: [
-        'Nine-member executive leadership council elected from the Synod.',
-        'Directs and closely monitors the executive and institutions to implement Synod decisions.',
-        'Issues directives to the General Manager and institution leaders; supervises execution.',
-        'Nominates diocese office managers for appointment.',
-        'Meets accountable to the Synod; plays the strategic leadership role.',
-      ],
+      article: '12',
+      roleCount: 5,
       children: [
         {
           id: 'theological-council',
           name: 'የነገረ ሃይማኖት መማክርት ጉባኤ',
           nameEn: 'Theological Advisory Council',
-          roles: [
-            'Advises the Standing Synod on doctrine and matters of faith.',
-            'Reviews teachings, books and faith declarations for doctrinal soundness.',
-          ],
+          roleCount: 2,
         },
         {
           id: 'general-office',
           name: 'ጠቅላይ ጽ/ቤት',
           nameEn: 'General Secretariat (Head Office)',
-          article: 'Article 13',
-          roles: [
-            'Chief executive (service-delivery) body of the church, led by the General Manager.',
-            'Organised into an administrative council, departments and various sections.',
-          ],
+          article: '13',
+          roleCount: 2,
           children: [
             {
               id: 'general-manager',
               name: 'ጠቅላይ ሥራ አስኪያጅ',
               nameEn: 'General Manager',
-              article: 'Article 13.3',
-              roles: [
-                'Appointed by the Synod; accountable to the Standing Synod.',
-                'Leads the day-to-day execution of all church services and administration.',
-                'Implements Synod and Standing Synod decisions across the structure.',
-              ],
+              article: '13.3',
+              roleCount: 3,
             },
             {
               id: 'deputy-manager',
               name: 'ምክትል ሥራ አስኪያጅ',
               nameEn: 'Deputy General Manager',
-              article: 'Article 13.4',
-              roles: [
-                'Serves as secretary of the administrative council.',
-                'Carries out duties delegated by the General Manager and acts in his absence.',
-              ],
+              article: '13.4',
+              roleCount: 2,
               children: [
                 {
                   id: 'control-followup',
                   name: 'አጠቃላይ ቁጥጥርና ክትትል',
                   nameEn: 'General Control & Follow-up',
-                  roles: ['Monitors overall execution and compliance across the office.'],
+                  roleCount: 1,
                 },
                 {
                   id: 'strategic-plan-budget',
                   name: 'ስልታዊ እቅድ፣ በጀትና ፕሮጀክት',
                   nameEn: 'Strategic Plan, Budget & Project',
-                  roles: ['Coordinates strategic planning, budgeting and projects.'],
+                  roleCount: 1,
                 },
                 {
                   id: 'legal-section',
                   name: 'ሕግ ክፍል',
                   nameEn: 'Legal Section',
-                  roles: ['Handles legal affairs and compliance.'],
+                  roleCount: 1,
                 },
               ],
             },
@@ -148,105 +150,80 @@ export const CHURCH_STRUCTURE: StructureNode = {
               id: 'admin-council',
               name: 'የጠቅላይ ጽ/ቤት አስተዳደር ጉባኤ',
               nameEn: 'General Office Administrative Council',
-              article: 'Article 13.2',
-              roles: [
-                'Chaired by the General Manager with the Deputy as secretary; the department heads are members.',
-                'Takes administrative decisions and reviews execution capacity.',
-                'Sets strategic direction for departmental services; reviews and approves work & finance plans.',
-                'Meets regularly every fifteen days, plus emergency sessions.',
-              ],
+              article: '13.2',
+              roleCount: 4,
             },
             {
               id: 'dept-evangelism',
               name: 'የስብከተ ወንጌል መምሪያ',
               nameEn: 'Evangelism Department',
-              roles: [
-                'Leads gospel preaching and outreach across the church.',
-                'Coordinates evangelists and apostolic mission work.',
-              ],
+              roleCount: 2,
               children: [
-                { id: 'sec-apostolic-mission', name: 'ሐዋርያዊ ተልዕኮ ክፍል', nameEn: 'Apostolic Mission Section', roles: ['Leads evangelism and mission outreach.'] },
-                { id: 'sec-assembly-worship', name: 'ጉባኤና አምልኮ ክፍል', nameEn: 'Assembly & Worship Section', roles: ['Organises congregational assembly and worship.'] },
+                { id: 'sec-apostolic-mission', name: 'ሐዋርያዊ ተልዕኮ ክፍል', nameEn: 'Apostolic Mission Section', roleCount: 1 },
+                { id: 'sec-assembly-worship', name: 'ጉባኤና አምልኮ ክፍል', nameEn: 'Assembly & Worship Section', roleCount: 1 },
               ],
             },
             {
               id: 'dept-education',
               name: 'የትምህርትና ሥልጠና መምሪያ',
               nameEn: 'Education & Training Department',
-              article: 'Article 13.5',
-              roles: [
-                'Prepares and oversees teaching materials and curricula.',
-                'Coordinates leaders\' and servants\' training.',
-                'Guards the faith and reviews books/literature for doctrinal soundness.',
-              ],
+              article: '13.5',
+              roleCount: 3,
               children: [
-                { id: 'sec-edu-prep', name: 'የትምህርት ዝግጅትና ክትትል', nameEn: 'Education Preparation & Follow-up', roles: ['Prepares curricula and follows up on teaching.'] },
-                { id: 'sec-leaders-training', name: 'የመሪዎችና የስልጠና ማስተባበሪያ', nameEn: 'Leaders & Training Coordination', roles: ['Coordinates leadership and servant training.'] },
-                { id: 'sec-faith-defense', name: 'አቅበተ እምነትና የመጻሕፍት ግምገማ', nameEn: 'Faith Defense & Book Review', roles: ['Defends the faith and reviews books/literature.'] },
+                { id: 'sec-edu-prep', name: 'የትምህርት ዝግጅትና ክትትል', nameEn: 'Education Preparation & Follow-up', roleCount: 1 },
+                { id: 'sec-leaders-training', name: 'የመሪዎችና የስልጠና ማስተባበሪያ', nameEn: 'Leaders & Training Coordination', roleCount: 1 },
+                { id: 'sec-faith-defense', name: 'አቅበተ እምነትና የመጻሕፍት ግምገማ', nameEn: 'Faith Defense & Book Review', roleCount: 1 },
               ],
             },
             {
               id: 'dept-services',
               name: 'የአገልግሎቶች ማደራጃ መምሪያ',
               nameEn: 'Services Coordination Department',
-              article: 'Article 13.8',
-              roles: [
-                'Organises archive (Mahder) services and miscellaneous ministries.',
-                'Coordinates document and protocol organisation and parish follow-up.',
-              ],
+              article: '13.8',
+              roleCount: 2,
               children: [
-                { id: 'sec-documents-protocol', name: 'የሰነዶችና ፕሮቶኮል ማደራጃ', nameEn: 'Documents & Protocol Organisation', roles: ['Organises documents and protocol.'] },
-                { id: 'sec-parishes-followup', name: 'የአጥቢያዎች ክትትል', nameEn: 'Parishes Follow-up', roles: ['Follows up on local parishes.'] },
-                { id: 'sec-archive-services', name: 'የማኅደር አገልግሎቶች ማደራጃ', nameEn: 'Archive (Mahder) Services Organisation', roles: ['Organises archive/Mahder services.'] },
-                { id: 'sec-various-services', name: 'የልዩ ልዩ አገልግሎቶች ማደራጃ', nameEn: 'Miscellaneous Services Organisation', roles: ['Coordinates miscellaneous ministries.'] },
+                { id: 'sec-documents-protocol', name: 'የሰነዶችና ፕሮቶኮል ማደራጃ', nameEn: 'Documents & Protocol Organisation', roleCount: 1 },
+                { id: 'sec-parishes-followup', name: 'የአጥቢያዎች ክትትል', nameEn: 'Parishes Follow-up', roleCount: 1 },
+                { id: 'sec-archive-services', name: 'የማኅደር አገልግሎቶች ማደራጃ', nameEn: 'Archive (Mahder) Services Organisation', roleCount: 1 },
+                { id: 'sec-various-services', name: 'የልዩ ልዩ አገልግሎቶች ማደራጃ', nameEn: 'Miscellaneous Services Organisation', roleCount: 1 },
               ],
             },
             {
               id: 'dept-admin-finance',
               name: 'አስተዳደርና ፋይናንስ መምሪያ',
               nameEn: 'Administration & Finance Department',
-              article: 'Article 13.7',
-              roles: [
-                'Manages human resources, records and archives.',
-                'Runs the finance section, property and general services.',
-                'Oversees the church\'s income-generating institutions.',
-              ],
+              article: '13.7',
+              roleCount: 3,
               children: [
-                { id: 'sec-income-institutions', name: 'የገቢ ተቋማት', nameEn: 'Income-generating Institutions', roles: ['Runs the church\'s income institutions.'] },
-                { id: 'sec-hr-admin', name: 'የሰው ኃይል አስተዳደር', nameEn: 'Human Resources Administration', roles: ['Manages employee records and staffing.'] },
-                { id: 'sec-record-archive', name: 'ሪከርድና ማኅደር', nameEn: 'Records & Archive', roles: ['Maintains records and archives.'] },
-                { id: 'sec-finance', name: 'የፋይናንስ ክፍል', nameEn: 'Finance Section', roles: ['Handles finance and accounting.'] },
-                { id: 'sec-property-general', name: 'ንብረትና ጠቅላላ አገልግሎት', nameEn: 'Property & General Services', roles: ['Manages property and general services.'] },
+                { id: 'sec-income-institutions', name: 'የገቢ ተቋማት', nameEn: 'Income-generating Institutions', roleCount: 1 },
+                { id: 'sec-hr-admin', name: 'የሰው ኃይል አስተዳደር', nameEn: 'Human Resources Administration', roleCount: 1 },
+                { id: 'sec-record-archive', name: 'ሪከርድና ማኅደር', nameEn: 'Records & Archive', roleCount: 1 },
+                { id: 'sec-finance', name: 'የፋይናንስ ክፍል', nameEn: 'Finance Section', roleCount: 1 },
+                { id: 'sec-property-general', name: 'ንብረትና ጠቅላላ አገልግሎት', nameEn: 'Property & General Services', roleCount: 1 },
               ],
             },
             {
               id: 'dept-public-relations',
               name: 'የሕዝብና የውጭ ግንኙነት መምሪያ',
               nameEn: 'Public & External Relations Department',
-              article: 'Article 13.6',
-              roles: [
-                'Manages public and external relations of the church.',
-                'Oversees printing & literature, and media coordination.',
-              ],
+              article: '13.6',
+              roleCount: 2,
               children: [
-                { id: 'sec-public-relations', name: 'ሕዝብና የውጭ ግንኙነት', nameEn: 'Public & External Relations', roles: ['Handles public and external relations.'] },
-                { id: 'sec-printing-literature', name: 'ኅትመትና ሥነ ጽሑፍ', nameEn: 'Printing & Literature', roles: ['Manages printing and literature.'] },
-                { id: 'sec-media-coordination', name: 'የሚዲያዎች ማስተባበሪያ', nameEn: 'Media Coordination', roles: ['Coordinates the church\'s media.'] },
+                { id: 'sec-public-relations', name: 'ሕዝብና የውጭ ግንኙነት', nameEn: 'Public & External Relations', roleCount: 1 },
+                { id: 'sec-printing-literature', name: 'ኅትመትና ሥነ ጽሑፍ', nameEn: 'Printing & Literature', roleCount: 1 },
+                { id: 'sec-media-coordination', name: 'የሚዲያዎች ማስተባበሪያ', nameEn: 'Media Coordination', roleCount: 1 },
               ],
             },
             {
               id: 'dept-youth-children',
               name: 'የወጣቶችና የሕጻናት መምሪያ',
               nameEn: 'Youth & Children Department',
-              article: 'Article 13.10',
-              roles: [
-                'Leads children\'s ministry, youth ministry and the students\' union.',
-                'Coordinates youth/children service follow-up and training.',
-              ],
+              article: '13.10',
+              roleCount: 2,
               children: [
-                { id: 'sec-children-service', name: 'የሕጻናት አገልግሎት', nameEn: 'Children Service', roles: ['Runs children\'s ministry.'] },
-                { id: 'sec-youth-service', name: 'የወጣቶች አገልግሎት', nameEn: 'Youth Service', roles: ['Runs youth ministry.'] },
-                { id: 'sec-students-union', name: 'የተማሪዎች ኅብረት', nameEn: 'Students\' Union', roles: ['Coordinates the students\' union.'] },
+                { id: 'sec-children-service', name: 'የሕጻናት አገልግሎት', nameEn: 'Children Service', roleCount: 1 },
+                { id: 'sec-youth-service', name: 'የወጣቶች አገልግሎት', nameEn: 'Youth Service', roleCount: 1 },
+                { id: 'sec-students-union', name: 'የተማሪዎች ኅብረት', nameEn: 'Students\' Union', roleCount: 1 },
               ],
             },
           ],
@@ -255,129 +232,105 @@ export const CHURCH_STRUCTURE: StructureNode = {
           id: 'diocese-office',
           name: 'ሀገረ ስብከት ጽ/ቤት',
           nameEn: 'Diocese Office',
-          article: 'Article 14',
-          roles: [
-            'Executive body accountable to the General Office, led by the Diocese Manager Priest.',
-            'Organises Woreda parish offices to reach all local churches.',
-            'Has its own administrative council, departments and sections mirroring the head office.',
-          ],
+          article: '14',
+          roleCount: 3,
           children: [
             {
               id: 'diocese-parish-council',
               name: 'የሀገረ ስብከት ጠቅላላ ሰበካ ጉባኤ',
               nameEn: 'Diocese General Parish Council',
-              article: 'Article 14.3',
-              roles: ['General parish council at the diocese level; governed by internal regulations.'],
+              article: '14.3',
+              roleCount: 1,
             },
             {
               id: 'woreda-office',
               name: 'የወረዳ ሰበካ ጽ/ቤት',
               nameEn: 'Woreda Parish Office',
-              article: 'Article 14.1.4',
-              roles: [
-                'Intermediate office under the diocese for reaching local parishes.',
-                'Governed by detailed internal regulations (ውስጠ ደንብ).',
-              ],
+              article: '14.1.4',
+              roleCount: 2,
               children: [
             {
               id: 'atbiya',
               name: 'አጥቢያ ቤተ ክርስቲያን',
               nameEn: 'Local (Parish) Church',
-              article: 'Article 15',
-              roles: [
-                'The local congregation — base unit of the church structure.',
-                'May arise through gospel messengers, families, or a nearby parish.',
-                'Organised under a general parish council, administrative council and lead priest.',
-              ],
+              article: '15',
+              roleCount: 3,
               children: [
                 {
                   id: 'general-parish-council',
                   name: 'ጠቅላላ ሰበካ ጉባኤ',
                   nameEn: 'General Parish Council',
-                  article: 'Article 15.4',
-                  roles: [
-                    'Highest decision-making body over all affairs of the local church.',
-                    'Voting members are the full members defined in Article 9.',
-                  ],
+                  article: '15.4',
+                  roleCount: 2,
                 },
                 {
                   id: 'parish-admin-council',
                   name: 'የሰበካ አስተዳደር ጉባኤ',
                   nameEn: 'Parish Administrative Council',
-                  article: 'Article 15.7',
-                  roles: [
-                    'Executive administration of the local church between general council sessions.',
-                    'Implements decisions and oversees the parish sections.',
-                  ],
+                  article: '15.7',
+                  roleCount: 2,
                 },
                 {
                   id: 'parish-audit',
                   name: 'ኦዲት ኮሚቴ',
                   nameEn: 'Parish Audit Committee',
-                  article: 'Article 15.5',
-                  roles: [
-                    'Audits the local church\'s finance and property.',
-                    'Verifies activities follow the bylaws and approved plans.',
-                  ],
+                  article: '15.5',
+                  roleCount: 2,
                 },
                 {
                   id: 'lead-priest',
                   name: 'መሪ ቄስ',
                   nameEn: 'Lead Priest',
-                  article: 'Article 15.8',
-                  roles: [
-                    'Spiritual leader of the local church.',
-                    'Leads worship and sacraments; shepherds the congregation.',
-                    'Oversees the parish sections and their servants.',
-                  ],
+                  article: '15.8',
+                  roleCount: 3,
                 },
                 {
                   id: 'parish-admin-finance',
                   name: 'የአስተዳደርና ፋይናንስ ክፍል',
                   nameEn: 'Administration & Finance Section',
-                  article: 'Article 15.9',
-                  roles: ['Manages the local church\'s administration, finance and property.'],
+                  article: '15.9',
+                  roleCount: 1,
                 },
                 {
                   id: 'parish-education',
                   name: 'የትምህርትና ሥልጠና ክፍል',
                   nameEn: 'Education & Training Section',
-                  article: 'Article 15.10',
-                  roles: ['Delivers teaching, Bible study and training at the local church.'],
+                  article: '15.10',
+                  roleCount: 1,
                 },
                 {
                   id: 'parish-mission',
                   name: 'ሐዋርያዊ ተልእኮ ክፍል',
                   nameEn: 'Apostolic Mission Section',
-                  article: 'Article 15.11',
-                  roles: ['Leads evangelism and outreach from the local church.'],
+                  article: '15.11',
+                  roleCount: 1,
                 },
                 {
                   id: 'parish-worship',
                   name: 'የጉባኤና አምልኮ ክፍል',
                   nameEn: 'Assembly & Worship Section',
-                  article: 'Article 15.12',
-                  roles: ['Organises congregational assembly and worship services.'],
+                  article: '15.12',
+                  roleCount: 1,
                 },
                 {
                   id: 'parish-mahderat',
                   name: 'የሕያዋን ማኅደራት ማስተባበሪያ ክፍል',
                   nameEn: 'Living Mahderat (Small Groups) Coordination Section',
-                  article: 'Article 15.13',
-                  roles: ['Coordinates the living small-groups (Mahderat) of believers.'],
+                  article: '15.13',
+                  roleCount: 1,
                 },
                 {
                   id: 'parish-youth',
                   name: 'የወጣቶችና ሕፃናት አገልግሎት ክፍል',
                   nameEn: 'Youth & Children Service Section',
-                  article: 'Article 15.14',
-                  roles: ['Runs youth and children ministry at the local church.'],
+                  article: '15.14',
+                  roleCount: 1,
                 },
                 {
                   id: 'parish-mahder',
                   name: 'ማኅደር',
                   nameEn: 'Mahder (Local Archive)',
-                  roles: ['The local parish archive / treasury.'],
+                  roleCount: 1,
                 },
               ],
             },
@@ -389,26 +342,23 @@ export const CHURCH_STRUCTURE: StructureNode = {
           id: 'apostolic-institutions',
           name: 'ሐዋርያዊ ተቋማት',
           nameEn: 'Apostolic Institutions',
-          roles: ['Mission-focused institutions established under the Standing Synod.'],
+          roleCount: 1,
         },
         {
           id: 'education-institutions',
           name: 'የትምህርትና ስልጠና ተቋማት',
           nameEn: 'Education & Training Institutions',
-          roles: [
-            'Includes the research institute and Bible school.',
-            'Provide formal theological education and training.',
-          ],
+          roleCount: 2,
           children: [
-            { id: 'research-institute', name: 'ጥናትና ምርምር ተቋም', nameEn: 'Research Institute', roles: ['Conducts theological study and research.'] },
-            { id: 'bible-school', name: 'መጽሐፍ ቅዱስ ት/ቤት', nameEn: 'Bible School', roles: ['Provides Bible education.'] },
+            { id: 'research-institute', name: 'ጥናትና ምርምር ተቋም', nameEn: 'Research Institute', roleCount: 1 },
+            { id: 'bible-school', name: 'መጽሐፍ ቅዱስ ት/ቤት', nameEn: 'Bible School', roleCount: 1 },
           ],
         },
         {
           id: 'charity-org',
           name: 'የበጎ አድራጎት ድርጅት',
           nameEn: 'Charity Organization',
-          roles: ['Charitable arm of the church serving the community.'],
+          roleCount: 1,
         },
       ],
     },

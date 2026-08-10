@@ -125,6 +125,55 @@ describe('persisted enum labels', () => {
   });
 });
 
+describe('cross-cutting registries resolve their keys', () => {
+  it('gives every permission a label, a description and a group heading', async () => {
+    const { ALL_PERMISSIONS, PERMISSION_META } = await import('@/lib/rolePermissions');
+    const missing: string[] = [];
+    for (const perm of ALL_PERMISSIONS) {
+      const meta = PERMISSION_META[perm];
+      expect(meta, `no PERMISSION_META for ${perm}`).toBeTruthy();
+      for (const key of [meta.labelKey, meta.descriptionKey, `group${meta.group}`]) {
+        if (!(key in en.permissions)) missing.push(`en.permissions.${key} (${perm})`);
+        if (!(key in am.permissions)) missing.push(`am.permissions.${key} (${perm})`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('gives every church structure body a name and one key per duty', async () => {
+    const { CHURCH_STRUCTURE } = await import('@/data/churchStructure');
+    type Node = { id: string; roleCount: number; children?: Node[] };
+    const nodes: Node[] = [];
+    (function walk(n: Node) {
+      nodes.push(n);
+      (n.children ?? []).forEach(walk);
+    })(CHURCH_STRUCTURE as unknown as Node);
+
+    const missing: string[] = [];
+    for (const node of nodes) {
+      const prefix = node.id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+      const keys = [`${prefix}Name`, ...Array.from({ length: node.roleCount }, (_, i) => `${prefix}Role${i + 1}`)];
+      for (const key of keys) {
+        if (!(key in en.structure)) missing.push(`en.structure.${key}`);
+        if (!(key in am.structure)) missing.push(`am.structure.${key}`);
+      }
+    }
+    expect(nodes.length).toBeGreaterThan(50);
+    expect(missing).toEqual([]);
+  });
+
+  it('gives every toggleable UI element a label', async () => {
+    const { ELEMENT_KEYS } = await import('@/services/softwareControl');
+    const missing: string[] = [];
+    for (const { key, labelKey } of ELEMENT_KEYS) {
+      if (!(labelKey in en.modules)) missing.push(`en.modules.${labelKey} (${key})`);
+      if (!(labelKey in am.modules)) missing.push(`am.modules.${labelKey} (${key})`);
+    }
+    expect(ELEMENT_KEYS.length).toBeGreaterThan(0);
+    expect(missing).toEqual([]);
+  });
+});
+
 describe('admin override reachability', () => {
   it('lets an override reach every key in the tree', () => {
     // The whole point of putting a string in the dictionary is that an admin

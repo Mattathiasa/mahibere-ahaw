@@ -13,6 +13,7 @@ import { permissionService } from '@/services/permissionService';
 import { userService } from '@/services/users';
 import {
   ALL_PERMISSIONS, PERMISSION_META, PERMISSION_GROUPS,
+  permissionLabel, permissionDescription, permissionGroupLabel,
   DEFAULT_ROLE_PERMISSIONS,
   type PermissionKey, type RolePermissionOverrides, type UserPermissionOverrides,
 } from '@/lib/rolePermissions';
@@ -351,7 +352,7 @@ const PermissionControl: React.FC = () => {
                             <div key={group}>
                               <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
                                 <div className="h-px flex-1 bg-border" />
-                                {group}
+                                {permissionGroupLabel(t, group)}
                                 <div className="h-px flex-1 bg-border" />
                               </h3>
                               <div className="space-y-2">
@@ -371,8 +372,8 @@ const PermissionControl: React.FC = () => {
                                           {effective ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
                                         </div>
                                         <div>
-                                          <p className="text-sm font-medium">{PERMISSION_META[perm].label}</p>
-                                          <p className="text-[11px] text-muted-foreground">{PERMISSION_META[perm].description}</p>
+                                          <p className="text-sm font-medium">{permissionLabel(t, perm)}</p>
+                                          <p className="text-[11px] text-muted-foreground">{permissionDescription(t, perm)}</p>
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
