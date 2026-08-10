@@ -9,6 +9,7 @@ import { Heart, Printer, CheckCircle2, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { createMemberTithe, MemberTithe } from '@/services/finance';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface TitheMemberTrackerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -16,6 +17,8 @@ interface TitheMemberTrackerDialogProps {
 }
 
 export function TitheMemberTrackerDialog({ open, onOpenChange, onSuccess }: TitheMemberTrackerDialogProps) {
+  const { t } = useLanguage();
+  const fin = t.finance;
   const [memberName, setMemberName] = useState('');
   const [type, setType] = useState<MemberTithe['type']>('Asrat (10%)');
   const [amount, setAmount] = useState<number>(0);
@@ -28,7 +31,7 @@ export function TitheMemberTrackerDialog({ open, onOpenChange, onSuccess }: Tith
 
   const handleSubmit = async () => {
     if (!memberName.trim() || amount <= 0) {
-      toast.error('Please fill member name and a valid amount');
+      toast.error(fin.titheMissingFields);
       return;
     }
 
@@ -50,7 +53,7 @@ export function TitheMemberTrackerDialog({ open, onOpenChange, onSuccess }: Tith
       setReceiptPrinted(newTithe);
       if (onSuccess) onSuccess();
     } catch (err) {
-      toast.error('Failed to record tithe');
+      toast.error(fin.titheFailed);
     } finally {
       setIsSubmitting(false);
     }
@@ -162,10 +165,10 @@ export function TitheMemberTrackerDialog({ open, onOpenChange, onSuccess }: Tith
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CBE (Commercial Bank)">Commercial Bank of Ethiopia (CBE)</SelectItem>
-                    <SelectItem value="Telebirr">Telebirr</SelectItem>
-                    <SelectItem value="Awash Bank">Awash Bank</SelectItem>
-                    <SelectItem value="Dashen Bank">Dashen Bank</SelectItem>
+                    <SelectItem value="CBE (Commercial Bank)">{fin.bankCbe}</SelectItem>
+                    <SelectItem value="Telebirr">{fin.bankTelebirr}</SelectItem>
+                    <SelectItem value="Awash Bank">{fin.bankAwash}</SelectItem>
+                    <SelectItem value="Dashen Bank">{fin.bankDashen}</SelectItem>
                     <SelectItem value="Cash">Cash (በጥሬ ገንዘብ)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -186,7 +189,7 @@ export function TitheMemberTrackerDialog({ open, onOpenChange, onSuccess }: Tith
             <div className="space-y-1.5">
               <Label className="font-bold">ማስታወሻ (Optional Notes)</Label>
               <Input
-                placeholder="Specific notes or intention..."
+                placeholder={fin.titheNotePlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />

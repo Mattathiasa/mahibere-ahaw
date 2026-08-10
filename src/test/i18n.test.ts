@@ -38,6 +38,10 @@ const SAME_IN_BOTH_LANGUAGES = new Set<string>([
   // part would only make the example look like a real address to copy.
   'forms.emailPlaceholder', // you@example.com
   'content.contactFollowUpPlaceholder', // email@church.org
+  'people.emailExamplePlaceholder', // user@example.com
+  'people.adminEmailExample', // addishiwot@example.com
+  'people.personEmailExample', // abebe@example.com
+  'people.usernameExample', // abebe.k — a username, not words
 ]);
 
 describe('translation tree shape', () => {

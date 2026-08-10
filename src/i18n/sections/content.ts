@@ -82,6 +82,26 @@ export const contentEn = {
   // ── Toasts ────────────────────────────────────────────────────────────────
   teachingCreated: 'Teaching created.',
   teachingMissingFields: 'Please fill in the required fields (title, speaker, date).',
+
+  // ── News editor ───────────────────────────────────────────────────────────
+  headOffice: 'Head office',
+  coverImageSet: 'Cover image set',
+  uploadCoverImage: 'Upload cover image',
+  addGalleryPhotos: 'Add gallery photos',
+  setAsCoverImage: 'Set as cover image',
+  removePhoto: 'Remove photo',
+  excerptPlaceholder: 'One or two sentences shown on the homepage card.',
+  bodyPlaceholder: 'Write the article. Blank lines start a new paragraph.',
+
+  // ── Import dialogs ────────────────────────────────────────────────────────
+  chooseFile: 'Choose CSV or Excel file',
+  supportedFormats: 'Supported formats: .csv, .xlsx',
+  selectFileFirst: 'Please select a CSV or Excel file to import.',
+  assetsImported: 'Assets imported.',
+  assetsImportFailed: 'Could not import the assets file.',
+  selectCsvFirst: 'Please select a CSV file.',
+  employeesImported: 'Employees imported.',
+  employeesImportFailed: 'Could not import the employees file.',
 };
 
 /**
@@ -156,6 +176,24 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
 
   teachingCreated: 'ትምህርቱ ተፈጥሯል።',
   teachingMissingFields: 'እባክዎ የሚያስፈልጉትን መስኮች ይሙሉ (ርዕስ፣ አስተማሪ፣ ቀን)።',
+
+  headOffice: 'ጠቅላይ ጽ/ቤት',
+  coverImageSet: 'የሽፋን ምስሉ ተቀምጧል',
+  uploadCoverImage: 'የሽፋን ምስል ጫን',
+  addGalleryPhotos: 'የማዕከለ ስዕላት ፎቶዎችን ጨምር',
+  setAsCoverImage: 'እንደ ሽፋን ምስል አድርግ',
+  removePhoto: 'ፎቶውን አስወግድ',
+  excerptPlaceholder: 'በዋና ገፅ ካርድ ላይ የሚታይ አንድ ወይም ሁለት ዓረፍተ ነገር።',
+  bodyPlaceholder: 'ጽሑፉን ይጻፉ። ባዶ መስመር አዲስ አንቀጽ ይጀምራል።',
+
+  chooseFile: 'የCSV ወይም የExcel ፋይል ይምረጡ',
+  supportedFormats: 'የሚደገፉ ቅርጸቶች፦ .csv, .xlsx',
+  selectFileFirst: 'እባክዎ ለማስመጣት የCSV ወይም የExcel ፋይል ይምረጡ።',
+  assetsImported: 'ንብረቶቹ ገብተዋል።',
+  assetsImportFailed: 'የንብረት ፋይሉን ማስመጣት አልተቻለም።',
+  selectCsvFirst: 'እባክዎ የCSV ፋይል ይምረጡ።',
+  employeesImported: 'ሠራተኞቹ ገብተዋል።',
+  employeesImportFailed: 'የሠራተኛ ፋይሉን ማስመጣት አልተቻለም።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

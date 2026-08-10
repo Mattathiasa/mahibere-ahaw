@@ -14,6 +14,11 @@ export const commonEn = {
   website: 'Website',
   emailAction: 'Email',
   callAction: 'Call',
+  brandName: 'MAHIBERE AHAW',
+  brandShort: 'AHAW',
+  brandTagline: 'Digital Ministry',
+  logoAlt: 'Mahibere Ahaw logo',
+  saving: 'Saving…',
 };
 
 /**
@@ -36,6 +41,11 @@ export const commonAm: Record<keyof typeof commonEn, string> = {
   website: 'ድረ-ገጽ',
   emailAction: 'ኢሜይል',
   callAction: 'ደውል',
+  brandName: 'ማኅበረ አኀው',
+  brandShort: 'አኀው',
+  brandTagline: 'ዲጂታል አገልግሎት',
+  logoAlt: 'የማኅበረ አኀው አርማ',
+  saving: 'በማስቀመጥ ላይ…',
 };
 
 export const commonOm: Partial<Record<keyof typeof commonEn, string>> = {
@@ -54,6 +64,11 @@ export const commonOm: Partial<Record<keyof typeof commonEn, string>> = {
   website: 'Marsariitii',
   emailAction: 'Imeelii',
   callAction: 'Bilbili',
+  brandName: 'MAHIBERE AHAW',
+  brandShort: 'AHAW',
+  brandTagline: 'Tajaajila Dijitaalaa',
+  logoAlt: 'Asxaa Mahibere Ahaw',
+  saving: 'Olkaa\'amaa jira…',
 };
 
 export const commonTi: Partial<Record<keyof typeof commonEn, string>> = {
@@ -72,4 +87,9 @@ export const commonTi: Partial<Record<keyof typeof commonEn, string>> = {
   website: 'ወብ ሳይት',
   emailAction: 'ኢመይል',
   callAction: 'ደውል',
+  brandName: 'ማሕበረ አኀው',
+  brandShort: 'አኀው',
+  brandTagline: 'ዲጂታላዊ ኣገልግሎት',
+  logoAlt: 'ኣርማ ማሕበረ አኀው',
+  saving: 'ይዕቀብ ኣሎ…',
 };

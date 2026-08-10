@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface LocalizationEditorProps {
@@ -118,6 +119,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
   handleSaveStrings,
   savingStrings,
 }) => {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const sections = getSections(stringsLang);
 
@@ -196,7 +198,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
           <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search keys or values…"
+              placeholder={t.admin.searchKeysPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -207,7 +209,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
 
       {/* Info banner */}
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm space-y-1">
-        <p className="font-bold">How overrides work</p>
+        <p className="font-bold">{t.admin.howOverridesWork}</p>
         <p>The placeholder text shows the current built-in default. Type a new value to override it for <strong>{LANG_LABELS[stringsLang]}</strong>. Clear a field to revert to the default. Changes go live for all users immediately after saving.</p>
       </div>
 
@@ -247,7 +249,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
                 </CardHeader>
                 <CardContent>
                   {filtered.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-8 text-center">No strings match your search.</p>
+                    <p className="text-sm text-muted-foreground py-8 text-center">{t.admin.noStringsMatch}</p>
                   ) : (
                     <div className="space-y-4">
                       {filtered.map(({ key, path, defaultValue, isLong }) => {
@@ -272,7 +274,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
                                   size="sm"
                                   className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
                                   onClick={() => clearOverride(path)}
-                                  title="Clear override, revert to default"
+                                  title={t.admin.clearOverride}
                                 >
                                   <RotateCcw className="h-3 w-3 mr-1" />
                                   Reset

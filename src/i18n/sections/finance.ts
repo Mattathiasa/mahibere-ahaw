@@ -156,6 +156,15 @@ export const financeEn = {
   recipientInfoOptional: 'Recipient information (optional)',
   recipientInfoPlaceholder: 'To whom it may concern — e.g., Atbiya Leadership, Regional Office',
   sendReportPlaceholder: 'Select Memriyas to send this financial report to...',
+
+  // ── Tithe tracker ─────────────────────────────────────────────────────────
+  titheMissingFields: 'Please enter a member name and a valid amount.',
+  titheFailed: 'Could not record the tithe.',
+  bankCbe: 'Commercial Bank of Ethiopia (CBE)',
+  bankTelebirr: 'Telebirr',
+  bankAwash: 'Awash Bank',
+  bankDashen: 'Dashen Bank',
+  titheNotePlaceholder: 'Specific notes or intention...',
 };
 
 /**
@@ -291,6 +300,14 @@ export const financeAm: Record<keyof typeof financeEn, string> = {
   recipientInfoOptional: 'የተቀባይ መረጃ (አማራጭ)',
   recipientInfoPlaceholder: 'ለሚመለከተው ሁሉ — ለምሳሌ የአጥቢያ አመራር፣ የክልል ጽ/ቤት',
   sendReportPlaceholder: 'ይህ የገንዘብ ሪፖርት የሚላክላቸውን መምሪያዎች ይምረጡ...',
+
+  titheMissingFields: 'እባክዎ የአባሉን ስምና ትክክለኛ መጠን ያስገቡ።',
+  titheFailed: 'አሥራቱን መመዝገብ አልተቻለም።',
+  bankCbe: 'የኢትዮጵያ ንግድ ባንክ (ኢንባ)',
+  bankTelebirr: 'ቴሌብር',
+  bankAwash: 'አዋሽ ባንክ',
+  bankDashen: 'ዳሽን ባንክ',
+  titheNotePlaceholder: 'የተለየ ማስታወሻ ወይም ዓላማ...',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

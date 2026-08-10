@@ -24,6 +24,7 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
 }) => {
   const { t } = useLanguage();
   const a = t.admin;
+  const pe = t.people;
   function set<K extends keyof AdminDraft>(key: K, value: AdminDraft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
@@ -34,7 +35,7 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
         <Field label={`${a.fullNameEnglish} *`}>
           <Input value={draft.fullNameEnglish} disabled={disabled}
             onChange={(e) => set('fullNameEnglish', e.target.value)}
-            placeholder="Abebe Kebede Worku" />
+            placeholder={pe.personNameExample} />
         </Field>
         <Field label={a.fullNameAmharic}>
           <Input value={draft.fullNameAmharic ?? ''} disabled={disabled}
@@ -44,7 +45,7 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
         <Field label={`${a.username} *`} hint={a.usernameHint}>
           <Input value={draft.username} disabled={disabled}
             onChange={(e) => set('username', e.target.value)}
-            autoComplete="off" placeholder="abebe.k" />
+            autoComplete="off" placeholder={pe.usernameExample} />
         </Field>
         <Field label={a.phone}>
           <Input value={draft.phone ?? ''} disabled={disabled}
@@ -63,7 +64,7 @@ export const AtbiyaAdminFields: React.FC<AtbiyaAdminFieldsProps> = ({
       >
         <Input type="email" value={draft.email ?? ''} disabled={disabled}
           onChange={(e) => set('email', e.target.value)}
-          autoComplete="off" placeholder="abebe@example.com" />
+          autoComplete="off" placeholder={pe.personEmailExample} />
       </Field>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

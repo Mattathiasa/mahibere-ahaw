@@ -19,12 +19,12 @@ import {
 } from '@/components/ui/dialog';
 import { optimized } from '@/services/cloudinary';
 
-const LANGS: { code: Language; label: string }[] = [
-  { code: 'en', label: 'English' },
-  { code: 'am', label: 'አማርኛ' },
-  { code: 'om', label: 'Afaan Oromoo' },
-  { code: 'ti', label: 'ትግርኛ' },
-];
+import { LANGUAGE_CYCLE, LANGUAGE_ENDONYM } from '@/i18n/languages';
+import { useLanguage } from '@/contexts/LanguageContext';
+const LANGS: { code: Language; label: string }[] = LANGUAGE_CYCLE.map((code) => ({
+  code,
+  label: LANGUAGE_ENDONYM[code],
+}));
 
 interface NewsEditorDialogProps {
   open: boolean;
@@ -39,6 +39,10 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
 }) => {
   const { user } = useAuth();
   const { isHeadOffice, myAtbiyaId, myRole } = usePermissions();
+
+  const { t } = useLanguage();
+
+  const c = t.content;
 
   const [title, setTitle] = useState<LocalizedText>({});
   const [excerpt, setExcerpt] = useState<LocalizedText>({});
@@ -132,7 +136,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
             {post ? 'Edit post' : 'New post'}
             <Badge variant={scope === 'global' ? 'default' : 'secondary'} className="gap-1 text-[10px]">
               {scope === 'global'
-                ? <><Globe className="h-3 w-3" /> Head office</>
+                ? <><Globe className="h-3 w-3" /> {c.headOffice}</>
                 : <><Church className="h-3 w-3" /> {user?.atbiyaName || 'Your congregation'}</>}
             </Badge>
           </DialogTitle>
@@ -152,7 +156,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                   Main Cover Image
                 </Label>
                 {coverImageUrl && (
-                  <span className="text-[11px] text-emerald-600 font-medium">Cover image set</span>
+                  <span className="text-[11px] text-emerald-600 font-medium">{c.coverImageSet}</span>
                 )}
               </div>
               <CloudinaryImageUpload
@@ -160,7 +164,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                 onChange={setCoverImageUrl}
                 folder="mahibere-ahaw/news"
                 variant="wide"
-                label="Upload Cover Image"
+                label={c.uploadCoverImage}
               />
             </div>
 
@@ -178,7 +182,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                 folder="mahibere-ahaw/news"
                 variant="wide"
                 multiple
-                label="Add Gallery Photos"
+                label="{c.addGalleryPhotos}"
               />
 
               {images.length > 0 && (
@@ -195,7 +199,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                             <button
                               type="button"
                               onClick={() => setCoverImageUrl(imgUrl)}
-                              title="Set as Cover Image"
+                              title={c.setAsCoverImage}
                               className="p-1.5 rounded-full bg-amber-500 text-white hover:scale-110 transition-transform"
                             >
                               <Star className="h-3.5 w-3.5 fill-white" />
@@ -204,7 +208,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                           <button
                             type="button"
                             onClick={() => removeImage(imgUrl)}
-                            title="Remove photo"
+                            title={c.removePhoto}
                             className="p-1.5 rounded-full bg-red-600 text-white hover:scale-110 transition-transform"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -255,7 +259,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                     rows={2}
                     value={excerpt[l.code] ?? ''}
                     onChange={(e) => setExcerpt((t) => ({ ...t, [l.code]: e.target.value }))}
-                    placeholder="One or two sentences shown on the homepage card."
+                    placeholder={c.excerptPlaceholder}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -266,7 +270,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                     rows={12}
                     value={body[l.code] ?? ''}
                     onChange={(e) => setBody((t) => ({ ...t, [l.code]: e.target.value }))}
-                    placeholder="Write the article. Blank lines start a new paragraph."
+                    placeholder={c.bodyPlaceholder}
                   />
                 </div>
               </TabsContent>
@@ -282,7 +286,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{t.common.cancel}</Button>
           <Button variant="secondary" onClick={() => save('draft')} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save draft

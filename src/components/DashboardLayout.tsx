@@ -200,12 +200,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <div className="relative group mx-auto w-20 h-20">
                     <div className="absolute -inset-2 bg-gradient-to-r from-[#2E5E99]/30 to-[#7BA4D0]/30 rounded-2xl blur-md opacity-80 group-hover:opacity-100 transition-opacity" />
                     <div className="relative z-10 w-full h-full p-2 bg-white/80 dark:bg-white/10 backdrop-blur-xl rounded-2xl border border-[#2E5E99]/20 shadow-lg flex items-center justify-center">
-                      <img src={logo} alt="Ahaw Logo" className="w-full h-full object-contain drop-shadow-md" />
+                      <img src={logo} alt={t.common.logoAlt} className="w-full h-full object-contain drop-shadow-md" />
                     </div>
                   </div>
-                  <h2 className="mt-4 text-center text-xl font-black text-[#2E5E99] tracking-tight">MAHIBERE AHAW</h2>
+                  <h2 className="mt-4 text-center text-xl font-black text-[#2E5E99] tracking-tight">{t.common.brandName}</h2>
                   <p className={`text-center text-[10px] tracking-[0.25em] uppercase font-bold ${theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/50'}`}>
-                    Digital Ministry
+                    {t.common.brandTagline}
                   </p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -217,9 +217,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
           <div className="flex items-center gap-2">
             <div className="p-1 rounded-xl bg-white/80 dark:bg-white/10 border border-[#2E5E99]/20 shadow-sm">
-              <img src={logo} alt="Ahaw" className="h-9 w-9 object-contain drop-shadow-sm" />
+              <img src={logo} alt={t.common.logoAlt} className="h-9 w-9 object-contain drop-shadow-sm" />
             </div>
-            <span className="font-black text-base text-[#2E5E99] tracking-tighter">AHAW</span>
+            <span className="font-black text-base text-[#2E5E99] tracking-tighter">{t.common.brandShort}</span>
           </div>
 
           <div className="flex items-center gap-2">

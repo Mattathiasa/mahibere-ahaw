@@ -549,6 +549,14 @@ export const adminEn = {
   addRole: 'Add role',
   editRole: 'Edit role',
   roleDialogDesc: "Permissions are edited in the matrix below the role list. This dialog covers the role's identity, scope and access flags.",
+
+  // ── Localization editor ───────────────────────────────────────────────────
+  searchKeysPlaceholder: 'Search keys or values…',
+  howOverridesWork: 'How overrides work',
+  overridesHelpBefore: 'The placeholder text shows the current built-in default. Type a new value to override it for',
+  overridesHelpAfter: '. Clear a field to revert to the default. Changes go live for all users immediately after saving.',
+  noStringsMatch: 'No strings match your search.',
+  clearOverride: 'Clear override, revert to default',
 };
 
 /**
@@ -1075,6 +1083,13 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
   addRole: 'ኃላፊነት ጨምር',
   editRole: 'ኃላፊነት አርትዕ',
   roleDialogDesc: 'ፈቃዶች ከኃላፊነት ዝርዝሩ በታች ባለው ማትሪክስ ውስጥ ይስተካከላሉ። ይህ መገናኛ የኃላፊነቱን ማንነት፣ ክልልና የመዳረሻ ምልክቶች ይሸፍናል።',
+
+  searchKeysPlaceholder: 'ቁልፎችን ወይም እሴቶችን ይፈልጉ…',
+  howOverridesWork: 'ተሽሮዎች እንዴት እንደሚሠሩ',
+  overridesHelpBefore: 'የቦታ ያዥ ጽሑፉ አሁን ያለውን አብሮ የተሰራ ነባሪ ያሳያል። ለመሻር አዲስ እሴት ይተይቡ ለ',
+  overridesHelpAfter: '። ወደ ነባሪው ለመመለስ መስኩን ባዶ ያድርጉ። ለውጦች ከተቀመጡ በኋላ ወዲያውኑ ለሁሉም ተጠቃሚዎች ይተገበራሉ።',
+  noStringsMatch: 'ከፍለጋዎ ጋር የሚዛመድ ሕብረቁምፊ የለም።',
+  clearOverride: 'ተሽሮውን አጽዳ፤ ወደ ነባሪው መልስ',
 };
 
 /**

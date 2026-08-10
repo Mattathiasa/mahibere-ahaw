@@ -12,6 +12,26 @@ export const peopleEn = {
   ministryDeaconService: 'Deacon service',
   ministryPrayerTeam: 'Prayer team',
   ministryMediaMinistry: 'Media ministry',
+
+  // ── Invite / role options ─────────────────────────────────────────────────
+  roleSystemOwner: 'System owner',
+  roleSystemAdmin: 'System admin',
+  roleFinanceManager: 'Finance manager',
+  roleHrManager: 'HR manager',
+  roleMember: 'Member',
+  inviteMissingContact: 'Please provide an email or a phone number.',
+  emailExamplePlaceholder: 'user@example.com',
+
+  // ── Parish registry examples ──────────────────────────────────────────────
+  parishNameExample: 'Bishoftu Congregation',
+  cityExample: 'Bishoftu',
+  addressExample: 'Around Zikuala roundabout, in front of Awash Hotel, about 100m',
+  adminNameExample: 'Addishiwot Teshome Worku',
+  adminEmailExample: 'addishiwot@example.com',
+  bankExample: 'Birhan Bank',
+  personNameExample: 'Abebe Kebede Worku',
+  usernameExample: 'abebe.k',
+  personEmailExample: 'abebe@example.com',
 };
 
 /**
@@ -26,6 +46,24 @@ export const peopleAm: Record<keyof typeof peopleEn, string> = {
   ministryDeaconService: 'የዲያቆናት አገልግሎት',
   ministryPrayerTeam: 'የጸሎት ቡድን',
   ministryMediaMinistry: 'የሚዲያ አገልግሎት',
+
+  roleSystemOwner: 'የሥርዓቱ ባለቤት',
+  roleSystemAdmin: 'የሥርዓቱ አስተዳዳሪ',
+  roleFinanceManager: 'የገንዘብ ኃላፊ',
+  roleHrManager: 'የሰው ሀብት ኃላፊ',
+  roleMember: 'አባል',
+  inviteMissingContact: 'እባክዎ ኢሜይል ወይም የስልክ ቁጥር ያስገቡ።',
+  emailExamplePlaceholder: 'user@example.com',
+
+  parishNameExample: 'የቢሾፍቱ ጉባኤ',
+  cityExample: 'ቢሾፍቱ',
+  addressExample: 'ዝቋላ አደባባይ አካባቢ፣ ከአዋሽ ሆቴል ፊት ለፊት፣ 100 ሜትር ገደማ',
+  adminNameExample: 'አዲስሕይወት ተሾመ ወርቁ',
+  adminEmailExample: 'addishiwot@example.com',
+  bankExample: 'ብርሃን ባንክ',
+  personNameExample: 'አበበ ከበደ ወርቁ',
+  usernameExample: 'abebe.k',
+  personEmailExample: 'abebe@example.com',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */
