@@ -155,7 +155,7 @@ const NewsManager: React.FC = () => {
         <Card className="rounded-2xl border-dashed p-12 text-center">
           <Newspaper className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p className="font-bold">
-            {posts.length === 0 ? 'No posts yet' : `No ${filter} posts match your search`}
+            {posts.length === 0 ? pg.noPostsYet : `No ${filter} posts match your search`}
           </p>
           <p className="text-sm text-muted-foreground">
             {posts.length === 0

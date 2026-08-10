@@ -21,16 +21,6 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const NAV_FALLBACK_LABELS: Record<string, string> = {
-  news: 'News',
-  landingEditor: 'Landing Page',
-  softwareControl: 'Software Control',
-  atbiyaRegistry: 'Congregation Registry',
-  myAtbiya: 'My Congregation',
-  membershipRequests: 'Membership Requests',
-  organisation: 'Organisation Structure',
-};
-
 interface NavFlags {
   can: (permission: PermissionKey) => boolean;
   /** Belongs to a parish AND has a parish-level role — i.e. runs one. */
@@ -135,7 +125,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         const isActive = location.pathname === item.href;
         // Newer nav entries have no i18n key yet — fall back rather than
         // rendering an empty label.
-        const translatedName = (t.nav as any)[item.name] ?? NAV_FALLBACK_LABELS[item.name] ?? item.name;
+        // Every nav key now exists in the `nav` section, so there is no English
+        // fallback map to fall through to — that map was why Notifications,
+        // Landing Page and Membership Requests stayed English.
+        const translatedName = (t.nav as Record<string, string | undefined>)[item.name] ?? item.name;
         // Requests waiting on this parish, shown where the administrator will
         // actually look rather than only inside the console itself.
         const badge = item.name === 'myAtbiya' || item.name === 'membershipRequests'

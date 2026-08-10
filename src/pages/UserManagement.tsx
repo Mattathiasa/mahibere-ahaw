@@ -1433,7 +1433,7 @@ const UserManagement = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={deleteUserMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleteUserMutation.isPending ? 'Suspending…' : 'Suspend'}
+              {deleteUserMutation.isPending ? a.busySuspending : a.suspend}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

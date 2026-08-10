@@ -201,7 +201,7 @@ export function TitheMemberTrackerDialog({ open, onOpenChange, onSuccess }: Tith
               </Button>
               <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2">
                 <CheckCircle2 className="h-4 w-4" />
-                {isSubmitting ? 'Recording...' : 'Record Tithe & Generate Receipt'}
+                {isSubmitting ? t.admin.busyRecording : t.admin.recordTitheReceipt}
               </Button>
             </DialogFooter>
           </div>

@@ -133,7 +133,7 @@ export const AtbiyaImportDialog: React.FC<AtbiyaImportDialogProps> = ({
         created += 1;
       } catch (e) {
         const code = (e as { code?: string })?.code ?? '';
-        failed.push(`${r.no}. ${r.nameAmharic}${code === 'permission-denied' ? ' — permission denied' : ''}`);
+        failed.push(`${r.no}. ${r.nameAmharic}${code === 'permission-denied' ? ` ${t.admin.permissionDeniedShort}` : ''}`);
       }
       setProgress((p) => p + 1);
     }

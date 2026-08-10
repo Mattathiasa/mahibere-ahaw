@@ -146,7 +146,7 @@ const MobileControl: React.FC = () => {
           </div>
           <Button onClick={handleSave} disabled={saving} size="sm">
             {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-            {saving ? 'Saving…' : 'Save & Publish'}
+            {saving ? a.busySaving : a.scSavePublish}
           </Button>
         </div>
 
@@ -192,7 +192,7 @@ const MobileControl: React.FC = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20">
                   <div>
-                    <p className="font-semibold">{config.killSwitch ? 'App is LOCKED' : 'App is live'}</p>
+                    <p className="font-semibold">{config.killSwitch ? a.appLocked : a.appLive}</p>
                     <p className="text-sm text-muted-foreground">
                       {config.killSwitch
                         ? 'Mobile users currently see the maintenance screen.'

@@ -56,7 +56,7 @@ export default function HR() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success(editingEmployee ? 'Employee updated' : 'Employee registered');
+      toast.success(editingEmployee ? hr.employeeUpdated : hr.employeeRegistered);
       setWizardOpen(false);
     },
     onError: () => toast.error(hr.saveFailed),

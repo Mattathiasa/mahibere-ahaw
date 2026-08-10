@@ -37,6 +37,8 @@ export const hrEn = {
   saveFailed: 'Could not save the employee.',
   removed: 'Employee removed.',
   removeFailed: 'Could not remove the employee.',
+  employeeUpdated: 'Employee updated.',
+  employeeRegistered: 'Employee registered.',
 };
 
 /**
@@ -72,6 +74,8 @@ export const hrAm: Record<keyof typeof hrEn, string> = {
   saveFailed: 'ሠራተኛውን ማስቀመጥ አልተቻለም።',
   removed: 'ሠራተኛው ተወግዷል።',
   removeFailed: 'ሠራተኛውን ማስወገድ አልተቻለም።',
+  employeeUpdated: 'የሠራተኛው መረጃ ተስተካክሏል።',
+  employeeRegistered: 'ሠራተኛው ተመዝግቧል።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

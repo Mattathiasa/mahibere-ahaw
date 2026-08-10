@@ -525,7 +525,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                 <DialogFooter className="px-6 py-4 border-t">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
                     <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-                        {createMutation.isPending ? 'Creating...' : 'Create Teaching'}
+                        {createMutation.isPending ? t.admin.busyCreating : t.content.createTeachingButton}
                     </Button>
                 </DialogFooter>
             </DialogContent>

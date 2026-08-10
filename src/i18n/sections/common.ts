@@ -34,7 +34,7 @@ export const commonAm: Record<keyof typeof commonEn, string> = {
   profile: 'መገለጫ',
   helpSupport: 'እገዛ እና ድጋፍ',
   save: 'አስቀምጥ',
-  cancel: 'ሰርዝ',
+  cancel: 'ተወው',
   edit: 'አርትዕ',
   delete: 'ሰርዝ',
   submit: 'አስገባ',

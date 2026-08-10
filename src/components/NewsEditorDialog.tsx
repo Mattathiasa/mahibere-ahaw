@@ -133,7 +133,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {post ? 'Edit post' : 'New post'}
+            {post ? t.admin.editPost : t.admin.newPost}
             <Badge variant={scope === 'global' ? 'default' : 'secondary'} className="gap-1 text-[10px]">
               {scope === 'global'
                 ? <><Globe className="h-3 w-3" /> {c.headOffice}</>

@@ -461,6 +461,20 @@ export const pagesEn = {
   hierFifthRevision: '5th revised bylaws',
   hierSupremeAssembly: 'Supreme assembly',
   hierFromRegistry: 'From the congregation registry',
+
+  // ── Login / sign-up prompt ────────────────────────────────────────────────
+  loginForgotPassword: 'Forgot password?',
+  loginSendingReset: 'Sending…',
+  loginNewMember: 'New member?',
+  loginCreateAccount: 'Create an account',
+  loginApprovalNote: 'Your congregation approves the request before you can sign in.',
+  employeeUpdated: 'Employee updated.',
+  employeeRegistered: 'Employee registered.',
+  noPostsYet: 'No posts yet',
+  noNewsPublished: 'No news published yet',
+  nothingMatchesSearch: 'Nothing matches your search',
+  checkBackSoon: 'Please check back soon.',
+  tryDifferentWord: 'Try a different word or filter.',
 };
 
 /**
@@ -508,7 +522,7 @@ export const pagesAm: Record<keyof typeof pagesEn, string> = {
   pastMeetings: 'ያለፉ ስብሰባዎች',
   title: 'ርዕስ',
   description: 'መግለጫ',
-  cancel: 'ሰርዝ',
+  cancel: 'ተወው',
   submit: 'አስገባ',
   transactions: 'ግብይቶች',
   monthlyBudgets: 'ወርሃዊ በጀቶች',
@@ -868,8 +882,8 @@ export const pagesAm: Record<keyof typeof pagesEn, string> = {
   nmSearchPosts: 'ጽሑፎችን ይፈልጉ…',
   nmUntitled: 'ርዕስ የለውም',
   nmViewOnSite: 'በጣቢያው ላይ ይመልከቱ',
-  nmUnpublish: 'ከህትመት አንሳ',
-  nmPublish: 'አትም',
+  nmUnpublish: 'ከሕትመት አንሳ',
+  nmPublish: 'አሳትም',
 
   pcCurrentRoles: 'የአሁኑ ኃላፊነቶች',
   pcSelectUser: 'ፈቃዶቻቸውን ለማስተዳደር ተጠቃሚ ይምረጡ',
@@ -890,6 +904,19 @@ export const pagesAm: Record<keyof typeof pagesEn, string> = {
   hierFifthRevision: '5ኛ ተሻሽሎ የወጣ መተዳደሪያ ደንብ',
   hierSupremeAssembly: 'የበላይ ጉባኤ',
   hierFromRegistry: 'ከአጥቢያ መዝገብ',
+
+  loginForgotPassword: 'የይለፍ ቃል ረሱ?',
+  loginSendingReset: 'በመላክ ላይ…',
+  loginNewMember: 'አዲስ አባል ነዎት?',
+  loginCreateAccount: 'መለያ ይክፈቱ',
+  loginApprovalNote: 'ከመግባትዎ በፊት አጥቢያዎ ጥያቄውን ማጽደቅ አለበት።',
+  employeeUpdated: 'የሠራተኛው መረጃ ተስተካክሏል።',
+  employeeRegistered: 'ሠራተኛው ተመዝግቧል።',
+  noPostsYet: 'እስካሁን ጽሑፍ የለም',
+  noNewsPublished: 'እስካሁን የታተመ ዜና የለም',
+  nothingMatchesSearch: 'ከፍለጋዎ ጋር የሚዛመድ የለም',
+  checkBackSoon: 'እባክዎ በቅርቡ ይመልከቱ።',
+  tryDifferentWord: 'ሌላ ቃል ወይም ማጣሪያ ይሞክሩ።',
 };
 
 export const pagesOm: Partial<Record<keyof typeof pagesEn, string>> = {

@@ -71,7 +71,7 @@ export const AtbiyaEditorDialog: React.FC<AtbiyaEditorDialogProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{atbiya ? 'Edit parish' : 'Register a parish'}</DialogTitle>
+          <DialogTitle>{atbiya ? t.admin.editParish : t.admin.registerParish}</DialogTitle>
           <DialogDescription>
             These details appear on the public sign-up form, so a member can find
             and choose their own parish before they have an account.
@@ -91,7 +91,7 @@ export const AtbiyaEditorDialog: React.FC<AtbiyaEditorDialogProps> = ({
           <Button variant="outline" onClick={onClose} disabled={saving}>{t.common.cancel}</Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {atbiya ? 'Save parish' : 'Register parish'}
+            {atbiya ? t.admin.saveParish : t.admin.registerParish}
           </Button>
         </DialogFooter>
       </DialogContent>

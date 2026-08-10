@@ -102,6 +102,7 @@ export const contentEn = {
   selectCsvFirst: 'Please select a CSV file.',
   employeesImported: 'Employees imported.',
   employeesImportFailed: 'Could not import the employees file.',
+  createTeachingButton: 'Create teaching',
 };
 
 /**
@@ -194,6 +195,7 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   selectCsvFirst: 'እባክዎ የCSV ፋይል ይምረጡ።',
   employeesImported: 'ሠራተኞቹ ገብተዋል።',
   employeesImportFailed: 'የሠራተኛ ፋይሉን ማስመጣት አልተቻለም።',
+  createTeachingButton: 'ትምህርት ፍጠር',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

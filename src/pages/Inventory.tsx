@@ -103,7 +103,7 @@ export default function Inventory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      toast.success(editing ? 'Asset updated' : 'Asset registered');
+      toast.success(editing ? inv.assetUpdated : inv.assetRegistered);
       setDialogOpen(false);
     },
     onError: () => toast.error(inv.saveFailed),

@@ -102,7 +102,7 @@ export function ImportEmployeesDialog({ open, onOpenChange }: ImportEmployeesDia
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
           <Button onClick={handleImport} disabled={!file || isUploading} className="bg-teal-600 hover:bg-teal-700 text-white">
-            {isUploading ? 'Importing...' : 'Upload & Import'}
+            {isUploading ? t.admin.busyImporting : t.admin.uploadAndImport}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -27,6 +27,9 @@ export const navEn = {
   softwareControl: 'Software Control',
   logout: 'Log Out',
   login: 'Login',
+  notifications: 'Notifications',
+  landingEditor: 'Landing Page',
+  membershipRequests: 'Membership Requests',
 };
 
 /**
@@ -62,6 +65,9 @@ export const navAm: Record<keyof typeof navEn, string> = {
   softwareControl: 'የሶፍትዌር ቁጥጥር',
   logout: 'ውጣ',
   login: 'ግባ',
+  notifications: 'ማሳወቂያዎች',
+  landingEditor: 'የዋና ገፅ አርታዒ',
+  membershipRequests: 'የአባልነት ጥያቄዎች',
 };
 
 export const navOm: Partial<Record<keyof typeof navEn, string>> = {
@@ -95,6 +101,9 @@ export const navOm: Partial<Record<keyof typeof navEn, string>> = {
   softwareControl: 'To\'annoo Sooftiweerii',
   logout: 'Ba\'u',
   login: 'Seeni',
+  notifications: 'Beeksisawwan',
+  landingEditor: 'Fuula Jalqabaa',
+  membershipRequests: 'Gaaffii Miseensummaa',
 };
 
 export const navTi: Partial<Record<keyof typeof navEn, string>> = {
@@ -126,4 +135,7 @@ export const navTi: Partial<Record<keyof typeof navEn, string>> = {
   softwareControl: 'ቁጽጽር ሶፍትዌር',
   logout: 'ውጻእ',
   login: 'እቶ',
+  notifications: 'ምልክታታት',
+  landingEditor: 'መበገሲ ገጽ ኣርታዒ',
+  membershipRequests: 'ሕቶታት ኣባልነት',
 };

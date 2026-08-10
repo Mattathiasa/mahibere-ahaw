@@ -440,7 +440,7 @@ const Settings = () => {
                   onClick={handleSaveProfile}
                   disabled={updateProfileMutation.isPending}
                 >
-                  {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  {updateProfileMutation.isPending ? a.busySaving : a.saveChanges}
                 </Button>
               </div>
             </div>
@@ -815,7 +815,7 @@ const Settings = () => {
                     onClick={handleChangePassword}
                     disabled={changePasswordMutation.isPending || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
                   >
-                    {changePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
+                    {changePasswordMutation.isPending ? a.busyUpdating : a.updatePassword}
                   </Button>
                 </div>
               </div>
@@ -863,7 +863,7 @@ const Settings = () => {
                           !recoveryData.email
                         }
                       >
-                        {addRecoveryEmailMutation.isPending ? 'Sending…' : 'Send Confirmation'}
+                        {addRecoveryEmailMutation.isPending ? a.busySending : a.sendConfirmation}
                       </Button>
                     </div>
                   </>
@@ -910,7 +910,7 @@ const Settings = () => {
                       username.trim() === (currentUser?.username ?? '')
                     }
                   >
-                    {changeUsernameMutation.isPending ? 'Saving…' : 'Change Username'}
+                    {changeUsernameMutation.isPending ? a.busySaving : a.changeUsername}
                   </Button>
                 </div>
               </div>

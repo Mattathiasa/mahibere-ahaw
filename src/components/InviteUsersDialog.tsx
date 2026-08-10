@@ -90,7 +90,7 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
           <Button onClick={handleSendInvite} disabled={isSending} className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold">
-            {isSending ? 'Sending...' : 'Send Invitation'}
+            {isSending ? t.admin.busySending : t.admin.sendInvitation}
           </Button>
         </DialogFooter>
       </DialogContent>

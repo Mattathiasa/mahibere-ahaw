@@ -283,7 +283,7 @@ const SoftwareControl: React.FC = () => {
           </div>
           <Button onClick={handleSave} disabled={saving} size="sm">
             {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-            {saving ? 'Saving…' : 'Save & Publish'}
+            {saving ? a.busySaving : a.scSavePublish}
           </Button>
         </div>
         {status === 'success' && (
@@ -423,7 +423,7 @@ const SoftwareControl: React.FC = () => {
                       </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 disabled:opacity-30"
                         disabled={role.isSystem}
-                        title={role.isSystem ? 'Built-in roles cannot be deleted' : 'Delete role'}
+                        title={role.isSystem ? a.builtInRoleUndeletable : a.deleteRole}
                         onClick={() => deleteRole(role)}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

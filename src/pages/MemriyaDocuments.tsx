@@ -124,7 +124,7 @@ const MemriyaDocuments = () => {
                         {moduleCfg.headerTitle || 'Memriya Documents'}
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        {moduleCfg.headerDescription || `Manage files and folders for ${user?.hierarchyLevel === 'Memriya' ? 'your Memriya' : 'the Memriya'}.`}
+                        {moduleCfg.headerDescription || tree.admin.docsManageFiles.replace('{scope}', user?.hierarchyLevel === 'Memriya' ? tree.admin.docsScopeOwn : tree.admin.docsScopeGeneral)}
                     </p>
                     <LearnMore title={moduleCfg.headerTitle || 'Memriya Documents'} content={moduleCfg.learnMore} />
                 </div>
@@ -164,7 +164,7 @@ const MemriyaDocuments = () => {
                                 <DialogFooter>
                                     <Button variant="outline" onClick={() => setIsCreateFolderOpen(false)}>{tree.common.cancel}</Button>
                                     <Button onClick={handleCreateFolder} disabled={!newFolderName.trim() || createFolderMutation.isPending}>
-                                        {createFolderMutation.isPending ? 'Creating...' : 'Create Folder'}
+                                        {createFolderMutation.isPending ? tree.admin.busyCreating : tree.admin.createFolder}
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>

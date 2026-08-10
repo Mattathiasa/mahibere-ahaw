@@ -102,7 +102,7 @@ export function ImportAssetsDialog({ open, onOpenChange }: ImportAssetsDialogPro
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
           <Button onClick={handleImport} disabled={!file || isUploading}>
-            {isUploading ? 'Importing...' : 'Upload & Import'}
+            {isUploading ? t.admin.busyImporting : t.admin.uploadAndImport}
           </Button>
         </DialogFooter>
       </DialogContent>

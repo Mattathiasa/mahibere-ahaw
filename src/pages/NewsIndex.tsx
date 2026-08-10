@@ -75,10 +75,10 @@ const NewsIndex: React.FC = () => {
           <div className="text-center py-24">
             <Newspaper className="h-12 w-12 mx-auto mb-4 opacity-30" />
             <p className="text-xl font-bold">
-              {posts.length === 0 ? 'No news published yet' : 'Nothing matches your search'}
+              {posts.length === 0 ? pg.noNewsPublished : pg.nothingMatchesSearch}
             </p>
             <p className="text-muted-foreground">
-              {posts.length === 0 ? 'Please check back soon.' : 'Try a different word or filter.'}
+              {posts.length === 0 ? pg.checkBackSoon : pg.tryDifferentWord}
             </p>
           </div>
         ) : (

@@ -538,7 +538,7 @@ const LandingEditor: React.FC = () => {
             </Button>
             <Button onClick={handleSave} disabled={saving || brokenFeatureLinks.length > 0} size="sm">
               {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-              {saving ? 'Saving…' : 'Save Changes'}
+              {saving ? a.busySaving : a.saveChanges}
             </Button>
           </div>
         </div>
@@ -556,8 +556,7 @@ const LandingEditor: React.FC = () => {
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <div>
                 <p className="font-semibold">
-                  Saving is blocked: {brokenFeatureLinks.length} feature link
-                  {brokenFeatureLinks.length !== 1 ? 's point' : ' points'} to a section that does not exist.
+                  {a.brokenLinksWarning.replace('{count}', String(brokenFeatureLinks.length))}
                 </p>
                 <ul className="list-disc pl-5 mt-1">
                   {brokenFeatureLinks.map(({ index, title, target }) => (
@@ -891,7 +890,7 @@ const LandingEditor: React.FC = () => {
                         <Button type="button" variant="secondary" disabled={uploadingHero}
                           onClick={() => document.getElementById('hero-upload')?.click()}>
                           {uploadingHero ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                          {uploadingHero ? 'Uploading…' : 'Upload hero image'}
+                          {uploadingHero ? a.busyUploading : a.uploadHeroImage}
                         </Button>
                         <span className="text-xs text-muted-foreground">{a.leCloudinaryHint}</span>
                       </div>
@@ -1553,7 +1552,11 @@ const LandingEditor: React.FC = () => {
             <div className="mt-8 flex justify-end">
               <Button onClick={handleSave} disabled={saving || brokenFeatureLinks.length > 0} size="lg">
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                {saving ? 'Saving…' : `Save ${LANGUAGES.find(l => l.value === activeLang)?.flag} ${LANGUAGES.find(l => l.value === activeLang)?.label} Content`}
+                {saving
+                  ? a.busySaving
+                  : a.saveLanguageContent
+                      .replace('{flag}', LANGUAGES.find((l) => l.value === activeLang)?.flag ?? '')
+                      .replace('{language}', LANGUAGES.find((l) => l.value === activeLang)?.label ?? '')}
               </Button>
             </div>
           </TabsContent>

@@ -243,7 +243,7 @@ const Members = () => {
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] border-none bg-white/90 backdrop-blur-2xl p-8">
                 <DialogHeader>
-                  <DialogTitle className="hidden">{isEditing ? 'Edit Profile' : 'Member Enrollment'}</DialogTitle>
+                  <DialogTitle className="hidden">{isEditing ? tree.admin.editProfile : tree.admin.memberEnrollment}</DialogTitle>
                 </DialogHeader>
                 <MemberWizard
                   initialData={selectedMember}

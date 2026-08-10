@@ -512,7 +512,7 @@ const Reports = () => {
                 disabled={commentMutation.isPending}
                 className="h-14 px-12 rounded-2xl bg-[#2E5E99] font-black uppercase tracking-widest shadow-xl shadow-[#2E5E99]/20"
               >
-                {commentMutation.isPending ? 'Publishing...' : 'Add Insight'}
+                {commentMutation.isPending ? tree.admin.busyPublishing : tree.admin.addInsight}
               </Button>
             </div>
           </form>

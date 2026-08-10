@@ -255,7 +255,7 @@ const Login = () => {
                       disabled={isResetting}
                       className="text-xs font-bold text-[#2E5E99] hover:underline disabled:opacity-50"
                     >
-                      {isResetting ? 'Sending…' : 'Forgot password?'}
+                      {isResetting ? tree.pages.loginSendingReset : tree.pages.loginForgotPassword}
                     </button>
                   </div>
                   {resetNotice && (
@@ -305,13 +305,13 @@ const Login = () => {
                 className="text-center text-sm"
               >
                 <span className={theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/60'}>
-                  New member?{' '}
+                  {tree.pages.loginNewMember}{' '}
                 </span>
                 <Link to="/signup" className="font-bold text-[#2E5E99] hover:underline">
-                  Create an account
+                  {tree.pages.loginCreateAccount}
                 </Link>
                 <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/30' : 'text-[#0D2440]/40'}`}>
-                  Your congregation approves the request before you can sign in.
+                  {tree.pages.loginApprovalNote}
                 </p>
               </motion.div>
 

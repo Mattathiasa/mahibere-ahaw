@@ -175,7 +175,7 @@ const PermissionControl: React.FC = () => {
           </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {saving ? 'Saving…' : 'Save All Changes'}
+            {saving ? t.admin.busySaving : t.admin.saveAllChanges}
           </Button>
         </div>
         {saveStatus === 'success' && (
@@ -494,7 +494,7 @@ const PermissionControl: React.FC = () => {
         <div className="mt-8 flex justify-end">
           <Button onClick={handleSave} disabled={saving} size="lg">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {saving ? 'Saving…' : 'Save All Changes'}
+            {saving ? t.admin.busySaving : t.admin.saveAllChanges}
           </Button>
         </div>
       </div>

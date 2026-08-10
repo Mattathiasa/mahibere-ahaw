@@ -215,7 +215,7 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t.common.cancel}</Button>
-          <Button onClick={handleSubmit}>{isNew ? 'Add role' : 'Save role'}</Button>
+          <Button onClick={handleSubmit}>{isNew ? t.admin.addRole : t.admin.saveRole}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

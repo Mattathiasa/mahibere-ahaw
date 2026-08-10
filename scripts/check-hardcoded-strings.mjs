@@ -87,6 +87,16 @@ const THROWN = /\bthrow\s+new\s+Error\s*\(\s*(["'])(.*?)\1/g;
 /** JSX text nodes: `>Some words<` on one line. */
 const JSX_TEXT = />([^<>{}\n]*[A-Za-z]{3,}[^<>{}\n]*)</g;
 /**
+ * The branches of a ternary rendered as JSX: `{busy ? 'Sending…' : 'Retry'}`.
+ * The JSX-text rule cannot see these — braces are exactly what it skips —
+ * which is how "Forgot password?" survived the first pass on the login page.
+ *
+ * Deliberately only ternaries. Matching every quoted string inside braces
+ * catches CSS transforms, class names and object literals as well, which
+ * drowns the real findings.
+ */
+const JSX_TERNARY = /\?\s*(["'])([^"']{3,})\1\s*:\s*(?:(["'])([^"']{3,})\3)?/g;
+/**
  * Object-literal label maps in non-component modules — `label: 'View
  * Dashboard'` in PERMISSION_META, `name:` in churchStructure, the field
  * registry in moduleConfig. These render verbatim but never touch a hook, so
@@ -132,7 +142,7 @@ function isProse(s) {
   if (/^(https?:|\/|#|data:|mailto:)/.test(v)) return false; // url or path
   if (/^[\d\s.,:%$-]+$/.test(v)) return false; // numeric
   // Tailwind class lists: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/30'.
-  if (/^(?:[a-z][\w:/[\].-]*\s*)+$/.test(v) && /-/.test(v)) return false;
+  if (/^(?:[a-z][\w:/[\]#.=-]*\s*)+$/.test(v) && /-/.test(v)) return false;
   // CSS values: gradients, calc(), colour functions.
   if (/^(?:conic|linear|radial)-gradient\(|^calc\(|^rgba?\(/.test(v)) return false;
   // Developer-only invariants. "useTheme must be used within ThemeProvider"
@@ -187,6 +197,16 @@ function scan(source, isTsx) {
       if (/\b(?:as|:)\s*\w+</.test(line)) return;
       const withoutCode = line.replace(/<code[^>]*>.*?<\/code>/g, '<code/>');
       for (const m of withoutCode.matchAll(JSX_TEXT)) add(m[1]);
+      // A ternary feeding a `value=` attribute or an object property is
+      // choosing a stored value, not copy: `status: paid ? 'Completed' :
+      // 'Active'` writes one of those two tokens to Firestore.
+      const isValueChoice = /value=\{|^\s*\w+:\s/.test(withoutCode);
+      if (!isValueChoice) {
+        for (const m of withoutCode.matchAll(JSX_TERNARY)) {
+          add(m[2]);
+          if (m[4]) add(m[4]);
+        }
+      }
     }
 
     for (const m of line.matchAll(LABEL_PROP)) add(m[2]);

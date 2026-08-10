@@ -56,6 +56,8 @@ export const inventoryEn = {
   saveFailed: 'Could not save the asset.',
   removed: 'Asset removed.',
   removeFailed: 'Could not remove the asset.',
+  assetUpdated: 'Asset updated.',
+  assetRegistered: 'Asset registered.',
 };
 
 /**
@@ -105,6 +107,8 @@ export const inventoryAm: Record<keyof typeof inventoryEn, string> = {
   saveFailed: 'ንብረቱን ማስቀመጥ አልተቻለም።',
   removed: 'ንብረቱ ተወግዷል።',
   removeFailed: 'ንብረቱን ማስወገድ አልተቻለም።',
+  assetUpdated: 'ንብረቱ ተስተካክሏል።',
+  assetRegistered: 'ንብረቱ ተመዝግቧል።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */
