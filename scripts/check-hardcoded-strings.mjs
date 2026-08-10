@@ -78,7 +78,12 @@ const JSX_TEXT = />([^<>{}\n]*[A-Za-z]{3,}[^<>{}\n]*)</g;
  * none of the patterns above see them.
  */
 const LABEL_PROP =
-  /(?:^|[{,[])\s*(?:label|description|desc|title|name|nameEn|placeholder|hint|message|summary|group|learnMore|headerTitle|headerDescription)\s*:\s*(["'])(.*?)\1/g;
+  /(?:^|[{,[])\s*(?:label|description|desc|title|name|placeholder|hint|message|summary|learnMore|headerTitle|headerDescription)\s*:\s*(["'])(.*?)\1/g;
+// `group:` and `nameEn:` are excluded on purpose. `group` is a filter
+// predicate and React key in PERMISSION_META — translating it would break the
+// grouping, so it stays an English token with a `group<Name>` label beside it.
+// `nameEn` says in its own name that it holds the English rendering; the
+// translated name lives in the dictionary.
 /**
  * `'Sunday School': 'ministrySundaySchool',` — a persisted token mapped to its
  * translation key. Both halves are identifiers, not copy: the left is a value
@@ -92,7 +97,7 @@ const TOKEN_KEY_MAP = /^\s*(["'])[^"']+\1\s*:\s*(["'])[a-z][A-Za-z0-9]*\2\s*,?\s
  * `churchStructure`'s per-body list of duties, which renders straight to the
  * Hierarchy page.
  */
-const ARRAY_ITEM = /^\s*(["'])(.*?)\1\s*,?\s*$/;
+const ARRAY_ITEM = /^\s*(["'])([^"']*)\1\s*,?\s*$/;
 
 /** Looks like prose a reader would see, rather than a css class or an id. */
 function isProse(s) {
