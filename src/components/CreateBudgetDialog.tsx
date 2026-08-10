@@ -9,6 +9,8 @@ import { FileUpload } from '@/components/ui/file-upload';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useFormatters } from '@/lib/formatters';
 interface CreateBudgetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,6 +21,8 @@ interface CreateBudgetDialogProps {
 export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: CreateBudgetDialogProps) {
   const { user } = useAuth();
   const currentDate = new Date();
+  const { t } = useLanguage();
+  const fin = t.finance;
   const [formData, setFormData] = useState({
     month: currentDate.getMonth() + 1,
     year: currentDate.getFullYear(),
@@ -47,22 +51,20 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
     });
   };
 
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  const { monthNames } = useFormatters();
+  const months = monthNames();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create Monthly Budget</DialogTitle>
-          <DialogDescription>Plan your monthly income and expenses</DialogDescription>
+          <DialogTitle>{fin.createMonthlyBudget}</DialogTitle>
+          <DialogDescription>{fin.createMonthlyBudgetDesc}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="month">Month *</Label>
+              <Label htmlFor="month">{fin.monthRequired}</Label>
               <select
                 id="month"
                 value={formData.month}
@@ -79,7 +81,7 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
             </div>
 
             <div>
-              <Label htmlFor="year">Year *</Label>
+              <Label htmlFor="year">{fin.yearRequired}</Label>
               <Input
                 id="year"
                 type="number"
@@ -94,7 +96,7 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="plannedIncome">Planned Income (Birr) *</Label>
+              <Label htmlFor="plannedIncome">{fin.plannedIncomeRequired}</Label>
               <Input
                 id="plannedIncome"
                 type="number"
@@ -107,7 +109,7 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
             </div>
 
             <div>
-              <Label htmlFor="plannedExpenses">Planned Expenses (Birr) *</Label>
+              <Label htmlFor="plannedExpenses">{fin.plannedExpensesRequired}</Label>
               <Input
                 id="plannedExpenses"
                 type="number"
@@ -121,20 +123,20 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
           </div>
 
           <div>
-            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Label htmlFor="notes">{fin.notesOptional}</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Additional notes about this budget"
+              placeholder={fin.notesPlaceholder}
               rows={3}
             />
           </div>
 
           <div>
             <RecipientSelector
-              label="Send to (Optional)"
-              placeholder="Select Memriyas to send this budget to..."
+              label={fin.sendToOptional}
+              placeholder={fin.sendBudgetPlaceholder}
               hierarchyLevel="Memriya"
               value={formData.recipients}
               onChange={(recipients) => setFormData({ ...formData, recipients })}
@@ -143,7 +145,7 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
 
           <div>
             <FileUpload
-              label="Attachments"
+              label={fin.attachments}
               value={formData.attachments}
               onChange={(files) => setFormData({ ...formData, attachments: files })}
             />

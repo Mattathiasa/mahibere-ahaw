@@ -57,6 +57,9 @@ export const statusEn = {
   teachingStatusDraft: 'Draft',
   teachingStatusPublished: 'Published',
   teachingStatusArchived: 'Archived',
+  teachingStatusScheduled: 'Scheduled',
+  teachingStatusCompleted: 'Completed',
+  teachingStatusCancelled: 'Cancelled',
 
   // ── Budget status — services/finance.ts ───────────────────────────────────
   budgetStatusActive: 'Active',
@@ -134,6 +137,9 @@ export const statusAm: Record<keyof typeof statusEn, string> = {
   teachingStatusDraft: 'ረቂቅ',
   teachingStatusPublished: 'የታተመ',
   teachingStatusArchived: 'በማህደር የተቀመጠ',
+  teachingStatusScheduled: 'የተያዘ',
+  teachingStatusCompleted: 'የተጠናቀቀ',
+  teachingStatusCancelled: 'የተሰረዘ',
 
   budgetStatusActive: 'በሥራ ላይ',
   budgetStatusCompleted: 'የተጠናቀቀ',

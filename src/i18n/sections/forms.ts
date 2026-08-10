@@ -88,6 +88,56 @@ export const formsEn = {
   taxDeduction: 'Tax deduction (ETB)',
   pensionDeduction: 'Pension deduction (7%)',
   netSalary: 'Net salary',
+
+  // ── Report dialog ─────────────────────────────────────────────────────────
+  submitReport: 'Submit report',
+  submitReportDesc: 'Submit a report with optional document attachments.',
+  selectPlanRequired: 'Select plan *',
+  selectPlanPlaceholder: 'Select a plan',
+  reportOptionRequired: 'Report option *',
+  timeframeRequired: 'Timeframe *',
+  workDone: 'Work done *',
+  workDonePlaceholder: 'Describe the work completed',
+  result: 'Result *',
+  resultPlaceholder: 'Describe the results achieved',
+  attachments: 'Attachments (optional)',
+  department: 'Department',
+
+  // ── Member wizard ─────────────────────────────────────────────────────────
+  namePlaceholder: 'John Doe',
+  occupationPlaceholder: 'Occupation or institution',
+  subCityPlaceholder: 'e.g. Sub City',
+  woredaPlaceholder: 'e.g. Bole',
+  personalArchive: 'Personal archive',
+  username: 'Username',
+  born: 'Born',
+  memberStatus: 'Status',
+  divineAssignment: 'Divine assignment',
+  region: 'Region',
+  profession: 'Profession',
+  assignedRoles: 'Assigned roles',
+
+  // ── Plan dialog ───────────────────────────────────────────────────────────
+  createNewPlan: 'Create new plan',
+  createNewPlanDesc: 'Add a new plan with optional document attachments.',
+  planNameRequired: 'Plan name *',
+  planNamePlaceholder: 'Enter plan name',
+  detailsRequired: 'Details *',
+  detailsPlaceholder: 'Enter plan details',
+
+  // ── Employee details ──────────────────────────────────────────────────────
+  position: 'Position',
+  totalBenefits: 'Total benefits',
+  totalDeductions: 'Total deductions',
+  nameLabel: 'Name:',
+  relationshipLabel: 'Relationship:',
+  phoneLabel: 'Phone:',
+  addressLabel: 'Address:',
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  searchTypeToSearch: 'Type to search...',
+  searchNoResults: 'No results found.',
+  searchPagesHeading: 'Pages',
 };
 
 /**
@@ -164,6 +214,51 @@ export const formsAm: Record<keyof typeof formsEn, string> = {
   taxDeduction: 'የግብር ተቀናሽ (ብር)',
   pensionDeduction: 'የጡረታ ተቀናሽ (7%)',
   netSalary: 'የተጣራ ደመወዝ',
+
+  submitReport: 'ሪፖርት አስገባ',
+  submitReportDesc: 'ሪፖርትዎን ከሰነድ አባሪ ጋር ያስገቡ።',
+  selectPlanRequired: 'ዕቅድ ይምረጡ *',
+  selectPlanPlaceholder: 'ዕቅድ ይምረጡ',
+  reportOptionRequired: 'የሪፖርት ደረጃ *',
+  timeframeRequired: 'የጊዜ ገደብ *',
+  workDone: 'የተሠራ ሥራ *',
+  workDonePlaceholder: 'የተጠናቀቀውን ሥራ ይግለጹ',
+  result: 'ውጤት *',
+  resultPlaceholder: 'የተገኘውን ውጤት ይግለጹ',
+  attachments: 'አባሪዎች (አማራጭ)',
+  department: 'መምሪያ',
+
+  namePlaceholder: 'አበበ ከበደ',
+  occupationPlaceholder: 'ሙያ ወይም ተቋም',
+  subCityPlaceholder: 'ለምሳሌ ክፍለ ከተማ',
+  woredaPlaceholder: 'ለምሳሌ ቦሌ',
+  personalArchive: 'የግል መዝገብ',
+  username: 'የተጠቃሚ ስም',
+  born: 'የተወለደበት',
+  memberStatus: 'ሁኔታ',
+  divineAssignment: 'መንፈሳዊ ኃላፊነት',
+  region: 'ክልል',
+  profession: 'ሙያ',
+  assignedRoles: 'የተሰጡ ኃላፊነቶች',
+
+  createNewPlan: 'አዲስ ዕቅድ ፍጠር',
+  createNewPlanDesc: 'አዲስ ዕቅድ ከሰነድ አባሪዎች ጋር ይጨምሩ።',
+  planNameRequired: 'የዕቅዱ ስም *',
+  planNamePlaceholder: 'የዕቅዱን ስም ያስገቡ',
+  detailsRequired: 'ዝርዝር *',
+  detailsPlaceholder: 'የዕቅዱን ዝርዝር ያስገቡ',
+
+  position: 'የሥራ መደብ',
+  totalBenefits: 'ጠቅላላ ጥቅማ ጥቅም',
+  totalDeductions: 'ጠቅላላ ተቀናሽ',
+  nameLabel: 'ስም፦',
+  relationshipLabel: 'ዝምድና፦',
+  phoneLabel: 'ስልክ፦',
+  addressLabel: 'አድራሻ፦',
+
+  searchTypeToSearch: 'ለመፈለግ ይተይቡ...',
+  searchNoResults: 'ምንም ውጤት አልተገኘም።',
+  searchPagesHeading: 'ገጾች',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

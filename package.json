@@ -14,8 +14,10 @@
         "test:rules": "firebase emulators:exec --only firestore --project mahibere-ahaw-rules-test \"vitest run src/test/firestore.rules.test.ts\"",
         "lint:i18n": "node scripts/check-hardcoded-strings.mjs",
         "lint:i18n:update": "node scripts/check-hardcoded-strings.mjs --update",
-        "check": "npm run typecheck && npm run lint:i18n && npm run test:run",
-        "typecheck": "tsc -p tsconfig.app.json --noEmit"
+        "check": "npm run typecheck:ratchet && npm run lint:i18n && npm run test:run",
+        "typecheck": "tsc -p tsconfig.app.json --noEmit",
+        "typecheck:ratchet": "node scripts/check-types.mjs",
+        "typecheck:update": "node scripts/check-types.mjs --update"
     },
     "dependencies": {
         "@hookform/resolvers": "^3.10.0",

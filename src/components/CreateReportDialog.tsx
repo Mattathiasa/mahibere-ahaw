@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Loader2 } from 'lucide-react';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+import { REPORT_OPTIONS, TIMEFRAMES, reportOptionLabel, timeframeLabel } from '@/i18n/enums';
 interface CreateReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -17,6 +19,8 @@ interface CreateReportDialogProps {
 }
 
 export function CreateReportDialog({ open, onOpenChange, onSubmit, isLoading, plans = [] }: CreateReportDialogProps) {
+  const { t } = useLanguage();
+  const f = t.forms;
   const [formData, setFormData] = useState({
     planId: '',
     option: 'Memriya' as 'Memriya' | 'Kifil' | 'Zerf',
@@ -36,18 +40,18 @@ export function CreateReportDialog({ open, onOpenChange, onSubmit, isLoading, pl
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Submit Report</DialogTitle>
-          <DialogDescription>Submit a report with optional document attachments</DialogDescription>
+          <DialogTitle>{f.submitReport}</DialogTitle>
+          <DialogDescription>{f.submitReportDesc}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="planId">Select Plan *</Label>
+            <Label htmlFor="planId">{f.selectPlanRequired}</Label>
             <Select
               value={formData.planId}
               onValueChange={(value) => setFormData({ ...formData, planId: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a plan" />
+                <SelectValue placeholder={f.selectPlanPlaceholder} />
               </SelectTrigger>
               <SelectContent>
                 {plans.map((plan) => (
@@ -60,7 +64,7 @@ export function CreateReportDialog({ open, onOpenChange, onSubmit, isLoading, pl
           </div>
 
           <div>
-            <Label htmlFor="option">Report Option *</Label>
+            <Label htmlFor="option">{f.reportOptionRequired}</Label>
             <Select
               value={formData.option}
               onValueChange={(value: any) => setFormData({ ...formData, option: value })}
@@ -69,15 +73,15 @@ export function CreateReportDialog({ open, onOpenChange, onSubmit, isLoading, pl
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Memriya">Memriya</SelectItem>
-                <SelectItem value="Kifil">Kifil</SelectItem>
-                <SelectItem value="Zerf">Zerf</SelectItem>
+                {REPORT_OPTIONS.map((v) => (
+                  <SelectItem key={v} value={v}>{reportOptionLabel(t, v)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="timeframe">Timeframe *</Label>
+            <Label htmlFor="timeframe">{f.timeframeRequired}</Label>
             <Select
               value={formData.timeframe}
               onValueChange={(value: any) => setFormData({ ...formData, timeframe: value })}
@@ -86,39 +90,39 @@ export function CreateReportDialog({ open, onOpenChange, onSubmit, isLoading, pl
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Weekly">Weekly</SelectItem>
-                <SelectItem value="Monthly">Monthly</SelectItem>
-                <SelectItem value="Annually">Annually</SelectItem>
+                {TIMEFRAMES.map((v) => (
+                  <SelectItem key={v} value={v}>{timeframeLabel(t, v)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="workDone">Work Done *</Label>
+            <Label htmlFor="workDone">{f.workDone}</Label>
             <Textarea
               id="workDone"
               value={formData.workDone}
               onChange={(e) => setFormData({ ...formData, workDone: e.target.value })}
-              placeholder="Describe the work completed"
+              placeholder={f.workDonePlaceholder}
               rows={3}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="result">Result *</Label>
+            <Label htmlFor="result">{f.result}</Label>
             <Textarea
               id="result"
               value={formData.result}
               onChange={(e) => setFormData({ ...formData, result: e.target.value })}
-              placeholder="Describe the results achieved"
+              placeholder={f.resultPlaceholder}
               rows={3}
               required
             />
           </div>
 
           <div>
-            <Label>Attachments (Optional)</Label>
+            <Label>{f.attachments}</Label>
             <p className="text-sm text-muted-foreground mb-2">
               Attach supporting documents for "to whom it may concern"
             </p>

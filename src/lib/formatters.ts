@@ -80,6 +80,17 @@ export function useFormatters() {
       formatNumber: (n: number | null | undefined): string =>
         typeof n === 'number' && Number.isFinite(n) ? number.format(n) : '',
       /**
+       * The twelve Gregorian month names, in the reader's language.
+       *
+       * From Intl rather than twelve dictionary keys: every locale already
+       * carries them, and am-ET renders them in Amharic without anyone having
+       * to translate a list the platform already has.
+       */
+      monthNames: (): string[] => {
+        const fmt = new Intl.DateTimeFormat(locale, { month: 'long' });
+        return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2000, i, 1)));
+      },
+      /**
        * 1,234.00 — money. Deliberately not `style: 'currency'`: the church
        * accounts in birr and the screens already label the unit themselves
        * ("Total Value Of Asset (ETB)"), so a second symbol would double it up.

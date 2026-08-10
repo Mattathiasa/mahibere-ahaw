@@ -13,6 +13,7 @@ import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 // Known transaction-type labels (English + Amharic). Custom types added in
 // Module Config fall back to their raw value.
 const TX_LABELS: Record<string, string> = {
@@ -38,6 +39,8 @@ interface CreateTransactionDialogProps {
 export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoading }: CreateTransactionDialogProps) {
   const moduleCfg = useModuleConfig('finance');
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const fin = t.finance;
   const [formData, setFormData] = useState({
     type: 'Income' as string,
     amount: '',
@@ -78,12 +81,12 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Transaction</DialogTitle>
-          <DialogDescription>Record a financial transaction with optional receipt/document</DialogDescription>
+          <DialogTitle>{fin.addTransaction}</DialogTitle>
+          <DialogDescription>{fin.addTransactionDesc}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="type">Transaction Type *</Label>
+            <Label htmlFor="type">{fin.transactionType}</Label>
             <Select
               value={formData.type}
               onValueChange={(value: any) => setFormData({ ...formData, type: value })}
@@ -100,7 +103,7 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
           </div>
 
           <div>
-            <Label htmlFor="amount">Amount (Birr) *</Label>
+            <Label htmlFor="amount">{fin.amountBirr}</Label>
             <Input
               id="amount"
               type="number"
@@ -114,12 +117,12 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
 
           {isTransfer && (
             <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/20">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank-to-bank transfer</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{fin.bankToBankTransfer}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label>From account *</Label>
+                  <Label>{fin.fromAccount}</Label>
                   <Select value={formData.fromAccount} onValueChange={(v) => setFormData({ ...formData, fromAccount: v })}>
-                    <SelectTrigger><SelectValue placeholder="Source account" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={fin.fromAccountPlaceholder} /></SelectTrigger>
                     <SelectContent>
                       {(moduleCfg.options.bankAccounts ?? []).map((b) => (
                         <SelectItem key={b} value={b}>{b}</SelectItem>
@@ -128,9 +131,9 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
                   </Select>
                 </div>
                 <div>
-                  <Label>To account *</Label>
+                  <Label>{fin.toAccount}</Label>
                   <Select value={formData.toAccount} onValueChange={(v) => setFormData({ ...formData, toAccount: v })}>
-                    <SelectTrigger><SelectValue placeholder="Destination account" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={fin.toAccountPlaceholder} /></SelectTrigger>
                     <SelectContent>
                       {(moduleCfg.options.bankAccounts ?? []).map((b) => (
                         <SelectItem key={b} value={b}>{b}</SelectItem>
@@ -140,12 +143,12 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
                 </div>
               </div>
               <div>
-                <Label>Receipt / screenshot</Label>
+                <Label>{fin.receiptScreenshot}</Label>
                 <CloudinaryImageUpload
                   value={formData.receiptUrl}
                   onChange={(url) => setFormData({ ...formData, receiptUrl: url })}
                   folder="mahibere-ahaw/receipts"
-                  label="Attach receipt"
+                  label={fin.attachReceipt}
                   variant="wide"
                 />
               </div>
@@ -161,29 +164,29 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
           </div>
 
           <div>
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">{fin.descriptionRequired}</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter transaction description"
+              placeholder={fin.descriptionPlaceholder}
               rows={3}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="category">Category (Optional)</Label>
+            <Label htmlFor="category">{fin.categoryOptional}</Label>
             <Input
               id="category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="e.g., Utilities, Salaries, Donations"
+              placeholder={fin.categoryPlaceholder}
             />
           </div>
 
           <div>
-            <Label>Attachments (Optional)</Label>
+            <Label>{fin.attachmentsOptional}</Label>
             <p className="text-sm text-muted-foreground mb-2">
               Attach receipts, invoices, or supporting documents
             </p>
@@ -197,8 +200,8 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
 
           <div>
             <RecipientSelector
-              label="Send to (Optional)"
-              placeholder="Select Memriyas to send this transaction to..."
+              label={fin.sendToOptional}
+              placeholder={fin.sendToPlaceholder}
               hierarchyLevel="Memriya"
               value={formData.recipients}
               onChange={(recipients) => setFormData({ ...formData, recipients })}

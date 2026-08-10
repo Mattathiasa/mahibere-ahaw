@@ -62,7 +62,14 @@ export const EMPLOYMENT_TYPES = ['FullTime', 'PartTime', 'Contract', 'Volunteer'
 export const EMPLOYEE_CATEGORIES = ['Priest', 'Staff'] as const;
 
 /** `TeachingRecord.status` — src/types/index.ts */
-export const TEACHING_STATUSES = ['Draft', 'Published', 'Archived'] as const;
+export const TEACHING_STATUSES = [
+  'Draft',
+  'Published',
+  'Archived',
+  'Scheduled',
+  'Completed',
+  'Cancelled',
+] as const;
 
 /** `Budget.status` — src/services/finance.ts */
 export const BUDGET_STATUSES = ['Active', 'Completed'] as const;

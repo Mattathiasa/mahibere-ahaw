@@ -9,12 +9,16 @@ import { FileText, Plus, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { createRequisitionVoucher, getRequisitions, updateRequisitionStatus, RequisitionVoucher } from '@/services/finance';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface VoucherRequisitionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function VoucherRequisitionDialog({ open, onOpenChange }: VoucherRequisitionDialogProps) {
+  const { t } = useLanguage();
+  const fin = t.finance;
+  const f = t.forms;
   const [requisitions, setRequisitions] = useState<RequisitionVoucher[]>([]);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -37,7 +41,7 @@ export function VoucherRequisitionDialog({ open, onOpenChange }: VoucherRequisit
 
   const handleCreate = async () => {
     if (!requestedBy.trim() || amount <= 0 || !purpose.trim()) {
-      toast.error('Please fill requested by, purpose, and amount');
+      toast.error(fin.voucherMissingFields);
       return;
     }
 
@@ -56,7 +60,7 @@ export function VoucherRequisitionDialog({ open, onOpenChange }: VoucherRequisit
       setShowCreate(false);
       loadRequisitions();
     } catch (err) {
-      toast.error('Failed to create requisition');
+      toast.error(fin.voucherFailed);
     }
   };
 
@@ -78,31 +82,31 @@ export function VoucherRequisitionDialog({ open, onOpenChange }: VoucherRequisit
 
         {showCreate ? (
           <div className="space-y-4 py-2 border p-4 rounded-2xl bg-slate-50 dark:bg-slate-900">
-            <h4 className="font-bold text-sm text-purple-600">New Requisition Voucher Request</h4>
+            <h4 className="font-bold text-sm text-purple-600">{fin.newVoucherRequest}</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Requested By *</Label>
-                <Input value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} placeholder="Requester Name" />
+                <Label className="text-xs font-bold">{fin.requestedBy}</Label>
+                <Input value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} placeholder={fin.requesterNamePlaceholder} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Department</Label>
+                <Label className="text-xs font-bold">{f.department}</Label>
                 <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs font-bold">Purpose / Details *</Label>
-                <Input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Purpose of expenditure" />
+                <Label className="text-xs font-bold">{fin.purposeDetails}</Label>
+                <Input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={fin.purposePlaceholder} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Amount (ETB) *</Label>
+                <Label className="text-xs font-bold">{fin.amountEtb}</Label>
                 <Input type="number" value={amount || ''} onChange={(e) => setAmount(Number(e.target.value))} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-bold">Date (Ethiopian Calendar)</Label>
+                <Label className="text-xs font-bold">{fin.dateEthiopian}</Label>
                 <EthiopianDatePicker value={dateIso} onChange={(iso, eth) => { setDateIso(iso); setEthFormatted(eth); }} />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>{t.common.cancel}</Button>
               <Button size="sm" onClick={handleCreate} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">
                 Submit Requisition
               </Button>
@@ -110,7 +114,7 @@ export function VoucherRequisitionDialog({ open, onOpenChange }: VoucherRequisit
           </div>
         ) : (
           <div className="flex justify-between items-center pt-2">
-            <h4 className="font-bold text-sm text-slate-700 dark:text-slate-300">Payment Vouchers History</h4>
+            <h4 className="font-bold text-sm text-slate-700 dark:text-slate-300">{fin.voucherHistory}</h4>
             <Button size="sm" onClick={() => setShowCreate(true)} className="bg-purple-600 hover:bg-purple-700 text-white font-bold gap-1">
               <Plus className="h-4 w-4" /> Request Requisition
             </Button>
@@ -120,7 +124,7 @@ export function VoucherRequisitionDialog({ open, onOpenChange }: VoucherRequisit
         {/* Requisitions List */}
         <div className="space-y-3 py-2">
           {requisitions.length === 0 ? (
-            <p className="text-center py-8 text-xs text-muted-foreground">No requisition vouchers requested yet.</p>
+            <p className="text-center py-8 text-xs text-muted-foreground">{fin.noVouchers}</p>
           ) : (
             requisitions.map((req) => (
               <div key={req.id} className="border p-4 rounded-xl space-y-2 bg-white dark:bg-[#0D2440]">
@@ -154,7 +158,7 @@ export function VoucherRequisitionDialog({ open, onOpenChange }: VoucherRequisit
         </div>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={() => onOpenChange(false)}>{t.admin.close}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

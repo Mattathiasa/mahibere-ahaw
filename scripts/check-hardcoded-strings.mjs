@@ -77,6 +77,14 @@ const JSX_TEXT = />([^<>{}\n]*[A-Za-z]{3,}[^<>{}\n]*)</g;
 const LABEL_PROP =
   /(?:^|[{,[])\s*(?:label|description|desc|title|name|nameEn|placeholder|hint|message|summary|group|learnMore|headerTitle|headerDescription)\s*:\s*(["'])(.*?)\1/g;
 /**
+ * `'Sunday School': 'ministrySundaySchool',` — a persisted token mapped to its
+ * translation key. Both halves are identifiers, not copy: the left is a value
+ * stored in Firestore and deliberately not translated, the right is the key
+ * that carries the translation.
+ */
+const TOKEN_KEY_MAP = /^\s*(["'])[^"']+\1\s*:\s*(["'])[a-z][A-Za-z0-9]*\2\s*,?\s*$/;
+
+/**
  * A bare quoted string on its own line — an element of a prose array such as
  * `churchStructure`'s per-body list of duties, which renders straight to the
  * Hierarchy page.
@@ -103,14 +111,29 @@ function isTranslated(line) {
   );
 }
 
+/**
+ * `const SERVICE_TYPES: TeachingServiceType[] = [ ... ]` — a type-annotated
+ * array of persisted tokens. The annotation is the signal: these are values
+ * written to Firestore, deliberately spelled in English forever, and their
+ * display labels live in the dictionary keyed by the token.
+ */
+const TOKEN_ARRAY_OPEN = /^\s*(?:export\s+)?const \w+\s*:\s*\w+\[\]\s*=\s*\[\s*$/;
+
 function scan(source) {
   const findings = [];
   const lines = source.split('\n');
+  let inTokenArray = false;
 
   lines.forEach((line, i) => {
+    if (inTokenArray) {
+      if (/^\s*\]/.test(line)) inTokenArray = false;
+      return;
+    }
+    if (TOKEN_ARRAY_OPEN.test(line)) { inTokenArray = true; return; }
     const trimmed = line.trim();
     if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return;
     if (isTranslated(line)) return;
+    if (TOKEN_KEY_MAP.test(line)) return;
 
     const add = (text) => {
       if (isProse(text)) findings.push({ line: i + 1, text: text.trim() });

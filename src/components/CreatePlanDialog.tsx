@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Loader2 } from 'lucide-react';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TIMEFRAMES, timeframeLabel } from '@/i18n/enums';
 interface CreatePlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -16,6 +18,8 @@ interface CreatePlanDialogProps {
 }
 
 export function CreatePlanDialog({ open, onOpenChange, onSubmit, isLoading }: CreatePlanDialogProps) {
+  const { t } = useLanguage();
+  const f = t.forms;
   const [formData, setFormData] = useState({
     name: '',
     timeframe: 'Monthly' as 'Weekly' | 'Monthly' | 'Annually',
@@ -33,23 +37,23 @@ export function CreatePlanDialog({ open, onOpenChange, onSubmit, isLoading }: Cr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Plan</DialogTitle>
-          <DialogDescription>Add a new plan with optional document attachments</DialogDescription>
+          <DialogTitle>{f.createNewPlan}</DialogTitle>
+          <DialogDescription>{f.createNewPlanDesc}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Plan Name *</Label>
+            <Label htmlFor="name">{f.planNameRequired}</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter plan name"
+              placeholder={f.planNamePlaceholder}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="timeframe">Timeframe *</Label>
+            <Label htmlFor="timeframe">{f.timeframeRequired}</Label>
             <Select
               value={formData.timeframe}
               onValueChange={(value: any) => setFormData({ ...formData, timeframe: value })}
@@ -58,27 +62,27 @@ export function CreatePlanDialog({ open, onOpenChange, onSubmit, isLoading }: Cr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Weekly">Weekly</SelectItem>
-                <SelectItem value="Monthly">Monthly</SelectItem>
-                <SelectItem value="Annually">Annually</SelectItem>
+                {TIMEFRAMES.map((v) => (
+                  <SelectItem key={v} value={v}>{timeframeLabel(t, v)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="details">Details *</Label>
+            <Label htmlFor="details">{f.detailsRequired}</Label>
             <Textarea
               id="details"
               value={formData.details}
               onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-              placeholder="Enter plan details"
+              placeholder={f.detailsPlaceholder}
               rows={4}
               required
             />
           </div>
 
           <div>
-            <Label>Attachments (Optional)</Label>
+            <Label>{f.attachments}</Label>
             <FileUpload
               value={formData.attachments}
               onChange={(files) => setFormData({ ...formData, attachments: files })}

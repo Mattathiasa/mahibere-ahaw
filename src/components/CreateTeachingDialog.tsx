@@ -325,7 +325,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                         />
                                         {formData.featuredImage && (
                                             <div className="mt-2 h-40 w-full bg-muted rounded-md overflow-hidden relative">
-                                                <img src={formData.featuredImage} alt="Preview" className="w-full h-full object-cover" />
+                                                <img src={formData.featuredImage} alt={c.preview} className="w-full h-full object-cover" />
                                             </div>
                                         )}
                                     </div>
@@ -462,7 +462,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                         <Label>{c.relatedResources}</Label>
                                         <div className="flex gap-2 items-end">
                                             <div className="space-y-1 flex-1">
-                                                <span className="text-xs text-muted-foreground">Title</span>
+                                                <span className="text-xs text-muted-foreground">{c.resourceTitle}</span>
                                                 <Input
                                                     value={tempResource.title}
                                                     onChange={(e) => setTempResource({ ...tempResource, title: e.target.value })}
