@@ -43,6 +43,9 @@ const SAME_IN_BOTH_LANGUAGES = new Set<string>([
   'people.personEmailExample', // abebe@example.com
   'people.usernameExample', // abebe.k — a username, not words
   'people.usernameExampleShort', // john.doe — likewise
+  // A role key the admin types verbatim into a code field; it is an
+  // identifier the system stores, not a word.
+  'admin.roleKeyExample', // AtbiyaSecretary
 ]);
 
 describe('translation tree shape', () => {

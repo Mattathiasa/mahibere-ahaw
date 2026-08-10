@@ -384,10 +384,10 @@ const SoftwareControl: React.FC = () => {
                     <div className="flex flex-col gap-0.5">
                       <button onClick={() => moveRole(i, -1)} disabled={i === 0}
                         className="text-[10px] leading-none px-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                        aria-label="Move up">▲</button>
+                        aria-label={a.scMoveUp}>▲</button>
                       <button onClick={() => moveRole(i, 1)} disabled={i === roles.length - 1}
                         className="text-[10px] leading-none px-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                        aria-label="Move down">▼</button>
+                        aria-label={a.scMoveDown}>▼</button>
                     </div>
                     <div className="flex-1 min-w-[200px]">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -401,13 +401,13 @@ const SoftwareControl: React.FC = () => {
                             <Lock className="h-2.5 w-2.5" /> Built-in
                           </Badge>
                         )}
-                        {!role.active && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
+                        {!role.active && <Badge variant="outline" className="text-[10px]">{a.scInactive}</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground">{role.description}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-[10px] capitalize">{role.scope}</Badge>
-                      {role.isAdmin && <Badge className="text-[10px]">Admin</Badge>}
+                      {role.isAdmin && <Badge className="text-[10px]">{a.scAdmin}</Badge>}
                       {role.canApproveMembers && (
                         <Badge variant="secondary" className="text-[10px]">{a.scApprover}</Badge>
                       )}

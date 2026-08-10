@@ -162,7 +162,7 @@ const ModuleConfigPage: React.FC = () => {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{a.description}</Label>
-                      <Textarea rows={2} value={mod.headerDescription} placeholder="(translated default)"
+                      <Textarea rows={2} value={mod.headerDescription} placeholder={a.translatedDefault}
                         onChange={(e) => patch(m.key, (x) => ({ ...x, headerDescription: e.target.value }))} />
                     </div>
                   </CardContent>
@@ -186,7 +186,7 @@ const ModuleConfigPage: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>{a.mcFormFields}</CardTitle>
-                    <CardDescription>Toggle which fields appear and whether they're required.</CardDescription>
+                    <CardDescription>{a.mcFieldsHint}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {mod.fields.map((f, i) => (
@@ -222,7 +222,7 @@ const ModuleConfigPage: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>{a.mcOptionLists}</CardTitle>
-                    <CardDescription>The selectable values used by this module's dropdowns.</CardDescription>
+                    <CardDescription>{a.mcOptionsHint}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     {Object.entries(mod.options).map(([listName, values]) => (

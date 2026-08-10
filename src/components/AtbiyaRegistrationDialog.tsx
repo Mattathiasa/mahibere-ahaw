@@ -162,7 +162,7 @@ export const AtbiyaRegistrationDialog: React.FC<AtbiyaRegistrationDialogProps> =
 
             <AtbiyaAdminFields draft={admin} setDraft={setAdmin} disabled={saving} />
 
-            <Field label="Role" hint="Determines what this account can do. Parish-level roles can approve their own members.">
+            <Field label={t.admin.role} hint={t.admin.roleDeterminesAccess}>
               <Select value={roleKey} onValueChange={setRoleKey} disabled={saving}>
                 <SelectTrigger><SelectValue placeholder={a.selectRole} /></SelectTrigger>
                 <SelectContent>
@@ -188,7 +188,7 @@ export const AtbiyaRegistrationDialog: React.FC<AtbiyaRegistrationDialogProps> =
               <ArrowLeft className="h-4 w-4 mr-1" /> Back
             </Button>
           ) : (
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button variant="outline" onClick={onClose}>{t.common.cancel}</Button>
           )}
           {step === 1 ? (
             <Button onClick={goToAdminStep}>

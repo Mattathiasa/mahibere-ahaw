@@ -320,11 +320,11 @@ const MobileControl: React.FC = () => {
                       <thead>
                         <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
                           <th className="py-2 pr-4">{a.scColUser}</th>
-                          <th className="py-2 pr-4">Level</th>
-                          <th className="py-2 pr-4">Device</th>
-                          <th className="py-2 pr-4">App</th>
-                          <th className="py-2 pr-4">Sessions</th>
-                          <th className="py-2">Last seen</th>
+                          <th className="py-2 pr-4">{a.mobColLevel}</th>
+                          <th className="py-2 pr-4">{a.mobColDevice}</th>
+                          <th className="py-2 pr-4">{a.mobColApp}</th>
+                          <th className="py-2 pr-4">{a.mobColSessions}</th>
+                          <th className="py-2">{a.mobColLastSeen}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -349,7 +349,7 @@ const MobileControl: React.FC = () => {
                                 <span className={outdated ? 'text-red-600 font-semibold' : ''}>
                                   {r.appVersion ?? '—'}{r.buildNumber ? ` (${r.buildNumber})` : ''}
                                 </span>
-                                {outdated && <div className="text-[10px] text-red-600 uppercase">Outdated</div>}
+                                {outdated && <div className="text-[10px] text-red-600 uppercase">{a.scOutdated}</div>}
                               </td>
                               <td className="py-2.5 pr-4">{r.sessionCount ?? '—'}</td>
                               <td className="py-2.5">{formatWhen(formatDateTime, r.lastSeen)}</td>

@@ -162,11 +162,11 @@ const Hierarchy = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Structures', val: String(totalStructures), sub: 'Bodies in the org chart' },
-          { label: 'Governing Document', val: 'ቁ. 001/2018', sub: '5th revised bylaws' },
-          { label: 'Top Body', val: 'ሲኖዶስ', sub: 'Supreme assembly' },
+          { label: tree.pages.hierStructures, val: String(totalStructures), sub: tree.pages.hierBodiesInChart },
+          { label: tree.pages.hierGoverningDocument, val: 'ቁ. 001/2018', sub: tree.pages.hierFifthRevision },
+          { label: tree.pages.hierTopBody, val: 'ሲኖዶስ', sub: tree.pages.hierSupremeAssembly },
           {
-            label: 'Registered Congregations',
+            label: tree.pages.hierRegisteredCongregations,
             val: parishesLoading ? '…' : String(parishes.length),
             sub: 'አጥቢያ — live in the registry',
           },
@@ -203,11 +203,11 @@ const Hierarchy = () => {
         </div>
 
         {parishesLoading ? (
-          <p className="text-sm text-muted-foreground">Loading congregations…</p>
+          <p className="text-sm text-muted-foreground">{tree.pages.hierLoadingCongregations}</p>
         ) : parishes.length === 0 ? (
           <Card className="rounded-2xl border-dashed p-8 text-center bg-white/40 dark:bg-slate-900/40">
             <Church className="h-8 w-8 mx-auto mb-3 opacity-40" />
-            <p className="font-semibold">No congregations registered yet</p>
+            <p className="font-semibold">{tree.pages.hierNoCongregations}</p>
             <p className="text-sm text-muted-foreground">
               A super admin can add them in Software Control → Congregation Registry.
             </p>

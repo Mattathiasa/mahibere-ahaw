@@ -113,7 +113,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
       })}
 
       <div className="flex flex-wrap gap-2 pt-2 items-center">
-        <span className="text-xs text-muted-foreground mr-1">Reset a role to defaults:</span>
+        <span className="text-xs text-muted-foreground mr-1">{t.admin.resetRoleHint}</span>
         {roles
           .filter((r) => DEFAULT_ROLE_PERMISSIONS[r.key])
           .map((role) => (

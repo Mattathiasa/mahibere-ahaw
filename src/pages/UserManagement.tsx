@@ -23,6 +23,7 @@ import { InviteUsersDialog } from '@/components/InviteUsersDialog';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 import { useFormatters } from '@/lib/formatters';
+import { ETHIOPIAN_REGIONS } from '@/types';
 interface UserFormData {
   username: string;
   password: string;
@@ -58,19 +59,9 @@ interface EntityFormData {
   location: string;
 }
 
-const ETHIOPIAN_REGIONS = [
-  "Addis Ababa",
-  "Afar",
-  "Amhara",
-  "Benishangul-Gumuz",
-  "Dire Dawa",
-  "Gambela",
-  "Harari",
-  "Oromia",
-  "Sidama",
-  "Somali",
-  "Tigray"
-];
+// Regions come from the canonical list in src/types; this file used to keep a
+// second copy of the names in English.
+const REGIONS = ETHIOPIAN_REGIONS;
 
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
@@ -839,8 +830,8 @@ const UserManagement = () => {
                         <SelectContent>
                           <SelectItem value="Administrator">{pe.roleAdministrator}</SelectItem>
                           <SelectItem value="Secretary">{pe.roleSecretary}</SelectItem>
-                          <SelectItem value="FinanceHead">Finance Head</SelectItem>
-                          <SelectItem value="DepartmentHead">Department Head</SelectItem>
+                          <SelectItem value="FinanceHead">{pe.roleFinanceHead}</SelectItem>
+                          <SelectItem value="DepartmentHead">{pe.roleDepartmentHead}</SelectItem>
                           <SelectItem value="Staff">{pe.roleStaff}</SelectItem>
                         </SelectContent>
                       </Select>
@@ -954,7 +945,7 @@ const UserManagement = () => {
                         <SelectValue placeholder={a.selectRegion} />
                       </SelectTrigger>
                       <SelectContent>
-                        {ETHIOPIAN_REGIONS.map((region) => (
+                        {REGIONS.map((region) => (
                           <SelectItem key={region} value={region}>
                             {region}
                           </SelectItem>
@@ -1304,8 +1295,8 @@ const UserManagement = () => {
                     <SelectContent>
                       <SelectItem value="Administrator">{pe.roleAdministrator}</SelectItem>
                       <SelectItem value="Secretary">{pe.roleSecretary}</SelectItem>
-                      <SelectItem value="FinanceHead">Finance Head</SelectItem>
-                      <SelectItem value="DepartmentHead">Department Head</SelectItem>
+                      <SelectItem value="FinanceHead">{pe.roleFinanceHead}</SelectItem>
+                      <SelectItem value="DepartmentHead">{pe.roleDepartmentHead}</SelectItem>
                       <SelectItem value="Staff">{pe.roleStaff}</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1391,7 +1382,7 @@ const UserManagement = () => {
                     <SelectValue placeholder={a.selectRegion} />
                   </SelectTrigger>
                   <SelectContent>
-                    {ETHIOPIAN_REGIONS.map((region) => (
+                    {REGIONS.map((region) => (
                       <SelectItem key={region} value={region}>
                         {region}
                       </SelectItem>

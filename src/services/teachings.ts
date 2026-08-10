@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import {
     collection, getDocs, getDoc, doc,
     addDoc, updateDoc, deleteDoc,
@@ -27,7 +28,7 @@ export const teachingService = {
     async getTeachingById(id: string) {
         const snap = await getDoc(doc(db, 'teachings', id));
         if (snap.exists()) return { id: snap.id, _id: snap.id, ...snap.data() };
-        throw new Error('Teaching not found');
+        throw new AppError('teachingNotFound');
     },
 
     async createTeaching(data: CreateTeachingData) {

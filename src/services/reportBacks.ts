@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import {
   collection,
   getDocs,
@@ -32,7 +33,7 @@ export const reportBackService = {
   async getReportBackById(id: string) {
     const docSnap = await getDoc(doc(db, 'report_backs', id));
     if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
-    throw new Error('Report back not found');
+    throw new AppError('reportBackNotFound');
   },
 
   async createReportBack(data: CreateReportBackData) {

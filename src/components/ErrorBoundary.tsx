@@ -11,6 +11,19 @@ interface State {
   error?: Error;
 }
 
+/**
+ * This screen stays in English, deliberately.
+ *
+ * Two reasons, both structural. It is a class component, so it cannot call
+ * `useLanguage()` at all. And it is the boundary that catches a crash anywhere
+ * below it — including inside LanguageProvider itself — so at the moment it
+ * renders, the translation context may be exactly the thing that failed.
+ * Reaching for a translation here risks throwing inside the error handler and
+ * replacing a readable error screen with a blank page.
+ *
+ * The refresh button below it is what a reader actually needs, and that is
+ * understood from the icon and position rather than the words.
+ */
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false

@@ -384,11 +384,11 @@ const Announcements = () => {
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-title">{t('title')} *</Label>
-              <Input id="edit-title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter announcement title" required />
+              <Input id="edit-title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={pg.announcementTitlePlaceholder} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-content">{t('description')} *</Label>
-              <Textarea id="edit-content" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} placeholder="Enter announcement content" rows={6} required />
+              <Textarea id="edit-content" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} placeholder={pg.announcementContentPlaceholder} rows={6} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-expiresAt">{t('expirationDate')}</Label>

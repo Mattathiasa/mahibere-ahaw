@@ -58,6 +58,15 @@ export const errorsEn = {
   // ── Membership requests ───────────────────────────────────────────────────
   requestGone: 'This request no longer exists.',
   requestAlreadyDecided: 'This request was already decided by someone else.',
+  transactionNotFound: 'That transaction no longer exists.',
+  budgetNotFound: 'That budget no longer exists.',
+  announcementNotFound: 'That announcement no longer exists.',
+  meetingNotFound: 'That meeting no longer exists.',
+  planNotFound: 'That plan no longer exists.',
+  reportNotFound: 'That report no longer exists.',
+  reportBackNotFound: 'That feedback no longer exists.',
+  teachingNotFound: 'That teaching no longer exists.',
+  cloudinaryNotConfigured: 'Image uploads are not set up yet. An administrator needs to add the Cloudinary cloud name and upload preset first.',
 };
 
 /**
@@ -104,6 +113,15 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
 
   requestGone: 'ይህ ጥያቄ ከእንግዲህ የለም።',
   requestAlreadyDecided: 'በዚህ ጥያቄ ላይ ሌላ ሰው አስቀድሞ ወስኗል።',
+  transactionNotFound: 'ያ ግብይት ከእንግዲህ የለም።',
+  budgetNotFound: 'ያ በጀት ከእንግዲህ የለም።',
+  announcementNotFound: 'ያ ማስታወቂያ ከእንግዲህ የለም።',
+  meetingNotFound: 'ያ ስብሰባ ከእንግዲህ የለም።',
+  planNotFound: 'ያ ዕቅድ ከእንግዲህ የለም።',
+  reportNotFound: 'ያ ሪፖርት ከእንግዲህ የለም።',
+  reportBackNotFound: 'ያ አስተያየት ከእንግዲህ የለም።',
+  teachingNotFound: 'ያ ትምህርት ከእንግዲህ የለም።',
+  cloudinaryNotConfigured: 'የምስል መጫኛ ገና አልተዘጋጀም። አስተዳዳሪ መጀመሪያ የCloudinary የክላውድ ስምና የመጫኛ ቅድመ ቅንብር መጨመር አለበት።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

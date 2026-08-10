@@ -423,6 +423,44 @@ export const pagesEn = {
   pendingSentGeneric: 'Your membership request has been sent to your congregation. Once they approve it you will be able to sign in with the username and password you just chose.',
   /** `{email}` is the address the reset link went to. */
   resetLinkSent: 'If an account exists for {email}, a reset link is on its way. Check the inbox and the spam folder.',
+
+  // ── Hierarchy ─────────────────────────────────────────────────────────────
+  hierStructures: 'Structures',
+  hierGoverningDocument: 'Governing document',
+  hierTopBody: 'Top body',
+  hierRegisteredCongregations: 'Registered congregations',
+  hierLoadingCongregations: 'Loading congregations…',
+  hierNoCongregations: 'No congregations registered yet',
+
+  // ── News manager ──────────────────────────────────────────────────────────
+  nmSubtitle: 'Church news and updates.',
+  nmSearchPosts: 'Search posts…',
+  nmUntitled: 'Untitled',
+  nmViewOnSite: 'View on site',
+  nmUnpublish: 'Unpublish',
+  nmPublish: 'Publish',
+
+  // ── Permission control ────────────────────────────────────────────────────
+  pcCurrentRoles: 'Current roles',
+  pcSelectUser: 'Select a user to manage their permissions',
+  pcLegendGranted: 'Green = granted',
+  pcLegendRevoked: 'Red = revoked',
+  pcLegendInherited: 'Grey = inherited from role',
+  pcRemoveOverride: 'Remove override, revert to role default',
+
+  // ── Church rules (built-in seed titles) ───────────────────────────────────
+  crSundayWorship: 'Sunday worship',
+  crMembershipConduct: 'Membership conduct',
+  crTithe: 'Tithe (Asrat)',
+  crReportingDirective: 'Reporting directive',
+  crCommunicationProtocol: 'Communication protocol',
+  crMinistryConduct: 'Ministry conduct',
+  crFinancialAccountability: 'Financial accountability',
+  crAssetStewardship: 'Asset stewardship',
+  hierBodiesInChart: 'Bodies in the org chart',
+  hierFifthRevision: '5th revised bylaws',
+  hierSupremeAssembly: 'Supreme assembly',
+  hierFromRegistry: 'From the congregation registry',
 };
 
 /**
@@ -818,6 +856,40 @@ export const pagesAm: Record<keyof typeof pagesEn, string> = {
   pendingApproveNote: ' ዘንድ ነው። ካጸደቁት በኋላ አሁን በመረጡት የተጠቃሚ ስምና የይለፍ ቃል መግባት ይችላሉ።',
   pendingSentGeneric: 'የአባልነት ጥያቄዎ ወደ አጥቢያዎ ተልኳል። ካጸደቁት በኋላ አሁን በመረጡት የተጠቃሚ ስምና የይለፍ ቃል መግባት ይችላሉ።',
   resetLinkSent: 'ለ{email} መለያ ካለ፣ የማደሻ አገናኝ በመንገድ ላይ ነው። ኢሜይልዎንና የአይፈለጌ መልእክት ማህደሩን ይመልከቱ።',
+
+  hierStructures: 'መዋቅሮች',
+  hierGoverningDocument: 'መተዳደሪያ ደንብ',
+  hierTopBody: 'የበላይ አካል',
+  hierRegisteredCongregations: 'የተመዘገቡ አጥቢያዎች',
+  hierLoadingCongregations: 'አጥቢያዎችን በመጫን ላይ…',
+  hierNoCongregations: 'እስካሁን የተመዘገበ አጥቢያ የለም',
+
+  nmSubtitle: 'የቤተ ክርስቲያን ዜናና ዝመናዎች።',
+  nmSearchPosts: 'ጽሑፎችን ይፈልጉ…',
+  nmUntitled: 'ርዕስ የለውም',
+  nmViewOnSite: 'በጣቢያው ላይ ይመልከቱ',
+  nmUnpublish: 'ከህትመት አንሳ',
+  nmPublish: 'አትም',
+
+  pcCurrentRoles: 'የአሁኑ ኃላፊነቶች',
+  pcSelectUser: 'ፈቃዶቻቸውን ለማስተዳደር ተጠቃሚ ይምረጡ',
+  pcLegendGranted: 'አረንጓዴ = የተፈቀደ',
+  pcLegendRevoked: 'ቀይ = የተከለከለ',
+  pcLegendInherited: 'ግራጫ = ከኃላፊነቱ የወረሰ',
+  pcRemoveOverride: 'ተሽሮውን አስወግድ፤ ወደ ኃላፊነቱ ነባሪ መልስ',
+
+  crSundayWorship: 'የእሑድ አምልኮ',
+  crMembershipConduct: 'የአባልነት ሥነ ምግባር',
+  crTithe: 'አሥራት',
+  crReportingDirective: 'የሪፖርት መመሪያ',
+  crCommunicationProtocol: 'የመገናኛ ሥርዓት',
+  crMinistryConduct: 'የአገልግሎት ሥነ ምግባር',
+  crFinancialAccountability: 'የገንዘብ ተጠያቂነት',
+  crAssetStewardship: 'የንብረት መጋቢነት',
+  hierBodiesInChart: 'በመዋቅሩ ውስጥ ያሉ አካላት',
+  hierFifthRevision: '5ኛ ተሻሽሎ የወጣ መተዳደሪያ ደንብ',
+  hierSupremeAssembly: 'የበላይ ጉባኤ',
+  hierFromRegistry: 'ከአጥቢያ መዝገብ',
 };
 
 export const pagesOm: Partial<Record<keyof typeof pagesEn, string>> = {

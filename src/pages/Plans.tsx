@@ -313,7 +313,7 @@ const Plans = () => {
                     <Button
                       variant="outline"
                       className="h-14 flex-1 rounded-2xl bg-[#0D2440] text-white hover:bg-[#1a3a5f] border-none font-black uppercase tracking-widest shadow-xl transition-all hover:scale-[1.02]"
-                      onClick={() => toast.info('{pg.expandingStrategy}')}
+                      onClick={() => toast.info(pg.expandingStrategy)}
                     >
                       Explore Strategy
                     </Button>

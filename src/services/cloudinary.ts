@@ -1,3 +1,4 @@
+import { AppError } from '@/lib/appError';
 // Cloudinary unsigned uploads + transformation helpers.
 // Cloud name & upload preset are admin-entered (siteConfig/integrations) so no
 // secrets live in the codebase. Create an *unsigned* upload preset in your
@@ -25,7 +26,7 @@ export async function uploadToCloudinary(
   resourceType: 'image' | 'auto' | 'raw' = 'image',
 ): Promise<CloudinaryUploadResult> {
   if (!config.cloudName || !config.uploadPreset) {
-    throw new Error('Cloudinary is not configured. Set the cloud name and upload preset first.');
+    throw new AppError('cloudinaryNotConfigured');
   }
   const form = new FormData();
   form.append('file', file);

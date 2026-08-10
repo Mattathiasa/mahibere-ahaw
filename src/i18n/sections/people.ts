@@ -70,6 +70,8 @@ export const peopleEn = {
   interestsPlaceholder: 'Music, IT, Painting...',
   woredaExample: 'Bole',
   subCityExample: 'Bole Sub City',
+  cityAddisAbaba: 'Addis Ababa',
+  cityDireDawa: 'Dire Dawa',
 };
 
 /**
@@ -137,6 +139,8 @@ export const peopleAm: Record<keyof typeof peopleEn, string> = {
   interestsPlaceholder: 'ሙዚቃ፣ አይቲ፣ ሥዕል...',
   woredaExample: 'ቦሌ',
   subCityExample: 'ቦሌ ክፍለ ከተማ',
+  cityAddisAbaba: 'አዲስ አበባ',
+  cityDireDawa: 'ድሬዳዋ',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

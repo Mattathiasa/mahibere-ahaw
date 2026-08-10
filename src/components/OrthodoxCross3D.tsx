@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 /**
  * Interactive 3D Ethiopian Orthodox processional cross — realistic gold,
  * Three.js + GSAP. Drag to rotate (with inertia), wheel/pinch to zoom,
@@ -11,6 +12,7 @@ import gsap from 'gsap';
  * keep the two in sync when changing the model.
  */
 export const OrthodoxCross3D: React.FC<{ className?: string }> = ({ className }) => {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -467,7 +469,7 @@ export const OrthodoxCross3D: React.FC<{ className?: string }> = ({ className })
       ref={canvasRef}
       className={className}
       style={{ width: '100%', height: '100%', display: 'block', touchAction: 'pan-y' }}
-      aria-label="Interactive 3D Ethiopian Orthodox cross"
+      aria-label={t.common.crossAlt}
     />
   );
 };

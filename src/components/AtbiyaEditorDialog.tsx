@@ -6,6 +6,7 @@ import {
 } from '@/services/hierarchy';
 import { AtbiyaForm, type ZoneOption } from '@/components/AtbiyaForm';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -21,6 +22,7 @@ interface AtbiyaEditorDialogProps {
 export const AtbiyaEditorDialog: React.FC<AtbiyaEditorDialogProps> = ({
   open, atbiya, onSaved, onClose,
 }) => {
+  const { t } = useLanguage();
   const [draft, setDraft] = useState<AtbiyaInput>(emptyAtbiya());
   const [zones, setZones] = useState<ZoneOption[]>([]);
   const [woredas, setWoredas] = useState<ZoneOption[]>([]);
@@ -86,7 +88,7 @@ export const AtbiyaEditorDialog: React.FC<AtbiyaEditorDialogProps> = ({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{t.common.cancel}</Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {atbiya ? 'Save parish' : 'Register parish'}

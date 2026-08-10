@@ -48,6 +48,7 @@ const COLOR_CLASSES: Record<string, string> = {
 
 const PermissionControl: React.FC = () => {
   const { t } = useLanguage();
+  const pg = t.pages;
   const a = t.admin;
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -169,7 +170,7 @@ const PermissionControl: React.FC = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              <h1 className="text-lg font-bold">Permission Control</h1>
+              <h1 className="text-lg font-bold">{t.admin.permissionControl}</h1>
             </div>
           </div>
           <Button onClick={handleSave} disabled={saving}>
@@ -220,7 +221,7 @@ const PermissionControl: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-sm font-bold mb-1">Current roles</p>
+                  <p className="text-sm font-bold mb-1">{pg.pcCurrentRoles}</p>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {roles.map((r) => (
                       <Badge key={r.key} variant="outline"
@@ -302,7 +303,7 @@ const PermissionControl: React.FC = () => {
                   <Card className="h-full flex items-center justify-center min-h-[300px]">
                     <div className="text-center text-muted-foreground">
                       <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                      <p className="font-medium">Select a user to manage their permissions</p>
+                      <p className="font-medium">{pg.pcSelectUser}</p>
                     </div>
                   </Card>
                 ) : (
@@ -339,9 +340,9 @@ const PermissionControl: React.FC = () => {
                       </div>
                       <CardDescription className="mt-2">
                         Overrides are applied on top of the <strong>{selectedUser.hierarchyLevel}</strong> role permissions.
-                        <span className="ml-1 text-emerald-600">Green = granted</span>,{' '}
-                        <span className="text-red-600">Red = revoked</span>,{' '}
-                        <span className="text-muted-foreground">Grey = inherited from role</span>.
+                        <span className="ml-1 text-emerald-600">{pg.pcLegendGranted}</span>,{' '}
+                        <span className="text-red-600">{pg.pcLegendRevoked}</span>,{' '}
+                        <span className="text-muted-foreground">{pg.pcLegendInherited}</span>.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -381,7 +382,7 @@ const PermissionControl: React.FC = () => {
                                           <button
                                             onClick={() => setUserPerm(selectedUser.id, perm, undefined)}
                                             className="text-[10px] text-muted-foreground hover:text-primary"
-                                            title="Remove override, revert to role default"
+                                            title={pg.pcRemoveOverride}
                                           >
                                             <RotateCcw className="h-3.5 w-3.5" />
                                           </button>

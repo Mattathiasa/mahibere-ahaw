@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import { localeFor } from '@/lib/ethiopian-calendar';
 import {
   collection,
@@ -70,7 +71,7 @@ export const meetingService = {
   async getMeetingById(id: string) {
     const docSnap = await getDoc(doc(db, 'meetings', id));
     if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
-    throw new Error('Meeting not found');
+    throw new AppError('meetingNotFound');
   },
 
   async createMeeting(data: CreateMeetingData) {

@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import {
   collection,
   getDocs,
@@ -102,7 +103,7 @@ export const getTransactions = async (params?: {
 export const getTransactionById = async (id: string): Promise<FinanceTransaction> => {
   const docSnap = await getDoc(doc(db, 'finance_transactions', id));
   if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() } as any;
-  throw new Error('Transaction not found');
+  throw new AppError('transactionNotFound');
 };
 
 export const updateTransaction = async (id: string, data: Partial<FinanceTransactionInput>): Promise<FinanceTransaction> => {
@@ -150,7 +151,7 @@ export const getBudgets = async (params?: {
 export const getBudgetById = async (id: string): Promise<MonthlyBudget> => {
   const docSnap = await getDoc(doc(db, 'finance_budgets', id));
   if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() } as any;
-  throw new Error('Budget not found');
+  throw new AppError('budgetNotFound');
 };
 
 export const updateBudget = async (id: string, data: Partial<MonthlyBudgetInput>): Promise<MonthlyBudget> => {

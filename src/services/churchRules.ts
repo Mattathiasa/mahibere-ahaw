@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import type { Language } from '@/i18n/translations';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // ─── Church Rules (Hige Denb), three categories ──────────────────────────────
@@ -17,7 +18,7 @@ export interface ChurchRulesData {
   meta?: { updatedAt?: string; updatedBy?: string };
 }
 
-export const DEFAULT_CHURCH_RULES: ChurchRulesData = {
+const RULES_EN: ChurchRulesData = {
   denb: [
     { title: 'Sunday Worship', content: 'All members are expected to attend Sunday worship services regularly with devotion and humility.' },
     { title: 'Membership Conduct', content: 'Members must uphold spiritual and moral purity in personal and public life, honoring the hierarchy and spiritual leadership.' },
@@ -33,6 +34,43 @@ export const DEFAULT_CHURCH_RULES: ChurchRulesData = {
     { title: 'Asset Stewardship', content: 'Church funds, property, and sacred items must be handled with care; misuse is strictly prohibited.' },
   ],
 };
+
+const RULES_AM: ChurchRulesData = {
+  denb: [
+    { title: 'የእሑድ አምልኮ', content: 'አባላት ሁሉ በእሑድ የአምልኮ ሥርዓት ላይ በተመስጦና በትሕትና በመደበኛነት እንዲገኙ ይጠበቃል።' },
+    { title: 'የአባልነት ሥነ ምግባር', content: 'አባላት በግልና በሕዝብ ሕይወታቸው መንፈሳዊና ሥነ ምግባራዊ ንጽሕናን መጠበቅ፣ እርከኑንና መንፈሳዊ አመራሩን ማክበር አለባቸው።' },
+    { title: 'አሥራት', content: 'በታማኝነትና በመደበኛነት የሚሰጥ አሥራት የቤተ ክርስቲያኒቱን ሥራና አገልግሎት ይደግፋል።' },
+  ],
+  memerya: [
+    { title: 'የሪፖርት መመሪያ', content: 'የመምሪያ አባላትና ከዚያ በላይ ያሉ እርከኖች ሁሉ ስለ ተሳትፎ፣ ገንዘብና የአገልግሎት ሂደት መደበኛ ሪፖርት (ሳምንታዊ፣ ወርኃዊ ወይም ዓመታዊ) ማቅረብ አለባቸው።' },
+    { title: 'የመገናኛ ሥርዓት', content: 'ይፋዊ ማስታወቂያ ማውጣት የሚችሉት ከመምሪያ ደረጃና ከዚያ በላይ ያሉ ብቻ ሲሆኑ፣ የተዘረጋውን የትእዛዝ ሰንሰለት መከተል አለባቸው።' },
+    { title: 'የአገልግሎት ሥነ ምግባር', content: 'የአገልግሎት ሠራተኞች ተገቢውን ሥልጠና ማጠናቀቅ፣ በመደበኛነት መገኘትና በተመደቡበት ዘርፍ በንቃት መሳተፍ አለባቸው።' },
+  ],
+  policies: [
+    { title: 'የገንዘብ ተጠያቂነት', content: 'ምርጫ፣ ሹመትና የገንዘብ አስተዳደር የማዕከላዊ ጉባኤውን መመሪያ ይከተላሉ፤ ግልጽነትና መንፈሳዊ ተጠያቂነት የአስተዳደሩ ምሰሶዎች ናቸው።' },
+    { title: 'የንብረት መጋቢነት', content: 'የቤተ ክርስቲያኒቱ ገንዘብ፣ ንብረትና ቅዱሳት ንዋያት በጥንቃቄ መያዝ አለባቸው፤ አላግባብ መጠቀም በጥብቅ የተከለከለ ነው።' },
+  ],
+};
+
+/**
+ * Seed rules per language, mirroring how landingContent and featuresContent
+ * ship their defaults. These are what the church sees until an admin writes
+ * its own in the Church Rules editor, so Amharic — the app default — needs a
+ * real version rather than English standing in.
+ *
+ * Afaan Oromoo and Tigrinya fall back to English rather than to prose nobody
+ * has reviewed.
+ */
+export const DEFAULT_CHURCH_RULES_BY_LANGUAGE: Record<Language, ChurchRulesData> = {
+  en: RULES_EN,
+  am: RULES_AM,
+  om: RULES_EN,
+  ti: RULES_EN,
+};
+
+/** Kept for callers that predate the per-language defaults. */
+export const DEFAULT_CHURCH_RULES = RULES_EN;
+
 
 const REF = () => doc(db, 'siteConfig', 'churchRules');
 

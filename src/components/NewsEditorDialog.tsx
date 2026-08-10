@@ -182,7 +182,7 @@ export const NewsEditorDialog: React.FC<NewsEditorDialogProps> = ({
                 folder="mahibere-ahaw/news"
                 variant="wide"
                 multiple
-                label="{c.addGalleryPhotos}"
+                label={c.addGalleryPhotos}
               />
 
               {images.length > 0 && (

@@ -163,7 +163,7 @@ export const MahderatManager: React.FC<MahderatManagerProps> = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={`${a.nameEnglish} *`}>
           <Input value={draft.name} disabled={saving}
-            onChange={(e) => set('name', e.target.value)} placeholder="Bole Mahedher" />
+            onChange={(e) => set('name', e.target.value)} placeholder={a.mahderNameExample} />
         </Field>
         <Field label={a.nameAmharic}>
           <Input value={draft.nameAmharic ?? ''} disabled={saving}
@@ -185,7 +185,7 @@ export const MahderatManager: React.FC<MahderatManagerProps> = ({
         </Field>
         <Field label={a.leader}>
           <Input value={draft.leaderName ?? ''} disabled={saving}
-            onChange={(e) => set('leaderName', e.target.value)} placeholder="Abebe Kebede" />
+            onChange={(e) => set('leaderName', e.target.value)} placeholder={t.people.personNameExample} />
         </Field>
         <Field label={a.leaderPhone}>
           <Input type="tel" value={draft.leaderPhone ?? ''} disabled={saving}
@@ -194,7 +194,7 @@ export const MahderatManager: React.FC<MahderatManagerProps> = ({
         <Field label={a.landmarkEnglish} hint={a.landmarkHint}>
           <Input value={draft.locationLabel ?? ''} disabled={saving}
             onChange={(e) => set('locationLabel', e.target.value)}
-            placeholder="near Bole Medhanealem" />
+            placeholder={a.landmarkExample} />
         </Field>
         <Field label={a.landmarkAmharic}>
           <Input value={draft.locationLabelAm ?? ''} disabled={saving}

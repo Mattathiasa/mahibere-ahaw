@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Translations } from '@/i18n/translations';
 import {
-  churchRulesService, DEFAULT_CHURCH_RULES,
+  churchRulesService, DEFAULT_CHURCH_RULES_BY_LANGUAGE,
   type ChurchRulesData, type RuleItem,
 } from '@/services/churchRules';
 
@@ -35,11 +35,11 @@ const categories = (
 
 const ChurchLaws = () => {
   const { t } = useTranslation();
-  const { t: tree } = useLanguage();
+  const { t: tree, language } = useLanguage();
   const pg = tree.pages;
   const { user } = useAuth();
   const { isAdminRole, isSuperAdmin } = usePermissions();
-  const [data, setData] = useState<ChurchRulesData>(DEFAULT_CHURCH_RULES);
+  const [data, setData] = useState<ChurchRulesData>(DEFAULT_CHURCH_RULES_BY_LANGUAGE[language]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -98,7 +98,7 @@ const ChurchLaws = () => {
           <div className="flex gap-2">
             {editMode ? (
               <>
-                <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setEditMode(false)}>{tree.common.cancel}</Button>
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                   Save
@@ -136,13 +136,13 @@ const ChurchLaws = () => {
                       {editMode ? (
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <Input value={item.title} placeholder="Title"
+                            <Input value={item.title} placeholder={tree.admin.crFieldTitle}
                               onChange={(e) => updateItem(key, i, 'title', e.target.value)} className="font-bold" />
                             <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeItem(key, i)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                          <Textarea rows={3} value={item.content} placeholder="Content"
+                          <Textarea rows={3} value={item.content} placeholder={tree.admin.crFieldContent}
                             onChange={(e) => updateItem(key, i, 'content', e.target.value)} />
                         </div>
                       ) : (

@@ -187,8 +187,8 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
               </Select>
               <Button onClick={handleSaveStrings} disabled={savingStrings}>
                 {savingStrings
-                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</>
-                  : <><Save className="h-4 w-4 mr-2" />Save</>
+                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t.common.saving}</>
+                  : <><Save className="h-4 w-4 mr-2" />{t.admin.save}</>
                 }
               </Button>
             </div>
@@ -210,7 +210,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
       {/* Info banner */}
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm space-y-1">
         <p className="font-bold">{t.admin.howOverridesWork}</p>
-        <p>The placeholder text shows the current built-in default. Type a new value to override it for <strong>{LANG_LABELS[stringsLang]}</strong>. Clear a field to revert to the default. Changes go live for all users immediately after saving.</p>
+        <p>{t.admin.overridesHelpBefore} <strong>{LANG_LABELS[stringsLang]}</strong>{t.admin.overridesHelpAfter}</p>
       </div>
 
       {/* Sections as tabs */}
@@ -313,7 +313,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
       <div className="flex justify-end">
         <Button onClick={handleSaveStrings} disabled={savingStrings} size="lg">
           {savingStrings
-            ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</>
+            ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t.common.saving}</>
             : <><Save className="h-4 w-4 mr-2" />Save {LANG_LABELS[stringsLang]} Translations</>
           }
         </Button>

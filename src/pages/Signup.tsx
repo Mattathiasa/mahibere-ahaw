@@ -210,7 +210,7 @@ const Signup: React.FC = () => {
 
           <div className="p-6 sm:p-10 space-y-8">
             <div className="text-center space-y-2">
-              <img src={logo} alt="Mahibere Ahaw" className="h-16 w-16 mx-auto" />
+              <img src={logo} alt={t.common.logoAlt} className="h-16 w-16 mx-auto" />
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{tx.title}</h1>
               <p className="text-sm text-muted-foreground max-w-lg mx-auto">
                 {tx.intro}
@@ -241,7 +241,7 @@ const Signup: React.FC = () => {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label={tx.fullNameEnglish} required>
                     <Input value={form.fullNameEnglish} onChange={(e) => set('fullNameEnglish', e.target.value)}
-                      placeholder="Abebe Kebede" />
+                      placeholder={t.people.personNameExample} />
                   </Field>
                   <Field label={tx.fullNameAmharic} required>
                     <Input value={form.fullNameAmharic} onChange={(e) => set('fullNameAmharic', e.target.value)}
@@ -255,7 +255,7 @@ const Signup: React.FC = () => {
                   </Field>
                   <Field label={tx.gender}>
                     <Select value={form.gender} onValueChange={(v) => set('gender', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t.common.selectPlaceholder} /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Male">{tx.male}</SelectItem>
                         <SelectItem value="Female">{tx.female}</SelectItem>
@@ -340,7 +340,7 @@ const Signup: React.FC = () => {
                 {fieldVisible('maritalStatus') && (
                   <Field label={tx.maritalStatus}>
                     <Select value={form.maritalStatus} onValueChange={(v) => set('maritalStatus', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t.common.selectPlaceholder} /></SelectTrigger>
                       <SelectContent>
                         {['Single', 'Married', 'Divorced', 'Widowed'].map((s) => (
                           <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -363,7 +363,7 @@ const Signup: React.FC = () => {
                 <div className="grid sm:grid-cols-3 gap-4">
                   <Field label={tx.region}>
                     <Select value={form.region} onValueChange={(v) => set('region', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t.common.selectPlaceholder} /></SelectTrigger>
                       <SelectContent>
                         {ETHIOPIAN_REGIONS.map((r) => (
                           <SelectItem key={r} value={r}>{r}</SelectItem>
@@ -426,11 +426,11 @@ const Signup: React.FC = () => {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label={tx.username} required>
                     <Input value={form.username} onChange={(e) => set('username', e.target.value)}
-                      autoComplete="username" placeholder="abebe.kebede" />
+                      autoComplete="username" placeholder={t.people.usernameExample} />
                   </Field>
                   <Field label={tx.email} hint={tx.emailHint}>
                     <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)}
-                      autoComplete="email" placeholder="you@example.com" />
+                      autoComplete="email" placeholder={t.forms.emailPlaceholder} />
                   </Field>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">

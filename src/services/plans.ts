@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import {
   collection,
   getDocs,
@@ -46,7 +47,7 @@ export const planService = {
     if (docSnap.exists()) {
       return { id: docSnap.id, ...docSnap.data() };
     }
-    throw new Error('Plan not found');
+    throw new AppError('planNotFound');
   },
 
   async createPlan(data: CreatePlanData) {

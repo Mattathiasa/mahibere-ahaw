@@ -443,7 +443,7 @@ export const AtbiyaAdminsDialog: React.FC<AtbiyaAdminsDialogProps> = ({
               </Field>
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" disabled={saving}
-                  onClick={() => { setAdding(false); setError(null); }}>Cancel</Button>
+                  onClick={() => { setAdding(false); setError(null); }}>{t.common.cancel}</Button>
                 <Button onClick={handleAdd} disabled={saving}>
                   {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {tx.createAccount}
@@ -493,7 +493,7 @@ export const AtbiyaAdminsDialog: React.FC<AtbiyaAdminsDialogProps> = ({
               </Field>
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" disabled={saving}
-                  onClick={() => { setPromoting(false); setError(null); }}>Cancel</Button>
+                  onClick={() => { setPromoting(false); setError(null); }}>{t.common.cancel}</Button>
                 <Button onClick={handlePromote} disabled={saving || !promoteUid}>
                   {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {tx.makeAdministrator}

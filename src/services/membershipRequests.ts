@@ -146,7 +146,7 @@ export const membershipRequestService = {
       if (!snap.exists()) throw new AppError('requestGone');
       const data = snap.data();
       if (data.status !== 'pending') {
-        throw new Error('This request was already decided by someone else.');
+        throw new AppError('requestAlreadyDecided');
       }
       tx.update(ref, {
         status: 'rejected',

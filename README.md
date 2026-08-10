@@ -7,7 +7,7 @@ A modern church management system focused on the home page and login functionali
 - **Home Page**: Beautiful landing page with modern UI, 3D background effects, and responsive design
 - **Login Page**: Secure authentication with elegant design
 - **Theme Support**: Light and dark mode toggle
-- **Multi-language**: English and Amharic language support
+- **Multi-language**: Amharic (default), English, Afaan Oromoo and Tigrinya
 - **Responsive**: Mobile-friendly design
 
 ## Getting Started

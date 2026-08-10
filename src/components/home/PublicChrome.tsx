@@ -64,9 +64,9 @@ export const PublicChrome: React.FC<{ children: React.ReactNode; backTo?: string
             © {new Date().getFullYear()} Mahibere Ahaw
           </span>
           <div className="flex gap-6">
-            <button onClick={() => navigate('/')} className="text-[#2E5E99] hover:underline">Home</button>
-            <button onClick={() => navigate('/news')} className="text-[#2E5E99] hover:underline">News</button>
-            <button onClick={() => navigate('/signup')} className="text-[#2E5E99] hover:underline">Join</button>
+            <button onClick={() => navigate('/')} className="text-[#2E5E99] hover:underline">{t.nav.home}</button>
+            <button onClick={() => navigate('/news')} className="text-[#2E5E99] hover:underline">{t.nav.news}</button>
+            <button onClick={() => navigate('/signup')} className="text-[#2E5E99] hover:underline">{t.common.joinNav}</button>
           </div>
         </div>
       </footer>

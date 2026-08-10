@@ -18,7 +18,7 @@ export function useAuth() {
     mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
     onSuccess: async (data) => {
       queryClient.setQueryData(['currentUser'], data.user);
-      toast.success('Login successful!');
+      toast.success(t.admin.loginSuccessful);
       // Parish administrators land on their own console; everyone else on the
       // dashboard. postLoginPath falls back to /dashboard if anything fails.
       navigate(await postLoginPath(data.user), { replace: true });
@@ -33,7 +33,7 @@ export function useAuth() {
     mutationFn: () => authService.logout(),
     onSuccess: () => {
       queryClient.clear();
-      toast.success('Logged out successfully');
+      toast.success(t.admin.loggedOut);
       navigate('/login', { replace: true });
     },
     onError: () => {

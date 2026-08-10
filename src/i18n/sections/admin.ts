@@ -677,6 +677,7 @@ export const adminEn = {
   // ── Software Control ──────────────────────────────────────────────────────
   scRoleInUse: 'Move those accounts to another role in User Management first — deleting it now would leave them with no permissions.',
   scSavePublish: 'Save & publish',
+  permissionControl: 'Permission Control',
   scPermissionControlDesc: 'Role & per-user permissions',
   scMobileControlDesc: 'Kill switch, versions, flags',
   scSiteContentEditor: 'Site content editor',
@@ -867,6 +868,33 @@ export const adminEn = {
   leSaveCloudinary: 'Save Cloudinary settings',
   leAddLink: 'Add link',
   leCaptionExample: 'Sunday service, Bishoftu',
+
+  // ── Small admin controls ──────────────────────────────────────────────────
+  scInactive: 'Inactive',
+  scAdmin: 'Admin',
+  scOutdated: 'Outdated',
+  mobColLevel: 'Level',
+  mobColDevice: 'Device',
+  mobColApp: 'App',
+  mobColSessions: 'Sessions',
+  mobColLastSeen: 'Last seen',
+  roleDeterminesAccess: 'Determines what this account can do. Parish-level roles can approve their own members.',
+
+  // ── Misc chrome ───────────────────────────────────────────────────────────
+  uploadImage: 'Upload image',
+  somethingWentWrong: 'Something went wrong',
+  verifyingAuth: 'Verifying authentication…',
+  loginSuccessful: 'Signed in.',
+  loggedOut: 'Signed out.',
+  resetRoleHint: 'Reset a role to defaults:',
+  translatedDefault: '(translated default)',
+  mcFieldsHint: "Toggle which fields appear and whether they're required.",
+  mcOptionsHint: "The selectable values used by this module's dropdowns.",
+  crFieldTitle: 'Title',
+  crFieldContent: 'Content',
+  mahderNameExample: 'Bole Mahedher',
+  landmarkExample: 'near Bole Medhanealem',
+  roleKeyExample: 'AtbiyaSecretary',
 };
 
 /**
@@ -1510,6 +1538,7 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
 
   scRoleInUse: 'መጀመሪያ እነዚያን መለያዎች በተጠቃሚ አስተዳደር ውስጥ ወደ ሌላ ኃላፊነት ያዛውሩ — አሁን ቢሰርዙት ምንም ፈቃድ ሳይኖራቸው ይቀራሉ።',
   scSavePublish: 'አስቀምጥና አትም',
+  permissionControl: 'የፈቃድ ቁጥጥር',
   scPermissionControlDesc: 'የኃላፊነትና የግለሰብ ፈቃዶች',
   scMobileControlDesc: 'የማጥፊያ ቁልፍ፣ ስሪቶች፣ ምልክቶች',
   scSiteContentEditor: 'የጣቢያ ይዘት አርታዒ',
@@ -1699,6 +1728,31 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
   leSaveCloudinary: 'የCloudinary ቅንብሮችን አስቀምጥ',
   leAddLink: 'አገናኝ ጨምር',
   leCaptionExample: 'የእሑድ አገልግሎት፣ ቢሾፍቱ',
+
+  scInactive: 'ንቁ ያልሆነ',
+  scAdmin: 'አስተዳዳሪ',
+  scOutdated: 'ጊዜው ያለፈበት',
+  mobColLevel: 'ደረጃ',
+  mobColDevice: 'መሣሪያ',
+  mobColApp: 'መተግበሪያ',
+  mobColSessions: 'ክፍለ ጊዜያት',
+  mobColLastSeen: 'መጨረሻ የታየበት',
+  roleDeterminesAccess: 'ይህ መለያ ምን ማድረግ እንደሚችል ይወስናል። የአጥቢያ ደረጃ ኃላፊነቶች የራሳቸውን አባላት ማጽደቅ ይችላሉ።',
+
+  uploadImage: 'ምስል ጫን',
+  somethingWentWrong: 'የሆነ ችግር ተፈጥሯል',
+  verifyingAuth: 'ማንነትዎን በማረጋገጥ ላይ…',
+  loginSuccessful: 'ገብተዋል።',
+  loggedOut: 'ወጥተዋል።',
+  resetRoleHint: 'ኃላፊነትን ወደ ነባሪ መልስ፦',
+  translatedDefault: '(የተተረጎመ ነባሪ)',
+  mcFieldsHint: 'የትኞቹ መስኮች እንደሚታዩና የግድ መሆን አለመሆናቸውን ይቀያይሩ።',
+  mcOptionsHint: 'በዚህ ክፍል ተቆልቋይ ዝርዝሮች ውስጥ የሚመረጡ እሴቶች።',
+  crFieldTitle: 'ርዕስ',
+  crFieldContent: 'ይዘት',
+  mahderNameExample: 'የቦሌ ማኅደር',
+  landmarkExample: 'ቦሌ መድኃኔዓለም አካባቢ',
+  roleKeyExample: 'AtbiyaSecretary',
 };
 
 /**

@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import {
   collection,
   getDocs,
@@ -52,7 +53,7 @@ export const announcementService = {
     if (docSnap.exists()) {
       return { id: docSnap.id, ...docSnap.data() };
     }
-    throw new Error('Announcement not found');
+    throw new AppError('announcementNotFound');
   },
 
   async createAnnouncement(data: CreateAnnouncementData) {

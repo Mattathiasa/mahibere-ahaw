@@ -262,14 +262,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <div className="relative z-10 w-full h-full p-2.5 bg-white/80 dark:bg-white/10 backdrop-blur-xl rounded-2xl border border-[#2E5E99]/20 shadow-lg flex items-center justify-center">
                   <img
                     src={logo}
-                    alt="Ahaw Logo"
+                    alt={t.common.logoAlt}
                     className="w-full h-full object-contain drop-shadow-md"
                   />
                 </div>
               </div>
               {!isCollapsed && (
                 <>
-                  <h1 className="mt-4 text-center text-2xl font-black text-[#2E5E99] tracking-tighter">MAHIBERE AHAW</h1>
+                  <h1 className="mt-4 text-center text-2xl font-black text-[#2E5E99] tracking-tighter">{t.common.brandName}</h1>
                   <p className={`text-center text-[10px] uppercase tracking-[0.25em] font-bold mt-1 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>
                     Digital Ministry
                   </p>

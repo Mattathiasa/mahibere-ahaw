@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import {
   collection,
   getDocs,
@@ -53,7 +54,7 @@ export const reportService = {
     if (docSnap.exists()) {
       return { id: docSnap.id, ...docSnap.data() };
     }
-    throw new Error('Report not found');
+    throw new AppError('reportNotFound');
   },
 
   async createReport(data: CreateReportData) {

@@ -19,6 +19,17 @@
  * `placeholder=`, `label=`, `toast.error(...)` and `throw new Error(...)`. And
  * `eslint-plugin-react` is not a dependency of this repo.
  *
+ * The baseline bottoms out at 2, not 0, and that is deliberate:
+ *
+ *   - ErrorBoundary's "Something went wrong" — a class component that renders
+ *     when the translation context may itself be what crashed.
+ *   - auth.ts's "Signed out" audit description — the audit log is a record read
+ *     later by whoever is investigating, not UI copy.
+ *
+ * Both carry a comment in their own file explaining why. They are left visible
+ * here rather than hidden in SKIP_PATHS, so the number stays honest: two known
+ * English strings with stated reasons, rather than zero by exclusion.
+ *
  *   node scripts/check-hardcoded-strings.mjs           # check against baseline
  *   node scripts/check-hardcoded-strings.mjs --update  # rewrite the baseline
  *   node scripts/check-hardcoded-strings.mjs --report <file>   # per-file detail
@@ -50,6 +61,10 @@ const SKIP_PATHS = [
   'src/services/landingContent.ts',
   'src/services/featuresContent.ts',
   'src/services/aboutContent.ts',
+  'src/services/churchRules.ts',
+  // The canonical list of persisted values (regions, unions). Tokens, not
+  // copy — their labels live in the `geo` section.
+  'src/types/index.ts',
   // Unreachable. Neither is imported anywhere — Landing.tsx was superseded by
   // Home.tsx and Index.tsx is leftover create-app scaffold ("Welcome to Your
   // Blank App"). Their ~43 English strings cannot render, so translating them
@@ -105,10 +120,24 @@ function isProse(s) {
   if (v.length < 3) return false;
   if (!/[A-Za-z]{3,}/.test(v)) return false;
   if (/[ሀ-፿]/.test(v)) return false; // already Ethiopic
+  // Brand and product names are spelled the same in every language.
+  if (
+    /^(YouTube|Telegram|Facebook|TikTok|Cloudinary|Firebase|Promise|Google|Excel|OpenStreetMap|Mahibere Ahaw|AtbiyaSecretary)$/.test(
+      v
+    )
+  )
+    return false;
   if (/^[a-z0-9-]+$/.test(v)) return false; // slug / css class / id
   if (/^[A-Z_][A-Z0-9_]*$/.test(v)) return false; // CONSTANT
   if (/^(https?:|\/|#|data:|mailto:)/.test(v)) return false; // url or path
   if (/^[\d\s.,:%$-]+$/.test(v)) return false; // numeric
+  // Tailwind class lists: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/30'.
+  if (/^(?:[a-z][\w:/[\].-]*\s*)+$/.test(v) && /-/.test(v)) return false;
+  // CSS values: gradients, calc(), colour functions.
+  if (/^(?:conic|linear|radial)-gradient\(|^calc\(|^rgba?\(/.test(v)) return false;
+  // Developer-only invariants. "useTheme must be used within ThemeProvider"
+  // is a programming error thrown at a developer, never rendered to a reader.
+  if (/^use[A-Z]\w* must be used within/.test(v)) return false;
   return true;
 }
 
@@ -127,7 +156,7 @@ function isTranslated(line) {
  */
 const TOKEN_ARRAY_OPEN = /^\s*(?:export\s+)?const \w+\s*:\s*\w+\[\]\s*=\s*\[\s*$/;
 
-function scan(source) {
+function scan(source, isTsx) {
   const findings = [];
   const lines = source.split('\n');
   let inTokenArray = false;
@@ -151,8 +180,14 @@ function scan(source) {
     for (const m of line.matchAll(TOAST)) add(m[2]);
     for (const m of line.matchAll(THROWN)) add(m[2]);
     // `<code>MapPin</code>` is an identifier the admin must type verbatim.
-    const withoutCode = line.replace(/<code[^>]*>.*?<\/code>/g, '<code/>');
-    for (const m of withoutCode.matchAll(JSX_TEXT)) add(m[1]);
+    // JSX text only in .tsx — in .ts a `>` … `<` span is usually a type
+    // signature fragment like `): Promise<Transaction>`.
+    if (isTsx) {
+      // `as Promise<User[]>` is a type argument, not JSX.
+      if (/\b(?:as|:)\s*\w+</.test(line)) return;
+      const withoutCode = line.replace(/<code[^>]*>.*?<\/code>/g, '<code/>');
+      for (const m of withoutCode.matchAll(JSX_TEXT)) add(m[1]);
+    }
 
     for (const m of line.matchAll(LABEL_PROP)) add(m[2]);
 
@@ -179,7 +214,7 @@ const detail = {};
 for await (const file of walk(join(ROOT, 'src'))) {
   const rel = relative(ROOT, file);
   if (SKIP_PATHS.some((p) => rel.startsWith(p))) continue;
-  const findings = scan(readFileSync(file, 'utf8'));
+  const findings = scan(readFileSync(file, 'utf8'), rel.endsWith('.tsx'));
   if (findings.length) {
     counts[rel] = findings.length;
     detail[rel] = findings;

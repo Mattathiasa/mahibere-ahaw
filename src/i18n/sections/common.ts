@@ -19,6 +19,10 @@ export const commonEn = {
   brandTagline: 'Digital Ministry',
   logoAlt: 'Mahibere Ahaw logo',
   saving: 'Saving…',
+  selectPlaceholder: 'Select',
+  uploadImage2: 'Upload image',
+  joinNav: 'Join',
+  crossAlt: 'Interactive 3D Ethiopian Orthodox cross',
 };
 
 /**
@@ -46,6 +50,10 @@ export const commonAm: Record<keyof typeof commonEn, string> = {
   brandTagline: 'ዲጂታል አገልግሎት',
   logoAlt: 'የማኅበረ አኀው አርማ',
   saving: 'በማስቀመጥ ላይ…',
+  selectPlaceholder: 'ይምረጡ',
+  uploadImage2: 'ምስል ጫን',
+  joinNav: 'ይቀላቀሉ',
+  crossAlt: 'መስተጋብራዊ ባለ3 አቅጣጫ የኢትዮጵያ ኦርቶዶክስ መስቀል',
 };
 
 export const commonOm: Partial<Record<keyof typeof commonEn, string>> = {
@@ -69,6 +77,10 @@ export const commonOm: Partial<Record<keyof typeof commonEn, string>> = {
   brandTagline: 'Tajaajila Dijitaalaa',
   logoAlt: 'Asxaa Mahibere Ahaw',
   saving: 'Olkaa\'amaa jira…',
+  selectPlaceholder: 'Filadhu',
+  uploadImage2: 'Suuraa fe\'i',
+  joinNav: 'Makami',
+  crossAlt: 'Fannoo Ortodoksii Itoophiyaa 3D',
 };
 
 export const commonTi: Partial<Record<keyof typeof commonEn, string>> = {
@@ -92,4 +104,8 @@ export const commonTi: Partial<Record<keyof typeof commonEn, string>> = {
   brandTagline: 'ዲጂታላዊ ኣገልግሎት',
   logoAlt: 'ኣርማ ማሕበረ አኀው',
   saving: 'ይዕቀብ ኣሎ…',
+  selectPlaceholder: 'ምረጽ',
+  uploadImage2: 'ስእሊ ጸዓን',
+  joinNav: 'ተጸምበር',
+  crossAlt: 'መስቀል ኦርቶዶክስ ኢትዮጵያ ብ3ዲ',
 };

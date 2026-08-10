@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Asset } from '@/services/inventory';
 import { Package, MapPin, Tag, Calendar, User, DollarSign, FileText, CheckCircle2 } from 'lucide-react';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface AssetDetailsDialogProps {
   asset: Asset | null;
   open: boolean;
@@ -11,6 +12,7 @@ interface AssetDetailsDialogProps {
 }
 
 export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDialogProps) {
+  const { t } = useLanguage();
   if (!asset) return null;
 
   return (
@@ -96,7 +98,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
         </div>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={() => onOpenChange(false)}>{t.admin.close}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

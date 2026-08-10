@@ -86,6 +86,34 @@ export const REPORT_OPTIONS = ['Memriya', 'Kifil', 'Zerf'] as const;
 /** `Member.maritalStatus` */
 export const MARITAL_STATUSES = ['Single', 'Married', 'Divorced', 'Widowed'] as const;
 
+/**
+ * `Member.region` — src/types/index.ts. Stored geography, so the token stays
+ * English; only the label is translated. The key suffix drops the punctuation
+ * the token carries, so this one needs an explicit map rather than the
+ * spelled-verbatim rule the `status` enums use.
+ */
+export const ETHIOPIAN_REGION_KEYS: Record<string, string> = {
+  'Addis Ababa': 'regionAddisAbaba',
+  Afar: 'regionAfar',
+  Amhara: 'regionAmhara',
+  'Benishangul-Gumuz': 'regionBenishangulGumuz',
+  'Dire Dawa': 'regionDireDawa',
+  Gambela: 'regionGambela',
+  Harari: 'regionHarari',
+  Oromia: 'regionOromia',
+  Sidama: 'regionSidama',
+  Somali: 'regionSomali',
+  'Southern Nations, Nationalities, and Peoples Region': 'regionSnnpr',
+  Tigray: 'regionTigray',
+};
+
+/** A region's name in the reader's language, falling back to the stored token. */
+export function regionLabel(t: Translations, value: string): string {
+  const section = t.geo as unknown as Record<string, string | undefined>;
+  const key = ETHIOPIAN_REGION_KEYS[value];
+  return (key && section[key]) || value;
+}
+
 /** `Member.gender` */
 export const GENDERS = ['Male', 'Female', 'Other'] as const;
 

@@ -405,7 +405,7 @@ const Members = () => {
                 <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 opacity-50" />
-                    <SelectValue placeholder="Gender" />
+                    <SelectValue placeholder={pg.csvGender} />
                   </div>
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-white/40 backdrop-blur-xl">
@@ -422,7 +422,7 @@ const Members = () => {
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">{pg.jurisdictionFilter}</p>
               <Select value={filterHierarchy} onValueChange={setFilterHierarchy}>
                 <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
-                  <SelectValue placeholder="Hierarchy Level" />
+                  <SelectValue placeholder={pg.csvHierarchyLevel} />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-white/40 backdrop-blur-xl max-h-[300px]">
                   <SelectItem value="all" className="rounded-xl font-bold italic">{t('allLevels')}</SelectItem>

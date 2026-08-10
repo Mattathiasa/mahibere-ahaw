@@ -179,7 +179,7 @@ const Login = () => {
             >
               <div className="relative group">
                 <div className="absolute -inset-4 bg-[#2E5E99]/20 rounded-full blur-xl group-hover:bg-[#2E5E99]/30 transition-all duration-500" />
-                <img src={logo} alt="Ahaw Logo" className="h-16 w-16 sm:h-24 sm:w-24 relative z-10 drop-shadow-2xl" />
+                <img src={logo} alt={tree.common.logoAlt} className="h-16 w-16 sm:h-24 sm:w-24 relative z-10 drop-shadow-2xl" />
               </div>
             </motion.div>
 
