@@ -13,6 +13,8 @@ import { useFormatters } from '@/lib/formatters';
 const NewsIndex: React.FC = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const { formatDate } = useFormatters();
   const { theme } = useTheme();
 
@@ -61,7 +63,7 @@ const NewsIndex: React.FC = () => {
               {label}
             </button>
           ))}
-          <Input placeholder="Search news…" value={search} onChange={(e) => setSearch(e.target.value)}
+          <Input placeholder={pg.searchNews} value={search} onChange={(e) => setSearch(e.target.value)}
             className="h-10 max-w-xs ml-auto rounded-xl" />
         </div>
 

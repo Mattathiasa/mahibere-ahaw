@@ -14,6 +14,8 @@ const NewsPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const { formatDateLong } = useFormatters();
   const { theme } = useTheme();
 
@@ -50,7 +52,7 @@ const NewsPostPage: React.FC = () => {
         </div>
       ) : !post || post.status !== 'published' ? (
         <div className="container mx-auto px-6 py-32 text-center space-y-4">
-          <h1 className="text-3xl font-black">Post not found</h1>
+          <h1 className="text-3xl font-black">{pg.postNotFound}</h1>
           <p className="text-muted-foreground">
             This article may have been removed, or is not published yet.
           </p>
@@ -126,7 +128,7 @@ const NewsPostPage: React.FC = () => {
                 ? body.split(/\n{2,}/).map((para, i) => (
                     <p key={i} className="whitespace-pre-line">{para}</p>
                   ))
-                : <p className="italic opacity-60">This post has no content in the selected language.</p>}
+                : <p className="italic opacity-60">{pg.postNoContentInLanguage}</p>}
             </div>
 
             {/* Article Photo Gallery */}

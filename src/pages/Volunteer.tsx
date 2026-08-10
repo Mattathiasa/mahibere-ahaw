@@ -10,28 +10,36 @@ import { toast } from 'sonner';
 import { userService } from '@/services/users';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { LearnMore } from '@/components/LearnMore';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { Translations } from '@/i18n/translations';
 
-const DEFAULT_MINISTRY_DESCRIPTIONS: Record<string, string> = {
-    'Ebet Metreg': 'Help keep the church clean and welcoming.',
-    'Natanim Agelgelot': 'Special service for helping the needy.',
-    'Choir': 'Sing in the church choir.',
-    'Ushering': 'Welcome and guide guests during services.',
-    'Sunday School': 'Teach and fast-track children.',
-    'Charity': 'Community outreach programs.',
-    'Evangelism': 'Spread the gospel in the community.',
-    'Media': 'Help with sound, video, and projection.',
+/**
+ * The ministry name is the value stored on the member's record, so it stays an
+ * English token; only its description is translated. `pages` holds the text.
+ */
+const MINISTRY_DESCRIPTION_KEYS: Record<string, keyof Translations['pages']> = {
+    'Ebet Metreg': 'ministryEbetMetreg',
+    'Natanim Agelgelot': 'ministryNatanimAgelgelot',
+    'Choir': 'ministryChoir',
+    'Ushering': 'ministryUshering',
+    'Sunday School': 'ministrySundayServiceSchool',
+    'Charity': 'ministryCharity',
+    'Evangelism': 'ministryEvangelism',
+    'Media': 'ministryMedia',
 };
 
 const Volunteer = () => {
     const { user } = useAuth();
+    const { t: tree } = useLanguage();
+    const pg = tree.pages;
     const queryClient = useQueryClient();
     const moduleCfg = useModuleConfig('volunteer');
     const [selectedMinistries, setSelectedMinistries] = useState<string[]>(user?.volunteerMinistries || []);
 
-    const ministries = (moduleCfg.options.ministries ?? Object.keys(DEFAULT_MINISTRY_DESCRIPTIONS)).map((id) => ({
+    const ministries = (moduleCfg.options.ministries ?? Object.keys(MINISTRY_DESCRIPTION_KEYS)).map((id) => ({
         id,
         label: id,
-        description: DEFAULT_MINISTRY_DESCRIPTIONS[id] ?? '',
+        description: MINISTRY_DESCRIPTION_KEYS[id] ? pg[MINISTRY_DESCRIPTION_KEYS[id]] : '',
     }));
 
     const updateProfileMutation = useMutation({
@@ -39,10 +47,10 @@ const Volunteer = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             // In a real app, we might need to refresh the auth user state too
-            toast.success('Volunteer preferences updated successfully!');
+            toast.success(pg.volunteerUpdated);
         },
         onError: () => {
-            toast.error('Failed to update preferences');
+            toast.error(pg.volunteerUpdateFailed);
         },
     });
 
@@ -75,7 +83,7 @@ const Volunteer = () => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Select Your Ministry Preferences</CardTitle>
+                    <CardTitle>{pg.selectMinistryPreferences}</CardTitle>
                     <CardDescription>
                         Where would you like to serve? Check all that apply.
                     </CardDescription>

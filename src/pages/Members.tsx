@@ -25,8 +25,11 @@ import { MemberWizard } from '@/components/MemberWizard';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 const Members = () => {
   const { t } = useTranslation();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterGender, setFilterGender] = useState<string>('all');
@@ -63,7 +66,7 @@ const Members = () => {
     mutationFn: ({ id, data }: { id: string, data: any }) => userService.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
-      toast.success('Member profile updated');
+      toast.success(pg.memberUpdated);
       setIsWizardOpen(false);
       setSelectedMember(null);
       setIsEditing(false);
@@ -77,7 +80,7 @@ const Members = () => {
     mutationFn: (id: string) => userService.deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
-      toast.success('Member removed');
+      toast.success(pg.memberRemoved);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Delete failed');
@@ -139,19 +142,19 @@ const Members = () => {
   const handleExport = () => {
     const rows = sortedMembers;
     if (rows.length === 0) {
-      toast.info('No members to export');
+      toast.info(pg.nothingToExport);
       return;
     }
     const cols: { key: string; label: string }[] = [
-      { key: 'fullNameEnglish', label: 'Full Name (English)' },
-      { key: 'fullNameAmharic', label: 'Full Name (Amharic)' },
-      { key: 'gender', label: 'Gender' },
-      { key: 'phone', label: 'Phone' },
-      { key: 'email', label: 'Email' },
-      { key: 'hierarchyLevel', label: 'Hierarchy Level' },
-      { key: 'dateOfBirth', label: 'Date of Birth' },
-      { key: 'maritalStatus', label: 'Marital Status' },
-      { key: 'workSchool', label: 'Work / School' },
+      { key: 'fullNameEnglish', label: pg.csvFullNameEn },
+      { key: 'fullNameAmharic', label: pg.csvFullNameAm },
+      { key: 'gender', label: pg.csvGender },
+      { key: 'phone', label: pg.csvPhone },
+      { key: 'email', label: pg.csvEmail },
+      { key: 'hierarchyLevel', label: pg.csvHierarchyLevel },
+      { key: 'dateOfBirth', label: pg.csvDateOfBirth },
+      { key: 'maritalStatus', label: pg.csvMaritalStatus },
+      { key: 'workSchool', label: pg.csvWorkSchool },
     ];
     const esc = (v: unknown) => {
       const s = v === undefined || v === null ? '' : String(v);
@@ -383,7 +386,7 @@ const Members = () => {
           </div>
           <div className="flex flex-wrap gap-6">
             <div className="flex-1 min-w-[240px]">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">Orientation</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">{pg.orientation}</p>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
                   <SelectValue placeholder={t('sortBy')} />
@@ -397,7 +400,7 @@ const Members = () => {
               </Select>
             </div>
             <div className="flex-1 min-w-[240px]">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">Spectrum</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">{pg.spectrum}</p>
               <Select value={filterGender} onValueChange={setFilterGender}>
                 <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
                   <div className="flex items-center gap-2">
@@ -416,7 +419,7 @@ const Members = () => {
               </Select>
             </div>
             <div className="flex-1 min-w-[280px]">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">Jurisdiction</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99]/60 mb-2 ml-4">{pg.jurisdictionFilter}</p>
               <Select value={filterHierarchy} onValueChange={setFilterHierarchy}>
                 <SelectTrigger className="h-14 rounded-2xl bg-white/60 dark:bg-black/20 border-none shadow-sm font-bold italic">
                   <SelectValue placeholder="Hierarchy Level" />

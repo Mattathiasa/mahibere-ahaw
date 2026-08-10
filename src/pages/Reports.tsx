@@ -26,9 +26,12 @@ import { toDate } from '@/lib/date-utils';
 import { useAuth } from '@/hooks/useAuth';
 
 import { useFormatters } from '@/lib/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
 const Reports = () => {
   const permissions = useRolePermissions();
   const { showElement } = useSoftwareControl();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const { formatDate } = useFormatters();
   const { t } = useTranslation();
   const moduleCfg = useModuleConfig('reports');
@@ -79,7 +82,7 @@ const Reports = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Report created successfully!');
+      toast.success(pg.reportCreated);
       setShowCreateDialog(false);
       setFormData({
         planId: '',
@@ -107,7 +110,7 @@ const Reports = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
-      toast.success('Comment added successfully!');
+      toast.success(pg.commentAdded);
       setShowCommentDialog(false);
       setCommentContent('');
       setSelectedReportId('');
@@ -128,7 +131,7 @@ const Reports = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.planId) {
-      toast.error('Please select a plan');
+      toast.error(pg.selectPlanFirst);
       return;
     }
     createMutation.mutate(formData);
@@ -206,7 +209,7 @@ const Reports = () => {
                         onValueChange={(value) => setFormData({ ...formData, planId: value })}
                       >
                         <SelectTrigger className="h-14 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
-                          <SelectValue placeholder="Select target plan" />
+                          <SelectValue placeholder={pg.selectTargetPlan} />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl">
                           {plans.map((plan: any) => (
@@ -224,7 +227,7 @@ const Reports = () => {
                         onValueChange={(value: any) => setFormData({ ...formData, option: value })}
                       >
                         <SelectTrigger className="h-14 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
-                          <SelectValue placeholder="Select entity type" />
+                          <SelectValue placeholder={pg.selectEntityType} />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl">
                           {(moduleCfg.options.types ?? ['Memriya', 'Kifil', 'Zerf']).map((type) => (
@@ -237,10 +240,10 @@ const Reports = () => {
 
                   {(moduleCfg.fields.find((f) => f.key === 'department')?.visible ?? true) && (moduleCfg.options.departments ?? []).length > 0 && (
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Department</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{pg.department}</Label>
                       <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
                         <SelectTrigger className="h-14 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
-                          <SelectValue placeholder="Select department" />
+                          <SelectValue placeholder={pg.selectDepartment} />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl">
                           {(moduleCfg.options.departments ?? []).map((d) => (
@@ -253,22 +256,22 @@ const Reports = () => {
 
                   {(moduleCfg.fields.find((f) => f.key === 'workPlanned')?.visible ?? true) && (
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Work Planned</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{pg.workPlanned}</Label>
                       <Textarea
                         value={formData.workPlanned}
                         onChange={(e) => setFormData({ ...formData, workPlanned: e.target.value })}
-                        placeholder="What was planned for this period..."
+                        placeholder={pg.workPlannedPlaceholder}
                         className="min-h-[100px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
                       />
                     </div>
                   )}
 
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Work Performed</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{pg.workPerformed}</Label>
                     <Textarea
                       value={formData.workDone}
                       onChange={(e) => setFormData({ ...formData, workDone: e.target.value })}
-                      placeholder="Detail the activities actually completed..."
+                      placeholder={pg.workPerformedPlaceholder}
                       className="min-h-[120px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
                       required
                     />
@@ -276,11 +279,11 @@ const Reports = () => {
 
                   {(moduleCfg.fields.find((f) => f.key === 'uncompletedTasks')?.visible ?? true) && (
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 ml-1">Uncompleted Tasks</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 ml-1">{pg.uncompletedTasks}</Label>
                       <Textarea
                         value={formData.uncompletedTasks}
                         onChange={(e) => setFormData({ ...formData, uncompletedTasks: e.target.value })}
-                        placeholder="What remains incomplete and why..."
+                        placeholder={pg.uncompletedPlaceholder}
                         className="min-h-[100px] rounded-2xl border-none bg-rose-50 dark:bg-rose-950/20 focus:ring-2 ring-rose-400 font-medium transition-all"
                       />
                     </div>
@@ -292,7 +295,7 @@ const Reports = () => {
                       <Textarea
                         value={formData.result}
                         onChange={(e) => setFormData({ ...formData, result: e.target.value })}
-                        placeholder="Quantify the results and impact..."
+                        placeholder={pg.quantifyPlaceholder}
                         className="min-h-[120px] rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all"
                         required={moduleCfg.fields.find((f) => f.key === 'results')?.required ?? false}
                       />
@@ -343,13 +346,13 @@ const Reports = () => {
                           <FileText className="h-8 w-8" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">Submission Type</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">{pg.submissionType}</p>
                           <Badge className={cn("px-4 py-1.5 rounded-full font-black uppercase text-[10px] tracking-widest", optionColors[report.option as keyof typeof optionColors])}>
                             {report.option}
                           </Badge>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">Registry Date</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">{pg.registryDate}</p>
                           <div className="flex items-center gap-2 text-[#0D2440] dark:text-white font-bold">
                             <Calendar className="h-4 w-4 opacity-40" />
                             <span className="text-sm">
@@ -358,7 +361,7 @@ const Reports = () => {
                           </div>
                         </div>
                         <div className="pt-6">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60 mb-3">Timeframe</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60 mb-3">{pg.timeframe}</p>
                           <div className={cn("inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs shadow-inner", timeframeColors[report.timeframe as keyof typeof timeframeColors])}>
                             <Clock className="h-3.5 w-3.5" />
                             {report.timeframe}
@@ -381,7 +384,7 @@ const Reports = () => {
                         </div>
                         <div className="bg-green-500/10 text-green-600 px-6 py-2 rounded-2xl flex items-center gap-2">
                           <CheckCircle2 className="h-5 w-5" />
-                          <span className="font-black uppercase tracking-[0.2em] text-[10px]">Verified</span>
+                          <span className="font-black uppercase tracking-[0.2em] text-[10px]">{pg.verified}</span>
                         </div>
                       </div>
 
@@ -470,8 +473,8 @@ const Reports = () => {
               className="flex flex-col items-center justify-center py-40 bg-white/20 dark:bg-black/10 rounded-[4rem] border-2 border-dashed border-white/20"
             >
               <AlertCircle className="h-24 w-24 text-[#2E5E99]/20 mb-6" />
-              <p className="text-2xl font-black text-[#0D2440]/20 dark:text-white/20 uppercase tracking-[0.3em]">Archives Empty</p>
-              <p className="font-bold text-muted-foreground mt-2 italic">Begin your ministry documentation journey above</p>
+              <p className="text-2xl font-black text-[#0D2440]/20 dark:text-white/20 uppercase tracking-[0.3em]">{pg.archivesEmpty}</p>
+              <p className="font-bold text-muted-foreground mt-2 italic">{pg.archivesEmptyDesc}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -481,14 +484,14 @@ const Reports = () => {
       <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
         <DialogContent className="rounded-[3rem] bg-white/95 backdrop-blur-2xl border-white/40 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black tracking-tight italic">Contribute Insights</DialogTitle>
-            <DialogDescription className="font-bold text-slate-500">Provide professional guidance or acknowledgment</DialogDescription>
+            <DialogTitle className="text-2xl font-black tracking-tight italic">{pg.contributeInsights}</DialogTitle>
+            <DialogDescription className="font-bold text-slate-500">{pg.contributeInsightsDesc}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCommentSubmit} className="space-y-6 pt-4">
             <Textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
-              placeholder="Enter your feedback or guidance..."
+              placeholder={pg.feedbackPlaceholder}
               className="min-h-[150px] rounded-3xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all p-6"
               required
             />

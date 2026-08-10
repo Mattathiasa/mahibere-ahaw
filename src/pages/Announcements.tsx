@@ -24,9 +24,12 @@ import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { useAuth } from '@/hooks/useAuth';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 const Announcements = () => {
   const moduleCfg = useModuleConfig('announcements');
   const { showElement } = useSoftwareControl();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const rolePerms = useRolePermissions();
   const canCreateAnnouncement = rolePerms.canCreateAnnouncement && showElement('announcements.create');
   const showField = (k: string) => moduleCfg.fields.find((f) => f.key === k)?.visible ?? true;
@@ -90,9 +93,9 @@ const Announcements = () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       if (!delivered) {
-        toast.warning('Announcement posted, but notifications could not be sent.');
+        toast.warning(pg.announcementPostedNoNotify);
       } else if (sent === 0) {
-        toast.success('Announcement posted. Nobody matched the chosen audience.');
+        toast.success(pg.announcementPostedNoAudience);
       } else {
         toast.success(`Announcement posted and sent to ${sent} ${sent === 1 ? 'person' : 'people'}.`);
       }
@@ -109,7 +112,7 @@ const Announcements = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Announcement updated successfully!');
+      toast.success(pg.announcementUpdated);
       setShowEditDialog(false);
       setSelectedAnnouncement(null);
       setFormData({ title: '', content: '', expiresAt: '' });
@@ -124,7 +127,7 @@ const Announcements = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Announcement deleted successfully!');
+      toast.success(pg.announcementDeleted);
       setShowDeleteDialog(false);
       setSelectedAnnouncement(null);
     },
@@ -246,7 +249,7 @@ const Announcements = () => {
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Enter announcement title"
+                    placeholder={pg.announcementTitlePlaceholder}
                     className="rounded-xl border-[#2E5E99]/10 focus:border-[#2E5E99] bg-white/50 h-12"
                     required
                   />
@@ -257,7 +260,7 @@ const Announcements = () => {
                     id="content"
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    placeholder="Enter announcement content"
+                    placeholder={pg.announcementContentPlaceholder}
                     rows={6}
                     className="rounded-xl border-[#2E5E99]/10 focus:border-[#2E5E99] bg-white/50"
                     required
@@ -288,9 +291,9 @@ const Announcements = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {myAtbiyaId && <SelectItem value="parish">My Atbiya</SelectItem>}
-                      <SelectItem value="everyone">Everyone</SelectItem>
-                      <SelectItem value="roles">Chosen roles</SelectItem>
+                      {myAtbiyaId && <SelectItem value="parish">{pg.audienceMyAtbiya}</SelectItem>}
+                      <SelectItem value="everyone">{pg.audienceEveryone}</SelectItem>
+                      <SelectItem value="roles">{pg.audienceChosenRoles}</SelectItem>
                     </SelectContent>
                   </Select>
 

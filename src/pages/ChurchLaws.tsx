@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   churchRulesService, DEFAULT_CHURCH_RULES,
   type ChurchRulesData, type RuleItem,
@@ -19,13 +20,15 @@ import {
 type CategoryKey = 'denb' | 'memerya' | 'policies';
 
 const CATEGORIES: { key: CategoryKey; label: string; amharic: string; icon: typeof Scale; color: string }[] = [
-  { key: 'denb', label: 'Regulations', amharic: 'ደንብ', icon: Scale, color: 'text-indigo-500' },
-  { key: 'memerya', label: 'Directives', amharic: 'መመሪያ', icon: BookText, color: 'text-emerald-500' },
-  { key: 'policies', label: 'Policies', amharic: 'ፖሊሲ', icon: ClipboardList, color: 'text-amber-500' },
+  { key: 'denb', label: pg.rulesRegulations, amharic: 'ደንብ', icon: Scale, color: 'text-indigo-500' },
+  { key: 'memerya', label: pg.rulesDirectives, amharic: 'መመሪያ', icon: BookText, color: 'text-emerald-500' },
+  { key: 'policies', label: pg.rulesPolicies, amharic: 'ፖሊሲ', icon: ClipboardList, color: 'text-amber-500' },
 ];
 
 const ChurchLaws = () => {
   const { t } = useTranslation();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const { user } = useAuth();
   const { isAdminRole, isSuperAdmin } = usePermissions();
   const [data, setData] = useState<ChurchRulesData>(DEFAULT_CHURCH_RULES);
@@ -59,10 +62,10 @@ const ChurchLaws = () => {
     setSaving(true);
     try {
       await churchRulesService.save(data, user?.email ?? 'admin');
-      toast.success('Church rules saved');
+      toast.success(pg.rulesSaved);
       setEditMode(false);
     } catch {
-      toast.error('Failed to save');
+      toast.error(pg.rulesSaveFailed);
     } finally {
       setSaving(false);
     }

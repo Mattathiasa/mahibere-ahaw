@@ -17,8 +17,11 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 import { useFormatters } from '@/lib/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
 const MemriyaDocuments = () => {
     const { t } = useTranslation();
+    const { t: tree } = useLanguage();
+    const p = tree.pages;
     const { formatDate } = useFormatters();
     const { user } = useAuth();
     const moduleCfg = useModuleConfig('documents');
@@ -32,7 +35,7 @@ const MemriyaDocuments = () => {
     // Simplified: fetch all documents once or store breadcrumb state.
     // Better: Helper query to get parent details or just store breadcrumb path in local state if we traverse down.
     // For now, let's store breadcrumb history in local state
-    const [breadcrumbs, setBreadcrumbs] = useState<{ id: string | null, name: string }[]>([{ id: null, name: 'Home' }]);
+    const [breadcrumbs, setBreadcrumbs] = useState<{ id: string | null, name: string }[]>([{ id: null, name: p.documentsHome }]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,10 +54,10 @@ const MemriyaDocuments = () => {
             queryClient.invalidateQueries({ queryKey: ['documents', currentFolderId] });
             setIsCreateFolderOpen(false);
             setNewFolderName('');
-            toast.success('Folder created successfully');
+            toast.success(p.folderCreated);
         },
         onError: (error: any) => {
-            toast.error('Failed to create folder');
+            toast.error(p.folderCreateFailed);
         }
     });
 
@@ -63,11 +66,11 @@ const MemriyaDocuments = () => {
         mutationFn: (file: File) => documentService.uploadFile(file, currentFolderId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['documents', currentFolderId] });
-            toast.success('File uploaded successfully');
+            toast.success(p.fileUploaded);
             if (fileInputRef.current) fileInputRef.current.value = '';
         },
         onError: () => {
-            toast.error('Failed to upload file');
+            toast.error(p.fileUploadFailed);
         }
     });
 
@@ -76,7 +79,7 @@ const MemriyaDocuments = () => {
         mutationFn: (id: string) => documentService.deleteDocument(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['documents', currentFolderId] });
-            toast.success('Item deleted');
+            toast.success(p.itemDeleted);
         }
     });
 
@@ -131,8 +134,8 @@ const MemriyaDocuments = () => {
                 {/* Upload Section */}
                 <Card className="lg:col-span-1 h-fit">
                     <CardHeader>
-                        <CardTitle className="text-lg">Add Content</CardTitle>
-                        <CardDescription>Upload files or create folders</CardDescription>
+                        <CardTitle className="text-lg">{p.addContent}</CardTitle>
+                        <CardDescription>{p.uploadFilesOrFolders}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
@@ -144,22 +147,22 @@ const MemriyaDocuments = () => {
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Create New Folder</DialogTitle>
+                                    <DialogTitle>{p.createNewFolder}</DialogTitle>
                                     <DialogDescription>
                                         Enter a name for the new folder.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-2 py-2">
-                                    <Label htmlFor="folder-name">Folder Name</Label>
+                                    <Label htmlFor="folder-name">{p.folderName}</Label>
                                     <Input
                                         id="folder-name"
                                         value={newFolderName}
                                         onChange={(e) => setNewFolderName(e.target.value)}
-                                        placeholder="e.g. Reports 2024"
+                                        placeholder={p.folderNamePlaceholder}
                                     />
                                 </div>
                                 <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsCreateFolderOpen(false)}>Cancel</Button>
+                                    <Button variant="outline" onClick={() => setIsCreateFolderOpen(false)}>{tree.common.cancel}</Button>
                                     <Button onClick={handleCreateFolder} disabled={!newFolderName.trim() || createFolderMutation.isPending}>
                                         {createFolderMutation.isPending ? 'Creating...' : 'Create Folder'}
                                     </Button>
@@ -168,7 +171,7 @@ const MemriyaDocuments = () => {
                         </Dialog>
 
                         <div className="border-t pt-4">
-                            <p className="text-sm font-medium mb-2">Upload Files</p>
+                            <p className="text-sm font-medium mb-2">{p.uploadFiles}</p>
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -188,8 +191,8 @@ const MemriyaDocuments = () => {
                                     <Upload className="h-6 w-6" />
                                 )}
                                 <div className="flex flex-col items-start">
-                                    <span>Click to upload files</span>
-                                    <span className="text-xs font-normal text-muted-foreground">Any file type supported</span>
+                                    <span>{p.clickToUpload}</span>
+                                    <span className="text-xs font-normal text-muted-foreground">{p.anyFileType}</span>
                                 </div>
                             </Button>
                         </div>
@@ -216,7 +219,7 @@ const MemriyaDocuments = () => {
                             <div className="w-full md:w-1/2 relative">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search documents..."
+                                    placeholder={p.searchDocuments}
                                     className="pl-9 h-9"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -286,7 +289,7 @@ const MemriyaDocuments = () => {
                                                     rel="noopener noreferrer"
                                                     onClick={(e) => e.stopPropagation()}
                                                     className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
-                                                    title="Download"
+                                                    title={p.download}
                                                 >
                                                     <Download className="h-4 w-4" />
                                                 </a>
@@ -295,7 +298,7 @@ const MemriyaDocuments = () => {
                                                 size="icon"
                                                 variant="ghost"
                                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                title="Delete"
+                                                title={tree.admin.remove}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     deleteMutation.mutate(item.id);
@@ -310,7 +313,7 @@ const MemriyaDocuments = () => {
                         ) : (
                             <div className="text-center py-12 text-muted-foreground">
                                 <Folder className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                                {searchQuery ? <p>No results found for "{searchQuery}"</p> : <p>This folder is empty</p>}
+                                {searchQuery ? <p>No results found for "{searchQuery}"</p> : <p>{p.emptyFolder}</p>}
                             </div>
                         )}
                     </CardContent>

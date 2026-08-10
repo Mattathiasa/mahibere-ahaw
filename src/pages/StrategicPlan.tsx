@@ -8,8 +8,11 @@ import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 const StrategicPlan = () => {
     const { t } = useTranslation();
+    const { t: tree } = useLanguage();
+    const pg = tree.pages;
     const { data: goals, isLoading } = useQuery({
         queryKey: ['strategic-goals'],
         queryFn: () => strategicPlanService.getAllGoals(),
@@ -19,8 +22,8 @@ const StrategicPlan = () => {
     const mockGoals = [
         {
             id: 1,
-            title: '50 Million Members in 50 Years',
-            description: 'Our long term vision for church growth and evangelism.',
+            title: pg.goalMembersTitle,
+            description: pg.goalMembersDesc,
             targetYear: 2075,
             currentValue: 1200000,
             targetValue: 50000000,
@@ -28,8 +31,8 @@ const StrategicPlan = () => {
         },
         {
             id: 2,
-            title: 'Plant 10,000 New Churches',
-            description: 'Establishing new places of worship across the region.',
+            title: pg.goalChurchesTitle,
+            description: pg.goalChurchesDesc,
             targetYear: 2030,
             currentValue: 2450,
             targetValue: 10000,
@@ -99,7 +102,7 @@ const StrategicPlan = () => {
                                                 </div>
                                             </div>
                                             <div className="hidden sm:block text-right">
-                                                <p className="text-sm font-bold opacity-60 italic mb-2">Steady spiritual growth</p>
+                                                <p className="text-sm font-bold opacity-60 italic mb-2">{pg.steadyGrowth}</p>
                                                 <div className="flex gap-2">
                                                     {[1, 2, 3, 4, 5].map(dot => (
                                                         <div key={dot} className={`h-2 w-2 rounded-full ${percentage >= dot * 20 ? 'bg-emerald-500' : 'bg-[#2E5E99]/10'}`} />

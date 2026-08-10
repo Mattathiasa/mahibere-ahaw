@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { Button } from '@/components/ui/button';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 /**
  * Shown after a member sends a sign-up request, and whenever a pending member
  * tries to sign in. Its job is to explain who is deciding and how to reach them.
@@ -14,6 +15,8 @@ import { Button } from '@/components/ui/button';
 const PendingApproval: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const location = useLocation();
   const state = (location.state ?? {}) as { atbiyaName?: string; atbiyaId?: string };
 
@@ -44,18 +47,18 @@ const PendingApproval: React.FC = () => {
             theme === 'dark' ? 'bg-white/5 border border-white/10' : 'bg-white'}`}>
           <div className="h-2 bg-gradient-to-r from-amber-400 to-amber-500" />
           <div className="p-8 sm:p-10 space-y-6 text-center">
-            <img src={logo} alt="Mahibere Ahaw" className="h-16 w-16 mx-auto" />
+            <img src={logo} alt={tree.home.title} className="h-16 w-16 mx-auto" />
 
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-black uppercase tracking-widest border border-amber-500/20">
               <Clock className="h-3.5 w-3.5" /> Awaiting approval
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-3xl font-black tracking-tight">Request sent</h1>
+              <h1 className="text-3xl font-black tracking-tight">{pg.requestSent}</h1>
               <p className="text-muted-foreground leading-relaxed">
                 {name
-                  ? <>Your membership request is with <strong>{name}</strong>. Once they approve it you will be able to sign in with the username and password you just chose.</>
-                  : <>Your membership request has been sent to your congregation. Once they approve it you will be able to sign in with the username and password you just chose.</>}
+                  ? <>{pg.pendingRequestWith} <strong>{name}</strong>{pg.pendingApproveNote}</>
+                  : <>{pg.pendingSentGeneric}</>}
               </p>
             </div>
 
@@ -97,7 +100,7 @@ const PendingApproval: React.FC = () => {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-              <Button variant="outline" onClick={() => navigate('/')}>Back to home</Button>
+              <Button variant="outline" onClick={() => navigate('/')}>{pg.backToHome}</Button>
               <Button onClick={() => navigate('/login')} className="bg-[#2E5E99] hover:bg-[#204a7c]">
                 Go to sign in
               </Button>

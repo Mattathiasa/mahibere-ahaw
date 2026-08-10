@@ -5,44 +5,47 @@ import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
 import { motion } from 'framer-motion';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 const HigeDenb = () => {
   const { t } = useTranslation();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const rules = [
     {
       id: '1',
-      title: 'Church Governance Structure',
+      title: pg.higeDenbGovernanceTitle,
       icon: Shield,
       color: 'text-indigo-500',
       bg: 'bg-indigo-500/10',
       content:
-        'The Ethiopian Orthodox Tewahedo Church follows a hierarchical structure starting from Sinodos at the highest level, followed by KuamiSinodos (9 units), Memriya (7 members), Zone, Atbiya (individual churches), EnkesekaseMaikel, and HiyawanMahderat at the base level.',
+        pg.higeDenbGovernanceBody,
     },
     {
       id: '2',
-      title: 'Reporting Requirements',
+      title: pg.higeDenbReportingTitle,
       icon: FileText,
       color: 'text-amber-500',
       bg: 'bg-amber-500/10',
       content:
-        'All Memriya members and higher levels must submit regular reports on church activities, including attendance, financial matters, and ministry progress. Reports should be submitted according to the designated frequency: weekly, monthly, or yearly.',
+        pg.higeDenbReportingBody,
     },
     {
       id: '3',
-      title: 'Ministry Conduct',
+      title: pg.higeDenbConductTitle,
       icon: BookOpen,
       color: 'text-emerald-500',
       bg: 'bg-emerald-500/10',
       content:
-        'All church members serving in ministry roles must uphold the highest standards of spiritual conduct, maintain regular attendance at services, and actively participate in their assigned ministry areas. Sunday School teachers, youth leaders, and other ministry workers must complete appropriate training.',
+        pg.higeDenbConductBody,
     },
     {
       id: '4',
-      title: 'Communication Protocol',
+      title: pg.higeDenbCommunicationTitle,
       icon: Scale,
       color: 'text-[#2E5E99]',
       bg: 'bg-[#2E5E99]/10',
       content:
-        'Official announcements can only be made by Memriya level and above. All communications must follow the established chain of command. Urgent matters should be escalated through proper channels to ensure timely response and appropriate action.',
+        pg.higeDenbCommunicationBody,
     },
   ];
 
