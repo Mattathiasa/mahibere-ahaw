@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle, Church, Loader2, Pencil, Plus, RefreshCw, ShieldCheck,
-  TriangleAlert, Users as UsersIcon,
+  TriangleAlert, Upload, Users as UsersIcon,
 } from 'lucide-react';
 import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { atbiyaAdminService } from '@/services/atbiyaAdmins';
@@ -14,6 +14,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { AtbiyaEditorDialog } from '@/components/AtbiyaEditorDialog';
 import { AtbiyaRegistrationDialog } from '@/components/AtbiyaRegistrationDialog';
 import { AtbiyaAdminsDialog } from '@/components/AtbiyaAdminsDialog';
+import { AtbiyaImportDialog } from '@/components/AtbiyaImportDialog';
 import { MahderatManager } from '@/components/MahderatManager';
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -50,6 +51,7 @@ const AtbiyaRegistry: React.FC = () => {
   const [editing, setEditing] = useState<Atbiya | null>(null);
   const [managingAdmins, setManagingAdmins] = useState<Atbiya | null>(null);
   const [managingGroups, setManagingGroups] = useState<Atbiya | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   /**
    * Member and administrator counts in one pass over `users`.
@@ -176,6 +178,11 @@ const AtbiyaRegistry: React.FC = () => {
               <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> {tx.refresh}
             </Button>
             {showElement('atbiya.add') && (
+              <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-1" /> {tx.importAction}
+              </Button>
+            )}
+            {showElement('atbiya.add') && (
               <Button size="sm" onClick={() => setRegisterOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Register
               </Button>
@@ -279,6 +286,11 @@ const AtbiyaRegistry: React.FC = () => {
         </CardContent>
       </Card>
 
+      <AtbiyaImportDialog
+        open={importOpen}
+        onImported={() => { load(); loadCounts(); }}
+        onClose={() => setImportOpen(false)}
+      />
       <AtbiyaRegistrationDialog
         open={registerOpen}
         onSaved={() => { setRegisterOpen(false); load(); loadCounts(); }}

@@ -53,6 +53,13 @@ export interface Atbiya {
   mapUrl?: string;
   photoUrl?: string;
   description?: string;
+  /**
+   * When the congregation was founded, as written in the church register —
+   * an Ethiopian-calendar date such as 'ነሐሴ 25/2008 ዓ.ም.'. Kept as free text
+   * rather than a Date because that is how the register records it, and some
+   * entries give only a month and year.
+   */
+  foundedAt?: string;
   /** MISSING means true — legacy parish docs have no such field. */
   active?: boolean;
   /** MISSING means true. Controls appearance in the public sign-up dropdown. */
@@ -73,6 +80,7 @@ export const emptyAtbiya = (): AtbiyaInput => ({
   mapUrl: '',
   photoUrl: '',
   description: '',
+  foundedAt: '',
   active: true,
   isPublic: true,
 });

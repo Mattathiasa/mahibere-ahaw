@@ -106,6 +106,10 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
           <Input value={draft.cityAm ?? ''} onChange={(e) => set('cityAm', e.target.value)}
             disabled={disabled} placeholder="ቢሾፍቱ" />
         </Field>
+        <Field label={a.foundedAt} hint={a.foundedAtHint}>
+          <Input value={draft.foundedAt ?? ''} onChange={(e) => set('foundedAt', e.target.value)}
+            disabled={disabled} placeholder="ነሐሴ 25/2008 ዓ.ም." />
+        </Field>
       </div>
       {showPlacement && (
         <Field label={a.diocese} hint={a.dioceseHint}>
