@@ -9,6 +9,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { X, Plus, Trash2, Calendar as CalendarIcon, Upload, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Employee, EducationItem } from '@/services/hr';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { Translations } from '@/i18n/translations';
+import { EMPLOYMENT_TYPES, employmentTypeLabel, genderLabel } from '@/i18n/enums';
 
 interface EmployeeRegistrationWizardProps {
   open: boolean;
@@ -17,14 +20,15 @@ interface EmployeeRegistrationWizardProps {
   editingEmployee?: Employee | null;
 }
 
-const STEPS = [
-  'Employer Information',
-  'Personal Info',
-  'Family Information',
-  'Education Background',
-  'Job',
-  'Bank and TIN',
-  'Emergency Contact',
+/** Step names in the reader's language. A function because this sits outside the component. */
+const steps = (f: Translations['forms']) => [
+  f.stepEmployerInfo,
+  f.stepPersonalInfo,
+  f.stepFamilyInfo,
+  f.stepEducation,
+  f.stepJob,
+  f.stepBankTin,
+  f.stepEmergencyContact,
 ];
 
 export function EmployeeRegistrationWizard({
@@ -33,6 +37,8 @@ export function EmployeeRegistrationWizard({
   onSubmit,
   editingEmployee,
 }: EmployeeRegistrationWizardProps) {
+  const { t } = useLanguage();
+  const f = t.forms;
   const [activeStep, setActiveStep] = useState(0);
 
   // Form State
@@ -198,7 +204,7 @@ export function EmployeeRegistrationWizard({
 
         {/* Wizard Tabs Navbar */}
         <div className="flex flex-wrap border-b bg-slate-50 dark:bg-slate-900 p-2 gap-1 overflow-x-auto">
-          {STEPS.map((step, idx) => (
+          {steps(f).map((step, idx) => (
             <button
               key={idx}
               onClick={() => setActiveStep(idx)}
@@ -219,34 +225,34 @@ export function EmployeeRegistrationWizard({
           {activeStep === 0 && (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Employer Name (Church Name)</Label>
+                <Label>{f.employerName}</Label>
                 <Input
                   value={formData.employerName}
                   onChange={(e) => handleFieldChange('employerName', e.target.value)}
-                  placeholder="Mahibere Ahaw Church"
+                  placeholder={f.employerNamePlaceholder}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Location</Label>
+                <Label>{f.location}</Label>
                 <Input
                   value={formData.employerLocation}
                   onChange={(e) => handleFieldChange('employerLocation', e.target.value)}
-                  placeholder="Addis Ababa, Ethiopia"
+                  placeholder={f.locationPlaceholder}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label>House Number</Label>
+                <Label>{f.houseNumber}</Label>
                 <Input
                   value={formData.employerHouseNumber}
                   onChange={(e) => handleFieldChange('employerHouseNumber', e.target.value)}
-                  placeholder="House No."
+                  placeholder={f.houseNumberPlaceholder}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Phone Number</Label>
+                <Label>{f.phoneNumber}</Label>
                 <Input
                   value={formData.employerPhone}
                   onChange={(e) => handleFieldChange('employerPhone', e.target.value)}
@@ -260,21 +266,21 @@ export function EmployeeRegistrationWizard({
           {activeStep === 1 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5 md:col-span-2">
-                <Label>Full Name *</Label>
+                <Label>{f.fullNameRequired}</Label>
                 <Input
                   value={formData.fullName}
                   onChange={(e) => handleFieldChange('fullName', e.target.value)}
-                  placeholder="e.g. Abebe Bikila"
+                  placeholder={f.fullNamePlaceholder}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Gender</Label>
+                <Label>{f.gender}</Label>
                 <Select value={formData.gender} onValueChange={(v) => handleFieldChange('gender', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Male">{genderLabel(t, 'Male')}</SelectItem>
+                    <SelectItem value="Female">{genderLabel(t, 'Female')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -288,7 +294,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label>Phone Number</Label>
+                <Label>{f.phoneNumber}</Label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => handleFieldChange('phone', e.target.value)}
@@ -296,7 +302,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label>Email</Label>
+                <Label>{f.email}</Label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -305,7 +311,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <Label>Residential Address</Label>
+                <Label>{f.residentialAddress}</Label>
                 <Input
                   value={formData.address}
                   onChange={(e) => handleFieldChange('address', e.target.value)}
@@ -318,7 +324,7 @@ export function EmployeeRegistrationWizard({
           {activeStep === 2 && (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Spouse Full Name</Label>
+                <Label>{f.spouseFullName}</Label>
                 <Input
                   value={formData.spouseName}
                   onChange={(e) => handleFieldChange('spouseName', e.target.value)}
@@ -326,7 +332,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label>Spouse Phone Number</Label>
+                <Label>{f.spousePhone}</Label>
                 <Input
                   value={formData.spousePhone}
                   onChange={(e) => handleFieldChange('spousePhone', e.target.value)}
@@ -334,7 +340,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1.5">
-                <Label>Number of Children</Label>
+                <Label>{f.childrenCount}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -349,7 +355,7 @@ export function EmployeeRegistrationWizard({
           {activeStep === 3 && (
             <div className="space-y-6">
               <div className="space-y-1.5">
-                <Label>CV Document</Label>
+                <Label>{f.cvDocument}</Label>
                 <div className="border border-slate-200 rounded-xl p-3 flex items-center gap-3">
                   <Input type="file" accept=".pdf,.doc,.docx" className="text-xs" />
                   <Upload className="h-4 w-4 text-slate-500" />
@@ -369,35 +375,35 @@ export function EmployeeRegistrationWizard({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Academic Status</Label>
+                      <Label className="text-xs">{f.academicStatus}</Label>
                       <Input
                         value={edu.academicStatus}
                         onChange={(e) => handleEducationChange(idx, 'academicStatus', e.target.value)}
-                        placeholder="e.g. Bachelor Degree"
+                        placeholder={f.academicStatusPlaceholder}
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Institution</Label>
+                      <Label className="text-xs">{f.institution}</Label>
                       <Input
                         value={edu.institution}
                         onChange={(e) => handleEducationChange(idx, 'institution', e.target.value)}
-                        placeholder="e.g. Addis Ababa University"
+                        placeholder={f.institutionPlaceholder}
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Field Of Study</Label>
+                      <Label className="text-xs">{f.fieldOfStudy}</Label>
                       <Input
                         value={edu.fieldOfStudy}
                         onChange={(e) => handleEducationChange(idx, 'fieldOfStudy', e.target.value)}
-                        placeholder="e.g. Accounting, Theology"
+                        placeholder={f.fieldOfStudyPlaceholder}
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Graduation Date (AMH - YYYY)</Label>
+                      <Label className="text-xs">{f.graduationDate}</Label>
                       <Input
                         value={edu.graduationDate}
                         onChange={(e) => handleEducationChange(idx, 'graduationDate', e.target.value)}
-                        placeholder="AMH - 2014"
+                        placeholder={f.graduationDatePlaceholder}
                       />
                     </div>
                   </div>
@@ -419,44 +425,43 @@ export function EmployeeRegistrationWizard({
           {activeStep === 4 && (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Current Position *</Label>
+                <Label>{f.currentPosition}</Label>
                 <Input
                   value={formData.position}
                   onChange={(e) => handleFieldChange('position', e.target.value)}
-                  placeholder="e.g. Accountant, Priest, Administrator"
+                  placeholder={f.currentPositionPlaceholder}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Employment Date (AMH - YYYY)</Label>
+                <Label>{f.employmentDate}</Label>
                 <div className="relative">
                   <Input
                     value={formData.hireDate}
                     onChange={(e) => handleFieldChange('hireDate', e.target.value)}
-                    placeholder="AMH - 2016"
+                    placeholder={f.employmentDatePlaceholder}
                   />
                   <CalendarIcon className="absolute right-3 top-2.5 h-4 w-4 text-slate-400" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label>Employment Type</Label>
+                <Label>{f.employmentType}</Label>
                 <Select
                   value={formData.employmentType}
                   onValueChange={(v) => handleFieldChange('employmentType', v)}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="FullTime">Full Time</SelectItem>
-                    <SelectItem value="PartTime">Part Time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
-                    <SelectItem value="Volunteer">Volunteer</SelectItem>
+                    {EMPLOYMENT_TYPES.map((v) => (
+                      <SelectItem key={v} value={v}>{employmentTypeLabel(t, v)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2 pt-2">
-                <Label>Have Work Experience?</Label>
+                <Label>{f.haveWorkExperience}</Label>
                 <RadioGroup
                   value={formData.haveWorkExperience ? 'Yes' : 'No'}
                   onValueChange={(v) => handleFieldChange('haveWorkExperience', v === 'Yes')}
@@ -464,11 +469,11 @@ export function EmployeeRegistrationWizard({
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="Yes" id="r-yes" />
-                    <Label htmlFor="r-yes">Yes</Label>
+                    <Label htmlFor="r-yes">{f.yes}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="No" id="r-no" />
-                    <Label htmlFor="r-no">No</Label>
+                    <Label htmlFor="r-no">{f.no}</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -480,42 +485,42 @@ export function EmployeeRegistrationWizard({
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-xs">Salary Bank Name</Label>
+                  <Label className="text-xs">{f.salaryBankName}</Label>
                   <Input
                     value={formData.salaryBankName}
                     onChange={(e) => handleFieldChange('salaryBankName', e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Salary Bank Account</Label>
+                  <Label className="text-xs">{f.salaryBankAccount}</Label>
                   <Input
                     value={formData.salaryBankAccount}
                     onChange={(e) => handleFieldChange('salaryBankAccount', e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">PF Bank Name</Label>
+                  <Label className="text-xs">{f.pfBankName}</Label>
                   <Input
                     value={formData.pfBankName}
                     onChange={(e) => handleFieldChange('pfBankName', e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">PF Bank Account</Label>
+                  <Label className="text-xs">{f.pfBankAccount}</Label>
                   <Input
                     value={formData.pfBankAccount}
                     onChange={(e) => handleFieldChange('pfBankAccount', e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Social Identification Number</Label>
+                  <Label className="text-xs">{f.socialIdNumber}</Label>
                   <Input
                     value={formData.socialId}
                     onChange={(e) => handleFieldChange('socialId', e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Tax Identification Number (TIN)</Label>
+                  <Label className="text-xs">{f.tinNumber}</Label>
                   <Input
                     value={formData.tin}
                     onChange={(e) => handleFieldChange('tin', e.target.value)}
@@ -526,7 +531,7 @@ export function EmployeeRegistrationWizard({
               {/* Salary Breakdown & Auto-calculators */}
               <div className="border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold">Gross Salary (ETB) *</Label>
+                  <Label className="text-xs font-bold">{f.grossSalary}</Label>
                   <Input
                     type="number"
                     value={formData.grossSalary || ''}
@@ -537,7 +542,7 @@ export function EmployeeRegistrationWizard({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Overtime (ETB)</Label>
+                  <Label className="text-xs">{f.overtime}</Label>
                   <Input
                     type="number"
                     value={formData.overtime || ''}
@@ -548,7 +553,7 @@ export function EmployeeRegistrationWizard({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Transport Allowance</Label>
+                  <Label className="text-xs">{f.transportAllowance}</Label>
                   <Input
                     type="number"
                     value={formData.transportAllowance || ''}
@@ -559,7 +564,7 @@ export function EmployeeRegistrationWizard({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">House Allowance</Label>
+                  <Label className="text-xs">{f.houseAllowance}</Label>
                   <Input
                     type="number"
                     value={formData.houseAllowance || ''}
@@ -570,7 +575,7 @@ export function EmployeeRegistrationWizard({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Tax Deduction (ETB)</Label>
+                  <Label className="text-xs">{f.taxDeduction}</Label>
                   <Input
                     type="number"
                     value={formData.tax || ''}
@@ -579,7 +584,7 @@ export function EmployeeRegistrationWizard({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Pension Deduction (7%)</Label>
+                  <Label className="text-xs">{f.pensionDeduction}</Label>
                   <Input
                     type="number"
                     value={formData.pension || ''}
@@ -591,7 +596,7 @@ export function EmployeeRegistrationWizard({
 
               {/* Net Salary Preview Banner */}
               <div className="bg-slate-900 text-white p-4 rounded-xl flex items-center justify-between">
-                <span className="text-xs uppercase tracking-wider font-bold">Net Salary</span>
+                <span className="text-xs uppercase tracking-wider font-bold">{f.netSalary}</span>
                 <span className="text-2xl font-black text-cyan-400">
                   {formData.netSalary ? formData.netSalary.toLocaleString() : '0.00'} ETB
                 </span>
@@ -603,16 +608,16 @@ export function EmployeeRegistrationWizard({
           {activeStep === 6 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label>Salutation</Label>
+                <Label>{f.salutation}</Label>
                 <Input
                   value={formData.emergencySalutation}
                   onChange={(e) => handleFieldChange('emergencySalutation', e.target.value)}
-                  placeholder="Mr., Mrs., Dr."
+                  placeholder={f.salutationPlaceholder}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label>First Name</Label>
+                <Label>{f.firstName}</Label>
                 <Input
                   value={formData.emergencyFirstName}
                   onChange={(e) => handleFieldChange('emergencyFirstName', e.target.value)}
@@ -620,7 +625,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1">
-                <Label>Middle Name</Label>
+                <Label>{f.middleName}</Label>
                 <Input
                   value={formData.emergencyMiddleName}
                   onChange={(e) => handleFieldChange('emergencyMiddleName', e.target.value)}
@@ -628,7 +633,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1">
-                <Label>Last Name</Label>
+                <Label>{f.lastName}</Label>
                 <Input
                   value={formData.emergencyLastName}
                   onChange={(e) => handleFieldChange('emergencyLastName', e.target.value)}
@@ -636,16 +641,16 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1 md:col-span-2">
-                <Label>Relationship</Label>
+                <Label>{f.relationship}</Label>
                 <Input
                   value={formData.emergencyRelationship}
                   onChange={(e) => handleFieldChange('emergencyRelationship', e.target.value)}
-                  placeholder="e.g. Spouse, Brother, Sister"
+                  placeholder={f.relationshipPlaceholder}
                 />
               </div>
 
               <div className="space-y-1">
-                <Label>Phone Number</Label>
+                <Label>{f.phoneNumber}</Label>
                 <Input
                   value={formData.emergencyPhone}
                   onChange={(e) => handleFieldChange('emergencyPhone', e.target.value)}
@@ -653,7 +658,7 @@ export function EmployeeRegistrationWizard({
               </div>
 
               <div className="space-y-1">
-                <Label>Address</Label>
+                <Label>{f.address}</Label>
                 <Input
                   value={formData.emergencyAddress}
                   onChange={(e) => handleFieldChange('emergencyAddress', e.target.value)}
@@ -680,7 +685,7 @@ export function EmployeeRegistrationWizard({
               </Button>
             )}
 
-            {activeStep < STEPS.length - 1 ? (
+            {activeStep < steps(f).length - 1 ? (
               <Button
                 onClick={() => setActiveStep(prev => prev + 1)}
                 className="bg-[#40A8B1] hover:bg-[#348b93] text-white gap-2"

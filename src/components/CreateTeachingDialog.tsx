@@ -13,6 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { X, Plus, Info, Video, FileText, MessageCircle, Mic2 } from 'lucide-react';
 import { teachingService } from '@/services/teachings';
 import { TeachingServiceType, TeachingStatus } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { Translations } from '@/i18n/translations';
+import { TEACHING_STATUSES, teachingStatusLabel } from '@/i18n/enums';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
@@ -31,11 +34,25 @@ const SERVICE_TYPES: TeachingServiceType[] = [
     'Other'
 ];
 
-const STATUSES: TeachingStatus[] = ['Draft', 'Published', 'Archived'];
+/**
+ * Service-type token -> translation key. The token is what is written to
+ * Firestore, so it stays exactly as it is; only the label beside it changes.
+ */
+const SERVICE_TYPE_KEYS: Record<string, keyof Translations['content']> = {
+    'Sunday Morning': 'serviceTypeSundayMorning',
+    'Wednesday Bible Study': 'serviceTypeWednesdayBibleStudy',
+    "Men's Breakfast": 'serviceTypeMensBreakfast',
+    "Women's Ministry": 'serviceTypeWomensMinistry',
+    'Youth Service': 'serviceTypeYouthService',
+    'Special Event': 'serviceTypeSpecialEvent',
+    'Other': 'serviceTypeOther',
+};
 
 export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialogProps) {
     const queryClient = useQueryClient();
     const moduleCfg = useModuleConfig('teachings');
+    const { t } = useLanguage();
+    const c = t.content;
     const [activeTab, setActiveTab] = useState('metadata');
 
     // Form State
@@ -111,7 +128,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['teachings'] });
-            toast.success('Teaching created successfully');
+            toast.success(c.teachingCreated);
             onOpenChange(false);
             // Reset form?
         },
@@ -122,7 +139,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
 
     const handleSubmit = () => {
         if (!formData.title || !formData.speaker || !formData.dateDelivered) {
-            toast.error('Please fill in required fields (Title, Speaker, Date)');
+            toast.error(c.teachingMissingFields);
             return;
         }
         createMutation.mutate(formData);
@@ -132,7 +149,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
                 <DialogHeader className="px-6 py-4 border-b">
-                    <DialogTitle>Create New Teaching</DialogTitle>
+                    <DialogTitle>{c.createTeaching}</DialogTitle>
                     <DialogDescription>
                         Fill out the template below to create a new teaching record.
                     </DialogDescription>
@@ -145,23 +162,23 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                             <TabsList className="flex flex-col h-auto bg-transparent space-y-2 w-full">
                                 <TabsTrigger value="metadata" className="w-full justify-start px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                     <Info className="w-4 h-4 mr-2" />
-                                    Metadata
+                                    {c.tabMetadata}
                                 </TabsTrigger>
                                 <TabsTrigger value="header" className="w-full justify-start px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                     <FileText className="w-4 h-4 mr-2" />
-                                    Public Header
+                                    {c.tabPublicHeader}
                                 </TabsTrigger>
                                 <TabsTrigger value="content" className="w-full justify-start px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                     <Video className="w-4 h-4 mr-2" />
-                                    Main Content
+                                    {c.tabMainContent}
                                 </TabsTrigger>
                                 <TabsTrigger value="engagement" className="w-full justify-start px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                     <MessageCircle className="w-4 h-4 mr-2" />
-                                    Engagement
+                                    {c.tabEngagement}
                                 </TabsTrigger>
                                 <TabsTrigger value="footer" className="w-full justify-start px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                     <Mic2 className="w-4 h-4 mr-2" />
-                                    Footer & Legal
+                                    {c.tabFooterLegal}
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -173,19 +190,19 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                 <TabsContent value="metadata" className="mt-0 space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2 col-span-2">
-                                            <Label>Teaching Title *</Label>
+                                            <Label>{c.teachingTitle}</Label>
                                             <Input
                                                 value={formData.title}
                                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                                placeholder="e.g., Born Again: A Nighttime Encounter"
+                                                placeholder={c.teachingTitlePlaceholder}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Speaker/Teacher *</Label>
+                                            <Label>{c.speaker}</Label>
                                             <Input
                                                 value={formData.speaker}
                                                 onChange={(e) => setFormData({ ...formData, speaker: e.target.value })}
-                                                placeholder="Pastor Name"
+                                                placeholder={c.speakerPlaceholder}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -196,61 +213,65 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Series</Label>
+                                            <Label>{c.series}</Label>
                                             <Input
                                                 value={formData.series}
                                                 onChange={(e) => setFormData({ ...formData, series: e.target.value })}
-                                                placeholder="e.g., Gospel of John"
+                                                placeholder={c.seriesPlaceholder}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Series Part</Label>
+                                            <Label>{c.seriesPart}</Label>
                                             <Input
                                                 value={formData.seriesPart}
                                                 onChange={(e) => setFormData({ ...formData, seriesPart: e.target.value })}
-                                                placeholder="e.g., Part 3 of 12"
+                                                placeholder={c.seriesPartPlaceholder}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Service Type</Label>
+                                            <Label>{c.serviceType}</Label>
                                             <Select value={formData.serviceType} onValueChange={(v) => setFormData({ ...formData, serviceType: v as TeachingServiceType })}>
                                                 <SelectTrigger>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {(moduleCfg.options.serviceTypes ?? SERVICE_TYPES).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                                                    {(moduleCfg.options.serviceTypes ?? SERVICE_TYPES).map(v => (
+                                                        <SelectItem key={v} value={v}>
+                                                            {SERVICE_TYPE_KEYS[v] ? c[SERVICE_TYPE_KEYS[v]] : v}
+                                                        </SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Status</Label>
+                                            <Label>{c.status}</Label>
                                             <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as TeachingStatus })}>
                                                 <SelectTrigger>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                                    {TEACHING_STATUSES.map(v => <SelectItem key={v} value={v}>{teachingStatusLabel(t, v)}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="space-y-2 col-span-2">
-                                            <Label>Primary Scripture *</Label>
+                                            <Label>{c.primaryScripture}</Label>
                                             <Input
                                                 value={formData.primaryScripture}
                                                 onChange={(e) => setFormData({ ...formData, primaryScripture: e.target.value })}
-                                                placeholder="e.g., John 3:1-21"
+                                                placeholder={c.primaryScripturePlaceholder}
                                             />
                                         </div>
 
                                         <div className="space-y-2 col-span-2">
-                                            <Label>Supporting Scriptures</Label>
+                                            <Label>{c.supportingScriptures}</Label>
                                             <div className="flex gap-2">
                                                 <Input
                                                     value={tempSupportingScripture}
                                                     onChange={(e) => setTempSupportingScripture(e.target.value)}
-                                                    placeholder="Add scripture reference"
+                                                    placeholder={c.addScripturePlaceholder}
                                                 />
-                                                <Button type="button" onClick={() => addArrayItem('supportingScriptures', tempSupportingScripture, setTempSupportingScripture)}>Add</Button>
+                                                <Button type="button" onClick={() => addArrayItem('supportingScriptures', tempSupportingScripture, setTempSupportingScripture)}>{c.add}</Button>
                                             </div>
                                             <div className="flex flex-wrap gap-2 mt-2">
                                                 {formData.supportingScriptures.map((item, i) => (
@@ -263,14 +284,14 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                         </div>
 
                                         <div className="space-y-2 col-span-2">
-                                            <Label>Tags / Key Topics</Label>
+                                            <Label>{c.tags}</Label>
                                             <div className="flex gap-2">
                                                 <Input
                                                     value={tempTag}
                                                     onChange={(e) => setTempTag(e.target.value)}
-                                                    placeholder="Add tag (e.g. Salvation)"
+                                                    placeholder={c.addTagPlaceholder}
                                                 />
-                                                <Button type="button" onClick={() => addArrayItem('tags', tempTag, setTempTag)}>Add</Button>
+                                                <Button type="button" onClick={() => addArrayItem('tags', tempTag, setTempTag)}>{c.add}</Button>
                                             </div>
                                             <div className="flex flex-wrap gap-2 mt-2">
                                                 {formData.tags.map((item, i) => (
@@ -283,11 +304,11 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                         </div>
 
                                         <div className="space-y-2 col-span-2">
-                                            <Label>Target Audience</Label>
+                                            <Label>{c.targetAudience}</Label>
                                             <Input
                                                 value={formData.targetAudience}
                                                 onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
-                                                placeholder="e.g., New Believers"
+                                                placeholder={c.targetAudiencePlaceholder}
                                             />
                                         </div>
                                     </div>
@@ -296,7 +317,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                 {/* 2. Public Header */}
                                 <TabsContent value="header" className="mt-0 space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Featured Image URL</Label>
+                                        <Label>{c.featuredImageUrl}</Label>
                                         <Input
                                             value={formData.featuredImage}
                                             onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
@@ -309,11 +330,11 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Short Description / Blurb *</Label>
+                                        <Label>{c.shortDescription}</Label>
                                         <Textarea
                                             value={formData.shortDescription}
                                             onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                                            placeholder="1-2 sentences summarizing the teaching's core message."
+                                            placeholder={c.shortDescriptionPlaceholder}
                                             rows={3}
                                         />
                                     </div>
@@ -323,44 +344,44 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                 <TabsContent value="content" className="mt-0 space-y-4">
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="space-y-2 col-span-2">
-                                            <Label>Media Embed URL</Label>
+                                            <Label>{c.mediaEmbedUrl}</Label>
                                             <Input
                                                 value={formData.mediaUrl}
                                                 onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
-                                                placeholder="YouTube, Vimeo, or Audio link"
+                                                placeholder={c.mediaEmbedPlaceholder}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Media Type</Label>
+                                            <Label>{c.mediaType}</Label>
                                             <Select value={formData.mediaType} onValueChange={(v) => setFormData({ ...formData, mediaType: v as any })}>
                                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="video">Video</SelectItem>
-                                                    <SelectItem value="audio">Audio</SelectItem>
+                                                    <SelectItem value="video">{c.mediaVideo}</SelectItem>
+                                                    <SelectItem value="audio">{c.mediaAudio}</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Full Transcript / Notes</Label>
+                                        <Label>{c.fullTranscript}</Label>
                                         <Textarea
                                             value={formData.transcript}
                                             onChange={(e) => setFormData({ ...formData, transcript: e.target.value })}
-                                            placeholder="Paste full text here..."
+                                            placeholder={c.fullTranscriptPlaceholder}
                                             className="min-h-[200px]"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Sermon Outline</Label>
+                                        <Label>{c.sermonOutline}</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 value={tempOutlinePoint}
                                                 onChange={(e) => setTempOutlinePoint(e.target.value)}
-                                                placeholder="Add outline point (e.g., I. Introduction)"
+                                                placeholder={c.outlinePlaceholder}
                                             />
-                                            <Button type="button" onClick={() => addArrayItem('sermonOutline', tempOutlinePoint, setTempOutlinePoint)}>Add</Button>
+                                            <Button type="button" onClick={() => addArrayItem('sermonOutline', tempOutlinePoint, setTempOutlinePoint)}>{c.add}</Button>
                                         </div>
                                         <div className="space-y-2 mt-2">
                                             {formData.sermonOutline.map((item, i) => (
@@ -375,14 +396,14 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Key Quotations</Label>
+                                        <Label>{c.keyQuotations}</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 value={tempQuote}
                                                 onChange={(e) => setTempQuote(e.target.value)}
-                                                placeholder="Add a memorable quote"
+                                                placeholder={c.quotePlaceholder}
                                             />
-                                            <Button type="button" onClick={() => addArrayItem('keyQuotations', tempQuote, setTempQuote)}>Add</Button>
+                                            <Button type="button" onClick={() => addArrayItem('keyQuotations', tempQuote, setTempQuote)}>{c.add}</Button>
                                         </div>
                                         <div className="space-y-2 mt-2">
                                             {formData.keyQuotations.map((item, i) => (
@@ -400,14 +421,14 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                 {/* 4. Engagement */}
                                 <TabsContent value="engagement" className="mt-0 space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Discussion Questions</Label>
+                                        <Label>{c.discussionQuestions}</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 value={tempQuestion}
                                                 onChange={(e) => setTempQuestion(e.target.value)}
-                                                placeholder="Add question for small groups"
+                                                placeholder={c.questionPlaceholder}
                                             />
-                                            <Button type="button" onClick={() => addArrayItem('discussionQuestions', tempQuestion, setTempQuestion)}>Add</Button>
+                                            <Button type="button" onClick={() => addArrayItem('discussionQuestions', tempQuestion, setTempQuestion)}>{c.add}</Button>
                                         </div>
                                         <ul className="list-disc pl-5 space-y-1 mt-2">
                                             {formData.discussionQuestions.map((item, i) => (
@@ -420,32 +441,32 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Weekly Challenge</Label>
+                                        <Label>{c.weeklyChallenge}</Label>
                                         <Input
                                             value={formData.applicationChallenge}
                                             onChange={(e) => setFormData({ ...formData, applicationChallenge: e.target.value })}
-                                            placeholder="Specific practical action step"
+                                            placeholder={c.weeklyChallengePlaceholder}
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Digital Connection Point</Label>
+                                        <Label>{c.digitalConnection}</Label>
                                         <Input
                                             value={formData.digitalConnectionPoint}
                                             onChange={(e) => setFormData({ ...formData, digitalConnectionPoint: e.target.value })}
-                                            placeholder="e.g. Text 'BORNAGAIN' to 55555"
+                                            placeholder={c.digitalConnectionPlaceholder}
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Related Resources</Label>
+                                        <Label>{c.relatedResources}</Label>
                                         <div className="flex gap-2 items-end">
                                             <div className="space-y-1 flex-1">
                                                 <span className="text-xs text-muted-foreground">Title</span>
                                                 <Input
                                                     value={tempResource.title}
                                                     onChange={(e) => setTempResource({ ...tempResource, title: e.target.value })}
-                                                    placeholder="Resource Title"
+                                                    placeholder={c.resourceTitlePlaceholder}
                                                 />
                                             </div>
                                             <div className="space-y-1 flex-1">
@@ -456,7 +477,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                                     placeholder="https://..."
                                                 />
                                             </div>
-                                            <Button type="button" onClick={() => addArrayItem('relatedResources', tempResource, setTempResource)}>Add</Button>
+                                            <Button type="button" onClick={() => addArrayItem('relatedResources', tempResource, setTempResource)}>{c.add}</Button>
                                         </div>
                                         <div className="space-y-2 mt-2">
                                             {formData.relatedResources.map((item, i) => (
@@ -472,27 +493,27 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                 {/* 5. Footer */}
                                 <TabsContent value="footer" className="mt-0 space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Copyright Notice</Label>
+                                        <Label>{c.copyrightNotice}</Label>
                                         <Input
                                             value={formData.copyrightNotice}
                                             onChange={(e) => setFormData({ ...formData, copyrightNotice: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Speaker Bio</Label>
+                                        <Label>{c.speakerBio}</Label>
                                         <Textarea
                                             value={formData.speakerBio}
                                             onChange={(e) => setFormData({ ...formData, speakerBio: e.target.value })}
-                                            placeholder="Brief bio..."
+                                            placeholder={c.speakerBioPlaceholder}
                                             rows={3}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Contact for Follow-up</Label>
+                                        <Label>{c.contactFollowUp}</Label>
                                         <Input
                                             value={formData.contactEmail}
                                             onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                                            placeholder="email@church.org"
+                                            placeholder={c.contactFollowUpPlaceholder}
                                         />
                                     </div>
                                 </TabsContent>
@@ -502,7 +523,7 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                 </div>
 
                 <DialogFooter className="px-6 py-4 border-t">
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
                     <Button onClick={handleSubmit} disabled={createMutation.isPending}>
                         {createMutation.isPending ? 'Creating...' : 'Create Teaching'}
                     </Button>

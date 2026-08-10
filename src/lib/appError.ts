@@ -37,8 +37,10 @@ export function errorMessage(t: Translations, e: unknown): string {
   if (e instanceof AppError) {
     const template = t.errors[e.key] ?? String(e.key);
     if (!e.params) return template;
+    // split/join rather than replaceAll: the project targets ES2020, where
+    // String.prototype.replaceAll does not exist.
     return Object.entries(e.params).reduce(
-      (s, [k, v]) => s.replaceAll(`{${k}}`, String(v)),
+      (s, [k, v]) => s.split(`{${k}}`).join(String(v)),
       template
     );
   }

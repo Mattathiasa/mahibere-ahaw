@@ -34,6 +34,10 @@ function dottedKeys(tree: Tree): string[] {
  */
 const SAME_IN_BOTH_LANGUAGES = new Set<string>([
   'pages.loginPasswordPlaceholder', // '••••••••' — a bullet mask, not words
+  // Example email addresses. An address is not prose; translating the local
+  // part would only make the example look like a real address to copy.
+  'forms.emailPlaceholder', // you@example.com
+  'content.contactFollowUpPlaceholder', // email@church.org
 ]);
 
 describe('translation tree shape', () => {
@@ -70,6 +74,38 @@ describe('translation tree shape', () => {
     for (const [lang, sections] of Object.entries(translations)) {
       expect(Object.keys(sections).sort(), `${lang} sections`).toEqual([...SECTION_NAMES].sort());
     }
+  });
+});
+
+describe('section source files', () => {
+  it('define each key exactly once', async () => {
+    // A duplicate key in an object literal is not a runtime error — the later
+    // definition silently wins — so the assembled tree above cannot reveal it.
+    // Only the source text can. This caught 40 accidental redefinitions in
+    // `pages` that were shadowing already-translated strings.
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const dir = 'src/i18n/sections';
+    const offenders: string[] = [];
+
+    for (const file of readdirSync(dir).filter((f) => f.endsWith('.ts'))) {
+      const lines = readFileSync(`${dir}/${file}`, 'utf8').split('\n');
+      let block = '';
+      let seen = new Set<string>();
+      for (const line of lines) {
+        const decl = line.match(/^export const (\w+)/);
+        if (decl) {
+          block = decl[1];
+          seen = new Set();
+          continue;
+        }
+        const key = line.match(/^ {2}(\w+):/);
+        if (key && block) {
+          if (seen.has(key[1])) offenders.push(`${file}: ${block}.${key[1]}`);
+          seen.add(key[1]);
+        }
+      }
+    }
+    expect(offenders, `${offenders.length} duplicate key definitions`).toEqual([]);
   });
 });
 

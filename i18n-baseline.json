@@ -1,5 +1,5 @@
 {
-  "total": 1159,
+  "total": 1043,
   "files": {
     "src/components/AssetDetailsDialog.tsx": 1,
     "src/components/AtbiyaAdminFields.tsx": 3,
@@ -14,11 +14,10 @@
     "src/components/CreateFinancialReportDialog.tsx": 11,
     "src/components/CreatePlanDialog.tsx": 11,
     "src/components/CreateReportDialog.tsx": 17,
-    "src/components/CreateTeachingDialog.tsx": 63,
+    "src/components/CreateTeachingDialog.tsx": 13,
     "src/components/CreateTransactionDialog.tsx": 18,
     "src/components/DashboardLayout.tsx": 13,
     "src/components/EmployeeDetailsDialog.tsx": 12,
-    "src/components/EmployeeRegistrationWizard.tsx": 66,
     "src/components/ErrorBoundary.tsx": 1,
     "src/components/ImportAssetsDialog.tsx": 6,
     "src/components/ImportEmployeesDialog.tsx": 6,
