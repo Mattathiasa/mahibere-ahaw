@@ -1,4 +1,5 @@
 import { auth, db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -50,17 +51,17 @@ export const authService = {
         case 'auth/invalid-login-credentials':
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
-          throw new Error('Incorrect password. Please try again.');
+          throw new AppError('wrongPassword');
         case 'auth/user-not-found':
-          throw new Error('No account found with this username or email.');
+          throw new AppError('noAccount');
         case 'auth/invalid-email':
-          throw new Error('The email or username format is invalid.');
+          throw new AppError('invalidIdentifier');
         case 'auth/user-disabled':
-          throw new Error('This account has been disabled. Contact your administrator.');
+          throw new AppError('accountDisabled');
         case 'auth/too-many-requests':
-          throw new Error('Too many failed attempts. Please wait a few minutes and try again.');
+          throw new AppError('tooManyAttempts');
         default:
-          throw new Error(`Login failed: ${error.message}`);
+          throw new AppError('loginFailedDetail', { detail: error.message });
       }
     }
 
@@ -155,6 +156,11 @@ export const authService = {
         actor = { id: cached.id, name: cached.fullName || cached.fullNameEnglish, email: cached.email, hierarchyLevel: cached.hierarchyLevel };
       }
     } catch { /* ignore */ }
+    // Audit descriptions stay English on purpose. The log is a record, not UI
+    // copy: entries are written once and read later by whoever is
+    // investigating, so translating each at write time would leave the trail in
+    // whatever language the actor happened to be using — a mix that is harder
+    // to read, not easier. Same reasoning as the persisted enum tokens.
     await auditLogService.log({ action: 'logout', targetType: 'auth', description: 'Signed out', actor });
 
     await signOut(auth);
@@ -222,10 +228,10 @@ export const authService = {
   async changePassword(data: { currentPassword: string; newPassword: string }): Promise<void> {
     const firebaseUser = auth.currentUser;
     if (!firebaseUser || !firebaseUser.email) {
-      throw new Error('No user is currently signed in.');
+      throw new AppError('notSignedIn');
     }
     if (data.newPassword.length < 6) {
-      throw new Error('New password must be at least 6 characters long.');
+      throw new AppError('passwordTooShort');
     }
     // Re-authenticate before changing the password (a Firebase requirement).
     const credential = EmailAuthProvider.credential(firebaseUser.email, data.currentPassword);
@@ -237,12 +243,12 @@ export const authService = {
       // that was in fact correct.
       const code = (e as { code?: string }).code ?? '';
       if (code === 'auth/too-many-requests') {
-        throw new Error('Too many attempts. Please wait a few minutes and try again.');
+        throw new AppError('tooManyAttemptsShort');
       }
       if (code === 'auth/network-request-failed') {
-        throw new Error('Network problem — check your connection and try again.');
+        throw new AppError('networkProblem');
       }
-      throw new Error('Current password is incorrect.');
+      throw new AppError('currentPasswordWrong');
     }
 
     try {
@@ -250,12 +256,12 @@ export const authService = {
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
       if (code === 'auth/weak-password') {
-        throw new Error('That password is too weak. Choose something longer or less predictable.');
+        throw new AppError('passwordTooWeak');
       }
       if (code === 'auth/requires-recent-login') {
-        throw new Error('For security, please sign out and back in, then change your password.');
+        throw new AppError('reauthRequired');
       }
-      throw new Error('Could not change the password. Please try again.');
+      throw new AppError('passwordChangeFailed');
     }
   },
 
@@ -273,11 +279,11 @@ export const authService = {
    */
   async changeUsername(next: string): Promise<void> {
     const firebaseUser = auth.currentUser;
-    if (!firebaseUser?.email) throw new Error('No user is currently signed in.');
+    if (!firebaseUser?.email) throw new AppError('notSignedIn');
 
     const trimmed = next.trim();
     if (!/^[a-zA-Z0-9._-]{3,}$/.test(trimmed)) {
-      throw new Error('A username needs at least 3 characters, and may use only letters, digits, dot, dash or underscore.');
+      throw new AppError('usernameInvalid');
     }
 
     const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
@@ -286,7 +292,7 @@ export const authService = {
 
     const existing = await getDoc(doc(db, 'usernames', trimmed.toLowerCase()));
     if (existing.exists() && existing.data().uid !== firebaseUser.uid) {
-      throw new Error('That username is already taken. Choose another.');
+      throw new AppError('usernameTaken');
     }
 
     try {
@@ -300,7 +306,7 @@ export const authService = {
         updatedAt: new Date().toISOString(),
       });
     } catch {
-      throw new Error('Could not save the new username. Please try again.');
+      throw new AppError('usernameSaveFailed');
     }
 
     // Best-effort: the rename has already taken effect. A leftover row only
@@ -341,27 +347,25 @@ export const authService = {
    */
   async sendPasswordReset(usernameOrEmail: string): Promise<{ sentTo: string }> {
     const input = usernameOrEmail.trim();
-    if (!input) throw new Error('Enter your username or email address first.');
+    if (!input) throw new AppError('enterIdentifierFirst');
 
     const email = await this.resolveEmail(input);
     if (email.toLowerCase().endsWith('@mahibereahaw.local')) {
-      throw new Error(
-        'This account signs in with a username and has no email address, so a reset link cannot be sent. Ask your parish administrator to issue you a new password.'
-      );
+      throw new AppError('noEmailOnAccount');
     }
 
     try {
       await sendPasswordResetEmail(auth, email);
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
-      if (code === 'auth/invalid-email') throw new Error('That email address is not valid.');
+      if (code === 'auth/invalid-email') throw new AppError('emailInvalid');
       if (code === 'auth/too-many-requests') {
-        throw new Error('Too many attempts. Please wait a few minutes and try again.');
+        throw new AppError('tooManyAttemptsShort');
       }
       // auth/user-not-found is deliberately NOT distinguished: saying which
       // addresses have accounts would let anyone enumerate the membership.
       if (code !== 'auth/user-not-found') {
-        throw new Error('Could not send the reset email. Please try again.');
+        throw new AppError('resetEmailFailed');
       }
     }
     return { sentTo: email };
@@ -380,16 +384,16 @@ export const authService = {
    */
   async addRecoveryEmail(currentPassword: string, newEmail: string): Promise<void> {
     const firebaseUser = auth.currentUser;
-    if (!firebaseUser?.email) throw new Error('No user is currently signed in.');
+    if (!firebaseUser?.email) throw new AppError('notSignedIn');
     if (!/^\S+@\S+\.\S+$/.test(newEmail.trim())) {
-      throw new Error('That email address is not valid.');
+      throw new AppError('emailInvalid');
     }
 
     const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
     try {
       await reauthenticateWithCredential(firebaseUser, credential);
     } catch {
-      throw new Error('Current password is incorrect.');
+      throw new AppError('currentPasswordWrong');
     }
 
     try {
@@ -397,9 +401,9 @@ export const authService = {
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
       if (code === 'auth/email-already-in-use') {
-        throw new Error('Another account already uses that email address.');
+        throw new AppError('emailTaken');
       }
-      throw new Error('Could not start the email change. Please try again.');
+      throw new AppError('emailChangeFailed');
     }
   },
 

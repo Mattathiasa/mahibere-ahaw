@@ -552,6 +552,9 @@ export const adminEn = {
 
   // ── Localization editor ───────────────────────────────────────────────────
   searchKeysPlaceholder: 'Search keys or values…',
+  mcResetModule: 'Reset to defaults',
+  mcResetModuleHint:
+    'Clears every override for this module and falls back to the built-in translated text. Takes effect when you save.',
   howOverridesWork: 'How overrides work',
   overridesHelpBefore: 'The placeholder text shows the current built-in default. Type a new value to override it for',
   overridesHelpAfter: '. Clear a field to revert to the default. Changes go live for all users immediately after saving.',
@@ -1085,6 +1088,9 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
   roleDialogDesc: 'ፈቃዶች ከኃላፊነት ዝርዝሩ በታች ባለው ማትሪክስ ውስጥ ይስተካከላሉ። ይህ መገናኛ የኃላፊነቱን ማንነት፣ ክልልና የመዳረሻ ምልክቶች ይሸፍናል።',
 
   searchKeysPlaceholder: 'ቁልፎችን ወይም እሴቶችን ይፈልጉ…',
+  mcResetModule: 'ወደ ነባሪ መልስ',
+  mcResetModuleHint:
+    'ለዚህ ክፍል የተደረጉ ተሽሮዎችን በሙሉ አጽድቶ ወደ አብሮ የተሰራው የተተረጎመ ጽሑፍ ይመልሳል። ሲያስቀምጡ ተግባራዊ ይሆናል።',
   howOverridesWork: 'ተሽሮዎች እንዴት እንደሚሠሩ',
   overridesHelpBefore: 'የቦታ ያዥ ጽሑፉ አሁን ያለውን አብሮ የተሰራ ነባሪ ያሳያል። ለመሻር አዲስ እሴት ይተይቡ ለ',
   overridesHelpAfter: '። ወደ ነባሪው ለመመለስ መስኩን ባዶ ያድርጉ። ለውጦች ከተቀመጡ በኋላ ወዲያውኑ ለሁሉም ተጠቃሚዎች ይተገበራሉ።',

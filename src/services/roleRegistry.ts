@@ -1,4 +1,5 @@
 import { doc, getDoc, writeBatch, onSnapshot } from 'firebase/firestore';
+import { AppError } from '@/lib/appError';
 import { db } from '@/lib/firebase';
 import {
   DEFAULT_ROLE_PERMISSIONS,
@@ -397,9 +398,7 @@ export const roleRegistryService = {
 
     const current = await this.get();
     if (current.version !== expectedVersion) {
-      throw new Error(
-        'These roles were changed in another tab or by another admin. Reload before saving so you do not overwrite their edits.'
-      );
+      throw new AppError('rolesChangedElsewhere');
     }
 
     const nextVersion = expectedVersion + 1;

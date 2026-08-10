@@ -15,12 +15,13 @@ import { Sun, Moon, Languages, Home, Sparkles, ArrowRight, Lock, Mail } from 'lu
 import { motion } from 'framer-motion';
 import { ThreeBackground } from '@/components/ThreeBackground';
 
+import { errorMessage } from '@/lib/appError';
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoggingIn } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t: tree } = useLanguage();
   const { t } = useTranslation();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [resetNotice, setResetNotice] = useState<string | null>(null);
@@ -73,7 +74,7 @@ const Login = () => {
     setLoginError(null);
     setResetNotice(null);
     login(formData, {
-      onError: (error: any) => setLoginError(error.message || t('loginFailed')),
+      onError: (error: unknown) => setLoginError(errorMessage(tree, error)),
     });
   };
 
@@ -86,17 +87,15 @@ const Login = () => {
     setLoginError(null);
     setResetNotice(null);
     if (!formData.username.trim()) {
-      setLoginError('Enter your username or email address first, then choose "Forgot password?".');
+      setLoginError(tree.errors.enterIdentifierFirst);
       return;
     }
     setIsResetting(true);
     try {
       const { sentTo } = await authService.sendPasswordReset(formData.username);
-      setResetNotice(
-        `If an account exists for ${sentTo}, a reset link is on its way. Check the inbox and the spam folder.`
-      );
+      setResetNotice(tree.pages.resetLinkSent.replace('{email}', sentTo));
     } catch (error) {
-      setLoginError(error instanceof Error ? error.message : 'Could not send the reset email.');
+      setLoginError(errorMessage(tree, error));
     } finally {
       setIsResetting(false);
     }

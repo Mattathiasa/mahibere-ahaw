@@ -64,8 +64,11 @@ const TEXT_PROPS =
   /\b(placeholder|label|title|alt|aria-label|description|hint|emptyTitle|emptyMessage|defaultTitle|defaultDescription)\s*=\s*(["'])(.*?)\2/g;
 /** Toast and dialog text. */
 const TOAST = /\btoast\s*\.\s*(?:success|error|info|warning|loading|message)\s*\(\s*(["'])(.*?)\1/g;
-/** Thrown prose. */
-const THROWN = /\bthrow\s+new\s+(?:Error|AppError)\s*\(\s*(["'])(.*?)\1/g;
+/**
+ * Thrown prose. `Error` only, never `AppError` — an AppError's argument is a
+ * translation key, which is the opposite of an untranslated string.
+ */
+const THROWN = /\bthrow\s+new\s+Error\s*\(\s*(["'])(.*?)\1/g;
 /** JSX text nodes: `>Some words<` on one line. */
 const JSX_TEXT = />([^<>{}\n]*[A-Za-z]{3,}[^<>{}\n]*)</g;
 /**

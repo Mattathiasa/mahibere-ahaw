@@ -421,6 +421,8 @@ export const pagesEn = {
   pendingRequestWith: 'Your membership request is with',
   pendingApproveNote: '. Once they approve it you will be able to sign in with the username and password you just chose.',
   pendingSentGeneric: 'Your membership request has been sent to your congregation. Once they approve it you will be able to sign in with the username and password you just chose.',
+  /** `{email}` is the address the reset link went to. */
+  resetLinkSent: 'If an account exists for {email}, a reset link is on its way. Check the inbox and the spam folder.',
 };
 
 /**
@@ -815,6 +817,7 @@ export const pagesAm: Record<keyof typeof pagesEn, string> = {
   pendingRequestWith: 'የአባልነት ጥያቄዎ ያለው በ',
   pendingApproveNote: ' ዘንድ ነው። ካጸደቁት በኋላ አሁን በመረጡት የተጠቃሚ ስምና የይለፍ ቃል መግባት ይችላሉ።',
   pendingSentGeneric: 'የአባልነት ጥያቄዎ ወደ አጥቢያዎ ተልኳል። ካጸደቁት በኋላ አሁን በመረጡት የተጠቃሚ ስምና የይለፍ ቃል መግባት ይችላሉ።',
+  resetLinkSent: 'ለ{email} መለያ ካለ፣ የማደሻ አገናኝ በመንገድ ላይ ነው። ኢሜይልዎንና የአይፈለጌ መልእክት ማህደሩን ይመልከቱ።',
 };
 
 export const pagesOm: Partial<Record<keyof typeof pagesEn, string>> = {

@@ -6,7 +6,10 @@ import { toast } from 'sonner';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { postLoginPath } from '@/lib/postLogin';
 
+import { errorMessage } from '@/lib/appError';
+import { useLanguage } from '@/contexts/LanguageContext';
 export function useAuth() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user, loading, isAuthenticated } = useAuthContext();
@@ -20,9 +23,8 @@ export function useAuth() {
       // dashboard. postLoginPath falls back to /dashboard if anything fails.
       navigate(await postLoginPath(data.user), { replace: true });
     },
-    onError: (error: any) => {
-      const message = error.message || 'Login failed. Please check your credentials.';
-      toast.error(message);
+    onError: (error: unknown) => {
+      toast.error(errorMessage(t, error));
       authService.clearAuth();
     },
   });

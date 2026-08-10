@@ -32,6 +32,12 @@ export const peopleEn = {
   personNameExample: 'Abebe Kebede Worku',
   usernameExample: 'abebe.k',
   personEmailExample: 'abebe@example.com',
+
+  // ── Membership decision notifications ─────────────────────────────────────
+  approvedTitle: 'Your membership was approved',
+  approvedMessage: 'You can now sign in and use the system. Welcome!',
+  rejectedTitle: 'Your membership request was not approved',
+  rejectedNoReason: 'Please contact your parish for details.',
 };
 
 /**
@@ -64,6 +70,11 @@ export const peopleAm: Record<keyof typeof peopleEn, string> = {
   personNameExample: 'አበበ ከበደ ወርቁ',
   usernameExample: 'abebe.k',
   personEmailExample: 'abebe@example.com',
+
+  approvedTitle: 'አባልነትዎ ጸድቋል',
+  approvedMessage: 'አሁን መግባትና ሥርዓቱን መጠቀም ይችላሉ። እንኳን ደህና መጡ!',
+  rejectedTitle: 'የአባልነት ጥያቄዎ አልጸደቀም',
+  rejectedNoReason: 'ለዝርዝሩ እባክዎ አጥቢያዎን ያነጋግሩ።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

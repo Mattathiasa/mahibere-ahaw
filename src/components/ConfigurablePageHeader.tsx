@@ -1,7 +1,8 @@
 import { PageHeader } from '@/components/ui/PageHeader';
 import { LearnMore } from '@/components/LearnMore';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
-import type { ModuleKey } from '@/services/moduleConfig';
+import { moduleLearnMore, type ModuleKey } from '@/services/moduleConfig';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
   module: ModuleKey;
@@ -19,6 +20,7 @@ interface Props {
  */
 export function ConfigurablePageHeader({ module, defaultTitle, defaultDescription, badge }: Props) {
   const cfg = useModuleConfig(module);
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
@@ -26,7 +28,7 @@ export function ConfigurablePageHeader({ module, defaultTitle, defaultDescriptio
         description={cfg.headerDescription || defaultDescription}
         badge={badge}
       />
-      <LearnMore title={cfg.headerTitle || defaultTitle} content={cfg.learnMore} />
+      <LearnMore title={cfg.headerTitle || defaultTitle} content={moduleLearnMore(t, module, cfg)} />
     </div>
   );
 }

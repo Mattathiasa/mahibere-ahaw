@@ -41,8 +41,23 @@ export const errorsEn = {
   enterIdentifierFirst: 'Enter your username or email address first.',
   emailInvalid: 'That email address is not valid.',
   resetEmailFailed: 'Could not send the reset email. Please try again.',
+  /** `{detail}` carries the Firebase message for an error we have no wording for. */
+  loginFailedDetail: 'Sign-in failed: {detail}',
+  noEmailOnAccount:
+    'This account signs in with a username and has no email address, so a reset link cannot be sent. Ask your parish administrator to issue you a new password.',
   emailTaken: 'Another account already uses that email address.',
   emailChangeFailed: 'Could not start the email change. Please try again.',
+
+  // ── Parish administration ─────────────────────────────────────────────────
+  adminNoEmailOnAccount:
+    'This account signs in with a username, not a real email address, so no reset link can be sent. Create a replacement administrator account instead.',
+  rolesChangedElsewhere:
+    'These roles were changed in another tab or by another admin. Reload before saving so you do not overwrite their edits.',
+  passwordRequired: 'A password is required.',
+
+  // ── Membership requests ───────────────────────────────────────────────────
+  requestGone: 'This request no longer exists.',
+  requestAlreadyDecided: 'This request was already decided by someone else.',
 };
 
 /**
@@ -75,8 +90,20 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
   enterIdentifierFirst: 'መጀመሪያ የተጠቃሚ ስምዎን ወይም የኢሜይል አድራሻዎን ያስገቡ።',
   emailInvalid: 'ይህ የኢሜይል አድራሻ ትክክል አይደለም።',
   resetEmailFailed: 'የይለፍ ቃል ማደሻ ኢሜይል መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+  loginFailedDetail: 'መግባት አልተሳካም፦ {detail}',
+  noEmailOnAccount:
+    'ይህ መለያ የሚገባው በተጠቃሚ ስም ስለሆነና የኢሜይል አድራሻ ስለሌለው የማደሻ አገናኝ መላክ አይቻልም። አዲስ የይለፍ ቃል እንዲሰጥዎ የአጥቢያዎን አስተዳዳሪ ይጠይቁ።',
   emailTaken: 'ሌላ መለያ አስቀድሞ ይህንን የኢሜይል አድራሻ ይጠቀማል።',
   emailChangeFailed: 'የኢሜይል ለውጡን መጀመር አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+
+  adminNoEmailOnAccount:
+    'ይህ መለያ የሚገባው በተጠቃሚ ስም እንጂ በእውነተኛ የኢሜይል አድራሻ ስላልሆነ የማደሻ አገናኝ መላክ አይቻልም። በምትኩ ሌላ የአስተዳዳሪ መለያ ይፍጠሩ።',
+  rolesChangedElsewhere:
+    'እነዚህ ኃላፊነቶች በሌላ ትር ወይም በሌላ አስተዳዳሪ ተለውጠዋል። የእነሱን ለውጥ እንዳይሽሩ ከማስቀመጥዎ በፊት ገጹን እንደገና ይጫኑ።',
+  passwordRequired: 'የይለፍ ቃል ያስፈልጋል።',
+
+  requestGone: 'ይህ ጥያቄ ከእንግዲህ የለም።',
+  requestAlreadyDecided: 'በዚህ ጥያቄ ላይ ሌላ ሰው አስቀድሞ ወስኗል።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

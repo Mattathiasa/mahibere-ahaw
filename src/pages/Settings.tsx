@@ -25,6 +25,7 @@ import { Language } from '@/i18n/translations';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 import { useFormatters } from '@/lib/formatters';
+import { errorMessage } from '@/lib/appError';
 const Settings = () => {
   const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
@@ -129,7 +130,7 @@ const Settings = () => {
       toast.success('Profile updated successfully!');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+      toast.error(errorMessage(t, error));
     },
   });
 
@@ -143,7 +144,7 @@ const Settings = () => {
     // a Firebase error never has — so every real reason ("Current password is
     // incorrect.") was swallowed and replaced with a generic failure.
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to change password');
+      toast.error(errorMessage(t, error));
     },
   });
 
@@ -162,7 +163,7 @@ const Settings = () => {
       toast.success('Username changed. Use the new one next time you sign in.');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Could not change the username');
+      toast.error(errorMessage(t, error));
     },
   });
 
@@ -181,7 +182,7 @@ const Settings = () => {
       );
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Could not start the email change');
+      toast.error(errorMessage(t, error));
     },
   });
 

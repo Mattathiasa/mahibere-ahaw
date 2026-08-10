@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Save, Loader2, CheckCircle2, AlertCircle, SlidersHorizontal,
-  Plus, Trash2,
+  Plus, Trash2, RotateCcw,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
-  moduleConfigService, DEFAULT_MODULE_CONFIG,
+  moduleConfigService, DEFAULT_MODULE_CONFIG, fieldLabel, moduleLearnMore,
   type ModuleConfig, type ModuleKey, type SingleModuleConfig, type FieldConfig,
 } from '@/services/moduleConfig';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,24 +20,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useFormatters } from '@/lib/formatters';
-const MODULES: { key: ModuleKey; label: string }[] = [
-  { key: 'members', label: 'Members' },
-  { key: 'plans', label: 'Plans' },
-  { key: 'reports', label: 'Reports' },
-  { key: 'announcements', label: 'Announcements' },
-  { key: 'meetings', label: 'Meetings' },
-  { key: 'finance', label: 'Finance' },
-  { key: 'hr', label: 'HR' },
-  { key: 'inventory', label: 'Inventory' },
-  { key: 'teachings', label: 'Teachings' },
-  { key: 'documents', label: 'Documents' },
-  { key: 'hierarchy', label: 'Hierarchy' },
-  { key: 'missionary', label: 'Missionary' },
-  { key: 'volunteer', label: 'Volunteer' },
-  { key: 'strategicPlan', label: 'Strategic Plan' },
-  { key: 'churchRules', label: 'Church Rules' },
-  { key: 'higeDenb', label: 'HigeDenb' },
-  { key: 'news', label: 'News' },
+import { navLabel } from '@/services/softwareControl';
+/**
+ * The module tabs. Labels resolve through the dictionary rather than being
+ * restated here — `navLabel` falls back from `nav` to `pages`, and every
+ * ModuleKey exists in one of them.
+ */
+const MODULE_TAB_KEYS: ModuleKey[] = [
+  'members', 'plans', 'reports', 'announcements', 'meetings', 'finance',
+  'hr', 'inventory', 'teachings', 'documents', 'hierarchy', 'missionary',
+  'volunteer', 'strategicPlan', 'churchRules', 'higeDenb', 'news',
 ];
 
 const ModuleConfigPage: React.FC = () => {
@@ -72,6 +64,23 @@ const ModuleConfigPage: React.FC = () => {
   function patch(key: ModuleKey, updater: (m: SingleModuleConfig) => SingleModuleConfig) {
     setConfig((c) => ({ ...c, [key]: updater(c[key]) }));
   }
+
+  /**
+   * Drop every override for one module and fall back to the built-in
+   * translated defaults.
+   *
+   * This exists because of how the config persists. `mergeModule` resolves
+   * `over.fields ?? base.fields`, so a saved copy wins outright — and until
+   * now the built-in field labels were English prose that got written into
+   * Firestore the first time any admin pressed Save. Those saved labels then
+   * beat every later translation, permanently, with no way back through the
+   * UI. Blanking them here is the way back.
+   */
+  function resetModule(key: ModuleKey) {
+    setConfig((c) => ({ ...c, [key]: structuredClone(DEFAULT_MODULE_CONFIG[key]) }));
+  }
+
+  const MODULES = MODULE_TAB_KEYS.map((key) => ({ key, label: navLabel(t, key) }));
 
   if (loading) {
     return (
@@ -131,6 +140,14 @@ const ModuleConfigPage: React.FC = () => {
             const mod = config[m.key];
             return (
               <TabsContent key={m.key} value={m.key} className="space-y-6">
+                <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4">
+                  <p className="text-xs text-muted-foreground">{a.mcResetModuleHint}</p>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => resetModule(m.key)}>
+                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                    {a.mcResetModule}
+                  </Button>
+                </div>
+
                 {/* Page header */}
                 <Card>
                   <CardHeader>
@@ -140,7 +157,7 @@ const ModuleConfigPage: React.FC = () => {
                   <CardContent className="space-y-4">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{a.title}</Label>
-                      <Input value={mod.headerTitle} placeholder="(translated default)"
+                      <Input value={mod.headerTitle} placeholder={navLabel(t, m.key)}
                         onChange={(e) => patch(m.key, (x) => ({ ...x, headerTitle: e.target.value }))} />
                     </div>
                     <div className="space-y-1.5">
@@ -159,6 +176,7 @@ const ModuleConfigPage: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <Textarea rows={6} value={mod.learnMore}
+                      placeholder={moduleLearnMore(t, m.key, mod)}
                       onChange={(e) => patch(m.key, (x) => ({ ...x, learnMore: e.target.value }))} />
                   </CardContent>
                 </Card>
@@ -174,7 +192,7 @@ const ModuleConfigPage: React.FC = () => {
                     {mod.fields.map((f, i) => (
                       <div key={f.key} className="flex items-center justify-between gap-4 p-3 rounded-xl border border-border bg-muted/20">
                         <div>
-                          <p className="text-sm font-semibold">{f.label}</p>
+                          <p className="text-sm font-semibold">{fieldLabel(t, f)}</p>
                           <code className="text-[10px] text-muted-foreground">{f.key}</code>
                         </div>
                         <div className="flex items-center gap-5">
