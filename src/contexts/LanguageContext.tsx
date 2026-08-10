@@ -29,12 +29,13 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
  *   3. siteConfig/translations_overrides   (Settings)
  *   4. siteConfig/pageStrings              (Landing Editor -> UI Translations)
  *
- * Step 1 matters: `pages` holds 233 keys in English but only 71 in Amharic,
- * Afaan Oromoo and Tigrinya, so without a base those three rendered
- * `undefined` for the other 162. Showing the English string is the honest
- * fallback — inventing translations in source would put words in the church's
- * mouth that nobody reviewed — and every fallback is listed in the UI
- * Translations tab for an admin to translate properly.
+ * Step 1 matters for Afaan Oromoo and Tigrinya, which are partial: they carry
+ * 158 of the tree's keys and have no `admin` section at all, so without an
+ * English base they would render `undefined` for the rest. Amharic is complete
+ * and enforced as such — every `*Am` export in src/i18n/sections is typed
+ * `Record<keyof typeof *En, string>`, so a key added in English without an
+ * Amharic translation is a compile error, not a silent fallback. Every key an
+ * om/ti reader is still missing is listed in the UI Translations tab.
  *
  * Step 4 used to be missing entirely, which meant editing a string in the UI
  * Translations tab had no effect on anything rendered through `t`, including
@@ -99,6 +100,21 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       setLangState(stored);
     }
   }, []);
+
+  /**
+   * Keep `<html lang>` in step with the language actually being rendered.
+   *
+   * It was hardcoded `en` and never updated, so a screen reader announced
+   * every page in English regardless — on an app whose readers are almost all
+   * Amharic speakers. It also drives `lang`-scoped font fallback and the
+   * browser's offer to translate the page.
+   *
+   * No `dir` handling: Amharic, Tigrinya, Afaan Oromoo and English are all
+   * left-to-right. Ge'ez script is not RTL.
+   */
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const setLanguage = (lang: Language) => {
     if (localTranslations[lang]) {

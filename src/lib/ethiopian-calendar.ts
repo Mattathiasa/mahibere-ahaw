@@ -51,15 +51,22 @@ export function monthName(id: number, lang: MonthLang): string {
 }
 
 /**
- * BCP-47 tag for `toLocaleDateString`, so Gregorian dates follow the language
+ * BCP-47 tags for `toLocaleDateString`, so Gregorian dates follow the language
  * the reader picked in the app rather than whatever their browser is set to.
+ *
+ * Returns a fallback *chain* rather than a single tag, which every `Intl`
+ * constructor accepts. ICU coverage for `ti-ET` and especially `om-ET` is thin
+ * and varies by browser and by OS; a lone unsupported tag silently resolves to
+ * the root locale, which formats dates in a way no reader recognises. Ending
+ * every chain at `en-GB` means the worst case is day/month order rather than
+ * something arbitrary.
  */
-export function localeFor(lang: string): string {
+export function localeFor(lang: string): string[] {
   switch (lang) {
-    case 'am': return 'am-ET';
-    case 'ti': return 'ti-ET';
-    case 'om': return 'om-ET';
-    default:   return 'en-GB';
+    case 'am': return ['am-ET', 'am', 'en-GB'];
+    case 'ti': return ['ti-ET', 'ti', 'am-ET', 'en-GB'];
+    case 'om': return ['om-ET', 'om', 'en-GB'];
+    default:   return ['en-GB'];
   }
 }
 

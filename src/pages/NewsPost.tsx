@@ -9,10 +9,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 
+import { useFormatters } from '@/lib/formatters';
 const NewsPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
+  const { formatDateLong } = useFormatters();
   const { theme } = useTheme();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -48,7 +52,7 @@ const NewsPostPage: React.FC = () => {
         </div>
       ) : !post || post.status !== 'published' ? (
         <div className="container mx-auto px-6 py-32 text-center space-y-4">
-          <h1 className="text-3xl font-black">Post not found</h1>
+          <h1 className="text-3xl font-black">{pg.postNotFound}</h1>
           <p className="text-muted-foreground">
             This article may have been removed, or is not published yet.
           </p>
@@ -69,9 +73,7 @@ const NewsPostPage: React.FC = () => {
               {post.publishedAt && (
                 <span className="inline-flex items-center gap-1.5 opacity-50">
                   <Calendar className="h-2.5 w-2.5" />
-                  {new Date(post.publishedAt).toLocaleDateString(undefined, {
-                    year: 'numeric', month: 'long', day: 'numeric',
-                  })}
+                  {formatDateLong(post.publishedAt)}
                 </span>
               )}
               {post.authorName && (
@@ -126,7 +128,7 @@ const NewsPostPage: React.FC = () => {
                 ? body.split(/\n{2,}/).map((para, i) => (
                     <p key={i} className="whitespace-pre-line">{para}</p>
                   ))
-                : <p className="italic opacity-60">This post has no content in the selected language.</p>}
+                : <p className="italic opacity-60">{pg.postNoContentInLanguage}</p>}
             </div>
 
             {/* Article Photo Gallery */}

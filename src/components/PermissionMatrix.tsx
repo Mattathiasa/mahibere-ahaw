@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { ChevronDown, RotateCcw } from 'lucide-react';
 import {
   ALL_PERMISSIONS, PERMISSION_META, PERMISSION_GROUPS, DEFAULT_ROLE_PERMISSIONS,
+  permissionLabel, permissionDescription, permissionGroupLabel,
   type PermissionKey,
 } from '@/lib/rolePermissions';
 import { roleLabel, type Role } from '@/services/roleRegistry';
-import type { Language } from '@/i18n/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface PermissionMatrixProps {
   roles: Role[];
-  lang?: Language;
   onToggle: (roleKey: string, permission: PermissionKey) => void;
   /** Restores a role's permission list to the values the app ships with. */
   onResetRole: (roleKey: string) => void;
@@ -24,8 +24,12 @@ interface PermissionMatrixProps {
  * here immediately.
  */
 export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
-  roles, lang = 'en', onToggle, onResetRole,
+  roles, onToggle, onResetRole,
 }) => {
+  // The language came in as a prop defaulting to 'en', and the only caller
+  // never passed it — so role names rendered in English however the reader had
+  // set the app. Reading the context removes both the prop and the bug.
+  const { t, language: lang } = useLanguage();
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(PERMISSION_GROUPS));
 
   function toggleGroup(group: string) {
@@ -56,7 +60,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
               onClick={() => toggleGroup(group)}
               className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
             >
-              <span className="text-sm font-bold">{group}</span>
+              <span className="text-sm font-bold">{permissionGroupLabel(t, group)}</span>
               <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? '' : '-rotate-90'}`} />
             </button>
             {isOpen && (
@@ -79,8 +83,8 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                     {perms.map((perm) => (
                       <tr key={perm} className="border-b border-border/50">
                         <td className="py-2 px-4">
-                          <div className="font-medium">{PERMISSION_META[perm].label}</div>
-                          <div className="text-[11px] text-muted-foreground">{PERMISSION_META[perm].description}</div>
+                          <div className="font-medium">{permissionLabel(t, perm)}</div>
+                          <div className="text-[11px] text-muted-foreground">{permissionDescription(t, perm)}</div>
                         </td>
                         {roles.map((role) => {
                           const isDefault =
@@ -92,7 +96,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                 <Checkbox
                                   checked={role.permissions.includes(perm)}
                                   onCheckedChange={() => onToggle(role.key, perm)}
-                                  aria-label={`${PERMISSION_META[perm].label} for ${role.key}`}
+                                  aria-label={`${permissionLabel(t, perm)} — ${roleLabel(role, lang)}`}
                                 />
                               </span>
                             </td>
@@ -109,7 +113,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
       })}
 
       <div className="flex flex-wrap gap-2 pt-2 items-center">
-        <span className="text-xs text-muted-foreground mr-1">Reset a role to defaults:</span>
+        <span className="text-xs text-muted-foreground mr-1">{t.admin.resetRoleHint}</span>
         {roles
           .filter((r) => DEFAULT_ROLE_PERMISSIONS[r.key])
           .map((role) => (

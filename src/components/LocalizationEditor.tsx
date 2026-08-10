@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface LocalizationEditorProps {
@@ -59,11 +60,16 @@ function flattenSection(section: string, obj: Record<string, unknown>): StringEn
 /**
  * Every section and key an admin can translate, for one language.
  *
- * The key set comes from English, not from the selected language: `pages` has
- * 233 keys in English and 71 in the other three, and enumerating the selected
- * language would hide the remaining 162 from the very editor meant to
- * translate them. Where a language has no string of its own, the English one
- * is shown as the placeholder — matching what the page actually renders.
+ * The key set comes from English, not from the selected language. Amharic is
+ * complete and enforced by the type system, but Afaan Oromoo and Tigrinya are
+ * partial — `pages` has 234 keys in English and 71 in those two, and they have
+ * no `admin` section at all — so enumerating the selected language would hide
+ * the untranslated keys from the very editor meant to translate them. Where a
+ * language has no string of its own the English one is shown as the
+ * placeholder, matching what the page actually renders.
+ *
+ * Sections with no keys are filtered out, so a section module that has been
+ * created but not yet populated does not show up as an empty tab.
  */
 function getSections(lang: Language): Array<{ section: string; entries: StringEntry[] }> {
   const englishData = translations.en as Record<string, unknown>;
@@ -89,6 +95,18 @@ const SECTION_LABELS: Record<string, string> = {
   pages: 'Page Titles & Descriptions',
   signup: 'Sign-up Form',
   admin: 'Admin Screens',
+  status: 'Statuses & Choices',
+  errors: 'Error Messages',
+  forms: 'Form Fields & Validation',
+  permissions: 'Permissions & Roles',
+  structure: 'Church Structure',
+  modules: 'Module Defaults',
+  finance: 'Finance',
+  hr: 'Human Resources',
+  inventory: 'Inventory',
+  people: 'Members & Users',
+  content: 'News & Teachings',
+  geo: 'Places',
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -101,6 +119,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
   handleSaveStrings,
   savingStrings,
 }) => {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const sections = getSections(stringsLang);
 
@@ -168,8 +187,8 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
               </Select>
               <Button onClick={handleSaveStrings} disabled={savingStrings}>
                 {savingStrings
-                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</>
-                  : <><Save className="h-4 w-4 mr-2" />Save</>
+                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t.common.saving}</>
+                  : <><Save className="h-4 w-4 mr-2" />{t.admin.save}</>
                 }
               </Button>
             </div>
@@ -179,7 +198,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
           <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search keys or values…"
+              placeholder={t.admin.searchKeysPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -190,8 +209,8 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
 
       {/* Info banner */}
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm space-y-1">
-        <p className="font-bold">How overrides work</p>
-        <p>The placeholder text shows the current built-in default. Type a new value to override it for <strong>{LANG_LABELS[stringsLang]}</strong>. Clear a field to revert to the default. Changes go live for all users immediately after saving.</p>
+        <p className="font-bold">{t.admin.howOverridesWork}</p>
+        <p>{t.admin.overridesHelpBefore} <strong>{LANG_LABELS[stringsLang]}</strong>{t.admin.overridesHelpAfter}</p>
       </div>
 
       {/* Sections as tabs */}
@@ -230,7 +249,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
                 </CardHeader>
                 <CardContent>
                   {filtered.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-8 text-center">No strings match your search.</p>
+                    <p className="text-sm text-muted-foreground py-8 text-center">{t.admin.noStringsMatch}</p>
                   ) : (
                     <div className="space-y-4">
                       {filtered.map(({ key, path, defaultValue, isLong }) => {
@@ -255,7 +274,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
                                   size="sm"
                                   className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0"
                                   onClick={() => clearOverride(path)}
-                                  title="Clear override, revert to default"
+                                  title={t.admin.clearOverride}
                                 >
                                   <RotateCcw className="h-3 w-3 mr-1" />
                                   Reset
@@ -294,7 +313,7 @@ export const LocalizationEditor: React.FC<LocalizationEditorProps> = ({
       <div className="flex justify-end">
         <Button onClick={handleSaveStrings} disabled={savingStrings} size="lg">
           {savingStrings
-            ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</>
+            ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t.common.saving}</>
             : <><Save className="h-4 w-4 mr-2" />Save {LANG_LABELS[stringsLang]} Translations</>
           }
         </Button>

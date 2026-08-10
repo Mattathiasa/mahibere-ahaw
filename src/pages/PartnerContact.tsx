@@ -11,7 +11,10 @@ import { toast } from 'sonner';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 const PartnerContact = () => {
+    const { t: tree } = useLanguage();
+    const pg = tree.pages;
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -29,11 +32,11 @@ const PartnerContact = () => {
             return docRef.id;
         },
         onSuccess: () => {
-            toast.success('Request submitted successfully!');
+            toast.success(pg.requestSubmitted);
             setFormData({ name: '', email: '', phone: '', type: 'Partnership', message: '' });
         },
         onError: () => {
-            toast.error('Failed to submit request');
+            toast.error(pg.requestFailed);
         },
     });
 
@@ -56,14 +59,14 @@ const PartnerContact = () => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Contact Form</CardTitle>
-                    <CardDescription>Bro Serategninet / Partnership Request</CardDescription>
+                    <CardTitle>{pg.contactForm}</CardTitle>
+                    <CardDescription>{pg.partnershipRequest}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
+                                <Label htmlFor="name">{pg.fullName}</Label>
                                 <Input
                                     id="name"
                                     value={formData.name}
@@ -72,7 +75,7 @@ const PartnerContact = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="type">Interest Type</Label>
+                                <Label htmlFor="type">{pg.interestType}</Label>
                                 <Select
                                     value={formData.type}
                                     onValueChange={(value) => setFormData({ ...formData, type: value })}
@@ -88,7 +91,7 @@ const PartnerContact = () => {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">{pg.csvEmail}</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -98,7 +101,7 @@ const PartnerContact = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Phone Number</Label>
+                                <Label htmlFor="phone">{pg.phoneNumber}</Label>
                                 <Input
                                     id="phone"
                                     type="tel"
@@ -110,10 +113,10 @@ const PartnerContact = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="message">Message / Cover Letter</Label>
+                            <Label htmlFor="message">{pg.messageCoverLetter}</Label>
                             <Textarea
                                 id="message"
-                                placeholder="Tell us more about your request..."
+                                placeholder={pg.messagePlaceholder}
                                 rows={6}
                                 value={formData.message}
                                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}

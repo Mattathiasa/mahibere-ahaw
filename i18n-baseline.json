@@ -1,0 +1,7 @@
+{
+  "total": 2,
+  "files": {
+    "src/components/ErrorBoundary.tsx": 1,
+    "src/services/auth.ts": 1
+  }
+}

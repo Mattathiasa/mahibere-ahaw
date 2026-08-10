@@ -14,6 +14,7 @@ import {
 } from '@/services/mobileAppControl';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFormatters } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,16 +47,22 @@ const FEATURE_LABELS: Record<string, string> = {
   permissionControl: 'Permission Control',
 };
 
-function formatWhen(iso?: string): string {
+/**
+ * Takes the formatter rather than calling `toLocaleString()` itself: this sits
+ * outside the component, so it cannot read the language, and the bare call
+ * followed the browser's locale instead of the reader's.
+ */
+function formatWhen(format: (v: string) => string, iso?: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return format(iso);
 }
 
 const MobileControl: React.FC = () => {
   const { t } = useLanguage();
   const a = t.admin;
+  const { formatDateTime } = useFormatters();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -132,14 +139,14 @@ const MobileControl: React.FC = () => {
               </h1>
               {config.meta?.updatedAt && (
                 <p className="text-xs text-muted-foreground">
-                  Last saved: {formatWhen(config.meta.updatedAt)} by {config.meta.updatedBy}
+                  Last saved: {formatWhen(formatDateTime, config.meta.updatedAt)} by {config.meta.updatedBy}
                 </p>
               )}
             </div>
           </div>
           <Button onClick={handleSave} disabled={saving} size="sm">
             {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-            {saving ? 'Saving…' : 'Save & Publish'}
+            {saving ? a.busySaving : a.scSavePublish}
           </Button>
         </div>
 
@@ -185,7 +192,7 @@ const MobileControl: React.FC = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20">
                   <div>
-                    <p className="font-semibold">{config.killSwitch ? 'App is LOCKED' : 'App is live'}</p>
+                    <p className="font-semibold">{config.killSwitch ? a.appLocked : a.appLive}</p>
                     <p className="text-sm text-muted-foreground">
                       {config.killSwitch
                         ? 'Mobile users currently see the maintenance screen.'
@@ -229,7 +236,7 @@ const MobileControl: React.FC = () => {
                     value={config.minBuildNumber}
                     onChange={(e) => setConfig((c) => ({ ...c, minBuildNumber: parseInt(e.target.value || '1', 10) }))}
                   />
-                  <p className="text-[11px] text-muted-foreground">Builds below this are blocked.</p>
+                  <p className="text-[11px] text-muted-foreground">{a.mobBuildsBlocked}</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -304,20 +311,20 @@ const MobileControl: React.FC = () => {
                 {audit.length === 0 && !auditError ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Smartphone className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                    <p className="font-medium">No mobile sessions reported yet</p>
-                    <p className="text-sm">Records appear after users sign in on the updated app.</p>
+                    <p className="font-medium">{a.mobNoSessions}</p>
+                    <p className="text-sm">{a.mobNoSessionsHint}</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                          <th className="py-2 pr-4">User</th>
-                          <th className="py-2 pr-4">Level</th>
-                          <th className="py-2 pr-4">Device</th>
-                          <th className="py-2 pr-4">App</th>
-                          <th className="py-2 pr-4">Sessions</th>
-                          <th className="py-2">Last seen</th>
+                          <th className="py-2 pr-4">{a.scColUser}</th>
+                          <th className="py-2 pr-4">{a.mobColLevel}</th>
+                          <th className="py-2 pr-4">{a.mobColDevice}</th>
+                          <th className="py-2 pr-4">{a.mobColApp}</th>
+                          <th className="py-2 pr-4">{a.mobColSessions}</th>
+                          <th className="py-2">{a.mobColLastSeen}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -342,10 +349,10 @@ const MobileControl: React.FC = () => {
                                 <span className={outdated ? 'text-red-600 font-semibold' : ''}>
                                   {r.appVersion ?? '—'}{r.buildNumber ? ` (${r.buildNumber})` : ''}
                                 </span>
-                                {outdated && <div className="text-[10px] text-red-600 uppercase">Outdated</div>}
+                                {outdated && <div className="text-[10px] text-red-600 uppercase">{a.scOutdated}</div>}
                               </td>
                               <td className="py-2.5 pr-4">{r.sessionCount ?? '—'}</td>
-                              <td className="py-2.5">{formatWhen(r.lastSeen)}</td>
+                              <td className="py-2.5">{formatWhen(formatDateTime, r.lastSeen)}</td>
                             </tr>
                           );
                         })}

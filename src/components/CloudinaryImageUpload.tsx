@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useCloudinary } from '@/hooks/useCloudinary';
 import { optimized } from '@/services/cloudinary';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface Props {
   value?: string;
   onChange: (url: string) => void;
@@ -23,9 +24,13 @@ interface Props {
 
 /** Reusable Cloudinary image picker — upload, preview, remove. */
 export function CloudinaryImageUpload({
-  value, onChange, onUploaded, folder = 'mahibere-ahaw', label = 'Upload image',
+  value, onChange, onUploaded, folder = 'mahibere-ahaw', label,
   variant = 'wide', multiple = false,
 }: Props) {
+  const { t } = useLanguage();
+  // Default in the body, not the parameter list: the fallback comes from a
+  // hook, which cannot run in a default argument.
+  const buttonLabel = label ?? t.common.uploadImage2;
   const { isConfigured, upload } = useCloudinary();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -104,7 +109,7 @@ export function CloudinaryImageUpload({
           onClick={() => inputRef.current?.click()}
         >
           {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-          {busy ? 'Uploading…' : label}
+          {busy ? t.common.saving : buttonLabel}
         </Button>
         {!isConfigured && (
           <span className="text-xs text-amber-600">

@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import type { Translations } from '@/i18n/translations';
 
 interface MemberWizardProps {
   onClose: () => void;
@@ -23,15 +24,20 @@ interface MemberWizardProps {
   initialData?: any;
 }
 
-const ministryOptions = [
-  'Sunday School',
-  'Youth Ministry',
-  'Women Ministry',
-  'Choir',
-  'Deacon Service',
-  'Prayer Team',
-  'Media Ministry',
-];
+/**
+ * The ministry name is stored on the member's record, so the token stays as it
+ * is; only its label is translated.
+ */
+const MINISTRY_KEYS: Record<string, keyof Translations['people']> = {
+  'Sunday School': 'ministrySundaySchool',
+  'Youth Ministry': 'ministryYouthMinistry',
+  'Women Ministry': 'ministryWomenMinistry',
+  'Choir': 'ministryChoir',
+  'Deacon Service': 'ministryDeaconService',
+  'Prayer Team': 'ministryPrayerTeam',
+  'Media Ministry': 'ministryMediaMinistry',
+};
+const ministryOptions = Object.keys(MINISTRY_KEYS);
 
 const churchRoles = [
   'Member',
@@ -49,6 +55,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
   // Roles come from the registry rather than a local copy of the old 7-value list.
   const { roles, roleLabel } = usePermissions();
   const { t: tt } = useLanguage();
+  const f = tt.forms;
   const a = tt.admin;
   const hierarchyLevels = roles.filter((r) => r.active !== false).map((r) => r.key);
   const fieldVisible = (key: string) => moduleCfg.fields.find((f) => f.key === key)?.visible ?? true;
@@ -206,7 +213,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.fullNameEnglish}
                       onChange={(e) => setFormData({ ...formData, fullNameEnglish: e.target.value })}
-                      placeholder="John Doe"
+                      placeholder={f.namePlaceholder}
                     />
                   </div>
                   <div className="space-y-2">
@@ -285,7 +292,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="john@example.com"
+                      placeholder={f.emailPlaceholder}
                     />
                   </div>
                   <div className="space-y-2">
@@ -318,7 +325,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                         className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                         value={formData.workSchool}
                         onChange={(e) => setFormData({ ...formData, workSchool: e.target.value })}
-                        placeholder="Occupation or Institution"
+                        placeholder={f.occupationPlaceholder}
                       />
                     </div>
                   )}
@@ -408,7 +415,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.zone}
                       onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
-                      placeholder="e.g. Bole"
+                      placeholder={f.woredaPlaceholder}
                     />
                   </div>
                   <div className="space-y-2">
@@ -417,7 +424,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                       className="h-14 rounded-2xl border-2 focus:border-[#2E5E99] bg-white/50 backdrop-blur-sm"
                       value={formData.woreda}
                       onChange={(e) => setFormData({ ...formData, woreda: e.target.value })}
-                      placeholder="e.g. Sub City"
+                      placeholder={f.subCityPlaceholder}
                     />
                   </div>
                 </div>
@@ -481,7 +488,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                           : 'bg-white border-slate-100 hover:border-slate-300'
                           }`}
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-widest italic">{ministry}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest italic">{MINISTRY_KEYS[ministry] ? tt.people[MINISTRY_KEYS[ministry]] : ministry}</span>
                       </div>
                     ))}
                   </div>
@@ -516,21 +523,21 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-4">
                   <div className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#2E5E99]">Personal Archive</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#2E5E99]">{f.personalArchive}</h4>
                     <div className="space-y-4">
-                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">Username</span><span className="text-sm font-bold">{formData.username}</span></div>
-                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">Born</span><span className="text-sm font-bold">{formData.dateOfBirth}</span></div>
-                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">Phone</span><span className="text-sm font-bold">{formData.phoneNumber}</span></div>
-                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">Status</span><span className="text-sm font-bold">{formData.maritalStatus} {formData.hasChildren ? `(${formData.childrenCount} Children)` : ''}</span></div>
+                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">{f.username}</span><span className="text-sm font-bold">{formData.username}</span></div>
+                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">{f.born}</span><span className="text-sm font-bold">{formData.dateOfBirth}</span></div>
+                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">{f.phoneNumber}</span><span className="text-sm font-bold">{formData.phoneNumber}</span></div>
+                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">{f.memberStatus}</span><span className="text-sm font-bold">{formData.maritalStatus} {formData.hasChildren ? `(${formData.childrenCount} Children)` : ''}</span></div>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#2E5E99]">Divine Assignment</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#2E5E99]">{f.divineAssignment}</h4>
                     <div className="space-y-4">
-                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">Region</span><span className="text-sm font-bold">{formData.region}</span></div>
-                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">Profession</span><span className="text-sm font-bold truncate max-w-[150px]">{formData.workSchool || 'Independent'}</span></div>
+                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">{f.region}</span><span className="text-sm font-bold">{formData.region}</span></div>
+                      <div className="flex justify-between border-b pb-2"><span className="text-xs opacity-50">{f.profession}</span><span className="text-sm font-bold truncate max-w-[150px]">{formData.workSchool || 'Independent'}</span></div>
                       <div className="flex flex-col gap-2 pt-2">
-                        <span className="text-xs opacity-50">Assigned Roles</span>
+                        <span className="text-xs opacity-50">{f.assignedRoles}</span>
                         <div className="flex flex-wrap gap-2">
                           {formData.churchRoles.map(r => <span key={r} className="px-3 py-1 bg-[#2E5E99]/10 text-[#2E5E99] rounded-full text-[9px] font-black uppercase">{r}</span>)}
                         </div>

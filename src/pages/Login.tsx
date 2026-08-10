@@ -9,28 +9,26 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '@/services/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGE_CODE, nextLanguage } from '@/i18n/languages';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Sun, Moon, Languages, Home, Sparkles, ArrowRight, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ThreeBackground } from '@/components/ThreeBackground';
 
+import { errorMessage } from '@/lib/appError';
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoggingIn } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t: tree } = useLanguage();
   const { t } = useTranslation();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [resetNotice, setResetNotice] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
 
-  const toggleLanguage = () => {
-    if (language === 'en') setLanguage('am');
-    else if (language === 'am') setLanguage('om');
-    else if (language === 'om') setLanguage('ti');
-    else setLanguage('en');
-  };
+  const upcomingLanguage = nextLanguage(language);
+  const toggleLanguage = () => setLanguage(upcomingLanguage);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -76,7 +74,7 @@ const Login = () => {
     setLoginError(null);
     setResetNotice(null);
     login(formData, {
-      onError: (error: any) => setLoginError(error.message || t('loginFailed')),
+      onError: (error: unknown) => setLoginError(errorMessage(tree, error)),
     });
   };
 
@@ -89,17 +87,15 @@ const Login = () => {
     setLoginError(null);
     setResetNotice(null);
     if (!formData.username.trim()) {
-      setLoginError('Enter your username or email address first, then choose "Forgot password?".');
+      setLoginError(tree.errors.enterIdentifierFirst);
       return;
     }
     setIsResetting(true);
     try {
       const { sentTo } = await authService.sendPasswordReset(formData.username);
-      setResetNotice(
-        `If an account exists for ${sentTo}, a reset link is on its way. Check the inbox and the spam folder.`
-      );
+      setResetNotice(tree.pages.resetLinkSent.replace('{email}', sentTo));
     } catch (error) {
-      setLoginError(error instanceof Error ? error.message : 'Could not send the reset email.');
+      setLoginError(errorMessage(tree, error));
     } finally {
       setIsResetting(false);
     }
@@ -161,7 +157,7 @@ const Login = () => {
           className={`gap-2 rounded-xl border-[#2E5E99]/10 backdrop-blur-md font-bold text-xs ${theme === 'dark' ? 'bg-[#0D2440]/50 hover:bg-[#0D2440]/70 text-white' : 'bg-white/50 hover:bg-white/70 text-[#0D2440]'}`}
         >
           <Languages className="h-4 w-4 text-[#2E5E99]" />
-          <span>{language === 'en' ? 'AM' : language === 'am' ? 'OM' : language === 'om' ? 'TI' : 'EN'}</span>
+          <span>{LANGUAGE_CODE[upcomingLanguage]}</span>
         </Button>
       </motion.div>
 
@@ -183,7 +179,7 @@ const Login = () => {
             >
               <div className="relative group">
                 <div className="absolute -inset-4 bg-[#2E5E99]/20 rounded-full blur-xl group-hover:bg-[#2E5E99]/30 transition-all duration-500" />
-                <img src={logo} alt="Ahaw Logo" className="h-16 w-16 sm:h-24 sm:w-24 relative z-10 drop-shadow-2xl" />
+                <img src={logo} alt={tree.common.logoAlt} className="h-16 w-16 sm:h-24 sm:w-24 relative z-10 drop-shadow-2xl" />
               </div>
             </motion.div>
 
@@ -259,7 +255,7 @@ const Login = () => {
                       disabled={isResetting}
                       className="text-xs font-bold text-[#2E5E99] hover:underline disabled:opacity-50"
                     >
-                      {isResetting ? 'Sending…' : 'Forgot password?'}
+                      {isResetting ? tree.pages.loginSendingReset : tree.pages.loginForgotPassword}
                     </button>
                   </div>
                   {resetNotice && (
@@ -309,13 +305,13 @@ const Login = () => {
                 className="text-center text-sm"
               >
                 <span className={theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/60'}>
-                  New member?{' '}
+                  {tree.pages.loginNewMember}{' '}
                 </span>
                 <Link to="/signup" className="font-bold text-[#2E5E99] hover:underline">
-                  Create an account
+                  {tree.pages.loginCreateAccount}
                 </Link>
                 <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/30' : 'text-[#0D2440]/40'}`}>
-                  Your congregation approves the request before you can sign in.
+                  {tree.pages.loginApprovalNote}
                 </p>
               </motion.div>
 

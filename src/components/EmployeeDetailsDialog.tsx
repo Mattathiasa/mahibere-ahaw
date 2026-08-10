@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Employee } from '@/services/hr';
 import { User, Briefcase, Phone, Mail, Building, GraduationCap, DollarSign, HeartHandshake, MapPin } from 'lucide-react';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface EmployeeDetailsDialogProps {
   employee: Employee | null;
   open: boolean;
@@ -11,6 +12,8 @@ interface EmployeeDetailsDialogProps {
 }
 
 export function EmployeeDetailsDialog({ employee, open, onOpenChange }: EmployeeDetailsDialogProps) {
+  const { t } = useLanguage();
+  const f = t.forms;
   if (!employee) return null;
 
   return (
@@ -37,15 +40,15 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
           {/* Job & Category */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl">
             <div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase">Position</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase">{f.position}</span>
               <p className="text-sm font-bold">{employee.position || 'N/A'}</p>
             </div>
             <div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase">Department</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase">{f.department}</span>
               <p className="text-sm font-bold">{employee.department || 'Administration'}</p>
             </div>
             <div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase">Employment Type</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase">{f.employmentType}</span>
               <p className="text-sm font-bold">{employee.employmentType}</p>
             </div>
           </div>
@@ -57,19 +60,19 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 border p-4 rounded-xl text-xs">
               <div>
-                <span className="text-slate-500 block">Gross Salary</span>
+                <span className="text-slate-500 block">{f.grossSalary}</span>
                 <span className="font-bold text-sm">{(employee.grossSalary || employee.salary || 0).toLocaleString()} ETB</span>
               </div>
               <div>
-                <span className="text-slate-500 block">Total Benefits</span>
+                <span className="text-slate-500 block">{f.totalBenefits}</span>
                 <span className="font-bold text-sm text-emerald-600">+{(employee.benefit || 0).toLocaleString()} ETB</span>
               </div>
               <div>
-                <span className="text-slate-500 block">Total Deductions</span>
+                <span className="text-slate-500 block">{f.totalDeductions}</span>
                 <span className="font-bold text-sm text-rose-600">-{(employee.deduction || employee.tax || 0).toLocaleString()} ETB</span>
               </div>
               <div>
-                <span className="text-slate-500 block">Net Salary</span>
+                <span className="text-slate-500 block">{f.netSalary}</span>
                 <span className="font-bold text-sm text-cyan-600">{(employee.netSalary || employee.salary || 0).toLocaleString()} ETB</span>
               </div>
             </div>
@@ -103,16 +106,16 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
               </h4>
               <div className="border p-3 rounded-lg text-xs grid grid-cols-2 gap-2">
                 <div>
-                  <span className="text-slate-500">Name:</span> {employee.emergencySalutation} {employee.emergencyFirstName} {employee.emergencyLastName}
+                  <span className="text-slate-500">{f.nameLabel}</span> {employee.emergencySalutation} {employee.emergencyFirstName} {employee.emergencyLastName}
                 </div>
                 <div>
-                  <span className="text-slate-500">Relationship:</span> {employee.emergencyRelationship}
+                  <span className="text-slate-500">{f.relationshipLabel}</span> {employee.emergencyRelationship}
                 </div>
                 <div>
-                  <span className="text-slate-500">Phone:</span> {employee.emergencyPhone}
+                  <span className="text-slate-500">{f.phoneLabel}</span> {employee.emergencyPhone}
                 </div>
                 <div>
-                  <span className="text-slate-500">Address:</span> {employee.emergencyAddress}
+                  <span className="text-slate-500">{f.addressLabel}</span> {employee.emergencyAddress}
                 </div>
               </div>
             </div>
@@ -120,7 +123,7 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
         </div>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={() => onOpenChange(false)}>{t.admin.close}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

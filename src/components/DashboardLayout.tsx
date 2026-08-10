@@ -14,21 +14,12 @@ import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGE_CODE, LANGUAGE_ENDONYM, nextLanguage } from '@/i18n/languages';
 import { ThreeBackground } from './ThreeBackground';
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
-
-const NAV_FALLBACK_LABELS: Record<string, string> = {
-  news: 'News',
-  landingEditor: 'Landing Page',
-  softwareControl: 'Software Control',
-  atbiyaRegistry: 'Congregation Registry',
-  myAtbiya: 'My Congregation',
-  membershipRequests: 'Membership Requests',
-  organisation: 'Organisation Structure',
-};
 
 interface NavFlags {
   can: (permission: PermissionKey) => boolean;
@@ -124,12 +115,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     logout();
   };
 
-  const toggleLanguage = () => {
-    if (language === 'en') setLanguage('am');
-    else if (language === 'am') setLanguage('om');
-    else if (language === 'om') setLanguage('ti');
-    else setLanguage('en');
-  };
+  const upcomingLanguage = nextLanguage(language);
+  const toggleLanguage = () => setLanguage(upcomingLanguage);
 
   const NavContent = ({ isCollapsed = false }: { isCollapsed?: boolean }) => (
     <nav className="space-y-1">
@@ -138,7 +125,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         const isActive = location.pathname === item.href;
         // Newer nav entries have no i18n key yet — fall back rather than
         // rendering an empty label.
-        const translatedName = (t.nav as any)[item.name] ?? NAV_FALLBACK_LABELS[item.name] ?? item.name;
+        // Every nav key now exists in the `nav` section, so there is no English
+        // fallback map to fall through to — that map was why Notifications,
+        // Landing Page and Membership Requests stayed English.
+        const translatedName = (t.nav as Record<string, string | undefined>)[item.name] ?? item.name;
         // Requests waiting on this parish, shown where the administrator will
         // actually look rather than only inside the console itself.
         const badge = item.name === 'myAtbiya' || item.name === 'membershipRequests'
@@ -203,12 +193,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <div className="relative group mx-auto w-20 h-20">
                     <div className="absolute -inset-2 bg-gradient-to-r from-[#2E5E99]/30 to-[#7BA4D0]/30 rounded-2xl blur-md opacity-80 group-hover:opacity-100 transition-opacity" />
                     <div className="relative z-10 w-full h-full p-2 bg-white/80 dark:bg-white/10 backdrop-blur-xl rounded-2xl border border-[#2E5E99]/20 shadow-lg flex items-center justify-center">
-                      <img src={logo} alt="Ahaw Logo" className="w-full h-full object-contain drop-shadow-md" />
+                      <img src={logo} alt={t.common.logoAlt} className="w-full h-full object-contain drop-shadow-md" />
                     </div>
                   </div>
-                  <h2 className="mt-4 text-center text-xl font-black text-[#2E5E99] tracking-tight">MAHIBERE AHAW</h2>
+                  <h2 className="mt-4 text-center text-xl font-black text-[#2E5E99] tracking-tight">{t.common.brandName}</h2>
                   <p className={`text-center text-[10px] tracking-[0.25em] uppercase font-bold ${theme === 'dark' ? 'text-white/50' : 'text-[#0D2440]/50'}`}>
-                    Digital Ministry
+                    {t.common.brandTagline}
                   </p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -220,9 +210,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
           <div className="flex items-center gap-2">
             <div className="p-1 rounded-xl bg-white/80 dark:bg-white/10 border border-[#2E5E99]/20 shadow-sm">
-              <img src={logo} alt="Ahaw" className="h-9 w-9 object-contain drop-shadow-sm" />
+              <img src={logo} alt={t.common.logoAlt} className="h-9 w-9 object-contain drop-shadow-sm" />
             </div>
-            <span className="font-black text-base text-[#2E5E99] tracking-tighter">AHAW</span>
+            <span className="font-black text-base text-[#2E5E99] tracking-tighter">{t.common.brandShort}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -240,12 +230,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              title={language === 'en' ? 'Switch to Amharic' : language === 'am' ? 'Switch to Afaan Oromoo' : language === 'om' ? 'Switch to Tigrigna' : 'Switch to English'}
+              title={LANGUAGE_ENDONYM[upcomingLanguage]}
               className="gap-1 hover:bg-[#2E5E99]/10 font-bold"
             >
               <Languages className={`h-5 w-5 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`} />
               <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                {language === 'en' ? 'AM' : language === 'am' ? 'OM' : language === 'om' ? 'TI' : 'EN'}
+                {LANGUAGE_CODE[upcomingLanguage]}
               </span>
             </Button>
             <ProfileDropdown />
@@ -265,14 +255,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <div className="relative z-10 w-full h-full p-2.5 bg-white/80 dark:bg-white/10 backdrop-blur-xl rounded-2xl border border-[#2E5E99]/20 shadow-lg flex items-center justify-center">
                   <img
                     src={logo}
-                    alt="Ahaw Logo"
+                    alt={t.common.logoAlt}
                     className="w-full h-full object-contain drop-shadow-md"
                   />
                 </div>
               </div>
               {!isCollapsed && (
                 <>
-                  <h1 className="mt-4 text-center text-2xl font-black text-[#2E5E99] tracking-tighter">MAHIBERE AHAW</h1>
+                  <h1 className="mt-4 text-center text-2xl font-black text-[#2E5E99] tracking-tighter">{t.common.brandName}</h1>
                   <p className={`text-center text-[10px] uppercase tracking-[0.25em] font-bold mt-1 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`}>
                     Digital Ministry
                   </p>
@@ -332,7 +322,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               >
                 <Languages className={`h-4 w-4 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`} />
                 <span className={`text-xs ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                  {language === 'en' ? 'AMHARIC' : language === 'am' ? 'OROMOO' : 'ENGLISH'}
+                  {LANGUAGE_ENDONYM[upcomingLanguage]}
                 </span>
               </Button>
               <div className="w-px h-8 bg-[#2E5E99]/20 mx-2" />

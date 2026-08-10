@@ -1,216 +1,70 @@
-# Language Switching Guide
+# Language Guide
 
-## How It Works Now
+## Amharic is the default
 
-### English Mode (Default)
-When the application is in English mode:
+`DEFAULT_LANGUAGE` in `src/contexts/LanguageContext.tsx` is `'am'`. A first-time
+visitor with empty storage gets Amharic. There is no browser-language detection,
+no server-side default and no locale in the URL — the app renders Amharic until
+the reader chooses otherwise, and `index.html` ships `<html lang="am">` so that
+holds before any JavaScript runs.
 
-```
-┌─────────────────────────────────────┐
-│  🌙  AM  [Login]                    │  ← Language toggle shows "AM"
-├─────────────────────────────────────┤
-│                                     │
-│  Mahibere Ahaw Yekiristos          │
-│  Betekerstian                       │
-│                                     │
-│  A renewed Orthodox Church...       │  ← All text in English
-│                                     │
-│  [Get Started]  [Learn More]       │
-│                                     │
-├─────────────────────────────────────┤
-│  Congregations    Admin Staff       │
-│      850            2.4k            │
-│                                     │
-│  Spiritual Growth  Global Reach     │
-│      40%            120+            │
-├─────────────────────────────────────┤
-│  Platform          Support          │
-│  • Dashboard       • Documentation  │
-│  • Community       • Help Center    │
-│  • Analytics       • Status         │
-│  • Security                         │
-│                                     │
-│  © 2025 Mahibere Ahaw Ecosystem    │
-│  Privacy Architecture | Terms...    │
-└─────────────────────────────────────┘
-```
+The chosen language is stored in `localStorage['app-language']`, per device.
+Nothing stores a per-user preference on the account, which is why notifications
+written for someone else to read later are pinned to Amharic rather than to the
+sender's language.
 
-### Amharic Mode
-When you click "AM" button, everything switches to Amharic:
+## The four languages
 
-```
-┌─────────────────────────────────────┐
-│  🌙  EN  [ግባ]                       │  ← Language toggle shows "EN"
-├─────────────────────────────────────┤
-│                                     │
-│  ማኅበረ አኀው የክርስቶስ ቤተክርስቲያን      │
-│                                     │
-│  በመጽሐፍ ቅዱስ የተገለጠውን...            │  ← All text in Amharic
-│                                     │
-│  [እንቀሳቀስ በመጀመሪያ?]  [ተጨማሪ ይመልከቱ] │
-│                                     │
-├─────────────────────────────────────┤
-│  ጉባኤዎች          የአስተዳደር ሰራተኞች    │
-│   850              2.4k            │
-│                                     │
-│  መንፈሳዊ እድገት      ዓለም አቀፍ ተደራሽነት  │
-│   40%              120+            │
-├─────────────────────────────────────┤
-│  መድረክ             ድጋፍ              │
-│  • ዳሽቦርድ          • ሰነዶች           │
-│  • ማህበረሰብ         • የእገዛ ማዕከል      │
-│  • ትንታኔዎች         • ሁኔታ           │
-│  • ደህንነት                           │
-│                                     │
-│  © 2025 ማኅበረ አኀው ስነ-ምህዳር...       │
-│  የግላዊነት አርክቴክቸር | የእምነት ውሎች...  │
-└─────────────────────────────────────┘
-```
+| Code | Language | Coverage |
+|------|----------|----------|
+| `am` | አማርኛ | complete, enforced by the type system |
+| `en` | English | complete — it is the merge base, not a preference |
+| `om` | Afaan Oromoo | partial; falls back to English |
+| `ti` | ትግርኛ | partial; falls back to English |
 
-## Key Features
+`LANGUAGE_CYCLE` and `LANGUAGE_ENDONYM` in `src/i18n/languages.ts` are the single
+source for the switcher. Every language button in the app reads from them.
 
-### 1. Language Toggle Button
-- **In English Mode**: Shows "AM" (click to switch to Amharic)
-- **In Amharic Mode**: Shows "EN" (click to switch to English)
+## Where strings live
 
-### 2. Complete Separation
-- No mixing of languages
-- All UI elements translate
-- Consistent experience
+`src/i18n/sections/*.ts` — one module per section, each exporting `xEn`, `xAm`
+(complete, `Record<>`), `xOm` and `xTi` (partial). `src/i18n/translations.ts`
+assembles them.
 
-### 3. What Translates
+Two rules the tree cannot bend:
 
-#### Navigation
-- Home, About, Services, Contact
-- Login button
+1. **Two levels only** — `section → key → string`. The Localization Editor, the
+   Firestore override layer and the flat-map builder all walk exactly that shape
+   and silently drop anything deeper or any array. Flatten lists to indexed keys.
+2. **Never rename a key or section** — admin overrides are stored against
+   `"section.key"` in `siteConfig/pageStrings`. A rename orphans them.
 
-#### Hero Section
-- Title and subtitle
-- Description text
-- Call-to-action buttons
+## Values that stay English on purpose
 
-#### Statistics
-- Labels for all metrics
-- Congregations, Admin Staff, etc.
+Anything persisted in Firestore keeps its English token and gets a translated
+*label*: asset status, employment type, church roles, regions, service types.
+See `src/i18n/enums.ts` for the contract and the resolvers. Translating a stored
+value would rewrite what existing documents mean and break every comparison.
 
-#### Features Section
-- Feature titles and descriptions
-- "Learn More" links
-- Section headers
+The same applies to `PermissionMeta.group`, which is a filter predicate and a
+React key, and to audit-log descriptions, which are a record rather than copy.
 
-#### Footer
-- Platform links
-- Support links
-- Email placeholder
-- Copyright text
-- Legal links
+## Reading a string outside React
 
-#### Floating Elements
-- "Active Souls" counter
-- "Service Uptime" indicator
+Services cannot call `useLanguage()`. They throw `AppError('someKey')` and the
+catch site resolves it with `errorMessage(t, e)` — see `src/lib/appError.ts`.
+Module-scope registries hold translation keys and take `t` as a parameter.
 
-## Translation Keys Reference
+## Checks
 
-### Common UI Elements
-```typescript
-t('home')           // Home / ዋና ገፅ
-t('login')          // Login / ግባ
-t('languageToggle') // AM / EN
-```
+`npm run check` runs three gates:
 
-### Hero Section
-```typescript
-t('heroTitle')       // Main title
-t('heroDescription') // Description
-t('getStarted')      // Get Started button
-t('learnMore')       // Learn More button
-```
-
-### Statistics
-```typescript
-t('congregations')    // Congregations / ጉባኤዎች
-t('adminStaff')       // Admin Staff / የአስተዳደር ሰራተኞች
-t('spiritualGrowth')  // Spiritual Growth / መንፈሳዊ እድገት
-t('globalReach')      // Global Reach / ዓለም አቀፍ ተደራሽነት
-```
-
-### Features
-```typescript
-t('membersTitle')    // Member Management
-t('membersDesc')     // Description
-t('planningTitle')   // Planning Management
-t('reportsTitle')    // Report Management
-t('learnMoreLink')   // LEARN MORE / ተጨማሪ ይመልከቱ
-```
-
-### Footer
-```typescript
-t('platform')              // Platform / መድረክ
-t('support')               // Support / ድጋፍ
-t('stayConnected')         // Stay Connected
-t('emailPlaceholder')      // Email Address
-t('copyrightText')         // Copyright notice
-t('privacyArchitecture')   // Privacy Architecture
-t('termsOfFaith')          // Terms of Faith
-```
-
-## Adding New Translations
-
-To add a new translatable text:
-
-1. **Add to translations file** (`src/i18n/translations.ts`):
-```typescript
-export const translations = {
-  en: {
-    myNewKey: 'My English Text',
-    // ... other keys
-  },
-  am: {
-    myNewKey: 'የእኔ አማርኛ ጽሑፍ',
-    // ... other keys
-  },
-};
-```
-
-2. **Use in component**:
-```tsx
-import { useTranslation } from '@/hooks/useTranslation';
-
-function MyComponent() {
-  const { t } = useTranslation();
-  
-  return <div>{t('myNewKey')}</div>;
-}
-```
-
-3. **Result**:
-- English mode: "My English Text"
-- Amharic mode: "የእኔ አማርኛ ጽሑፍ"
-
-## Testing Checklist
-
-### English Mode ✓
-- [ ] Language toggle shows "AM"
-- [ ] All navigation in English
-- [ ] Hero section in English
-- [ ] Statistics labels in English
-- [ ] Feature cards in English
-- [ ] Footer sections in English
-- [ ] No Amharic characters visible
-
-### Amharic Mode ✓
-- [ ] Language toggle shows "EN"
-- [ ] All navigation in Amharic
-- [ ] Hero section in Amharic
-- [ ] Statistics labels in Amharic
-- [ ] Feature cards in Amharic
-- [ ] Footer sections in Amharic
-- [ ] No English words visible (except brand names)
-
-## Notes
-
-- Brand names (like "Mahibere Ahaw") can remain in their original form
-- Numbers and statistics (850, 2.4k, etc.) remain the same
-- Icons and visual elements don't change
-- The language preference is stored in the LanguageContext
-- Switching is instant - no page reload needed
+- `typecheck:ratchet` — `tsc` against `tsconfig.app.json`, compared per file
+  against `typecheck-baseline.json`. Note that plain `tsc --noEmit` against the
+  root config is a **no-op**: it is solution-style, so tsc resolves an empty
+  program and exits 0 without reading anything.
+- `lint:i18n` — per-file hardcoded-string counts against `i18n-baseline.json`.
+- `test:run` — includes `src/test/i18n.test.ts`, which enforces Amharic parity,
+  that no Amharic value is still its English text, the two-level shape, that
+  every persisted enum value has a label, and that an admin override can reach
+  every key in the tree.

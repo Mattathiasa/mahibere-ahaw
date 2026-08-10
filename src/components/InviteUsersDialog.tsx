@@ -7,12 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserPlus, Mail, Phone, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface InviteUsersDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps) {
+  const { t } = useLanguage();
+  const pe = t.people;
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('+251');
   const [role, setRole] = useState('ADMIN');
@@ -20,7 +23,7 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
 
   const handleSendInvite = () => {
     if (!email.trim() && !phone.trim()) {
-      toast.error('Please provide an email or phone number');
+      toast.error(pe.inviteMissingContact);
       return;
     }
 
@@ -50,7 +53,7 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
             </Label>
             <Input
               type="email"
-              placeholder="user@example.com"
+              placeholder={pe.emailExamplePlaceholder}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -74,20 +77,20 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="OWNER">System Owner</SelectItem>
-                <SelectItem value="ADMIN">System Admin</SelectItem>
-                <SelectItem value="FINANCE">Finance Manager</SelectItem>
-                <SelectItem value="HR">HR Manager</SelectItem>
-                <SelectItem value="MEMBER">Member</SelectItem>
+                <SelectItem value="OWNER">{pe.roleSystemOwner}</SelectItem>
+                <SelectItem value="ADMIN">{pe.roleSystemAdmin}</SelectItem>
+                <SelectItem value="FINANCE">{pe.roleFinanceManager}</SelectItem>
+                <SelectItem value="HR">{pe.roleHrManager}</SelectItem>
+                <SelectItem value="MEMBER">{pe.roleMember}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
           <Button onClick={handleSendInvite} disabled={isSending} className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold">
-            {isSending ? 'Sending...' : 'Send Invitation'}
+            {isSending ? t.admin.busySending : t.admin.sendInvitation}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -23,8 +23,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 const Meetings = () => {
   const { t } = useTranslation();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const moduleCfg = useModuleConfig('meetings');
   const showField = (k: string) => moduleCfg.fields.find((f) => f.key === k)?.visible ?? true;
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -73,9 +76,9 @@ const Meetings = () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       if (notified < 0) {
-        toast.warning('Meeting scheduled, but notifications could not be sent.');
+        toast.warning(pg.meetingScheduledNoNotify);
       } else if (notified === 0) {
-        toast.success('Meeting scheduled. Nobody matched the audience, so no notifications were sent.');
+        toast.success(pg.meetingScheduledNoAudience);
       } else {
         toast.success(`Meeting scheduled and ${notified} ${notified === 1 ? 'person' : 'people'} notified.`);
       }
@@ -92,7 +95,7 @@ const Meetings = () => {
     mutationFn: (id: string) => meetingService.deleteMeeting(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
-      toast.success('Meeting deleted successfully!');
+      toast.success(pg.meetingDeleted);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete meeting');
@@ -148,14 +151,14 @@ const Meetings = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Calendar event downloaded!');
+    toast.success(pg.calendarDownloaded);
   };
 
   const getMeetingStatus = (scheduledDate: string) => {
     const date = new Date(scheduledDate);
-    if (isToday(date)) return { label: 'Today', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
-    if (isFuture(date)) return { label: 'Upcoming', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' };
-    return { label: 'Past', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' };
+    if (isToday(date)) return { label: pg.filterToday, color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+    if (isFuture(date)) return { label: pg.filterUpcoming, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' };
+    return { label: pg.filterPast, color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' };
   };
 
   if (isLoading) {
@@ -199,7 +202,7 @@ const Meetings = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">{t('meetingTitle')} *</Label>
-                    <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter meeting title" required />
+                    <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={pg.meetingTitlePlaceholder} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="scheduledDate">{t('dateTime')} *</Label>
@@ -208,13 +211,13 @@ const Meetings = () => {
                   {showField('description') && (
                   <div className="space-y-2">
                     <Label htmlFor="description">{t('description')} {(moduleCfg.fields.find((f) => f.key === 'description')?.required ?? true) ? '*' : ''}</Label>
-                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter meeting description and agenda" rows={6} required={moduleCfg.fields.find((f) => f.key === 'description')?.required ?? true} />
+                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder={pg.meetingDescPlaceholder} rows={6} required={moduleCfg.fields.find((f) => f.key === 'description')?.required ?? true} />
                   </div>
                   )}
                   {showField('location') && (
                   <div className="space-y-2">
                     <Label htmlFor="location">{t('meetingLocation')}</Label>
-                    <Input id="location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Where the meeting is held" />
+                    <Input id="location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder={pg.meetingLocationPlaceholder} />
                   </div>
                   )}
                   <MeetingAudiencePicker

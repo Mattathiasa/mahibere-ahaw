@@ -1,4 +1,6 @@
 import { db } from '@/lib/firebase';
+import type { Translations } from '@/i18n/translations';
+import type { modulesEn } from '@/i18n/sections/modules';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // ─── Configurable module content for every post-login page ───────────────────
@@ -13,7 +15,18 @@ export type ModuleKey =
 
 export interface FieldConfig {
   key: string;
+  /**
+   * The admin's override. Blank means "use the built-in translated default",
+   * matching how headerTitle and headerDescription already work in this file.
+   *
+   * This is NOT where the built-in label lives. It used to be, and that was a
+   * trap: moduleConfig round-trips through Firestore, so the moment an admin
+   * pressed Save the English defaults were persisted and `mergeModule`'s
+   * `over.fields ?? base.fields` made them win over anything shipped later.
+   */
   label: string;
+  /** Translation key for the built-in default. Resolved via `fieldLabel`. */
+  labelKey?: keyof typeof modulesEn;
   visible: boolean;
   required: boolean;
 }
@@ -35,8 +48,16 @@ export type ModuleConfig = Record<ModuleKey, SingleModuleConfig> & {
   meta?: { updatedAt?: string; updatedBy?: string };
 };
 
-const f = (key: string, label: string, visible = true, required = false): FieldConfig =>
-  ({ key, label, visible, required });
+/**
+ * A built-in field. `labelKey` points at the translated default; `label` starts
+ * blank and only fills in when an admin types an override — see FieldConfig.
+ */
+const f = (
+  key: string,
+  labelKey: keyof typeof modulesEn,
+  visible = true,
+  required = false
+): FieldConfig => ({ key, label: '', labelKey, visible, required });
 
 export const MODULE_KEYS: ModuleKey[] = [
   'members', 'plans', 'reports', 'announcements', 'meetings', 'finance',
@@ -47,36 +68,33 @@ export const MODULE_KEYS: ModuleKey[] = [
 export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   news: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'The News module publishes articles to the public homepage. Head-office authors write for the whole church; a parish author writes for their own Atbiya and their posts carry the parish name. Save a draft while you work, then publish when it is ready.',
+    learnMore: '',
     fields: [
-      f('title', 'Title', true, true),
-      f('excerpt', 'Short Summary'),
-      f('body', 'Full Text', true, true),
-      f('coverImageUrl', 'Cover Image'),
+      f('title', 'fldNewsTitle', true, true),
+      f('excerpt', 'fldNewsExcerpt'),
+      f('body', 'fldNewsBody', true, true),
+      f('coverImageUrl', 'fldNewsCoverImageUrl'),
     ],
     options: {},
   },
   members: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'The Members module is your church directory. Add members with their personal contact, jurisdiction (hierarchy level, region, zone), and ministry roles. Use search, sort and filters to find people quickly, and export the directory when permitted.',
+    learnMore: '',
     fields: [
-      f('fullName', 'Full Name', true, true),
-      f('phone', 'Phone'),
-      f('gender', 'Gender'),
-      f('dateOfBirth', 'Date of Birth'),
-      f('workSchool', 'Work / School'),
-      f('maritalStatus', 'Marital Status'),
-      f('hierarchyLevel', 'Hierarchy Level', true, true),
+      f('fullName', 'fldMembersFullName', true, true),
+      f('phone', 'fldMembersPhone'),
+      f('gender', 'fldMembersGender'),
+      f('dateOfBirth', 'fldMembersDateOfBirth'),
+      f('workSchool', 'fldMembersWorkSchool'),
+      f('maritalStatus', 'fldMembersMaritalStatus'),
+      f('hierarchyLevel', 'fldMembersHierarchyLevel', true, true),
     ],
     options: { genders: ['Male', 'Female'], sortBy: ['name', 'hierarchy', 'region', 'zone'] },
   },
   plans: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'The Plans module organises ministry plans across all levels. Create a plan with a name, a period (weekly, monthly or annually) and details, then track progress through reports submitted against it.',
-    fields: [f('name', 'Plan Name', true, true), f('timeframe', 'Period', true, true), f('department', 'Department'), f('details', 'Details')],
+    learnMore: '',
+    fields: [f('name', 'fldPlansName', true, true), f('timeframe', 'fldPlansTimeframe', true, true), f('department', 'fldPlansDepartment'), f('details', 'fldPlansDetails')],
     options: {
       periods: ['Weekly', 'Monthly', 'Annually'],
       departments: ['Evangelism', 'Education & Training', 'Services Coordination', 'Administration & Finance', 'Public & External Relations', 'Youth & Children'],
@@ -84,13 +102,12 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   },
   reports: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'The Reports module is where units submit and review work reports. Pick the plan a report belongs to, choose the submission type, describe the work done and the results, and leaders can add professional feedback.',
+    learnMore: '',
     fields: [
-      f('plan', 'Related Plan', true, true), f('type', 'Submission Type', true, true),
-      f('department', 'Department'),
-      f('workPlanned', 'Work Planned'), f('workPerformed', 'Work Performed', true, true),
-      f('uncompletedTasks', 'Uncompleted Tasks'), f('results', 'Results'),
+      f('plan', 'fldReportsPlan', true, true), f('type', 'fldReportsType', true, true),
+      f('department', 'fldReportsDepartment'),
+      f('workPlanned', 'fldReportsWorkPlanned'), f('workPerformed', 'fldReportsWorkPerformed', true, true),
+      f('uncompletedTasks', 'fldReportsUncompletedTasks'), f('results', 'fldReportsResults'),
     ],
     options: {
       types: ['Memriya', 'Kifil', 'Zerf'],
@@ -99,22 +116,19 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   },
   announcements: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Post church-wide announcements here. Members are notified on web and mobile. Optionally set an expiry date so time-sensitive notices disappear automatically.',
-    fields: [f('title', 'Title', true, true), f('content', 'Content', true, true), f('expiresAt', 'Expiration Date')],
+    learnMore: '',
+    fields: [f('title', 'fldAnnouncementsTitle', true, true), f('content', 'fldAnnouncementsContent', true, true), f('expiresAt', 'fldAnnouncementsExpiresAt')],
     options: {},
   },
   meetings: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Schedule and coordinate meetings and events. Choose who is notified — a whole diocese, one congregation, or only particular roles — and upcoming/past meetings are tracked automatically.',
-    fields: [f('title', 'Meeting Title', true, true), f('scheduledDate', 'Date & Time', true, true), f('location', 'Location'), f('description', 'Description')],
+    learnMore: '',
+    fields: [f('title', 'fldMeetingsTitle', true, true), f('scheduledDate', 'fldMeetingsScheduledDate', true, true), f('location', 'fldMeetingsLocation'), f('description', 'fldMeetingsDescription')],
     options: {},
   },
   finance: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Track income, expenses, budgets and financial reports. Record transactions, set monthly budgets, and generate reports for accountability.',
+    learnMore: '',
     fields: [],
     options: {
       transactionTypes: ['Income', 'Expense', 'Tithe', 'Offering', 'Donation', 'Collection', 'Deposit', 'Asrat', 'YefikirSetota', 'Transfer'],
@@ -123,13 +137,12 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   },
   hr: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Manage church employees: positions, departments, employment type, salary and status. Use it as the HR record for staff and contractors.',
+    learnMore: '',
     fields: [
-      f('fullName', 'Full Name', true, true), f('position', 'Position', true, true),
-      f('department', 'Department'), f('employmentType', 'Employment Type'),
-      f('salary', 'Salary'), f('hireDate', 'Hire Date'), f('phone', 'Phone'),
-      f('email', 'Email'), f('status', 'Status'),
+      f('fullName', 'fldHrFullName', true, true), f('position', 'fldHrPosition', true, true),
+      f('department', 'fldHrDepartment'), f('employmentType', 'fldHrEmploymentType'),
+      f('salary', 'fldHrSalary'), f('hireDate', 'fldHrHireDate'), f('phone', 'fldHrPhone'),
+      f('email', 'fldHrEmail'), f('status', 'fldHrStatus'),
     ],
     options: {
       employmentTypes: ['FullTime', 'PartTime', 'Contract', 'Volunteer'],
@@ -138,12 +151,11 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   },
   inventory: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Track church assets, equipment and property — quantity, location, condition, value and assignment. Monitor what the church owns and its state.',
+    learnMore: '',
     fields: [
-      f('name', 'Asset Name', true, true), f('category', 'Category'), f('quantity', 'Quantity', true, true),
-      f('location', 'Location'), f('assignedTo', 'Assigned To'), f('condition', 'Condition'),
-      f('status', 'Status'), f('value', 'Unit Value'), f('purchaseDate', 'Purchase Date'),
+      f('name', 'fldInventoryName', true, true), f('category', 'fldInventoryCategory'), f('quantity', 'fldInventoryQuantity', true, true),
+      f('location', 'fldInventoryLocation'), f('assignedTo', 'fldInventoryAssignedTo'), f('condition', 'fldInventoryCondition'),
+      f('status', 'fldInventoryStatus'), f('value', 'fldInventoryValue'), f('purchaseDate', 'fldInventoryPurchaseDate'),
     ],
     options: {
       conditions: ['New', 'Good', 'Fair', 'Poor'],
@@ -152,42 +164,37 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   },
   teachings: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Publish teachings, sermons and Bible studies. Each teaching has a speaker, service type, summary and full content for members to read.',
+    learnMore: '',
     fields: [
-      f('title', 'Title', true, true), f('speaker', 'Speaker'), f('serviceType', 'Service Type'),
-      f('shortDescription', 'Short Description'), f('fullContent', 'Full Content'), f('dateDelivered', 'Date Delivered'),
+      f('title', 'fldTeachingsTitle', true, true), f('speaker', 'fldTeachingsSpeaker'), f('serviceType', 'fldTeachingsServiceType'),
+      f('shortDescription', 'fldTeachingsShortDescription'), f('fullContent', 'fldTeachingsFullContent'), f('dateDelivered', 'fldTeachingsDateDelivered'),
     ],
     options: { serviceTypes: ['Sunday Morning', 'Wednesday Bible Study', "Men's Breakfast", "Women's Ministry", 'Youth Service', 'Special Event', 'Other'] },
   },
   documents: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Browse and manage official church documents in folders. Upload files, create folders, and open documents — access follows your permissions.',
+    learnMore: '',
     fields: [],
     options: {},
   },
   hierarchy: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'The official organizational structure of the church per the bylaws — from the Synod down to local parishes — with each body\'s roles and responsibilities.',
+    learnMore: '',
     fields: [],
     options: {},
   },
   missionary: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Apply for missionary service and submit field reports. Choose your missionary type and desired location, and track applications and impact.',
+    learnMore: '',
     fields: [
-      f('missionaryType', 'Missionary Type', true, true), f('desiredLocation', 'Desired Location'),
-      f('whyServe', 'Why do you want to serve?'),
+      f('missionaryType', 'fldMissionaryMissionaryType', true, true), f('desiredLocation', 'fldMissionaryDesiredLocation'),
+      f('whyServe', 'fldMissionaryWhyServe'),
     ],
     options: { missionaryTypes: ['FullTime', 'PartTime', 'ShortTerm'] },
   },
   volunteer: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Choose the ministries you would like to serve in. Your preferences are saved to your profile so coordinators can reach you.',
+    learnMore: '',
     fields: [],
     options: {
       ministries: ['Ebet Metreg', 'Natanim Agelgelot', 'Choir', 'Ushering', 'Sunday School', 'Charity', 'Evangelism', 'Media'],
@@ -195,26 +202,40 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
   },
   strategicPlan: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Track long-term vision goals and strategic milestones, with progress against targets over time.',
+    learnMore: '',
     fields: [],
     options: {},
   },
   churchRules: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Browse the church\'s canonical guidelines, prohibitions, obligations and administrative rules.',
+    learnMore: '',
     fields: [],
     options: {},
   },
   higeDenb: {
     headerTitle: '', headerDescription: '',
-    learnMore:
-      'Access the church governance rules (Hige Denb) covering structure, reporting, conduct and communication protocol.',
+    learnMore: '',
     fields: [],
     options: {},
   },
 };
+
+/**
+ * A field's label in the reader's language: the admin's override if they typed
+ * one, otherwise the built-in translation, otherwise the raw field key.
+ */
+export function fieldLabel(t: Translations, field: FieldConfig): string {
+  if (field.label.trim()) return field.label;
+  const section = t.modules as unknown as Record<string, string | undefined>;
+  return (field.labelKey && section[field.labelKey]) || field.key;
+}
+
+/** A module's "learn more" text: the admin's override, else the built-in translation. */
+export function moduleLearnMore(t: Translations, key: ModuleKey, cfg: SingleModuleConfig): string {
+  if (cfg.learnMore.trim()) return cfg.learnMore;
+  const section = t.modules as unknown as Record<string, string | undefined>;
+  return section[`${key}LearnMore`] ?? '';
+}
 
 function mergeModule(base: SingleModuleConfig, over?: Partial<SingleModuleConfig>): SingleModuleConfig {
   if (!over) return base;

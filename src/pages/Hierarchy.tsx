@@ -10,8 +10,15 @@ import {
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CHURCH_STRUCTURE, type StructureNode } from '@/data/churchStructure';
+import {
+  CHURCH_STRUCTURE,
+  structureName,
+  structureRoles,
+  structureArticle,
+  type StructureNode,
+} from '@/data/churchStructure';
 import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 
 const DEPTH_COLORS = [
@@ -33,7 +40,13 @@ const HierarchyTreeNode = ({
   depth: number;
   onSelect: (n: StructureNode) => void;
 }) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(depth < 2);
+  // The bylaw Amharic spelling is worth showing beside a translated name, but
+  // not twice over to a reader who is already reading Amharic.
+  const displayName = structureName(t, node);
+  const bylawName = displayName === node.name ? null : node.name;
+  const article = structureArticle(t, node);
   const hasChildren = !!node.children?.length;
   const colorClass = DEPTH_COLORS[Math.min(depth, DEPTH_COLORS.length - 1)];
 
@@ -70,13 +83,15 @@ const HierarchyTreeNode = ({
               </div>
               <div>
                 <p className="text-base sm:text-lg font-black text-[#0D2440] dark:text-white tracking-tight font-ethiopic">
-                  {node.name}
+                  {displayName}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <span className="text-xs font-semibold text-[#2E5E99]/70">{node.nameEn}</span>
-                  {node.article && (
+                  {bylawName && (
+                    <span className="text-xs font-semibold text-[#2E5E99]/70 font-ethiopic">{bylawName}</span>
+                  )}
+                  {article && (
                     <Badge variant="outline" className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${colorClass}`}>
-                      {node.article}
+                      {article}
                     </Badge>
                   )}
                 </div>
@@ -88,7 +103,7 @@ const HierarchyTreeNode = ({
               className="h-9 px-4 rounded-xl border-[#2E5E99]/20 text-[#2E5E99] text-xs font-bold hover:bg-[#2E5E99] hover:text-white transition-all shrink-0"
             >
               <ScrollText className="h-3.5 w-3.5 mr-1.5" />
-              Roles ({node.roles.length})
+              {t.structure.dutiesButton.replace('{count}', String(node.roleCount))}
             </Button>
           </div>
         </div>
@@ -118,6 +133,9 @@ const HierarchyTreeNode = ({
 
 const Hierarchy = () => {
   const { t } = useTranslation();
+  // Both APIs are in play here: `t('key')` for this page's own copy, and the
+  // object form for the structure resolvers. The function form is being retired.
+  const { t: tree } = useLanguage();
   const [selected, setSelected] = useState<StructureNode | null>(null);
   // The bylaws chart above is a static document. These are the parishes that
   // actually exist in the system, from the Atbiya registry.
@@ -144,11 +162,11 @@ const Hierarchy = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Structures', val: String(totalStructures), sub: 'Bodies in the org chart' },
-          { label: 'Governing Document', val: 'ቁ. 001/2018', sub: '5th revised bylaws' },
-          { label: 'Top Body', val: 'ሲኖዶስ', sub: 'Supreme assembly' },
+          { label: tree.pages.hierStructures, val: String(totalStructures), sub: tree.pages.hierBodiesInChart },
+          { label: tree.pages.hierGoverningDocument, val: 'ቁ. 001/2018', sub: tree.pages.hierFifthRevision },
+          { label: tree.pages.hierTopBody, val: 'ሲኖዶስ', sub: tree.pages.hierSupremeAssembly },
           {
-            label: 'Registered Congregations',
+            label: tree.pages.hierRegisteredCongregations,
             val: parishesLoading ? '…' : String(parishes.length),
             sub: 'አጥቢያ — live in the registry',
           },
@@ -185,11 +203,11 @@ const Hierarchy = () => {
         </div>
 
         {parishesLoading ? (
-          <p className="text-sm text-muted-foreground">Loading congregations…</p>
+          <p className="text-sm text-muted-foreground">{tree.pages.hierLoadingCongregations}</p>
         ) : parishes.length === 0 ? (
           <Card className="rounded-2xl border-dashed p-8 text-center bg-white/40 dark:bg-slate-900/40">
             <Church className="h-8 w-8 mx-auto mb-3 opacity-40" />
-            <p className="font-semibold">No congregations registered yet</p>
+            <p className="font-semibold">{tree.pages.hierNoCongregations}</p>
             <p className="text-sm text-muted-foreground">
               A super admin can add them in Software Control → Congregation Registry.
             </p>
@@ -226,16 +244,16 @@ const Hierarchy = () => {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-ethiopic text-2xl">{selected.name}</DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  {selected.nameEn}{selected.article ? ` · ${selected.article}` : ''}
+                <DialogTitle className="font-ethiopic text-2xl">{structureName(tree, selected)}</DialogTitle>
+                <p className="text-sm text-muted-foreground font-ethiopic">
+                  {[selected.name, structureArticle(tree, selected)].filter(Boolean).join(' · ')}
                 </p>
               </DialogHeader>
               <div className="space-y-3 pt-2">
                 <p className="text-xs font-black uppercase tracking-widest text-[#2E5E99]/70">
-                  Powers & Duties (ሥልጣንና ተግባር)
+                  {tree.structure.dutiesHeading}
                 </p>
-                {selected.roles.map((role, i) => (
+                {structureRoles(tree, selected).map((role, i) => (
                   <div key={i} className="flex gap-3 items-start p-3 rounded-xl bg-[#2E5E99]/5 border border-[#2E5E99]/10">
                     <CheckCircle2 className="h-4 w-4 text-[#2E5E99] mt-0.5 shrink-0" />
                     <p className="text-sm text-[#0D2440]/80 dark:text-white/80 leading-relaxed">{role}</p>

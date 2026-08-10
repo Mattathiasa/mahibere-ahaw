@@ -11,24 +11,35 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { Translations } from '@/i18n/translations';
 import {
-  churchRulesService, DEFAULT_CHURCH_RULES,
+  churchRulesService, DEFAULT_CHURCH_RULES_BY_LANGUAGE,
   type ChurchRulesData, type RuleItem,
 } from '@/services/churchRules';
 
 type CategoryKey = 'denb' | 'memerya' | 'policies';
 
-const CATEGORIES: { key: CategoryKey; label: string; amharic: string; icon: typeof Scale; color: string }[] = [
-  { key: 'denb', label: 'Regulations', amharic: 'ደንብ', icon: Scale, color: 'text-indigo-500' },
-  { key: 'memerya', label: 'Directives', amharic: 'መመሪያ', icon: BookText, color: 'text-emerald-500' },
-  { key: 'policies', label: 'Policies', amharic: 'ፖሊሲ', icon: ClipboardList, color: 'text-amber-500' },
+/**
+ * `key` is the persisted category token; `amharic` is the bylaw term as the
+ * church writes it. The label is a function of `t` because this sits outside
+ * the component and so cannot read the language itself.
+ */
+const categories = (
+  pg: Translations['pages']
+): { key: CategoryKey; label: string; amharic: string; icon: typeof Scale; color: string }[] => [
+  { key: 'denb', label: pg.rulesRegulations, amharic: 'ደንብ', icon: Scale, color: 'text-indigo-500' },
+  { key: 'memerya', label: pg.rulesDirectives, amharic: 'መመሪያ', icon: BookText, color: 'text-emerald-500' },
+  { key: 'policies', label: pg.rulesPolicies, amharic: 'ፖሊሲ', icon: ClipboardList, color: 'text-amber-500' },
 ];
 
 const ChurchLaws = () => {
   const { t } = useTranslation();
+  const { t: tree, language } = useLanguage();
+  const pg = tree.pages;
   const { user } = useAuth();
   const { isAdminRole, isSuperAdmin } = usePermissions();
-  const [data, setData] = useState<ChurchRulesData>(DEFAULT_CHURCH_RULES);
+  const [data, setData] = useState<ChurchRulesData>(DEFAULT_CHURCH_RULES_BY_LANGUAGE[language]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -59,10 +70,10 @@ const ChurchLaws = () => {
     setSaving(true);
     try {
       await churchRulesService.save(data, user?.email ?? 'admin');
-      toast.success('Church rules saved');
+      toast.success(pg.rulesSaved);
       setEditMode(false);
     } catch {
-      toast.error('Failed to save');
+      toast.error(pg.rulesSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -87,7 +98,7 @@ const ChurchLaws = () => {
           <div className="flex gap-2">
             {editMode ? (
               <>
-                <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setEditMode(false)}>{tree.common.cancel}</Button>
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                   Save
@@ -104,7 +115,7 @@ const ChurchLaws = () => {
 
       <Tabs defaultValue="denb" className="space-y-8">
         <TabsList className="bg-white/40 dark:bg-black/20 p-1.5 rounded-2xl border border-white/40 dark:border-white/10 backdrop-blur-xl h-auto flex flex-wrap gap-2">
-          {CATEGORIES.map(({ key, label, amharic, icon: Icon }) => (
+          {categories(pg).map(({ key, label, amharic, icon: Icon }) => (
             <TabsTrigger key={key} value={key}
               className="rounded-xl px-6 py-2.5 data-[state=active]:bg-[#2E5E99] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-bold gap-2">
               <Icon className="h-4 w-4" /> {label} <span className="font-ethiopic opacity-70">({amharic})</span>
@@ -112,7 +123,7 @@ const ChurchLaws = () => {
           ))}
         </TabsList>
 
-        {CATEGORIES.map(({ key, label, color }) => (
+        {categories(pg).map(({ key, label, color }) => (
           <TabsContent key={key} value={key}>
             <div className="space-y-4">
               {data[key].length === 0 && !editMode && (
@@ -125,13 +136,13 @@ const ChurchLaws = () => {
                       {editMode ? (
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <Input value={item.title} placeholder="Title"
+                            <Input value={item.title} placeholder={tree.admin.crFieldTitle}
                               onChange={(e) => updateItem(key, i, 'title', e.target.value)} className="font-bold" />
                             <Button variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeItem(key, i)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                          <Textarea rows={3} value={item.content} placeholder="Content"
+                          <Textarea rows={3} value={item.content} placeholder={tree.admin.crFieldContent}
                             onChange={(e) => updateItem(key, i, 'content', e.target.value)} />
                         </div>
                       ) : (

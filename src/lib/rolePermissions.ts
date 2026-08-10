@@ -1,3 +1,6 @@
+import type { Translations } from '@/i18n/translations';
+import type { permissionsEn } from '@/i18n/sections/permissions';
+
 // ─── All permission keys in the system ───────────────────────────────────────
 
 export const ALL_PERMISSIONS = [
@@ -59,81 +62,103 @@ export const ALL_PERMISSIONS = [
 
 export type PermissionKey = typeof ALL_PERMISSIONS[number];
 
-// ─── Human-readable labels and grouping ──────────────────────────────────────
+// ─── Labels and grouping ─────────────────────────────────────────────────────
 
+/**
+ * Permission metadata holds translation KEYS, not prose.
+ *
+ * This module cannot call `useLanguage()` — it is not a component — and it used
+ * to carry English sentences that rendered verbatim in PermissionMatrix,
+ * PermissionControl and the access-denied screen. Resolving the key at the
+ * render site, where `t` is in scope, also means every one of these strings is
+ * editable by an admin in the Localization Editor, which prose in this file
+ * never could be.
+ */
 export interface PermissionMeta {
-  label: string;
-  description: string;
+  labelKey: keyof typeof permissionsEn;
+  descriptionKey: keyof typeof permissionsEn;
+  /**
+   * NOT a label. This string is a React key, a `Set` member and the predicate
+   * in `ALL_PERMISSIONS.filter(p => PERMISSION_META[p].group === group)`, so it
+   * stays a stable English token. `permissionGroupLabel` translates it for
+   * display.
+   */
   group: string;
 }
 
 export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
-  // Pages
-  canViewDashboard:            { label: 'View Dashboard',           description: 'Access the main dashboard',                    group: 'Pages' },
-  canViewAnnouncements:        { label: 'View Announcements',       description: 'See the announcements page',                   group: 'Pages' },
-  canViewPlans:                { label: 'View Plans',               description: 'See the plans & ministry page',                group: 'Pages' },
-  canViewReports:              { label: 'View Reports',             description: 'See the reports page',                         group: 'Pages' },
-  canViewMembers:              { label: 'View Members',             description: 'See the members directory',                    group: 'Pages' },
-  canViewMeetings:             { label: 'View Meetings',            description: 'See the meetings page',                        group: 'Pages' },
-  canViewFinance:              { label: 'View Finance',             description: 'See the finance page',                         group: 'Pages' },
-  canViewChurchRules:          { label: 'View Church Rules',        description: 'See the church rules page',                    group: 'Pages' },
-  canViewHigeDenb:             { label: 'View HigeDenb',            description: 'See the HigeDenb page',                        group: 'Pages' },
-  canViewStrategicPlan:        { label: 'View Strategic Plan',      description: 'See the strategic plan page',                  group: 'Pages' },
-  canViewDocuments:            { label: 'View Documents',           description: 'See the documents page',                       group: 'Pages' },
-  canViewHierarchy:            { label: 'View Hierarchy',           description: 'See the church hierarchy page',                group: 'Pages' },
-  canViewMissionary:           { label: 'View Missionary',          description: 'See the missionary page',                      group: 'Pages' },
-  canViewTeachings:            { label: 'View Teachings',           description: 'See the teachings page',                       group: 'Pages' },
-  canViewVolunteer:            { label: 'View Volunteer',           description: 'See the volunteer page',                       group: 'Pages' },
-  canViewUserManagement:       { label: 'View User Management',     description: 'See the user management page',                 group: 'Pages' },
-  canViewSettings:             { label: 'View Settings',            description: 'Access settings',                              group: 'Pages' },
-  canViewNotifications:        { label: 'View Notifications',       description: 'See notifications',                            group: 'Pages' },
-  canViewNews:                 { label: 'View News',                description: 'See the news manager',                         group: 'Pages' },
-  canViewHR:                   { label: 'View Human Resources',     description: 'See the HR page',                              group: 'Pages' },
-  canViewInventory:            { label: 'View Inventory',           description: 'See the inventory page',                       group: 'Pages' },
-  // Announcements
-  canCreateAnnouncement:       { label: 'Create Announcement',      description: 'Post new announcements',                       group: 'Announcements' },
-  canEditAnnouncement:         { label: 'Edit Announcement',        description: 'Edit existing announcements',                  group: 'Announcements' },
-  canDeleteAnnouncement:       { label: 'Delete Announcement',      description: 'Delete announcements',                         group: 'Announcements' },
-  // Plans
-  canCreatePlan:               { label: 'Create Plan',              description: 'Create new ministry plans',                    group: 'Plans' },
-  canDeletePlan:               { label: 'Delete Plan',              description: 'Delete ministry plans',                        group: 'Plans' },
-  // Reports
-  canCreateReport:             { label: 'Create Report',            description: 'Submit new reports',                           group: 'Reports' },
-  canViewAllReports:           { label: 'View All Reports',         description: 'See reports from all units',                   group: 'Reports' },
-  canCommentOnReport:          { label: 'Comment on Report',        description: 'Add feedback to reports',                      group: 'Reports' },
-  // Members
-  canAddMembers:               { label: 'Add Members',              description: 'Enroll new church members',                    group: 'Members' },
-  canEditMembers:              { label: 'Edit Members',             description: 'Edit member profiles',                         group: 'Members' },
-  canDeleteMembers:            { label: 'Delete Members',           description: 'Remove members from the system',               group: 'Members' },
-  canExportData:               { label: 'Export Data',              description: 'Export member and report data',                group: 'Members' },
-  // Meetings
-  canScheduleMeeting:          { label: 'Schedule Meeting',         description: 'Create new meetings',                          group: 'Meetings' },
-  canDeleteMeeting:            { label: 'Delete Meeting',           description: 'Delete scheduled meetings',                    group: 'Meetings' },
-  // Finance
-  canAddTransaction:           { label: 'Add Transaction',          description: 'Record financial transactions',                group: 'Finance' },
-  canCreateBudget:             { label: 'Create Budget',            description: 'Create monthly budgets',                       group: 'Finance' },
-  canGenerateFinancialReport:  { label: 'Generate Financial Report',description: 'Generate financial reports',                   group: 'Finance' },
-  // Documents
-  canUploadDocuments:          { label: 'Upload Documents',         description: 'Upload files and create folders',              group: 'Documents' },
-  canDeleteDocuments:          { label: 'Delete Documents',         description: 'Delete files and folders',                     group: 'Documents' },
-  // Teachings
-  canCreateTeaching:           { label: 'Create Teaching',          description: 'Publish new teachings',                        group: 'Teachings' },
-  // Missionary
-  canSubmitMissionaryApplication: { label: 'Submit Missionary Application', description: 'Apply for missionary service',         group: 'Missionary' },
-  canSubmitMissionaryReport:   { label: 'Submit Missionary Report', description: 'Submit field reports',                         group: 'Missionary' },
-  // News
-  canManageNews:               { label: 'Manage News',              description: 'Write, publish and unpublish homepage news',   group: 'News' },
-  // Administration
-  canApproveMembers:           { label: 'Approve Member Requests',  description: 'Approve or reject membership sign-up requests', group: 'Administration' },
-  // Two deliberately separate keys. Registering a parish is a head-office act;
-  // maintaining the one you belong to is not. Folding them together would mean
-  // every parish leader could mint new parishes.
-  canManageAtbiyas:            { label: 'Manage Atbiya Registry',   description: 'Register parishes and edit any parish record', group: 'Administration' },
-  canEditOwnAtbiya:            { label: 'Edit Own Atbiya',          description: "Edit the details of the parish you belong to", group: 'Administration' },
-  // Dashboard
-  canViewFullDashboard:        { label: 'Full Dashboard View',      description: 'See all stats and quick actions',              group: 'Dashboard' },
-  canViewLimitedDashboard:     { label: 'Limited Dashboard View',   description: 'See basic stats only',                         group: 'Dashboard' },
+  canViewDashboard: { labelKey: 'canViewDashboardLabel', descriptionKey: 'canViewDashboardDesc', group: 'Pages' },
+  canViewAnnouncements: { labelKey: 'canViewAnnouncementsLabel', descriptionKey: 'canViewAnnouncementsDesc', group: 'Pages' },
+  canViewPlans: { labelKey: 'canViewPlansLabel', descriptionKey: 'canViewPlansDesc', group: 'Pages' },
+  canViewReports: { labelKey: 'canViewReportsLabel', descriptionKey: 'canViewReportsDesc', group: 'Pages' },
+  canViewMembers: { labelKey: 'canViewMembersLabel', descriptionKey: 'canViewMembersDesc', group: 'Pages' },
+  canViewMeetings: { labelKey: 'canViewMeetingsLabel', descriptionKey: 'canViewMeetingsDesc', group: 'Pages' },
+  canViewFinance: { labelKey: 'canViewFinanceLabel', descriptionKey: 'canViewFinanceDesc', group: 'Pages' },
+  canViewChurchRules: { labelKey: 'canViewChurchRulesLabel', descriptionKey: 'canViewChurchRulesDesc', group: 'Pages' },
+  canViewHigeDenb: { labelKey: 'canViewHigeDenbLabel', descriptionKey: 'canViewHigeDenbDesc', group: 'Pages' },
+  canViewStrategicPlan: { labelKey: 'canViewStrategicPlanLabel', descriptionKey: 'canViewStrategicPlanDesc', group: 'Pages' },
+  canViewDocuments: { labelKey: 'canViewDocumentsLabel', descriptionKey: 'canViewDocumentsDesc', group: 'Pages' },
+  canViewHierarchy: { labelKey: 'canViewHierarchyLabel', descriptionKey: 'canViewHierarchyDesc', group: 'Pages' },
+  canViewMissionary: { labelKey: 'canViewMissionaryLabel', descriptionKey: 'canViewMissionaryDesc', group: 'Pages' },
+  canViewTeachings: { labelKey: 'canViewTeachingsLabel', descriptionKey: 'canViewTeachingsDesc', group: 'Pages' },
+  canViewVolunteer: { labelKey: 'canViewVolunteerLabel', descriptionKey: 'canViewVolunteerDesc', group: 'Pages' },
+  canViewUserManagement: { labelKey: 'canViewUserManagementLabel', descriptionKey: 'canViewUserManagementDesc', group: 'Pages' },
+  canViewSettings: { labelKey: 'canViewSettingsLabel', descriptionKey: 'canViewSettingsDesc', group: 'Pages' },
+  canViewNotifications: { labelKey: 'canViewNotificationsLabel', descriptionKey: 'canViewNotificationsDesc', group: 'Pages' },
+  canViewNews: { labelKey: 'canViewNewsLabel', descriptionKey: 'canViewNewsDesc', group: 'Pages' },
+  canViewHR: { labelKey: 'canViewHRLabel', descriptionKey: 'canViewHRDesc', group: 'Pages' },
+  canViewInventory: { labelKey: 'canViewInventoryLabel', descriptionKey: 'canViewInventoryDesc', group: 'Pages' },
+  canCreateAnnouncement: { labelKey: 'canCreateAnnouncementLabel', descriptionKey: 'canCreateAnnouncementDesc', group: 'Announcements' },
+  canEditAnnouncement: { labelKey: 'canEditAnnouncementLabel', descriptionKey: 'canEditAnnouncementDesc', group: 'Announcements' },
+  canDeleteAnnouncement: { labelKey: 'canDeleteAnnouncementLabel', descriptionKey: 'canDeleteAnnouncementDesc', group: 'Announcements' },
+  canCreatePlan: { labelKey: 'canCreatePlanLabel', descriptionKey: 'canCreatePlanDesc', group: 'Plans' },
+  canDeletePlan: { labelKey: 'canDeletePlanLabel', descriptionKey: 'canDeletePlanDesc', group: 'Plans' },
+  canCreateReport: { labelKey: 'canCreateReportLabel', descriptionKey: 'canCreateReportDesc', group: 'Reports' },
+  canViewAllReports: { labelKey: 'canViewAllReportsLabel', descriptionKey: 'canViewAllReportsDesc', group: 'Reports' },
+  canCommentOnReport: { labelKey: 'canCommentOnReportLabel', descriptionKey: 'canCommentOnReportDesc', group: 'Reports' },
+  canAddMembers: { labelKey: 'canAddMembersLabel', descriptionKey: 'canAddMembersDesc', group: 'Members' },
+  canEditMembers: { labelKey: 'canEditMembersLabel', descriptionKey: 'canEditMembersDesc', group: 'Members' },
+  canDeleteMembers: { labelKey: 'canDeleteMembersLabel', descriptionKey: 'canDeleteMembersDesc', group: 'Members' },
+  canExportData: { labelKey: 'canExportDataLabel', descriptionKey: 'canExportDataDesc', group: 'Members' },
+  canScheduleMeeting: { labelKey: 'canScheduleMeetingLabel', descriptionKey: 'canScheduleMeetingDesc', group: 'Meetings' },
+  canDeleteMeeting: { labelKey: 'canDeleteMeetingLabel', descriptionKey: 'canDeleteMeetingDesc', group: 'Meetings' },
+  canAddTransaction: { labelKey: 'canAddTransactionLabel', descriptionKey: 'canAddTransactionDesc', group: 'Finance' },
+  canCreateBudget: { labelKey: 'canCreateBudgetLabel', descriptionKey: 'canCreateBudgetDesc', group: 'Finance' },
+  canGenerateFinancialReport: { labelKey: 'canGenerateFinancialReportLabel', descriptionKey: 'canGenerateFinancialReportDesc', group: 'Finance' },
+  canUploadDocuments: { labelKey: 'canUploadDocumentsLabel', descriptionKey: 'canUploadDocumentsDesc', group: 'Documents' },
+  canDeleteDocuments: { labelKey: 'canDeleteDocumentsLabel', descriptionKey: 'canDeleteDocumentsDesc', group: 'Documents' },
+  canCreateTeaching: { labelKey: 'canCreateTeachingLabel', descriptionKey: 'canCreateTeachingDesc', group: 'Teachings' },
+  canSubmitMissionaryApplication: { labelKey: 'canSubmitMissionaryApplicationLabel', descriptionKey: 'canSubmitMissionaryApplicationDesc', group: 'Missionary' },
+  canSubmitMissionaryReport: { labelKey: 'canSubmitMissionaryReportLabel', descriptionKey: 'canSubmitMissionaryReportDesc', group: 'Missionary' },
+  canManageNews: { labelKey: 'canManageNewsLabel', descriptionKey: 'canManageNewsDesc', group: 'News' },
+  canApproveMembers: { labelKey: 'canApproveMembersLabel', descriptionKey: 'canApproveMembersDesc', group: 'Administration' },
+  canManageAtbiyas: { labelKey: 'canManageAtbiyasLabel', descriptionKey: 'canManageAtbiyasDesc', group: 'Administration' },
+  canEditOwnAtbiya: { labelKey: 'canEditOwnAtbiyaLabel', descriptionKey: 'canEditOwnAtbiyaDesc', group: 'Administration' },
+  canViewFullDashboard: { labelKey: 'canViewFullDashboardLabel', descriptionKey: 'canViewFullDashboardDesc', group: 'Dashboard' },
+  canViewLimitedDashboard: { labelKey: 'canViewLimitedDashboardLabel', descriptionKey: 'canViewLimitedDashboardDesc', group: 'Dashboard' },
 };
+
+/** A permission's name in the reader's language. */
+export function permissionLabel(t: Translations, permission: PermissionKey): string {
+  const key = PERMISSION_META[permission]?.labelKey;
+  return (key && t.permissions[key]) || permission;
+}
+
+/** A permission's one-line explanation in the reader's language. */
+export function permissionDescription(t: Translations, permission: PermissionKey): string {
+  const key = PERMISSION_META[permission]?.descriptionKey;
+  return (key && t.permissions[key]) || '';
+}
+
+/**
+ * A group heading in the reader's language. Takes the English token from
+ * `PermissionMeta.group` and looks up `group<Token>`; falls back to the token
+ * so a group added without a label is visible rather than blank.
+ */
+export function permissionGroupLabel(t: Translations, group: string): string {
+  const key = `group${group}` as keyof typeof permissionsEn;
+  return t.permissions[key] ?? group;
+}
 
 export const PERMISSION_GROUPS = [...new Set(ALL_PERMISSIONS.map(p => PERMISSION_META[p].group))];
 

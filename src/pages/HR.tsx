@@ -14,6 +14,8 @@ import { EmployeeRegistrationWizard } from '@/components/EmployeeRegistrationWiz
 import { EmployeeDetailsDialog } from '@/components/EmployeeDetailsDialog';
 import { ImportEmployeesDialog } from '@/components/ImportEmployeesDialog';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+import { employmentStatusLabel } from '@/i18n/enums';
 const STATUS_COLORS: Record<string, string> = {
   Active: 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/30',
   OnLeave: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30',
@@ -26,6 +28,8 @@ export default function HR() {
   const [searchParams] = useSearchParams();
   const { showElement } = useSoftwareControl();
 
+  const { t } = useLanguage();
+  const hr = t.hr;
   const [wizardOpen, setWizardOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -52,19 +56,19 @@ export default function HR() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success(editingEmployee ? 'Employee updated' : 'Employee registered');
+      toast.success(editingEmployee ? hr.employeeUpdated : hr.employeeRegistered);
       setWizardOpen(false);
     },
-    onError: () => toast.error('Failed to save employee'),
+    onError: () => toast.error(hr.saveFailed),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => hrService.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success('Employee removed');
+      toast.success(hr.removed);
     },
-    onError: () => toast.error('Failed to remove employee'),
+    onError: () => toast.error(hr.removeFailed),
   });
 
   function openCreate() {
@@ -96,8 +100,8 @@ export default function HR() {
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       <ConfigurablePageHeader
         module="hr"
-        defaultTitle="Human Resources"
-        defaultDescription="Manage church employees, positions, payroll, and staff profiles."
+        defaultTitle={hr.title}
+        defaultDescription={hr.subtitle}
         badge="HR"
       />
 
@@ -111,7 +115,7 @@ export default function HR() {
                   {employees.length}
                 </p>
                 <p className="text-xs uppercase font-bold tracking-wider text-[#2E5E99] dark:text-[#7BA4D0] mt-4">
-                  Total Employees
+                  {hr.totalEmployees}
                 </p>
               </div>
               <div className="p-3 bg-[#2E5E99]/20 rounded-full">
@@ -129,7 +133,7 @@ export default function HR() {
                   {activeCount}
                 </p>
                 <p className="text-xs uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400 mt-4">
-                  Total Active Employees
+                  {hr.totalActive}
                 </p>
               </div>
               <div className="p-3 bg-emerald-500/20 rounded-full">
@@ -147,7 +151,7 @@ export default function HR() {
                   {inactiveCount}
                 </p>
                 <p className="text-xs uppercase font-bold tracking-wider text-amber-600 dark:text-amber-400 mt-4">
-                  Total Inactive Employees
+                  {hr.totalInactive}
                 </p>
               </div>
               <div className="p-3 bg-amber-500/20 rounded-full">
@@ -184,7 +188,7 @@ export default function HR() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             className="pl-9 bg-white text-slate-900 placeholder:text-slate-400 border-none h-10 rounded-lg text-sm"
-            placeholder="Search..."
+            placeholder={t.common.search}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -200,8 +204,8 @@ export default function HR() {
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
             <BriefcaseBusiness className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium">No employees found</p>
-            <p className="text-sm">Register your first employee to get started.</p>
+            <p className="font-medium">{hr.emptyTitle}</p>
+            <p className="text-sm">{hr.emptyHint}</p>
           </CardContent>
         </Card>
       ) : (
@@ -210,15 +214,15 @@ export default function HR() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b text-left text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  <th className="py-3.5 px-4">Employee ID</th>
-                  <th className="py-3.5 px-4">Name</th>
-                  <th className="py-3.5 px-4">Gross</th>
-                  <th className="py-3.5 px-4">Deduction</th>
-                  <th className="py-3.5 px-4">Benefit</th>
-                  <th className="py-3.5 px-4">Net</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Date</th>
-                  <th className="py-3.5 px-4 text-right">Operations</th>
+                  <th className="py-3.5 px-4">{hr.colEmployeeId}</th>
+                  <th className="py-3.5 px-4">{hr.colName}</th>
+                  <th className="py-3.5 px-4">{hr.colGross}</th>
+                  <th className="py-3.5 px-4">{hr.colDeduction}</th>
+                  <th className="py-3.5 px-4">{hr.colBenefit}</th>
+                  <th className="py-3.5 px-4">{hr.colNet}</th>
+                  <th className="py-3.5 px-4">{hr.colStatus}</th>
+                  <th className="py-3.5 px-4">{hr.colDate}</th>
+                  <th className="py-3.5 px-4 text-right">{hr.colActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -250,7 +254,7 @@ export default function HR() {
                       </td>
                       <td className="py-4 px-4">
                         <Badge variant="outline" className={`px-2.5 py-0.5 font-bold uppercase text-[10px] ${STATUS_COLORS[emp.status] ?? STATUS_COLORS.Active}`}>
-                          {emp.status}
+                          {employmentStatusLabel(t, emp.status)}
                         </Badge>
                       </td>
                       <td className="py-4 px-4 text-slate-500 text-xs">
@@ -262,11 +266,11 @@ export default function HR() {
                           size="icon"
                           onClick={() => openDetails(emp)}
                           className="text-slate-600 hover:text-cyan-600"
-                          title="View Employee Profile"
+                          title={hr.viewProfile}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(emp)} title="Edit Employee">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(emp)} title={hr.editEmployee}>
                           <Pencil className="h-4 w-4 text-slate-600" />
                         </Button>
                         {showElement('hr.delete') && (
@@ -277,7 +281,7 @@ export default function HR() {
                             onClick={() => {
                               if (confirm(`Remove ${emp.fullName}?`)) deleteMutation.mutate(emp.id);
                             }}
-                            title="Remove Employee"
+                            title={hr.removeEmployee}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

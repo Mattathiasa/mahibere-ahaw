@@ -6,7 +6,10 @@ import { toast } from 'sonner';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { postLoginPath } from '@/lib/postLogin';
 
+import { errorMessage } from '@/lib/appError';
+import { useLanguage } from '@/contexts/LanguageContext';
 export function useAuth() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user, loading, isAuthenticated } = useAuthContext();
@@ -15,14 +18,13 @@ export function useAuth() {
     mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
     onSuccess: async (data) => {
       queryClient.setQueryData(['currentUser'], data.user);
-      toast.success('Login successful!');
+      toast.success(t.admin.loginSuccessful);
       // Parish administrators land on their own console; everyone else on the
       // dashboard. postLoginPath falls back to /dashboard if anything fails.
       navigate(await postLoginPath(data.user), { replace: true });
     },
-    onError: (error: any) => {
-      const message = error.message || 'Login failed. Please check your credentials.';
-      toast.error(message);
+    onError: (error: unknown) => {
+      toast.error(errorMessage(t, error));
       authService.clearAuth();
     },
   });
@@ -31,7 +33,7 @@ export function useAuth() {
     mutationFn: () => authService.logout(),
     onSuccess: () => {
       queryClient.clear();
-      toast.success('Logged out successfully');
+      toast.success(t.admin.loggedOut);
       navigate('/login', { replace: true });
     },
     onError: () => {

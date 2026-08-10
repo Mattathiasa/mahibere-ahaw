@@ -1,4 +1,5 @@
 import { auth, db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import {
   collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp,
@@ -257,9 +258,7 @@ export const atbiyaAdminService = {
    */
   async sendReset(email: string): Promise<void> {
     if (!isRealEmail(email)) {
-      throw new Error(
-        'This account signs in with a username, not a real email address, so no reset link can be sent. Create a replacement administrator account instead.'
-      );
+      throw new AppError('adminNoEmailOnAccount');
     }
     await sendPasswordResetEmail(auth, email);
     auditLogService.dataChange('update', 'users', email, 'Sent a password reset email to a parish administrator');

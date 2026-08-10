@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface CreateFinancialReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,6 +22,8 @@ interface CreateFinancialReportDialogProps {
 export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLoading }: CreateFinancialReportDialogProps) {
   const { user } = useAuth();
   const currentDate = new Date();
+  const { t } = useLanguage();
+  const fin = t.finance;
   const [formData, setFormData] = useState({
     title: '',
     titleAmharic: '',
@@ -54,23 +57,23 @@ export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Generate Financial Report</DialogTitle>
-          <DialogDescription>Create a comprehensive financial report with document attachments</DialogDescription>
+          <DialogTitle>{fin.generateFinancialReport}</DialogTitle>
+          <DialogDescription>{fin.generateFinancialReportDesc}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Report Title (English) *</Label>
+            <Label htmlFor="title">{fin.reportTitleEn}</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., Monthly Financial Report - December 2024"
+              placeholder={fin.reportTitleEnPlaceholder}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="titleAmharic">Report Title (Amharic) *</Label>
+            <Label htmlFor="titleAmharic">{fin.reportTitleAm}</Label>
             <Input
               id="titleAmharic"
               value={formData.titleAmharic}
@@ -81,7 +84,7 @@ export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLo
           </div>
 
           <div>
-            <Label htmlFor="reportType">Report Type *</Label>
+            <Label htmlFor="reportType">{fin.reportTypeRequired}</Label>
             <Select
               value={formData.reportType}
               onValueChange={(value: any) => setFormData({ ...formData, reportType: value })}
@@ -117,17 +120,17 @@ export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLo
           </div>
 
           <div>
-            <Label htmlFor="recipientInfo">Recipient Information (Optional)</Label>
+            <Label htmlFor="recipientInfo">{fin.recipientInfoOptional}</Label>
             <Input
               id="recipientInfo"
               value={formData.recipientInfo}
               onChange={(e) => setFormData({ ...formData, recipientInfo: e.target.value })}
-              placeholder="To whom it may concern - e.g., Atbiya Leadership, Regional Office"
+              placeholder={fin.recipientInfoPlaceholder}
             />
           </div>
 
           <div>
-            <Label>Attachments (Optional)</Label>
+            <Label>{fin.attachmentsOptional}</Label>
             <p className="text-sm text-muted-foreground mb-2">
               Attach detailed financial documents, spreadsheets, or supporting materials
             </p>
@@ -141,8 +144,8 @@ export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLo
 
           <div>
             <RecipientSelector
-              label="Send to (Optional)"
-              placeholder="Select Memriyas to send this financial report to..."
+              label={fin.sendToOptional}
+              placeholder={fin.sendReportPlaceholder}
               hierarchyLevel="Memriya"
               value={formData.recipients}
               onChange={(recipients) => setFormData({ ...formData, recipients })}

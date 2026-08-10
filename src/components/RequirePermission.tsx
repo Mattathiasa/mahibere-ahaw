@@ -3,7 +3,9 @@ import { Lock } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
-import { PERMISSION_META, type PermissionKey } from '@/lib/rolePermissions';
+import { permissionLabel, type PermissionKey } from '@/lib/rolePermissions';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { Translations } from '@/i18n/translations';
 import type { ModuleKey } from '@/services/moduleConfig';
 
 /**
@@ -27,15 +29,29 @@ interface RequirePermissionProps {
   permission: PermissionKey;
   /** Drives the admin-editable page header shown above the refusal. */
   module: ModuleKey;
-  title: string;
+  /**
+   * Page name for the header. Optional: every `ModuleKey` is also a key in
+   * `nav` or `pages`, so the translated name is derived from `module` by
+   * default. Callers used to pass English literals here, which is how a dozen
+   * page titles stayed English no matter the reader's language.
+   */
+  title?: string;
   description?: string;
   children: React.ReactNode;
 }
 
+/** The page's name in the reader's language, from `nav` then `pages`. */
+function moduleTitle(t: Translations, module: ModuleKey): string | undefined {
+  const nav = t.nav as Record<string, string | undefined>;
+  const pages = t.pages as Record<string, string | undefined>;
+  return nav[module] ?? pages[module];
+}
+
 export const RequirePermission: React.FC<RequirePermissionProps> = ({
-  permission, module, title, description = 'You do not have access to this page.', children,
+  permission, module, title, description, children,
 }) => {
   const { can, loading } = usePermissions();
+  const { t } = useLanguage();
 
   // Rendering the refusal before the registry resolves would flash "Access
   // Denied" at legitimate staff on every hard refresh of the URL.
@@ -49,21 +65,19 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
 
   if (can(permission)) return <>{children}</>;
 
-  const label = PERMISSION_META[permission]?.label ?? permission;
+  const body = t.permissions.deniedBody
+    .replace('{permission}', permissionLabel(t, permission))
+    .replace('{location}', t.permissions.deniedLocation);
 
   return (
     <div className="space-y-6">
       <ConfigurablePageHeader
         module={module}
-        defaultTitle={title}
-        defaultDescription={description}
+        defaultTitle={title ?? moduleTitle(t, module) ?? module}
+        defaultDescription={description ?? t.permissions.noAccessDefault}
       />
-      <SectionCard title="Access Denied" icon={Lock}>
-        <p className="text-muted-foreground">
-          Your role does not include the "{label}" permission, so this page is not
-          available to you. If you believe you should have it, an administrator can
-          grant it in Software Control → Roles.
-        </p>
+      <SectionCard title={t.admin.accessDenied} icon={Lock}>
+        <p className="text-muted-foreground">{body}</p>
       </SectionCard>
     </div>
   );

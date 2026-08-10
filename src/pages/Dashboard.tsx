@@ -25,10 +25,15 @@ import { toast } from 'sonner';
 import { MembershipRequests } from '@/components/MembershipRequests';
 import { ChooseMahderCard } from '@/components/ChooseMahderCard';
 
+import { useFormatters } from '@/lib/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
 const Dashboard = () => {
   const navigate = useNavigate();
   const permissions = useRolePermissions();
   const { can } = usePermissions();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
+  const { formatTime } = useFormatters();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
 
@@ -38,12 +43,12 @@ const Dashboard = () => {
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      setTimeString(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setTimeString(formatTime(now));
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [formatTime]);
 
   const ethDate = toEthiopianDateString();
 
@@ -171,7 +176,7 @@ const Dashboard = () => {
               size="icon"
               onClick={() => {
                 navigator.clipboard.writeText("ሁለተኞቱም ይህችን ትመስላለች፤ እርስዋም። ባልንጀራህን እንደ ነፍስህ ውደድ የምትለው ናት። - የማቴዎስ ወንጌል 22:39");
-                toast.success("Daily verse copied!");
+                toast.success(pg.verseCopied);
               }}
               className="text-[#2E5E99] hover:bg-[#2E5E99]/10 rounded-full"
             >
@@ -189,12 +194,12 @@ const Dashboard = () => {
 
         {/* Member Search Bar Widget */}
         <Card className="md:col-span-4 bg-white/60 dark:bg-[#0D2440]/60 backdrop-blur-2xl border-white/20 dark:border-white/5 rounded-[2rem] p-6 shadow-xl flex flex-col justify-center gap-3">
-          <label className="text-xs font-black uppercase tracking-widest text-[#2E5E99]">Member Search</label>
+          <label className="text-xs font-black uppercase tracking-widest text-[#2E5E99]">{pg.memberSearch}</label>
           <div className="flex gap-2">
             <Input
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
-              placeholder="Search member name..."
+              placeholder={pg.memberSearchPlaceholder}
               className="rounded-xl border-[#2E5E99]/20"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && memberSearch.trim()) {
@@ -241,12 +246,12 @@ const Dashboard = () => {
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { to: '/members?action=register', icon: UserPlus, title: 'Register Member', color: 'text-indigo-500' },
-              { to: '/announcements?action=send', icon: MessageSquare, title: 'Send Message', color: 'text-sky-500' },
-              { to: '/finance?action=revenue', icon: DollarSign, title: 'Record Revenue', color: 'text-emerald-500' },
-              { to: '/finance?action=requisition', icon: FileText, title: 'Request Requisition', color: 'text-amber-500' },
-              { to: '/hr?action=add', icon: UserCheck, title: 'Add Staff', color: 'text-purple-500' },
-              { to: '/inventory?action=add', icon: PlusCircle, title: 'Add Asset', color: 'text-teal-500' },
+              { to: '/members?action=register', icon: UserPlus, title: pg.quickRegisterMember, color: 'text-indigo-500' },
+              { to: '/announcements?action=send', icon: MessageSquare, title: pg.quickSendMessage, color: 'text-sky-500' },
+              { to: '/finance?action=revenue', icon: DollarSign, title: pg.quickRecordRevenue, color: 'text-emerald-500' },
+              { to: '/finance?action=requisition', icon: FileText, title: pg.quickRequestRequisition, color: 'text-amber-500' },
+              { to: '/hr?action=add', icon: UserCheck, title: pg.quickAddStaff, color: 'text-purple-500' },
+              { to: '/inventory?action=add', icon: PlusCircle, title: pg.quickAddAsset, color: 'text-teal-500' },
             ].map((act, i) => (
               <Link key={i} to={act.to}>
                 <motion.div whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.95 }}>

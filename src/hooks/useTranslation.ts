@@ -1,87 +1,78 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { translations, Language } from '../i18n/translations';
-import { pageStringsService, type PageStringOverrides } from '@/services/pageStrings';
+import { translations, type Translations } from '../i18n/translations';
 
 /**
- * Build a flat key→string map from the nested translations object.
+ * The function-style translation API: `t('nav.plans')`.
  *
- * Every string is registered twice: under its dotted path (`nav.plans`) and,
- * when no other section claimed it first, under its bare leaf (`plans`).
+ * Prefer `useLanguage().t.nav.plans` in new code. That form is checked against
+ * the `Translations` type, so a typo is a build error; this one can only fail
+ * at runtime. These call sites are migrated opportunistically as their files
+ * are touched, and this module goes away once the last one is gone.
  *
- * The bare leaf exists only for callers written before dotted keys and is
- * genuinely ambiguous — the tree has both `nav.plans` and `pages.plans`, and
- * whichever section is walked first wins. Prefer the dotted form in new code.
+ * It reads the tree from `LanguageContext` rather than importing
+ * `translations[lang]` directly. That matters: the context is what layers the
+ * English merge base and both Firestore override documents
+ * (`translations_overrides` and `pageStrings`) on top of the static strings.
+ * Reading the static tree directly — as this hook used to — meant admin edits
+ * silently had no effect on any string reached through `t()`, and kept a
+ * second, independently-cached copy of the overrides that could disagree with
+ * the context's.
  */
-function buildFlatMap(lang: Language, overrides: PageStringOverrides = {}): Record<string, string> {
-  const source = translations[lang] as Record<string, unknown>;
-  const flat: Record<string, string> = {};
 
-  for (const [section, value] of Object.entries(source)) {
+/**
+ * Sections that predate dotted keys and may still be reached by a bare leaf.
+ *
+ * Frozen deliberately. The bare alias is ambiguous — the tree has both
+ * `nav.plans` and `pages.plans`, and whichever section is walked first wins —
+ * so it exists only to keep already-written call sites working. New sections
+ * are dotted-only, otherwise every key added from here on would be a fresh
+ * chance to collide (`status.active` vs `admin.active`) and the winner would
+ * depend on section order.
+ */
+const BARE_LEAF_SECTIONS = new Set([
+  'nav',
+  'common',
+  'dashboard',
+  'home',
+  'footer',
+  'settings',
+  'pages',
+  'signup',
+  'admin',
+]);
+
+/** Flatten a `section -> key -> string` tree to `"section.key"` (plus legacy bare leaves). */
+function buildFlatMap(tree: Translations): Record<string, string> {
+  const flat: Record<string, string> = {};
+  for (const [section, value] of Object.entries(tree as Record<string, unknown>)) {
     if (!value || typeof value !== 'object') continue;
+    const allowBare = BARE_LEAF_SECTIONS.has(section);
     for (const [key, leaf] of Object.entries(value as Record<string, unknown>)) {
       if (typeof leaf !== 'string') continue;
       flat[`${section}.${key}`] = leaf;
-      if (!(key in flat)) flat[key] = leaf;
+      if (allowBare && !(key in flat)) flat[key] = leaf;
     }
   }
-
-  // Firestore overrides win over static translations. A dotted override also
-  // updates the legacy bare alias, so `t('learnMore')` and `t('common.learnMore')`
-  // cannot disagree.
-  for (const [key, value] of Object.entries(overrides)) {
-    if (key.startsWith('_') || !value?.trim()) continue;
-    flat[key] = value;
-    const leaf = key.includes('.') ? key.slice(key.indexOf('.') + 1) : null;
-    if (leaf && flat[leaf] !== undefined) flat[leaf] = value;
-  }
-
   return flat;
 }
 
-// ─── Module-level cache so we only fetch once per session ─────────────────────
-let cachedOverrides: Record<Language, PageStringOverrides> | null = null;
-let fetchPromise: Promise<void> | null = null;
-
-function ensureOverridesFetched(): Promise<void> {
-  if (cachedOverrides) return Promise.resolve();
-  if (fetchPromise) return fetchPromise;
-
-  fetchPromise = pageStringsService
-    .get()
-    .then((data) => {
-      cachedOverrides = (data ?? {}) as Record<Language, PageStringOverrides>;
-    })
-    .catch(() => {
-      cachedOverrides = {} as Record<Language, PageStringOverrides>;
-    });
-
-  return fetchPromise;
+/** English fallback map. Static, so it is built once for the whole session. */
+let englishFlat: Record<string, string> | null = null;
+function getEnglishFlat(): Record<string, string> {
+  englishFlat ??= buildFlatMap(translations.en);
+  return englishFlat;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 export const useTranslation = () => {
-  const { language } = useLanguage();
-  const [overrides, setOverrides] = useState<PageStringOverrides>(
-    cachedOverrides?.[language] ?? {}
-  );
+  const { t: tree, language } = useLanguage();
 
-  useEffect(() => {
-    ensureOverridesFetched().then(() => {
-      setOverrides(cachedOverrides?.[language] ?? {});
-    });
-  }, [language]);
+  // Was rebuilt on every single t() call — an 884-entry walk per string
+  // rendered. The tree identity only changes when the language changes or an
+  // admin saves, which is exactly when the map should be rebuilt.
+  const flat = useMemo(() => buildFlatMap(tree), [tree]);
 
-  const t = (key: string): string => {
-    const flat = buildFlatMap(language, overrides);
-    return flat[key] ?? key;
-  };
+  const t = (key: string): string => flat[key] ?? getEnglishFlat()[key] ?? key;
 
   return { t, language };
 };
-
-// ─── Utility to force-refresh the cache (called after admin saves) ────────────
-export function invalidateTranslationCache() {
-  cachedOverrides = null;
-  fetchPromise = null;
-}

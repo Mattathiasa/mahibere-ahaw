@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
 import { auditLogService } from '@/services/auditLog';
 import {
   collection,
@@ -51,7 +52,7 @@ export const userService = {
       const password = userData.password;
       
       if (!password) {
-        throw new Error('Password is required');
+        throw new AppError('passwordRequired');
       }
 
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);

@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { LANGUAGE_CYCLE, LANGUAGE_ENDONYM } from '@/i18n/languages';
+import type { Language } from '@/i18n/translations';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -27,12 +29,10 @@ const SCOPES: { value: RoleScope; labelKey: ScopeStringKey; hintKey: ScopeHintKe
 
 const COLORS = ['indigo', 'violet', 'blue', 'cyan', 'emerald', 'amber', 'rose', 'slate'];
 
-const LANGS: { code: 'en' | 'am' | 'om' | 'ti'; label: string }[] = [
-  { code: 'en', label: 'English' },
-  { code: 'am', label: 'አማርኛ' },
-  { code: 'om', label: 'Afaan Oromoo' },
-  { code: 'ti', label: 'ትግርኛ' },
-];
+const LANGS: { code: Language; label: string }[] = LANGUAGE_CYCLE.map((code) => ({
+  code,
+  label: LANGUAGE_ENDONYM[code],
+}));
 
 const BLANK: Role = {
   key: '', labels: {}, description: '', scope: 'atbiya', permissions: [],
@@ -110,7 +110,7 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
               value={draft.key}
               disabled={!isNew}
               onChange={(e) => set('key', e.target.value)}
-              placeholder="AtbiyaSecretary"
+              placeholder={t.admin.roleKeyExample}
             />
             <p className="text-[11px] text-muted-foreground">
               {isNew
@@ -190,7 +190,7 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-bold">Active</p>
+                <p className="text-sm font-bold">{t.admin.active}</p>
                 <p className="text-xs text-muted-foreground">
                   Inactive roles stay assignable to existing accounts but are hidden from pickers.
                 </p>
@@ -214,8 +214,8 @@ export const RoleEditorDialog: React.FC<RoleEditorDialogProps> = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit}>{isNew ? 'Add role' : 'Save role'}</Button>
+          <Button variant="outline" onClick={onClose}>{t.common.cancel}</Button>
+          <Button onClick={handleSubmit}>{isNew ? t.admin.addRole : t.admin.saveRole}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

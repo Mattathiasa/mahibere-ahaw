@@ -13,6 +13,7 @@ import { permissionService } from '@/services/permissionService';
 import { userService } from '@/services/users';
 import {
   ALL_PERMISSIONS, PERMISSION_META, PERMISSION_GROUPS,
+  permissionLabel, permissionDescription, permissionGroupLabel,
   DEFAULT_ROLE_PERMISSIONS,
   type PermissionKey, type RolePermissionOverrides, type UserPermissionOverrides,
 } from '@/lib/rolePermissions';
@@ -47,6 +48,7 @@ const COLOR_CLASSES: Record<string, string> = {
 
 const PermissionControl: React.FC = () => {
   const { t } = useLanguage();
+  const pg = t.pages;
   const a = t.admin;
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -168,12 +170,12 @@ const PermissionControl: React.FC = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              <h1 className="text-lg font-bold">Permission Control</h1>
+              <h1 className="text-lg font-bold">{t.admin.permissionControl}</h1>
             </div>
           </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {saving ? 'Saving…' : 'Save All Changes'}
+            {saving ? t.admin.busySaving : t.admin.saveAllChanges}
           </Button>
         </div>
         {saveStatus === 'success' && (
@@ -219,7 +221,7 @@ const PermissionControl: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-xl border border-border bg-muted/20 p-4">
-                  <p className="text-sm font-bold mb-1">Current roles</p>
+                  <p className="text-sm font-bold mb-1">{pg.pcCurrentRoles}</p>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {roles.map((r) => (
                       <Badge key={r.key} variant="outline"
@@ -301,7 +303,7 @@ const PermissionControl: React.FC = () => {
                   <Card className="h-full flex items-center justify-center min-h-[300px]">
                     <div className="text-center text-muted-foreground">
                       <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                      <p className="font-medium">Select a user to manage their permissions</p>
+                      <p className="font-medium">{pg.pcSelectUser}</p>
                     </div>
                   </Card>
                 ) : (
@@ -338,9 +340,9 @@ const PermissionControl: React.FC = () => {
                       </div>
                       <CardDescription className="mt-2">
                         Overrides are applied on top of the <strong>{selectedUser.hierarchyLevel}</strong> role permissions.
-                        <span className="ml-1 text-emerald-600">Green = granted</span>,{' '}
-                        <span className="text-red-600">Red = revoked</span>,{' '}
-                        <span className="text-muted-foreground">Grey = inherited from role</span>.
+                        <span className="ml-1 text-emerald-600">{pg.pcLegendGranted}</span>,{' '}
+                        <span className="text-red-600">{pg.pcLegendRevoked}</span>,{' '}
+                        <span className="text-muted-foreground">{pg.pcLegendInherited}</span>.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -351,7 +353,7 @@ const PermissionControl: React.FC = () => {
                             <div key={group}>
                               <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
                                 <div className="h-px flex-1 bg-border" />
-                                {group}
+                                {permissionGroupLabel(t, group)}
                                 <div className="h-px flex-1 bg-border" />
                               </h3>
                               <div className="space-y-2">
@@ -371,8 +373,8 @@ const PermissionControl: React.FC = () => {
                                           {effective ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
                                         </div>
                                         <div>
-                                          <p className="text-sm font-medium">{PERMISSION_META[perm].label}</p>
-                                          <p className="text-[11px] text-muted-foreground">{PERMISSION_META[perm].description}</p>
+                                          <p className="text-sm font-medium">{permissionLabel(t, perm)}</p>
+                                          <p className="text-[11px] text-muted-foreground">{permissionDescription(t, perm)}</p>
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
@@ -380,7 +382,7 @@ const PermissionControl: React.FC = () => {
                                           <button
                                             onClick={() => setUserPerm(selectedUser.id, perm, undefined)}
                                             className="text-[10px] text-muted-foreground hover:text-primary"
-                                            title="Remove override, revert to role default"
+                                            title={pg.pcRemoveOverride}
                                           >
                                             <RotateCcw className="h-3.5 w-3.5" />
                                           </button>
@@ -492,7 +494,7 @@ const PermissionControl: React.FC = () => {
         <div className="mt-8 flex justify-end">
           <Button onClick={handleSave} disabled={saving} size="lg">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            {saving ? 'Saving…' : 'Save All Changes'}
+            {saving ? t.admin.busySaving : t.admin.saveAllChanges}
           </Button>
         </div>
       </div>

@@ -62,6 +62,7 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
 }) => {
   const { t } = useLanguage();
   const a = t.admin;
+  const pe = t.people;
   function set<K extends keyof AtbiyaInput>(key: K, value: AtbiyaInput[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
@@ -94,7 +95,7 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label={`${a.nameEnglish} *`}>
           <Input value={draft.name} onChange={(e) => set('name', e.target.value)}
-            disabled={disabled} placeholder="Bishoftu Congregation" />
+            disabled={disabled} placeholder={pe.parishNameExample} />
         </Field>
         <Field label={a.nameAmharic}>
           <Input value={draft.nameAmharic ?? ''} onChange={(e) => set('nameAmharic', e.target.value)}
@@ -102,7 +103,7 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
         </Field>
         <Field label={a.cityEnglish}>
           <Input value={draft.cityEn ?? ''} onChange={(e) => set('cityEn', e.target.value)}
-            disabled={disabled} placeholder="Bishoftu" />
+            disabled={disabled} placeholder={pe.cityExample} />
         </Field>
         <Field label={a.cityAmharic}>
           <Input value={draft.cityAm ?? ''} onChange={(e) => set('cityAm', e.target.value)}
@@ -160,7 +161,7 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
       <Field label={a.addressEnglish}>
         <Textarea rows={2} value={draft.address?.en ?? ''} onChange={(e) => setAddress('en', e.target.value)}
           disabled={disabled}
-          placeholder="Around Zikuala Roundabout, in front of Awash Hotel, about 100m" />
+          placeholder={pe.addressExample} />
       </Field>
       <Field label={a.addressAmharic}>
         <Textarea rows={2} value={draft.address?.am ?? ''} onChange={(e) => setAddress('am', e.target.value)}
@@ -176,7 +177,7 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label={a.contactNameEn}>
           <Input value={draft.contact?.nameEn ?? ''} onChange={(e) => setContact('nameEn', e.target.value)}
-            disabled={disabled} placeholder="AddisHiwot Teshome Worku" />
+            disabled={disabled} placeholder={pe.adminNameExample} />
         </Field>
         <Field label={a.contactNameAm}>
           <Input value={draft.contact?.nameAm ?? ''} onChange={(e) => setContact('nameAm', e.target.value)}
@@ -193,7 +194,7 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
       </div>
       <Field label={a.email}>
         <Input type="email" value={draft.contact?.email ?? ''} onChange={(e) => setContact('email', e.target.value)}
-          disabled={disabled} placeholder="AddishiwotJAM@gmail.com" />
+          disabled={disabled} placeholder={pe.adminEmailExample} />
       </Field>
 
       <Divider label={a.bankAccounts} />
@@ -211,7 +212,7 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input value={b.bankName} onChange={(e) => setBank(i, 'bankName', e.target.value)}
-                disabled={disabled} placeholder="Birhan Bank" />
+                disabled={disabled} placeholder={pe.bankExample} />
               <Input value={b.bankNameAmharic ?? ''} onChange={(e) => setBank(i, 'bankNameAmharic', e.target.value)}
                 disabled={disabled} placeholder="ብርሃን ባንክ" />
               <Input value={b.accountNumber} onChange={(e) => setBank(i, 'accountNumber', e.target.value)}

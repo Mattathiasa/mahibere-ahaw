@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatters } from '@/lib/formatters';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -28,6 +29,7 @@ import {
  */
 export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   const { user } = useAuth();
+  const { formatDate } = useFormatters();
   const {
     can, isHeadOffice, myAtbiyaId, roles, roleLabel, isApproverRole, isSuperAdmin,
   } = usePermissions();
@@ -263,7 +265,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
                       {req.requestedAt && (
                         <p className="flex items-center gap-1.5">
                           <Calendar className="h-3 w-3" />
-                          {a.requested} {new Date(req.requestedAt).toLocaleDateString()}
+                          {a.requested} {formatDate(req.requestedAt)}
                         </p>
                       )}
                     </div>

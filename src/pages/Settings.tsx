@@ -24,12 +24,21 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Language } from '@/i18n/translations';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
+import { useFormatters } from '@/lib/formatters';
+import { errorMessage } from '@/lib/appError';
+import { genderLabel } from '@/i18n/enums';
+import { LANGUAGE_CYCLE, LANGUAGE_ENDONYM } from '@/i18n/languages';
 const Settings = () => {
   const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
+  const { formatDate, formatTime } = useFormatters();
   const { isSuperAdmin, isAdminRole } = usePermissions();
   const queryClient = useQueryClient();
   const { language, setLanguage, t } = useLanguage();
+  const a = t.admin;
+  const f = t.forms;
+  const pg = t.pages;
+  const pe = t.people;
   const { theme, toggleTheme } = useTheme();
 
   const [profilePicture, setProfilePicture] = useState((currentUser as any)?.profilePicture || '');
@@ -124,10 +133,10 @@ const Settings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       authService.getCurrentUser(); // Refresh stored user
-      toast.success('Profile updated successfully!');
+      toast.success(a.setProfileUpdated);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+      toast.error(errorMessage(t, error));
     },
   });
 
@@ -135,13 +144,13 @@ const Settings = () => {
     mutationFn: (data: any) => authService.changePassword(data),
     onSuccess: () => {
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      toast.success('Password changed successfully!');
+      toast.success(a.setPasswordChanged);
     },
     // These were read as `error.response?.data?.message` — an axios shape that
     // a Firebase error never has — so every real reason ("Current password is
     // incorrect.") was swallowed and replaced with a generic failure.
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to change password');
+      toast.error(errorMessage(t, error));
     },
   });
 
@@ -157,10 +166,10 @@ const Settings = () => {
     onSuccess: async () => {
       await authService.getCurrentUser();
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      toast.success('Username changed. Use the new one next time you sign in.');
+      toast.success(a.setUsernameChanged);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Could not change the username');
+      toast.error(errorMessage(t, error));
     },
   });
 
@@ -179,7 +188,7 @@ const Settings = () => {
       );
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Could not start the email change');
+      toast.error(errorMessage(t, error));
     },
   });
 
@@ -206,11 +215,11 @@ const Settings = () => {
 
   const handleChangePassword = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error(a.setPasswordsDoNotMatch);
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error(a.setPasswordTooShort);
       return;
     }
 
@@ -228,7 +237,7 @@ const Settings = () => {
 
   const handleSavePreferences = () => {
     localStorage.setItem('preferences', JSON.stringify(preferences));
-    toast.success('Preferences saved!');
+    toast.success(a.setPrefsSaved);
   };
 
   const handleLogout = () => {
@@ -239,9 +248,9 @@ const Settings = () => {
     try {
       await translationService.saveOverrides(translationOverrides);
       await refreshTranslations();
-      toast.success('Translations updated successfully!');
+      toast.success(a.setTranslationsUpdated);
     } catch (error) {
-      toast.error('Failed to save translations');
+      toast.error(a.setTranslationsFailed);
     }
   };
 
@@ -261,24 +270,24 @@ const Settings = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+        <h1 className="text-3xl font-bold text-foreground">{a.setTitle}</h1>
+        <p className="text-muted-foreground mt-1">{a.setSubtitle}</p>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4 lg:grid-cols-7' : 'grid-cols-3 lg:grid-cols-6'}`}>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="language">Language</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
-          {isAdmin && <TabsTrigger value="translations" className="text-primary font-bold">Admin: Translations</TabsTrigger>}
+          <TabsTrigger value="profile">{a.setTabProfile}</TabsTrigger>
+          <TabsTrigger value="notifications">{a.setTabNotifications}</TabsTrigger>
+          <TabsTrigger value="appearance">{a.setTabAppearance}</TabsTrigger>
+          <TabsTrigger value="language">{a.setTabLanguage}</TabsTrigger>
+          <TabsTrigger value="security">{a.setTabSecurity}</TabsTrigger>
+          <TabsTrigger value="system">{a.setTabSystem}</TabsTrigger>
+          {isAdmin && <TabsTrigger value="translations" className="text-primary font-bold">{a.setTabTranslations}</TabsTrigger>}
         </TabsList>
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
-          <SectionCard title="Profile Information" icon={User}>
+          <SectionCard title={a.setProfileInfo} icon={User}>
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20 border-4 border-primary">
@@ -293,7 +302,7 @@ const Settings = () => {
                     value={profilePicture}
                     onChange={setProfilePicture}
                     folder="mahibere-ahaw/avatars"
-                    label="Upload profile picture"
+                    label={a.setUploadPicture}
                     variant="avatar"
                   />
                 </div>
@@ -301,7 +310,7 @@ const Settings = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name (English)</Label>
+                  <Label htmlFor="fullName">{pg.csvFullNameEn}</Label>
                   <Input
                     id="fullName"
                     value={profileData.fullName}
@@ -309,7 +318,7 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="fullNameAmharic">Full Name (Amharic)</Label>
+                  <Label htmlFor="fullNameAmharic">{pg.csvFullNameAm}</Label>
                   <Input
                     id="fullNameAmharic"
                     value={profileData.fullNameAmharic}
@@ -317,7 +326,7 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{f.phoneNumber}</Label>
                   <Input
                     id="phone"
                     value={profileData.phone}
@@ -332,7 +341,7 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender">{f.gender}</Label>
                   <Select
                     value={profileData.gender}
                     onValueChange={(value) => setProfileData({ ...profileData, gender: value as 'Male' | 'Female' })}
@@ -341,19 +350,19 @@ const Settings = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Male">{genderLabel(t, 'Male')}</SelectItem>
+                      <SelectItem value="Female">{genderLabel(t, 'Female')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="region">Region</Label>
+                  <Label htmlFor="region">{f.region}</Label>
                   <Select
                     value={profileData.region}
                     onValueChange={(value) => setProfileData({ ...profileData, region: value })}
                   >
                     <SelectTrigger id="region">
-                      <SelectValue placeholder="Select Region" />
+                      <SelectValue placeholder={a.setSelectRegion} />
                     </SelectTrigger>
                     <SelectContent>
                       {ETHIOPIAN_REGIONS.map((region) => (
@@ -365,7 +374,7 @@ const Settings = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="zone">Zone</Label>
+                  <Label htmlFor="zone">{a.setZone}</Label>
                   <Input
                     id="zone"
                     value={profileData.zone}
@@ -373,7 +382,7 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="woreda">Woreda</Label>
+                  <Label htmlFor="woreda">{a.setWoreda}</Label>
                   <Input
                     id="woreda"
                     value={profileData.woreda}
@@ -381,7 +390,7 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="profilePicture">Profile Picture</Label>
+                  <Label htmlFor="profilePicture">{a.setProfilePicture}</Label>
                   <Input
                     id="profilePicture"
                     type="file"
@@ -390,7 +399,7 @@ const Settings = () => {
                       const file = e.target.files?.[0];
                       if (file) {
                         if (file.size > 2 * 1024 * 1024) {
-                          toast.error('File size must be less than 2MB');
+                          toast.error(a.setFileTooLarge);
                           return;
                         }
                         const reader = new FileReader();
@@ -402,7 +411,7 @@ const Settings = () => {
                     }}
                     className="cursor-pointer"
                   />
-                  <p className="text-xs text-muted-foreground">Upload JPG, PNG, or GIF. Max size 2MB.</p>
+                  <p className="text-xs text-muted-foreground">{a.setUploadHint}</p>
                 </div>
               </div>
 
@@ -431,7 +440,7 @@ const Settings = () => {
                   onClick={handleSaveProfile}
                   disabled={updateProfileMutation.isPending}
                 >
-                  {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  {updateProfileMutation.isPending ? a.busySaving : a.saveChanges}
                 </Button>
               </div>
             </div>
@@ -440,14 +449,14 @@ const Settings = () => {
 
         {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
-          <SectionCard title="Notification Preferences" icon={Bell}>
+          <SectionCard title={a.setNotificationPrefs} icon={Bell}>
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold mb-4">General Notifications</h3>
+                <h3 className="font-semibold mb-4">{a.setGeneralNotifications}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Email Notifications</p>
+                      <p className="font-medium">{a.setEmailNotifications}</p>
                       <p className="text-sm text-muted-foreground">
                         Receive announcements via email
                       </p>
@@ -459,7 +468,7 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Push Notifications</p>
+                      <p className="font-medium">{a.setPushNotifications}</p>
                       <p className="text-sm text-muted-foreground">
                         Get instant updates on your device
                       </p>
@@ -473,11 +482,11 @@ const Settings = () => {
               </div>
 
               <div className="pt-4 border-t">
-                <h3 className="font-semibold mb-4">Activity Notifications</h3>
+                <h3 className="font-semibold mb-4">{a.setActivityNotifications}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Meeting Reminders</p>
+                      <p className="font-medium">{a.setMeetingReminders}</p>
                       <p className="text-sm text-muted-foreground">
                         Notify before scheduled meetings
                       </p>
@@ -489,7 +498,7 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Report Updates</p>
+                      <p className="font-medium">{a.setReportUpdates}</p>
                       <p className="text-sm text-muted-foreground">
                         Notify when reports are commented
                       </p>
@@ -501,7 +510,7 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Plan Notifications</p>
+                      <p className="font-medium">{a.setPlanNotifications}</p>
                       <p className="text-sm text-muted-foreground">
                         Notify when new plans are created or updated
                       </p>
@@ -513,7 +522,7 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Finance Notifications</p>
+                      <p className="font-medium">{a.setFinanceNotifications}</p>
                       <p className="text-sm text-muted-foreground">
                         Notify about financial transactions and reports
                       </p>
@@ -527,11 +536,11 @@ const Settings = () => {
               </div>
 
               <div className="pt-4 border-t">
-                <h3 className="font-semibold mb-4">Digest & Summary</h3>
+                <h3 className="font-semibold mb-4">{a.setDigestSummary}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Weekly Summary</p>
+                      <p className="font-medium">{a.setWeeklySummary}</p>
                       <p className="text-sm text-muted-foreground">
                         Receive weekly activity digest
                       </p>
@@ -542,24 +551,24 @@ const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Notification Frequency</Label>
+                    <Label>{a.setNotificationFrequency}</Label>
                     <Select defaultValue="immediate">
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="immediate">Immediate</SelectItem>
-                        <SelectItem value="hourly">Hourly Digest</SelectItem>
-                        <SelectItem value="daily">Daily Digest</SelectItem>
-                        <SelectItem value="weekly">Weekly Digest</SelectItem>
+                        <SelectItem value="immediate">{a.setFreqImmediate}</SelectItem>
+                        <SelectItem value="hourly">{a.setFreqHourly}</SelectItem>
+                        <SelectItem value="daily">{a.setFreqDaily}</SelectItem>
+                        <SelectItem value="weekly">{a.setFreqWeekly}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Quiet Hours</Label>
+                    <Label>{a.setQuietHours}</Label>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-xs">From</Label>
+                        <Label className="text-xs">{a.setFrom}</Label>
                         <Input type="time" defaultValue="22:00" />
                       </div>
                       <div>
@@ -585,10 +594,10 @@ const Settings = () => {
 
         {/* Appearance Tab */}
         <TabsContent value="appearance" className="space-y-6">
-          <SectionCard title="Appearance Settings" icon={Palette}>
+          <SectionCard title={a.setAppearance} icon={Palette}>
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label>Theme</Label>
+                <Label>{a.setTheme}</Label>
                 <Select
                   value={theme}
                   onValueChange={(value) => {
@@ -603,8 +612,8 @@ const Settings = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="light">{a.setThemeLight}</SelectItem>
+                    <SelectItem value="dark">{a.setThemeDark}</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
@@ -614,7 +623,7 @@ const Settings = () => {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Compact Mode</p>
+                  <p className="font-medium">{a.setCompactMode}</p>
                   <p className="text-sm text-muted-foreground">
                     Show more content with reduced spacing
                   </p>
@@ -627,7 +636,7 @@ const Settings = () => {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Animations</p>
+                  <p className="font-medium">{a.setAnimations}</p>
                   <p className="text-sm text-muted-foreground">
                     Enable smooth transitions and effects
                   </p>
@@ -649,10 +658,10 @@ const Settings = () => {
 
         {/* Language Tab */}
         <TabsContent value="language" className="space-y-6">
-          <SectionCard title="Language & Region" icon={Globe}>
+          <SectionCard title={a.setLanguageRegion} icon={Globe}>
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label>Display Language</Label>
+                <Label>{a.setDisplayLanguage}</Label>
                 <Select
                   value={language}
                   onValueChange={(value) => setLanguage(value as Language)}
@@ -661,16 +670,15 @@ const Settings = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="am">አማርኛ (Amharic)</SelectItem>
-                    <SelectItem value="om">Afaan Oromoo</SelectItem>
-                    <SelectItem value="ti">ትግርኛ (Tigrigna)</SelectItem>
+                    {LANGUAGE_CYCLE.map((code) => (
+                      <SelectItem key={code} value={code}>{LANGUAGE_ENDONYM[code]}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Date Format</Label>
+                <Label>{a.setDateFormat}</Label>
                 <Select
                   value={preferences.dateFormat}
                   onValueChange={(value) => setPreferences({ ...preferences, dateFormat: value })}
@@ -679,14 +687,14 @@ const Settings = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gregorian">Gregorian Calendar</SelectItem>
-                    <SelectItem value="ethiopian">Ethiopian Calendar</SelectItem>
+                    <SelectItem value="gregorian">{a.setCalendarGregorian}</SelectItem>
+                    <SelectItem value="ethiopian">{a.setCalendarEthiopian}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Time Zone</Label>
+                <Label>{a.setTimeZone}</Label>
                 <Select
                   value={preferences.timeZone}
                   onValueChange={(value) => setPreferences({ ...preferences, timeZone: value })}
@@ -695,7 +703,7 @@ const Settings = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="eat">East Africa Time (EAT)</SelectItem>
+                    <SelectItem value="eat">{a.setTimeZoneEat}</SelectItem>
                     <SelectItem value="utc">UTC</SelectItem>
                   </SelectContent>
                 </Select>
@@ -713,7 +721,7 @@ const Settings = () => {
         {/* Admin: Translations Tab */}
         {isAdmin && (
           <TabsContent value="translations" className="space-y-6">
-            <SectionCard title="Custom Translation Overrides" icon={RefreshCw}>
+            <SectionCard title={a.setCustomOverrides} icon={RefreshCw}>
               <div className="space-y-8">
                 <p className="text-sm text-muted-foreground">
                   Override any text in the system. Changes will apply to all users instantly. 
@@ -722,10 +730,10 @@ const Settings = () => {
 
                 <Tabs defaultValue="en">
                   <TabsList className="w-full justify-start mb-4">
-                    <TabsTrigger value="en">English Overrides</TabsTrigger>
-                    <TabsTrigger value="am">Amharic Overrides</TabsTrigger>
-                    <TabsTrigger value="om">Oromo Overrides</TabsTrigger>
-                    <TabsTrigger value="ti">Tigrigna Overrides</TabsTrigger>
+                    <TabsTrigger value="en">{a.setOverridesEnglish}</TabsTrigger>
+                    <TabsTrigger value="am">{a.setOverridesAmharic}</TabsTrigger>
+                    <TabsTrigger value="om">{a.setOverridesOromo}</TabsTrigger>
+                    <TabsTrigger value="ti">{a.setOverridesTigrinya}</TabsTrigger>
                   </TabsList>
 
                   {(['en', 'am', 'om', 'ti'] as Language[]).map((lang) => (
@@ -771,13 +779,13 @@ const Settings = () => {
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
-          <SectionCard title="Security Settings" icon={Shield}>
+          <SectionCard title={a.setSecurity} icon={Shield}>
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold mb-4">Change Password</h3>
+                <h3 className="font-semibold mb-4">{a.setChangePassword}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="current">Current Password</Label>
+                    <Label htmlFor="current">{a.setCurrentPassword}</Label>
                     <Input
                       id="current"
                       type="password"
@@ -786,7 +794,7 @@ const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="new">New Password</Label>
+                    <Label htmlFor="new">{a.setNewPassword}</Label>
                     <Input
                       id="new"
                       type="password"
@@ -795,7 +803,7 @@ const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirm">Confirm New Password</Label>
+                    <Label htmlFor="confirm">{a.setConfirmNewPassword}</Label>
                     <Input
                       id="confirm"
                       type="password"
@@ -807,13 +815,13 @@ const Settings = () => {
                     onClick={handleChangePassword}
                     disabled={changePasswordMutation.isPending || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
                   >
-                    {changePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
+                    {changePasswordMutation.isPending ? a.busyUpdating : a.updatePassword}
                   </Button>
                 </div>
               </div>
 
               <div className="pt-6 border-t">
-                <h3 className="font-semibold mb-1">Password Recovery</h3>
+                <h3 className="font-semibold mb-1">{a.setPasswordRecovery}</h3>
                 {usesSyntheticEmail ? (
                   <>
                     <p className="text-sm text-muted-foreground mb-4">
@@ -823,7 +831,7 @@ const Settings = () => {
                     </p>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="recovery-password">Current Password</Label>
+                        <Label htmlFor="recovery-password">{a.setCurrentPassword}</Label>
                         <Input
                           id="recovery-password"
                           type="password"
@@ -832,11 +840,11 @@ const Settings = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="recovery-email">Email Address</Label>
+                        <Label htmlFor="recovery-email">{a.setEmailAddress}</Label>
                         <Input
                           id="recovery-email"
                           type="email"
-                          placeholder="you@example.com"
+                          placeholder={f.emailPlaceholder}
                           value={recoveryData.email}
                           onChange={(e) => setRecoveryData({ ...recoveryData, email: e.target.value })}
                         />
@@ -855,7 +863,7 @@ const Settings = () => {
                           !recoveryData.email
                         }
                       >
-                        {addRecoveryEmailMutation.isPending ? 'Sending…' : 'Send Confirmation'}
+                        {addRecoveryEmailMutation.isPending ? a.busySending : a.sendConfirmation}
                       </Button>
                     </div>
                   </>
@@ -873,19 +881,19 @@ const Settings = () => {
                   worse than not offering the feature at all. */}
 
               <div className="pt-6 border-t">
-                <h3 className="font-semibold mb-1">Username</h3>
+                <h3 className="font-semibold mb-1">{f.username}</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   What you type to sign in. Changing it does not change your
                   password.
                 </p>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username">{f.username}</Label>
                     <Input
                       id="username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="abebe.k"
+                      placeholder={pe.usernameExample}
                       autoComplete="off"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -902,16 +910,16 @@ const Settings = () => {
                       username.trim() === (currentUser?.username ?? '')
                     }
                   >
-                    {changeUsernameMutation.isPending ? 'Saving…' : 'Change Username'}
+                    {changeUsernameMutation.isPending ? a.busySaving : a.changeUsername}
                   </Button>
                 </div>
               </div>
 
               <div className="pt-6 border-t">
-                <h3 className="font-semibold mb-4">Account Actions</h3>
+                <h3 className="font-semibold mb-4">{a.setAccountActions}</h3>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium">Log Out</p>
+                    <p className="font-medium">{t.nav.logout}</p>
                     <p className="text-sm text-muted-foreground">
                       Sign out of your account and return to login page
                     </p>
@@ -932,48 +940,48 @@ const Settings = () => {
 
         {/* System Tab */}
         <TabsContent value="system" className="space-y-6">
-          <SectionCard title="System Information" icon={Monitor}>
+          <SectionCard title={a.setSystemInfo} icon={Monitor}>
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Application Version</span>
+                    <span className="text-sm font-medium">{a.setAppVersion}</span>
                     <span className="text-sm text-muted-foreground">v1.0.0</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Last Updated</span>
-                    <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</span>
+                    <span className="text-sm font-medium">{a.setLastUpdated}</span>
+                    <span className="text-sm text-muted-foreground">{formatDate(new Date())}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Browser</span>
+                    <span className="text-sm font-medium">{a.setBrowser}</span>
                     <span className="text-sm text-muted-foreground">{navigator.userAgent.split(' ')[0]}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Connection Status</span>
+                    <span className="text-sm font-medium">{a.setConnectionStatus}</span>
                     <div className="flex items-center gap-2">
                       <Wifi className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-600">Online</span>
+                      <span className="text-sm text-green-600">{a.setOnline}</span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Storage Used</span>
+                    <span className="text-sm font-medium">{a.setStorageUsed}</span>
                     <span className="text-sm text-muted-foreground">2.4 MB</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Cache Size</span>
+                    <span className="text-sm font-medium">{a.setCacheSize}</span>
                     <span className="text-sm text-muted-foreground">1.2 MB</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Last Sync</span>
-                    <span className="text-sm text-muted-foreground">{new Date().toLocaleTimeString()}</span>
+                    <span className="text-sm font-medium">{a.setLastSync}</span>
+                    <span className="text-sm text-muted-foreground">{formatTime(new Date())}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Server Status</span>
+                    <span className="text-sm font-medium">{a.setServerStatus}</span>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-green-600">Healthy</span>
+                      <span className="text-sm text-green-600">{a.setHealthy}</span>
                     </div>
                   </div>
                 </div>
@@ -981,12 +989,12 @@ const Settings = () => {
             </div>
           </SectionCard>
 
-          <SectionCard title="Data Management" icon={Database}>
+          <SectionCard title={a.setDataManagement} icon={Database}>
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium mb-2">Export Data</h4>
+                    <h4 className="font-medium mb-2">{a.setExportData}</h4>
                     <p className="text-sm text-muted-foreground mb-3">
                       Download your data in various formats
                     </p>
@@ -1008,7 +1016,7 @@ const Settings = () => {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium mb-2">Cache & Storage</h4>
+                    <h4 className="font-medium mb-2">{a.setCacheStorage}</h4>
                     <p className="text-sm text-muted-foreground mb-3">
                       Manage local data and cache
                     </p>
@@ -1020,7 +1028,7 @@ const Settings = () => {
                         onClick={() => {
                           localStorage.clear();
                           sessionStorage.clear();
-                          toast.success('Cache cleared successfully');
+                          toast.success(a.setCacheCleared);
                         }}
                       >
                         <Trash className="h-4 w-4 mr-2" />
@@ -1050,7 +1058,7 @@ const Settings = () => {
 
           {/* Landing Page Editor — admin hierarchy levels plus super admins */}
           {isAdmin && (
-            <SectionCard title="Landing Page Editor" icon={Layout}>
+            <SectionCard title={a.setLandingEditor} icon={Layout}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Edit the public landing page content — hero text, stats, features, bank accounts, and footer — directly from here. Changes are saved to Firestore and go live immediately.
@@ -1065,7 +1073,7 @@ const Settings = () => {
 
           {/* Mobile App Control — admin hierarchy levels plus super admins */}
           {isAdmin && (
-            <SectionCard title="Mobile App Control" icon={Shield}>
+            <SectionCard title={a.setMobileControl} icon={Shield}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Remotely control the mobile app — kill switch, forced updates, per-module feature flags — and audit which devices and app versions are in use.
@@ -1080,7 +1088,7 @@ const Settings = () => {
 
           {/* Software Control — super admins only */}
           {isSuperAdmin && (
-            <SectionCard title="Software Control" icon={Shield}>
+            <SectionCard title={a.setSoftwareControl} icon={Shield}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Declare roles and their access, control which navigation tabs and buttons each role sees, and review the full audit log — plus quick links to Mobile App Control and the Site Content Editor. Also available in the sidebar.
@@ -1093,11 +1101,11 @@ const Settings = () => {
             </SectionCard>
           )}
 
-          <SectionCard title="Advanced Settings" icon={Shield}>            <div className="space-y-6">
+          <SectionCard title={a.setAdvanced} icon={Shield}>            <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Developer Mode</p>
+                    <p className="font-medium">{a.setDeveloperMode}</p>
                     <p className="text-sm text-muted-foreground">
                       Enable advanced debugging features
                     </p>
@@ -1107,14 +1115,14 @@ const Settings = () => {
                     onCheckedChange={(checked) => {
                       setPreferences({ ...preferences, compactMode: checked });
                       if (checked) {
-                        toast.info('Developer mode enabled');
+                        toast.info(a.setDeveloperModeOn);
                       }
                     }}
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Beta Features</p>
+                    <p className="font-medium">{a.setBetaFeatures}</p>
                     <p className="text-sm text-muted-foreground">
                       Access experimental features (may be unstable)
                     </p>
@@ -1123,7 +1131,7 @@ const Settings = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Analytics</p>
+                    <p className="font-medium">{a.setAnalytics}</p>
                     <p className="text-sm text-muted-foreground">
                       Help improve the app by sharing usage data
                     </p>
@@ -1135,7 +1143,7 @@ const Settings = () => {
               <div className="pt-4 border-t">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium text-destructive">Reset All Settings</p>
+                    <p className="font-medium text-destructive">{a.setResetAll}</p>
                     <p className="text-sm text-muted-foreground">
                       This will reset all your preferences to default values
                     </p>
@@ -1144,7 +1152,7 @@ const Settings = () => {
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      if (window.confirm('Are you sure you want to reset all settings? This action cannot be undone.')) {
+                      if (window.confirm(a.setResetConfirm)) {
                         localStorage.removeItem('notifications');
                         localStorage.removeItem('preferences');
                         setNotifications({
@@ -1160,7 +1168,7 @@ const Settings = () => {
                           dateFormat: 'gregorian',
                           timeZone: 'eat',
                         });
-                        toast.success('All settings have been reset to defaults');
+                        toast.success(a.setResetDone);
                       }
                     }}
                   >

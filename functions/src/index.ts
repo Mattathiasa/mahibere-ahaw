@@ -1,5 +1,9 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import {
+  NOTIFICATION_STRINGS as S,
+  formatNotificationDate,
+} from "./i18n";
 
 admin.initializeApp();
 
@@ -16,11 +20,11 @@ export const onAnnouncementCreated = functions.firestore
     const data = snap.data();
     if (!data) return;
 
-    const title: string = data.title ?? "New Announcement";
+    const title: string = data.title ?? S.announcementTitle;
     const body: string =
       typeof data.content === "string"
         ? data.content.substring(0, 150)
-        : "A new announcement has been posted.";
+        : S.announcementBody;
 
     try {
       const response = await messaging.send({
@@ -71,23 +75,17 @@ export const onMeetingCreated = functions.firestore
     const data = snap.data();
     if (!data) return;
 
-    const title: string = data.title ?? "New Meeting Scheduled";
+    const title: string = data.title ?? S.meetingTitle;
     const scheduledDate: string = data.scheduledDate
-      ? new Date(data.scheduledDate).toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "Date TBD";
+      ? formatNotificationDate(data.scheduledDate)
+      : S.meetingDateTbd;
 
     try {
       await messaging.send({
         topic: "meetings",
         notification: {
           title,
-          body: `Scheduled for ${scheduledDate}`,
+          body: S.meetingBody.replace("{date}", scheduledDate),
         },
         data: {
           meetingId: context.params.meetingId,
@@ -152,8 +150,8 @@ export const onReportCommented = functions.firestore
       await messaging.send({
         token: fcmToken,
         notification: {
-          title: `New feedback on your report`,
-          body: `${newComment.authorName ?? "Someone"}: ${
+          title: S.reportCommentTitle,
+          body: `${newComment.authorName ?? S.someone}: ${
             newComment.content?.substring(0, 100) ?? ""
           }`,
         },

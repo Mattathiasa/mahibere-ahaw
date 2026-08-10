@@ -17,10 +17,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SectionCard } from '@/components/ui/SectionCard';
 
+import { useFormatters } from '@/lib/formatters';
 const NewsManager: React.FC = () => {
   const { can, isHeadOffice, myAtbiyaId, isSuperAdmin } = usePermissions();
+  const { formatDate } = useFormatters();
   const { showElement } = useSoftwareControl();
-  const { language } = useLanguage();
+  const { language, t: tree } = useLanguage();
+  const pg = tree.pages;
 
   const [posts, setPosts] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,8 +94,8 @@ const NewsManager: React.FC = () => {
   if (!canManage) {
     return (
       <div className="space-y-6">
-        <ConfigurablePageHeader module="news" defaultTitle="News" defaultDescription="Church news and updates." badge="Publishing" />
-        <SectionCard title="Access Denied" icon={Newspaper}>
+        <ConfigurablePageHeader module="news" defaultTitle={tree.nav.news} defaultDescription={pg.nmSubtitle} badge="Publishing" />
+        <SectionCard title={tree.admin.accessDenied} icon={Newspaper}>
           <p className="text-muted-foreground">
             Your role does not include the "Manage News" permission. A super admin
             can grant it in Software Control → Roles.
@@ -107,7 +110,7 @@ const NewsManager: React.FC = () => {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <ConfigurablePageHeader
           module="news"
-          defaultTitle="News"
+          defaultTitle={tree.nav.news}
           defaultDescription={
             isHeadOffice
               ? 'Write and publish news for the public homepage.'
@@ -133,7 +136,7 @@ const NewsManager: React.FC = () => {
             {f}
           </button>
         ))}
-        <Input placeholder="Search posts…" value={search} onChange={(e) => setSearch(e.target.value)}
+        <Input placeholder={pg.nmSearchPosts} value={search} onChange={(e) => setSearch(e.target.value)}
           className="h-9 max-w-xs ml-auto" />
       </div>
 
@@ -152,7 +155,7 @@ const NewsManager: React.FC = () => {
         <Card className="rounded-2xl border-dashed p-12 text-center">
           <Newspaper className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p className="font-bold">
-            {posts.length === 0 ? 'No posts yet' : `No ${filter} posts match your search`}
+            {posts.length === 0 ? pg.noPostsYet : `No ${filter} posts match your search`}
           </p>
           <p className="text-sm text-muted-foreground">
             {posts.length === 0
@@ -180,14 +183,14 @@ const NewsManager: React.FC = () => {
                     <div className="flex-1 min-w-[220px] space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold">
-                          {pickText(p.title, language) || <span className="italic text-muted-foreground">Untitled</span>}
+                          {pickText(p.title, language) || <span className="italic text-muted-foreground">{pg.nmUntitled}</span>}
                         </span>
                         <Badge variant={p.status === 'published' ? 'default' : 'secondary'} className="text-[10px] capitalize">
                           {p.status}
                         </Badge>
                         <Badge variant="outline" className="gap-1 text-[10px]">
                           {p.scope === 'global'
-                            ? <><Globe className="h-2.5 w-2.5" /> Head office</>
+                            ? <><Globe className="h-2.5 w-2.5" /> {tree.content.headOffice}</>
                             : <><Church className="h-2.5 w-2.5" /> {p.atbiyaName?.en || 'Parish'}</>}
                         </Badge>
                       </div>
@@ -196,14 +199,14 @@ const NewsManager: React.FC = () => {
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {p.authorName}
-                        {p.publishedAt && ` · published ${new Date(p.publishedAt).toLocaleDateString()}`}
+                        {p.publishedAt && ` · published ${formatDate(p.publishedAt)}`}
                         {' · '}<code>{p.slug}</code>
                       </p>
                     </div>
 
                     <div className="flex items-center gap-1.5">
                       {p.status === 'published' && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8" title="View on site"
+                        <Button size="icon" variant="ghost" className="h-8 w-8" title={pg.nmViewOnSite}
                           onClick={() => window.open(`/news/${p.slug}`, '_blank')}>
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Button>
@@ -213,8 +216,8 @@ const NewsManager: React.FC = () => {
                         {busyId === p.id
                           ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           : p.status === 'published'
-                            ? <><EyeOff className="h-3.5 w-3.5 mr-1" /> Unpublish</>
-                            : <><Eye className="h-3.5 w-3.5 mr-1" /> Publish</>}
+                            ? <><EyeOff className="h-3.5 w-3.5 mr-1" /> {pg.nmUnpublish}</>
+                            : <><Eye className="h-3.5 w-3.5 mr-1" /> {pg.nmPublish}</>}
                       </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8"
                         onClick={() => { setEditing(p); setDialogOpen(true); }}>

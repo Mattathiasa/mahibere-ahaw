@@ -15,8 +15,13 @@ import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { useFormatters } from '@/lib/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
 const Teaching = () => {
     const { t } = useTranslation();
+    const { t: tree } = useLanguage();
+    const pg = tree.pages;
+    const { formatDate } = useFormatters();
     const { showElement } = useSoftwareControl();
     const rolePerms = useRolePermissions();
     const canCreateTeaching = rolePerms.canCreateTeaching && showElement('teachings.create');
@@ -87,7 +92,7 @@ const Teaching = () => {
                                             </Badge>
                                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#2E5E99]/60">
                                                 <Clock className="h-4 w-4" />
-                                                {new Date(teaching.dateDelivered).toLocaleDateString()}
+                                                {formatDate(teaching.dateDelivered)}
                                             </div>
                                         </div>
                                         <CardTitle className="text-2xl font-black text-[#0D2440] dark:text-white leading-tight mb-2 tracking-tight group-hover:text-[#2E5E99] transition-colors">
@@ -131,8 +136,8 @@ const Teaching = () => {
                         <div className="p-8 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] mb-8 animate-pulse">
                             <BookOpen className="h-16 w-16" />
                         </div>
-                        <h3 className="text-3xl font-black text-[#0D2440] dark:text-white tracking-tighter mb-4 italic">No teachings found</h3>
-                        <p className="text-xl font-bold text-[#2E5E99]/60 max-w-md text-center">We are currently preparing sacred wisdom for the community. Please check back soon.</p>
+                        <h3 className="text-3xl font-black text-[#0D2440] dark:text-white tracking-tighter mb-4 italic">{pg.noTeachings}</h3>
+                        <p className="text-xl font-bold text-[#2E5E99]/60 max-w-md text-center">{pg.noTeachingsHint}</p>
                     </div>
                 )}
             </div>

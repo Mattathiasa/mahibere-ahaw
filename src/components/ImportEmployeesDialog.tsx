@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { hrService } from '@/services/hr';
 import { useQueryClient } from '@tanstack/react-query';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 interface ImportEmployeesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -15,6 +16,8 @@ interface ImportEmployeesDialogProps {
 
 export function ImportEmployeesDialog({ open, onOpenChange }: ImportEmployeesDialogProps) {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
+  const c = t.content;
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -26,7 +29,7 @@ export function ImportEmployeesDialog({ open, onOpenChange }: ImportEmployeesDia
 
   const handleImport = async () => {
     if (!file) {
-      toast.error('Please select a CSV file');
+      toast.error(c.selectCsvFirst);
       return;
     }
 
@@ -48,11 +51,11 @@ export function ImportEmployeesDialog({ open, onOpenChange }: ImportEmployeesDia
 
       await hrService.create(mockEmployee);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success('Employees imported successfully!');
+      toast.success(c.employeesImported);
       onOpenChange(false);
       setFile(null);
     } catch (err) {
-      toast.error('Failed to import employees file');
+      toast.error(c.employeesImportFailed);
     } finally {
       setIsUploading(false);
     }
@@ -72,8 +75,8 @@ export function ImportEmployeesDialog({ open, onOpenChange }: ImportEmployeesDia
           <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center space-y-3">
             <Upload className="h-10 w-10 mx-auto text-muted-foreground opacity-60" />
             <div>
-              <p className="text-sm font-semibold">Choose CSV or Excel file</p>
-              <p className="text-xs text-muted-foreground">Supported formats: .csv, .xlsx</p>
+              <p className="text-sm font-semibold">{c.chooseFile}</p>
+              <p className="text-xs text-muted-foreground">{c.supportedFormats}</p>
             </div>
             <Input
               type="file"
@@ -97,9 +100,9 @@ export function ImportEmployeesDialog({ open, onOpenChange }: ImportEmployeesDia
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
           <Button onClick={handleImport} disabled={!file || isUploading} className="bg-teal-600 hover:bg-teal-700 text-white">
-            {isUploading ? 'Importing...' : 'Upload & Import'}
+            {isUploading ? t.admin.busyImporting : t.admin.uploadAndImport}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,6 @@
 import { db } from '@/lib/firebase';
+import { AppError } from '@/lib/appError';
+import { localeFor } from '@/lib/ethiopian-calendar';
 import {
   collection,
   getDocs,
@@ -69,7 +71,7 @@ export const meetingService = {
   async getMeetingById(id: string) {
     const docSnap = await getDoc(doc(db, 'meetings', id));
     if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
-    throw new Error('Meeting not found');
+    throw new AppError('meetingNotFound');
   },
 
   async createMeeting(data: CreateMeetingData) {
@@ -136,10 +138,15 @@ export const meetingService = {
     const recipients = await this.resolveRecipients(audience, organiser?.id);
     if (recipients.length === 0) return 0;
 
+    // Amharic, not the organiser's browser locale. This text is written into
+    // each recipient's notification document, so it is frozen at send time and
+    // read later by many people whose languages differ — there is no single
+    // reader whose preference could apply. Amharic matches DEFAULT_LANGUAGE and
+    // the Cloud Functions notification text, for the same reason.
     const when = new Date(meeting.scheduledDate);
     const whenText = Number.isNaN(when.getTime())
       ? meeting.scheduledDate
-      : when.toLocaleString();
+      : when.toLocaleString(localeFor('am'));
     const where = meeting.location ? ` · ${meeting.location}` : '';
 
     return notificationService.createMany(

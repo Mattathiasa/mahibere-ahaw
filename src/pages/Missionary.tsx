@@ -16,8 +16,13 @@ import { Loader2, Globe, Send, FileText, MapPin, Users, Droplets, Plus } from 'l
 import { toast } from 'sonner';
 import { missionaryService } from '@/services/missionary';
 
+import { useFormatters } from '@/lib/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
 const Missionary = () => {
     const { user } = useAuth();
+    const { t: tree } = useLanguage();
+    const p = tree.pages;
+    const { formatDate } = useFormatters();
     const queryClient = useQueryClient();
     const moduleCfg = useModuleConfig('missionary');
     const [activeTab, setActiveTab] = useState('application');
@@ -61,11 +66,11 @@ const Missionary = () => {
         }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['missionary-applications'] });
-            toast.success('Application submitted successfully!');
+            toast.success(p.applicationSubmitted);
             setFormData({ desiredLocation: '', missionaryType: 'FullTime', description: '' });
         },
         onError: () => {
-            toast.error('Failed to submit application');
+            toast.error(p.applicationFailed);
         },
     });
 
@@ -84,12 +89,12 @@ const Missionary = () => {
         }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['missionary-reports'] });
-            toast.success('Field report submitted successfully!');
+            toast.success(p.fieldReportSubmitted);
             setIsReportDialogOpen(false);
             setReportFormData({ title: '', location: '', content: '', peopleReached: 0, baptized: 0 });
         },
         onError: () => {
-            toast.error('Failed to submit report');
+            toast.error(p.fieldReportFailed);
         },
     });
 
@@ -113,22 +118,22 @@ const Missionary = () => {
 
             <Tabs defaultValue="application" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="application">Application Form</TabsTrigger>
-                    <TabsTrigger value="my-applications">My Applications</TabsTrigger>
-                    <TabsTrigger value="reports">Field Reports</TabsTrigger>
+                    <TabsTrigger value="application">{p.applicationForm}</TabsTrigger>
+                    <TabsTrigger value="my-applications">{p.myApplications}</TabsTrigger>
+                    <TabsTrigger value="reports">{p.fieldReports}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="application">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Missionary Application Form</CardTitle>
-                            <CardDescription>Fill out this form to apply for missionary service (Yewengel Lukakan)</CardDescription>
+                            <CardTitle>{p.missionaryApplicationForm}</CardTitle>
+                            <CardDescription>{p.missionaryFormDesc}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmitApplication} className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="type">Missionary Type</Label>
+                                        <Label htmlFor="type">{p.missionaryType}</Label>
                                         <Select
                                             value={formData.missionaryType}
                                             onValueChange={(value) => setFormData({ ...formData, missionaryType: value })}
@@ -144,10 +149,10 @@ const Missionary = () => {
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="location">Desired Location</Label>
+                                        <Label htmlFor="location">{p.desiredLocation}</Label>
                                         <Input
                                             id="location"
-                                            placeholder="e.g., Rural areas in South Region"
+                                            placeholder={p.desiredLocationPlaceholder}
                                             value={formData.desiredLocation}
                                             onChange={(e) => setFormData({ ...formData, desiredLocation: e.target.value })}
                                             required
@@ -155,10 +160,10 @@ const Missionary = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="description">Why do you want to serve?</Label>
+                                    <Label htmlFor="description">{p.whyServe}</Label>
                                     <Textarea
                                         id="description"
-                                        placeholder="Describe your calling and motivation..."
+                                        placeholder={p.whyServePlaceholder}
                                         rows={5}
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -177,21 +182,21 @@ const Missionary = () => {
                 <TabsContent value="my-applications">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Application Status</CardTitle>
-                            <CardDescription>Track the status of your submitted applications</CardDescription>
+                            <CardTitle>{p.applicationStatus}</CardTitle>
+                            <CardDescription>{p.applicationStatusDesc}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {isLoadingApps ? (
-                                <div>Loading...</div>
+                                <div>{tree.common.loading ?? tree.admin.loading}</div>
                             ) : applications?.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground">No applications found.</div>
+                                <div className="text-center py-8 text-muted-foreground">{p.noApplications}</div>
                             ) : (
                                 <div className="space-y-4">
                                     {applications?.map((app: any) => (
                                         <div key={app._id} className="flex justify-between items-center border p-4 rounded-lg">
                                             <div>
                                                 <h4 className="font-semibold">{app.missionaryType} - {app.desiredLocation}</h4>
-                                                <p className="text-sm text-muted-foreground">{new Date(app.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-sm text-muted-foreground">{formatDate(app.createdAt)}</p>
                                             </div>
                                             <Badge variant={app.status === 'Approved' ? 'default' : app.status === 'Rejected' ? 'destructive' : 'secondary'}>
                                                 {app.status}
@@ -207,7 +212,7 @@ const Missionary = () => {
                 <TabsContent value="reports">
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold tracking-tight">Field Reports</h2>
+                            <h2 className="text-2xl font-bold tracking-tight">{p.fieldReports}</h2>
                             <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button>
@@ -217,29 +222,29 @@ const Missionary = () => {
                                 </DialogTrigger>
                                 <DialogContent className="max-w-2xl">
                                     <DialogHeader>
-                                        <DialogTitle>Submit Field Report</DialogTitle>
+                                        <DialogTitle>{p.submitFieldReport}</DialogTitle>
                                         <DialogDescription>
                                             Share updates and statistics from your missionary field work.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <form onSubmit={handleSubmitReport} className="space-y-4 mt-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="report-title">Report Title</Label>
+                                            <Label htmlFor="report-title">{p.reportTitle}</Label>
                                             <Input
                                                 id="report-title"
-                                                placeholder="e.g., October Mission Trip Summary"
+                                                placeholder={p.reportTitlePlaceholder}
                                                 value={reportFormData.title}
                                                 onChange={(e) => setReportFormData({ ...reportFormData, title: e.target.value })}
                                                 required
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="report-location">Location</Label>
+                                            <Label htmlFor="report-location">{p.location}</Label>
                                             <div className="relative">
                                                 <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                                 <Input
                                                     id="report-location"
-                                                    placeholder="e.g., Gambela Region"
+                                                    placeholder={p.locationPlaceholder}
                                                     className="pl-10"
                                                     value={reportFormData.location}
                                                     onChange={(e) => setReportFormData({ ...reportFormData, location: e.target.value })}
@@ -249,7 +254,7 @@ const Missionary = () => {
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="people-reached">People Reached</Label>
+                                                <Label htmlFor="people-reached">{p.peopleReached}</Label>
                                                 <div className="relative">
                                                     <Users className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                                     <Input
@@ -264,7 +269,7 @@ const Missionary = () => {
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="baptized">Baptized</Label>
+                                                <Label htmlFor="baptized">{p.baptized}</Label>
                                                 <div className="relative">
                                                     <Droplets className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                                     <Input
@@ -280,10 +285,10 @@ const Missionary = () => {
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="report-content">Detailed Report</Label>
+                                            <Label htmlFor="report-content">{p.detailedReport}</Label>
                                             <Textarea
                                                 id="report-content"
-                                                placeholder="Describe the activities, challenges, and testimonies..."
+                                                placeholder={p.detailedReportPlaceholder}
                                                 rows={6}
                                                 value={reportFormData.content}
                                                 onChange={(e) => setReportFormData({ ...reportFormData, content: e.target.value })}
@@ -316,7 +321,7 @@ const Missionary = () => {
                                             <div className="flex justify-between items-start">
                                                 <CardTitle className="text-lg line-clamp-1">{report.title}</CardTitle>
                                                 <Badge variant="outline" className="ml-2 shrink-0">
-                                                    {new Date(report.date).toLocaleDateString()}
+                                                    {formatDate(report.date)}
                                                 </Badge>
                                             </div>
                                             <div className="flex items-center text-sm text-muted-foreground mt-1">
@@ -329,11 +334,11 @@ const Missionary = () => {
                                                 {report.content}
                                             </p>
                                             <div className="flex gap-4 pt-4 border-t text-sm font-medium">
-                                                <div className="flex items-center gap-1.5" title="People Reached">
+                                                <div className="flex items-center gap-1.5" title={p.peopleReached}>
                                                     <Users className="h-4 w-4 text-blue-500" />
                                                     <span>{report.stats?.peopleReached || 0}</span>
                                                 </div>
-                                                <div className="flex items-center gap-1.5" title="Baptized">
+                                                <div className="flex items-center gap-1.5" title={p.baptized}>
                                                     <Droplets className="h-4 w-4 text-cyan-500" />
                                                     <span>{report.stats?.baptized || 0}</span>
                                                 </div>
@@ -346,7 +351,7 @@ const Missionary = () => {
                             <Card className="bg-muted/30 border-dashed">
                                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                                     <Globe className="h-12 w-12 text-muted-foreground opacity-50 mb-4" />
-                                    <h3 className="text-lg font-semibold">No Reports Yet</h3>
+                                    <h3 className="text-lg font-semibold">{p.noReportsYet}</h3>
                                     <p className="text-sm text-muted-foreground max-w-xs mt-1 mb-4">
                                         Submit your first missionary field report to start tracking your impact.
                                     </p>

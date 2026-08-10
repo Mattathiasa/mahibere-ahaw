@@ -1,4 +1,22 @@
 import { db } from '@/lib/firebase';
+import { translations } from '@/i18n/translations';
+
+/**
+ * Decision notifications are written in Amharic, deliberately.
+ *
+ * The text is stored on the recipient's notification document and read later
+ * by the member — not by the approver clicking the button — so the approver's
+ * language is the wrong one to use. No per-user language preference exists to
+ * read either: language lives in localStorage, per device. Amharic matches
+ * DEFAULT_LANGUAGE and is what nearly every member reads, the same call made
+ * for push notifications in functions/src/i18n.ts.
+ *
+ * Reading the static dictionary means the Firestore override layer does not
+ * apply to these four strings. That is the accepted cost of freezing them at
+ * write time; changing it needs a per-user language preference first.
+ */
+const notify = translations.am.people;
+import { AppError } from '@/lib/appError';
 import {
   collection, query, where, orderBy, getDocs, getCountFromServer, doc, runTransaction,
 } from 'firebase/firestore';
@@ -91,7 +109,7 @@ export const membershipRequestService = {
 
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
-      if (!snap.exists()) throw new Error('This request no longer exists.');
+      if (!snap.exists()) throw new AppError('requestGone');
       const data = snap.data();
       if (data.status !== 'pending') {
         throw new Error(
@@ -113,8 +131,8 @@ export const membershipRequestService = {
     );
     notificationService.create({
       userId: uid,
-      title: 'Your membership was approved',
-      message: 'You can now sign in and use the system. Welcome!',
+      title: notify.approvedTitle,
+      message: notify.approvedMessage,
       type: 'success',
     }).catch(() => { /* notification failure must not undo the approval */ });
   },
@@ -125,10 +143,10 @@ export const membershipRequestService = {
 
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
-      if (!snap.exists()) throw new Error('This request no longer exists.');
+      if (!snap.exists()) throw new AppError('requestGone');
       const data = snap.data();
       if (data.status !== 'pending') {
-        throw new Error('This request was already decided by someone else.');
+        throw new AppError('requestAlreadyDecided');
       }
       tx.update(ref, {
         status: 'rejected',
@@ -142,8 +160,8 @@ export const membershipRequestService = {
     auditLogService.dataChange('update', 'users', uid, `Rejected membership request: ${reason}`);
     notificationService.create({
       userId: uid,
-      title: 'Your membership request was not approved',
-      message: reason.trim() || 'Please contact your parish for details.',
+      title: notify.rejectedTitle,
+      message: reason.trim() || notify.rejectedNoReason,
       type: 'warning',
     }).catch(() => { /* non-fatal */ });
   },

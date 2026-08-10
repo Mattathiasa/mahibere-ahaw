@@ -26,9 +26,12 @@ import { toDate } from '@/lib/date-utils';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { LearnMore } from '@/components/LearnMore';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 const Plans = () => {
   const moduleCfg = useModuleConfig('plans');
   const { showElement } = useSoftwareControl();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
   const rolePerms = useRolePermissions();
   const canCreatePlan = rolePerms.canCreatePlan && showElement('plans.create');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +58,7 @@ const Plans = () => {
       planService.createPlan(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
-      toast.success('Strategy propagated successfully!');
+      toast.success(pg.strategyPropagated);
       setShowCreateDialog(false);
       setFormData({ name: '', timeframe: 'Weekly', department: '', details: '', attachments: [], recipients: [] });
     },
@@ -68,7 +71,7 @@ const Plans = () => {
     mutationFn: (id: string) => planService.deletePlan(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
-      toast.success('Plan archived successfully!');
+      toast.success(pg.planArchived);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Archive failed');
@@ -158,7 +161,7 @@ const Plans = () => {
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Divine Mission Phase One"
+                    placeholder={pg.planNamePlaceholder}
                     className="h-16 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 text-lg font-bold focus:ring-2 ring-[#2E5E99] transition-all"
                     required
                   />
@@ -171,7 +174,7 @@ const Plans = () => {
                     onValueChange={(value: any) => setFormData({ ...formData, timeframe: value })}
                   >
                     <SelectTrigger className="h-16 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
-                      <SelectValue placeholder="Select timeframe" />
+                      <SelectValue placeholder={pg.selectTimeframe} />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
                       {(moduleCfg.options.periods ?? ['Weekly', 'Monthly', 'Annually']).map((period) => (
@@ -185,10 +188,10 @@ const Plans = () => {
 
                 {(moduleCfg.fields.find((f) => f.key === 'department')?.visible ?? true) && (moduleCfg.options.departments ?? []).length > 0 && (
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">Department</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#2E5E99] ml-1">{pg.department}</Label>
                     <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
                       <SelectTrigger className="h-16 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-bold">
-                        <SelectValue placeholder="Select department" />
+                        <SelectValue placeholder={pg.selectDepartment} />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
                         {(moduleCfg.options.departments ?? []).map((d) => (
@@ -208,7 +211,7 @@ const Plans = () => {
                       <Textarea
                         value={formData.details}
                         onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-                        placeholder="Detail the divine objectives and spiritual milestones..."
+                        placeholder={pg.planDescPlaceholder}
                         className="min-h-[150px] rounded-3xl border-none bg-slate-100 dark:bg-slate-800 focus:ring-2 ring-[#2E5E99] font-medium transition-all p-6"
                         required={detailsField?.required ?? false}
                       />
@@ -248,7 +251,7 @@ const Plans = () => {
         <div className="absolute -inset-1 bg-gradient-to-r from-[#2E5E99]/20 to-[#0D2440]/20 rounded-[2rem] blur-xl opacity-0 group-hover/search:opacity-100 transition-opacity duration-500" />
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-[#2E5E99]/50 group-focus-within/search:text-[#2E5E99] transition-colors" />
         <Input
-          placeholder="Search spiritual roadmaps..."
+          placeholder={pg.searchRoadmaps}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="relative pl-16 h-20 rounded-[2rem] border-white/20 dark:border-white/10 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl text-xl font-medium tracking-tight italic placeholder:text-slate-400 focus:ring-4 ring-[#2E5E99]/10 shadow-2xl transition-all"
@@ -310,7 +313,7 @@ const Plans = () => {
                     <Button
                       variant="outline"
                       className="h-14 flex-1 rounded-2xl bg-[#0D2440] text-white hover:bg-[#1a3a5f] border-none font-black uppercase tracking-widest shadow-xl transition-all hover:scale-[1.02]"
-                      onClick={() => toast.info('Expanding strategy details...')}
+                      onClick={() => toast.info(pg.expandingStrategy)}
                     >
                       Explore Strategy
                     </Button>
@@ -334,8 +337,8 @@ const Plans = () => {
             className="col-span-full flex flex-col items-center justify-center py-40 bg-white/20 dark:bg-black/10 rounded-[4rem] border-2 border-dashed border-white/20"
           >
             <Search className="h-24 w-24 text-[#2E5E99]/20 mb-6" />
-            <p className="text-2xl font-black text-[#0D2440]/20 dark:text-white/20 uppercase tracking-[0.3em]">No roadmaps discovered</p>
-            <p className="font-bold text-muted-foreground mt-2 italic">Try a different spiritual search query</p>
+            <p className="text-2xl font-black text-[#0D2440]/20 dark:text-white/20 uppercase tracking-[0.3em]">{pg.noRoadmaps}</p>
+            <p className="font-bold text-muted-foreground mt-2 italic">{pg.noRoadmapsHint}</p>
           </motion.div>
         )}
       </div>

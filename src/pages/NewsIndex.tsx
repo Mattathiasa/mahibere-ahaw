@@ -9,9 +9,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Input } from '@/components/ui/input';
 
+import { useFormatters } from '@/lib/formatters';
 const NewsIndex: React.FC = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { t: tree } = useLanguage();
+  const pg = tree.pages;
+  const { formatDate } = useFormatters();
   const { theme } = useTheme();
 
   const [posts, setPosts] = useState<NewsPost[]>([]);
@@ -59,7 +63,7 @@ const NewsIndex: React.FC = () => {
               {label}
             </button>
           ))}
-          <Input placeholder="Search news…" value={search} onChange={(e) => setSearch(e.target.value)}
+          <Input placeholder={pg.searchNews} value={search} onChange={(e) => setSearch(e.target.value)}
             className="h-10 max-w-xs ml-auto rounded-xl" />
         </div>
 
@@ -71,10 +75,10 @@ const NewsIndex: React.FC = () => {
           <div className="text-center py-24">
             <Newspaper className="h-12 w-12 mx-auto mb-4 opacity-30" />
             <p className="text-xl font-bold">
-              {posts.length === 0 ? 'No news published yet' : 'Nothing matches your search'}
+              {posts.length === 0 ? pg.noNewsPublished : pg.nothingMatchesSearch}
             </p>
             <p className="text-muted-foreground">
-              {posts.length === 0 ? 'Please check back soon.' : 'Try a different word or filter.'}
+              {posts.length === 0 ? pg.checkBackSoon : pg.tryDifferentWord}
             </p>
           </div>
         ) : (
@@ -107,7 +111,7 @@ const NewsIndex: React.FC = () => {
                     {post.publishedAt && (
                       <span className="inline-flex items-center gap-1.5 opacity-50">
                         <Calendar className="h-2.5 w-2.5" />
-                        {new Date(post.publishedAt).toLocaleDateString()}
+                        {formatDate(post.publishedAt)}
                       </span>
                     )}
                     {(post.images?.length ?? 0) > 0 && (
