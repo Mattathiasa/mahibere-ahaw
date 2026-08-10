@@ -141,15 +141,101 @@ const EN: FeaturesContent = {
 };
 
 /**
- * The other languages start as the English copy on purpose.
+ * Amharic. Spelling of the church's name matches what the rest of the app
+ * already ships — `ማኅበረ አኀው`, per landingContent and the footer copyright.
  *
- * Inventing Amharic, Afaan Oromoo and Tigrinya marketing prose here would put
- * words in the church's mouth that nobody reviewed. Showing the English until
- * an admin translates it in the editor is the honest default.
+ * REVIEW: this is marketing prose describing the church's own platform, so the
+ * wording is the church's voice. It is a faithful translation of the English
+ * above rather than independently written Amharic copy, and an admin can
+ * rewrite any of it in the Landing Editor without a deploy.
+ */
+const AM: FeaturesContent = {
+  badge: 'የሥርዓቱ ዝርዝር',
+  title: 'መንፈሳዊ መሣሪያዎች ለ',
+  titleHighlight: 'ዘመናዊ አገልግሎት',
+  subtitle:
+    'ማኅበረ አኀው ቤተ ክርስቲያንዎን በዲጂታል ዘመን እንድታስተዳድር፣ እንድታቅድና እንድታድግ እንዴት እንደሚያግዝ ይመልከቱ።',
+  backLabel: 'ወደ ዋና ገፅ ተመለስ',
+  brand: 'ማኅበረ አኀው',
+  sections: [
+    {
+      id: 'members',
+      title: 'የአባላት አስተዳደር',
+      subtitle: 'የአገልግሎትዎ ልብ',
+      description:
+        'ምእመናንዎን በክብርና በጥንቃቄ ለማስተዳደር የተሟሉ መሣሪያዎች። ከመንፈሳዊ ዕድገት ክትትል እስከ የአገልግሎት ኃላፊነት ድልድል ድረስ፣ ሁሉንም ሰው በአንድነት ያገናኙ።',
+      icon: 'Users',
+      color: 'blue',
+      bullets: [
+        'ለእያንዳንዱ አባል ዝርዝር መንፈሳዊ መገለጫ',
+        'የአገልግሎት ኃላፊነት ድልድልና የተሳትፎ ክትትል',
+        'በክልል ወይም በእርከን የላቀ ፍለጋና ማጣሪያ',
+        'የተጠበቀ የአድራሻና የቤተሰብ ግንኙነት አያያዝ',
+        'በራስ-ሰር የልደትና የዓመት በዓል መንፈሳዊ ምርቃት',
+      ],
+      imageUrl: '',
+      ctaLabel: 'ይህንን አገልግሎት ይሞክሩ',
+    },
+    {
+      id: 'planning',
+      title: 'የዕቅድ አስተዳደር',
+      subtitle: 'የራእይ መሪነት መሣሪያዎች',
+      description:
+        'ስትራቴጂያዊ ዕቅድ ቀላል ሆኗል። ዝግጅቶችን ያስተባብሩ፣ የአጽዋማትና የበዓላት ቀን መቁጠሪያን ያስተዳድሩ፣ የአገልግሎት ግቦችዎን በሁሉም የቤተ ክርስቲያኒቱ እርከኖች ያስተሳስሩ።',
+      icon: 'Calendar',
+      color: 'emerald',
+      bullets: [
+        'ተለዋዋጭ የበዓላት ቀን መቁጠሪያ ውሕደት',
+        'በእርከን የተደራጀ የዝግጅት ማስተባበር (ከሲኖዶስ እስከ አጥቢያ)',
+        'የሀብትና የቦታ ድልድል አስተዳደር',
+        'የተግባር ውክልናና የሂደት ክትትል',
+        'ለአገልግሎት ክፍሎች የጋራ የዕቅድ መደላድል',
+      ],
+      imageUrl: '',
+      ctaLabel: 'ይህንን አገልግሎት ይሞክሩ',
+    },
+    {
+      id: 'reports',
+      title: 'የሪፖርት አስተዳደር',
+      subtitle: 'በማስተዋል መጋቢነት',
+      description:
+        'መረጃን ወደ መንፈሳዊ ማስተዋል ይለውጡ። ስለ አገልግሎት ዕድገት፣ ስለ ገንዘብ መጋቢነትና ስለ መንፈሳዊ ምዕራፎች የተሟሉ ሪፖርቶችን በቀላሉ ያዘጋጁ።',
+      icon: 'BarChart3',
+      color: 'purple',
+      bullets: [
+        'በራስ-ሰር በቅጽበት የሚሰበሰብ ስታቲስቲክስ',
+        'ለሁሉም መምሪያዎች የሚስተካከሉ የሪፖርት ቅጦች',
+        'የገንዘብ ግልጽነትና ለኦዲት የተዘጋጁ መሣሪያዎች',
+        'የዕድገት አዝማሚያና የተጽዕኖ ትንተና በሥዕል',
+        'የተጠበቀ ባለ ብዙ እርከን የሪፖርት ማቅረቢያ ሥርዓት',
+      ],
+      imageUrl: '',
+      ctaLabel: 'ይህንን አገልግሎት ይሞክሩ',
+    },
+  ],
+  cta: {
+    title: 'ቤተ ክርስቲያንዎን ለመለወጥ ዝግጁ ነዎት?',
+    description:
+      'ማኅበረሰባቸውን ለማገልገል ማኅበረ አኀውን አስቀድመው ከሚጠቀሙ በመቶዎች ከሚቆጠሩ ጉባኤያት ጋር ይቀላቀሉ።',
+    primaryLabel: 'አሁን ይጀምሩ',
+    secondaryLabel: 'ድጋፍ ያግኙ',
+  },
+  footer: `© ${new Date().getFullYear()} ማኅበረ አኀው ስነ-ምህዳር። ሁሉም መብቶች የተጠበቁ ናቸው።`,
+};
+
+/**
+ * Amharic is the app default, so the /features page — which every "Learn More"
+ * on the home page links to — is now Amharic out of the box. It used to map to
+ * the English copy, making it the largest English surface on the public site
+ * for a readership that mostly does not read English.
+ *
+ * Afaan Oromoo and Tigrinya still fall back to English rather than to invented
+ * marketing prose nobody has reviewed. Both are listed for translation in the
+ * Landing Editor, and a partial translation deep-merges over these defaults.
  */
 export const DEFAULT_FEATURES_CONTENT: Record<Language, FeaturesContent> = {
   en: EN,
-  am: EN,
+  am: AM,
   om: EN,
   ti: EN,
 };

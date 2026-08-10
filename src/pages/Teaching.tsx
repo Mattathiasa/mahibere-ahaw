@@ -15,8 +15,10 @@ import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { useFormatters } from '@/lib/formatters';
 const Teaching = () => {
     const { t } = useTranslation();
+    const { formatDate } = useFormatters();
     const { showElement } = useSoftwareControl();
     const rolePerms = useRolePermissions();
     const canCreateTeaching = rolePerms.canCreateTeaching && showElement('teachings.create');
@@ -87,7 +89,7 @@ const Teaching = () => {
                                             </Badge>
                                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#2E5E99]/60">
                                                 <Clock className="h-4 w-4" />
-                                                {new Date(teaching.dateDelivered).toLocaleDateString()}
+                                                {formatDate(teaching.dateDelivered)}
                                             </div>
                                         </div>
                                         <CardTitle className="text-2xl font-black text-[#0D2440] dark:text-white leading-tight mb-2 tracking-tight group-hover:text-[#2E5E99] transition-colors">

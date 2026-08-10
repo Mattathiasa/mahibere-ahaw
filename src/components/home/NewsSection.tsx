@@ -7,9 +7,9 @@ import { optimized } from '@/services/cloudinary';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
-import { localeFor } from '@/lib/ethiopian-calendar';
 import { InlineLoader } from '@/components/BrandedLoader';
 
+import { useFormatters } from '@/lib/formatters';
 /**
  * Shared by all three return paths below so the `#news` anchor behaves
  * identically whichever one renders. `scroll-mt-*` keeps the heading clear of
@@ -30,6 +30,7 @@ const SECTION_CLASS = 'py-24 sm:py-32 relative scroll-mt-24 sm:scroll-mt-28';
 export const NewsSection: React.FC = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { formatDate } = useFormatters();
   const { theme } = useTheme();
   const { content } = useLandingContent();
   const news = content.news;
@@ -90,12 +91,7 @@ export const NewsSection: React.FC = () => {
       : news.headOfficeLabel;
 
   /** Dates follow the reader's chosen language, not the browser's locale. */
-  const published = (post: NewsPost) =>
-    post.publishedAt
-      ? new Date(post.publishedAt).toLocaleDateString(localeFor(language), {
-          year: 'numeric', month: 'short', day: 'numeric',
-        })
-      : null;
+  const published = (post: NewsPost) => (post.publishedAt ? formatDate(post.publishedAt) : null);
 
   return (
     <section id="news" className={SECTION_CLASS}>

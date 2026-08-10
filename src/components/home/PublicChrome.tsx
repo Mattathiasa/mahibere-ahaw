@@ -5,6 +5,7 @@ import { Sun, Moon, ArrowLeft } from 'lucide-react';
 import { BrandMark } from '@/components/BrandMark';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGE_CODE, nextLanguage } from '@/i18n/languages';
 import { Button } from '@/pages/home-components/Button';
 
 /**
@@ -19,7 +20,7 @@ export const PublicChrome: React.FC<{ children: React.ReactNode; backTo?: string
   const { language, setLanguage, t } = useLanguage();
 
   const cycleLanguage = () =>
-    setLanguage(language === 'en' ? 'am' : language === 'am' ? 'om' : language === 'om' ? 'ti' : 'en');
+    setLanguage(nextLanguage(language));
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-700 ${
@@ -45,7 +46,7 @@ export const PublicChrome: React.FC<{ children: React.ReactNode; backTo?: string
             </button>
             <button onClick={cycleLanguage}
               className="p-2.5 rounded-xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs uppercase text-[#2E5E99]">
-              {language === 'en' ? 'AM' : language === 'am' ? 'OM' : language === 'om' ? 'TI' : 'EN'}
+              {LANGUAGE_CODE[nextLanguage(language)]}
             </button>
             <Button onClick={() => navigate('/login')}
               className="bg-[#2E5E99] hover:bg-[#204a7c] px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-xl">

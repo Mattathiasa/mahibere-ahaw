@@ -9,10 +9,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 
+import { useFormatters } from '@/lib/formatters';
 const NewsPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { formatDateLong } = useFormatters();
   const { theme } = useTheme();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -69,9 +71,7 @@ const NewsPostPage: React.FC = () => {
               {post.publishedAt && (
                 <span className="inline-flex items-center gap-1.5 opacity-50">
                   <Calendar className="h-2.5 w-2.5" />
-                  {new Date(post.publishedAt).toLocaleDateString(undefined, {
-                    year: 'numeric', month: 'long', day: 'numeric',
-                  })}
+                  {formatDateLong(post.publishedAt)}
                 </span>
               )}
               {post.authorName && (

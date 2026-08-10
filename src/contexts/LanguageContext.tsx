@@ -100,6 +100,21 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  /**
+   * Keep `<html lang>` in step with the language actually being rendered.
+   *
+   * It was hardcoded `en` and never updated, so a screen reader announced
+   * every page in English regardless — on an app whose readers are almost all
+   * Amharic speakers. It also drives `lang`-scoped font fallback and the
+   * browser's offer to translate the page.
+   *
+   * No `dir` handling: Amharic, Tigrinya, Afaan Oromoo and English are all
+   * left-to-right. Ge'ez script is not RTL.
+   */
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
   const setLanguage = (lang: Language) => {
     if (localTranslations[lang]) {
       setLangState(lang);

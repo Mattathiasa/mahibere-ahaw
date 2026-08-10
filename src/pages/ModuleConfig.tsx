@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { useFormatters } from '@/lib/formatters';
 const MODULES: { key: ModuleKey; label: string }[] = [
   { key: 'members', label: 'Members' },
   { key: 'plans', label: 'Plans' },
@@ -41,6 +42,7 @@ const MODULES: { key: ModuleKey; label: string }[] = [
 
 const ModuleConfigPage: React.FC = () => {
   const { t } = useLanguage();
+  const { formatDateTime } = useFormatters();
   const a = t.admin;
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -93,7 +95,7 @@ const ModuleConfigPage: React.FC = () => {
               </h1>
               {config.meta?.updatedAt && (
                 <p className="text-xs text-muted-foreground">
-                  Last saved: {new Date(config.meta.updatedAt).toLocaleString()} by {config.meta.updatedBy}
+                  Last saved: {formatDateTime(config.meta.updatedAt)} by {config.meta.updatedBy}
                 </p>
               )}
             </div>

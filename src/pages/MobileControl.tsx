@@ -14,6 +14,7 @@ import {
 } from '@/services/mobileAppControl';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFormatters } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,16 +47,22 @@ const FEATURE_LABELS: Record<string, string> = {
   permissionControl: 'Permission Control',
 };
 
-function formatWhen(iso?: string): string {
+/**
+ * Takes the formatter rather than calling `toLocaleString()` itself: this sits
+ * outside the component, so it cannot read the language, and the bare call
+ * followed the browser's locale instead of the reader's.
+ */
+function formatWhen(format: (v: string) => string, iso?: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return format(iso);
 }
 
 const MobileControl: React.FC = () => {
   const { t } = useLanguage();
   const a = t.admin;
+  const { formatDateTime } = useFormatters();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -132,7 +139,7 @@ const MobileControl: React.FC = () => {
               </h1>
               {config.meta?.updatedAt && (
                 <p className="text-xs text-muted-foreground">
-                  Last saved: {formatWhen(config.meta.updatedAt)} by {config.meta.updatedBy}
+                  Last saved: {formatWhen(formatDateTime, config.meta.updatedAt)} by {config.meta.updatedBy}
                 </p>
               )}
             </div>
@@ -345,7 +352,7 @@ const MobileControl: React.FC = () => {
                                 {outdated && <div className="text-[10px] text-red-600 uppercase">Outdated</div>}
                               </td>
                               <td className="py-2.5 pr-4">{r.sessionCount ?? '—'}</td>
-                              <td className="py-2.5">{formatWhen(r.lastSeen)}</td>
+                              <td className="py-2.5">{formatWhen(formatDateTime, r.lastSeen)}</td>
                             </tr>
                           );
                         })}

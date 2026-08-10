@@ -16,8 +16,10 @@ import { Loader2, Globe, Send, FileText, MapPin, Users, Droplets, Plus } from 'l
 import { toast } from 'sonner';
 import { missionaryService } from '@/services/missionary';
 
+import { useFormatters } from '@/lib/formatters';
 const Missionary = () => {
     const { user } = useAuth();
+    const { formatDate } = useFormatters();
     const queryClient = useQueryClient();
     const moduleCfg = useModuleConfig('missionary');
     const [activeTab, setActiveTab] = useState('application');
@@ -191,7 +193,7 @@ const Missionary = () => {
                                         <div key={app._id} className="flex justify-between items-center border p-4 rounded-lg">
                                             <div>
                                                 <h4 className="font-semibold">{app.missionaryType} - {app.desiredLocation}</h4>
-                                                <p className="text-sm text-muted-foreground">{new Date(app.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-sm text-muted-foreground">{formatDate(app.createdAt)}</p>
                                             </div>
                                             <Badge variant={app.status === 'Approved' ? 'default' : app.status === 'Rejected' ? 'destructive' : 'secondary'}>
                                                 {app.status}
@@ -316,7 +318,7 @@ const Missionary = () => {
                                             <div className="flex justify-between items-start">
                                                 <CardTitle className="text-lg line-clamp-1">{report.title}</CardTitle>
                                                 <Badge variant="outline" className="ml-2 shrink-0">
-                                                    {new Date(report.date).toLocaleDateString()}
+                                                    {formatDate(report.date)}
                                                 </Badge>
                                             </div>
                                             <div className="flex items-center text-sm text-muted-foreground mt-1">

@@ -9,6 +9,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '@/services/auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGE_CODE, nextLanguage } from '@/i18n/languages';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Sun, Moon, Languages, Home, Sparkles, ArrowRight, Lock, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -25,12 +26,8 @@ const Login = () => {
   const [resetNotice, setResetNotice] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
 
-  const toggleLanguage = () => {
-    if (language === 'en') setLanguage('am');
-    else if (language === 'am') setLanguage('om');
-    else if (language === 'om') setLanguage('ti');
-    else setLanguage('en');
-  };
+  const upcomingLanguage = nextLanguage(language);
+  const toggleLanguage = () => setLanguage(upcomingLanguage);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -161,7 +158,7 @@ const Login = () => {
           className={`gap-2 rounded-xl border-[#2E5E99]/10 backdrop-blur-md font-bold text-xs ${theme === 'dark' ? 'bg-[#0D2440]/50 hover:bg-[#0D2440]/70 text-white' : 'bg-white/50 hover:bg-white/70 text-[#0D2440]'}`}
         >
           <Languages className="h-4 w-4 text-[#2E5E99]" />
-          <span>{language === 'en' ? 'AM' : language === 'am' ? 'OM' : language === 'om' ? 'TI' : 'EN'}</span>
+          <span>{LANGUAGE_CODE[upcomingLanguage]}</span>
         </Button>
       </motion.div>
 

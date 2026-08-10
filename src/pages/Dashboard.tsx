@@ -25,10 +25,12 @@ import { toast } from 'sonner';
 import { MembershipRequests } from '@/components/MembershipRequests';
 import { ChooseMahderCard } from '@/components/ChooseMahderCard';
 
+import { useFormatters } from '@/lib/formatters';
 const Dashboard = () => {
   const navigate = useNavigate();
   const permissions = useRolePermissions();
   const { can } = usePermissions();
+  const { formatTime } = useFormatters();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
 
@@ -38,12 +40,12 @@ const Dashboard = () => {
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      setTimeString(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setTimeString(formatTime(now));
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [formatTime]);
 
   const ethDate = toEthiopianDateString();
 

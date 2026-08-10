@@ -25,9 +25,11 @@ import { formatDistanceToNow } from 'date-fns';
 import { toDate } from '@/lib/date-utils';
 import { useAuth } from '@/hooks/useAuth';
 
+import { useFormatters } from '@/lib/formatters';
 const Reports = () => {
   const permissions = useRolePermissions();
   const { showElement } = useSoftwareControl();
+  const { formatDate } = useFormatters();
   const { t } = useTranslation();
   const moduleCfg = useModuleConfig('reports');
   const [expandedReports, setExpandedReports] = useState<string[]>([]);
@@ -351,7 +353,7 @@ const Reports = () => {
                           <div className="flex items-center gap-2 text-[#0D2440] dark:text-white font-bold">
                             <Calendar className="h-4 w-4 opacity-40" />
                             <span className="text-sm">
-                              {toDate(report.submittedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                              {formatDate(toDate(report.submittedAt))}
                             </span>
                           </div>
                         </div>

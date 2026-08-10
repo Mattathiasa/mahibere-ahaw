@@ -8,6 +8,7 @@ import {
 import logo from '@/assets/logo.png';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGE_CODE, nextLanguage } from '@/i18n/languages';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { signupService, type SignupInput } from '@/services/signup';
@@ -183,7 +184,7 @@ const Signup: React.FC = () => {
   }
 
   const cycleLanguage = () =>
-    setLanguage(language === 'en' ? 'am' : language === 'am' ? 'om' : language === 'om' ? 'ti' : 'en');
+    setLanguage(nextLanguage(language));
 
   return (
     <div className={`min-h-screen transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440] text-white' : 'bg-[#E7F0FA] text-[#0D2440]'}`}>
@@ -197,7 +198,7 @@ const Signup: React.FC = () => {
           </button>
           <button onClick={cycleLanguage}
             className="p-3 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs uppercase text-[#2E5E99]">
-            {language === 'en' ? 'AM' : language === 'am' ? 'OM' : language === 'om' ? 'TI' : 'EN'}
+            {LANGUAGE_CODE[nextLanguage(language)]}
           </button>
         </div>
       </div>

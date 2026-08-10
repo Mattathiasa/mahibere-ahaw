@@ -22,6 +22,7 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { InviteUsersDialog } from '@/components/InviteUsersDialog';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
+import { useFormatters } from '@/lib/formatters';
 interface UserFormData {
   username: string;
   password: string;
@@ -73,6 +74,7 @@ const ETHIOPIAN_REGIONS = [
 
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
+  const { formatDateTime } = useFormatters();
   const { can, roles, roleLabel, scopeOf } = usePermissions();
   const { t } = useLanguage();
   const a = t.admin;
@@ -1158,7 +1160,7 @@ const UserManagement = () => {
                       {log.action}: <span className="text-primary">{log.targetUserName}</span>
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      By {log.performedByName} ({log.performedByRole}) • {new Date(log.createdAt).toLocaleString()}
+                      By {log.performedByName} ({log.performedByRole}) • {formatDateTime(log.createdAt)}
                     </p>
                   </div>
                 </div>

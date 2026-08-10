@@ -24,9 +24,11 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Language } from '@/i18n/translations';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
+import { useFormatters } from '@/lib/formatters';
 const Settings = () => {
   const navigate = useNavigate();
   const { user: currentUser, logout } = useAuth();
+  const { formatDate, formatTime } = useFormatters();
   const { isSuperAdmin, isAdminRole } = usePermissions();
   const queryClient = useQueryClient();
   const { language, setLanguage, t } = useLanguage();
@@ -942,7 +944,7 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Last Updated</span>
-                    <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</span>
+                    <span className="text-sm text-muted-foreground">{formatDate(new Date())}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Browser</span>
@@ -967,7 +969,7 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Last Sync</span>
-                    <span className="text-sm text-muted-foreground">{new Date().toLocaleTimeString()}</span>
+                    <span className="text-sm text-muted-foreground">{formatTime(new Date())}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Server Status</span>

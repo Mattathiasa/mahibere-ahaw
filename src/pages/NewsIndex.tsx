@@ -9,9 +9,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Input } from '@/components/ui/input';
 
+import { useFormatters } from '@/lib/formatters';
 const NewsIndex: React.FC = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { formatDate } = useFormatters();
   const { theme } = useTheme();
 
   const [posts, setPosts] = useState<NewsPost[]>([]);
@@ -107,7 +109,7 @@ const NewsIndex: React.FC = () => {
                     {post.publishedAt && (
                       <span className="inline-flex items-center gap-1.5 opacity-50">
                         <Calendar className="h-2.5 w-2.5" />
-                        {new Date(post.publishedAt).toLocaleDateString()}
+                        {formatDate(post.publishedAt)}
                       </span>
                     )}
                     {(post.images?.length ?? 0) > 0 && (

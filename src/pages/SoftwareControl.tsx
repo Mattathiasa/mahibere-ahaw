@@ -37,6 +37,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useFormatters } from '@/lib/formatters';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -44,6 +45,7 @@ import {
 const SoftwareControl: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { formatDateTime } = useFormatters();
   const { reload: reloadPermissions, isSuperAdmin } = usePermissions();
   const { t } = useLanguage();
   const a = t.admin;
@@ -273,7 +275,7 @@ const SoftwareControl: React.FC = () => {
               </h1>
               {config.meta?.updatedAt && (
                 <p className="text-xs text-muted-foreground">
-                  Last saved: {new Date(config.meta.updatedAt).toLocaleString()} by {config.meta.updatedBy}
+                  Last saved: {formatDateTime(config.meta.updatedAt)} by {config.meta.updatedBy}
                 </p>
               )}
             </div>
@@ -635,7 +637,7 @@ const SoftwareControl: React.FC = () => {
                           {filtered.map((l) => (
                             <tr key={l.id} className="border-b border-border/50">
                               <td className="py-2.5 pr-4 whitespace-nowrap text-xs text-muted-foreground">
-                                {l.createdAt?.toDate ? l.createdAt.toDate().toLocaleString() : '—'}
+                                {l.createdAt?.toDate ? formatDateTime(l.createdAt.toDate()) : '—'}
                               </td>
                               <td className="py-2.5 pr-4">
                                 <div className="font-medium">{l.userName ?? '—'}</div>

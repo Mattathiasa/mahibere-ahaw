@@ -17,8 +17,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SectionCard } from '@/components/ui/SectionCard';
 
+import { useFormatters } from '@/lib/formatters';
 const NewsManager: React.FC = () => {
   const { can, isHeadOffice, myAtbiyaId, isSuperAdmin } = usePermissions();
+  const { formatDate } = useFormatters();
   const { showElement } = useSoftwareControl();
   const { language } = useLanguage();
 
@@ -196,7 +198,7 @@ const NewsManager: React.FC = () => {
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {p.authorName}
-                        {p.publishedAt && ` · published ${new Date(p.publishedAt).toLocaleDateString()}`}
+                        {p.publishedAt && ` · published ${formatDate(p.publishedAt)}`}
                         {' · '}<code>{p.slug}</code>
                       </p>
                     </div>

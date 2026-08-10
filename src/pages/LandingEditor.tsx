@@ -50,6 +50,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LocalizationEditor } from '@/components/LocalizationEditor';
 
+import { useFormatters } from '@/lib/formatters';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LANGUAGES: { value: Language; label: string; flag: string }[] = [
@@ -133,6 +134,7 @@ function FooterLinkEditor({
 const LandingEditor: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { formatDateTime } = useFormatters();
   const { refreshTranslations } = useLanguage();
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -523,7 +525,7 @@ const LandingEditor: React.FC = () => {
               <h1 className="text-lg font-bold">Site Content Editor</h1>
               {allContent.meta?.updatedAt && (
                 <p className="text-xs text-muted-foreground">
-                  Last saved: {new Date(allContent.meta.updatedAt).toLocaleString()} by {allContent.meta.updatedBy}
+                  Last saved: {formatDateTime(allContent.meta.updatedAt)} by {allContent.meta.updatedBy}
                 </p>
               )}
             </div>

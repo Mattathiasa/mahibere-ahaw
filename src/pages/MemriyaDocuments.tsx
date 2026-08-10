@@ -16,8 +16,10 @@ import { LearnMore } from '@/components/LearnMore';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+import { useFormatters } from '@/lib/formatters';
 const MemriyaDocuments = () => {
     const { t } = useTranslation();
+    const { formatDate } = useFormatters();
     const { user } = useAuth();
     const moduleCfg = useModuleConfig('documents');
     const queryClient = useQueryClient();
@@ -266,7 +268,7 @@ const MemriyaDocuments = () => {
                                             <div className="min-w-0">
                                                 <p className="font-medium truncate text-sm">{item.name}</p>
                                                 <p className="text-xs text-muted-foreground flex items-center gap-2">
-                                                    <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                                                    <span>{formatDate(item.createdAt)}</span>
                                                     {item.size && (
                                                         <>
                                                             <span>•</span>
