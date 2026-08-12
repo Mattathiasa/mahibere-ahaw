@@ -12,6 +12,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { getTransactions, getBudgets, getFinancialReports, getMemberTithes, DEFAULT_CHURCH_BANKS, MemberTithe } from '@/services/finance';
 import { userService } from '@/services/users';
 import { hierarchyService } from '@/services/hierarchy';
@@ -63,6 +64,8 @@ export default function Finance() {
   // Software Control gating for the money-touching actions.
   const { showElement } = useSoftwareControl();
   const financePerms = useRolePermissions();
+  // Only used to scope the member list the tithe tracker picks names from.
+  const { canReadWholeDirectory, myAtbiyaId } = usePermissions();
   const canAddTransaction = financePerms.canAddTransaction && showElement('finance.addTransaction');
   const canCreateBudget = financePerms.canCreateBudget && showElement('finance.createBudget');
   const canGenerateReport = showElement('finance.generateReport');
@@ -94,7 +97,9 @@ export default function Finance() {
         getBudgets(),
         getFinancialReports(),
         getMemberTithes(),
-        userService.getAllUsers().catch(() => ({ users: [] })),
+        userService
+          .getUsersInScope({ wholeDirectory: canReadWholeDirectory, atbiyaId: myAtbiyaId })
+          .catch(() => ({ users: [] })),
         dashboardService.getDashboardData().catch(() => null),
         hierarchyService.getEntitiesByLevel('Atbiya').catch(() => []),
       ]);

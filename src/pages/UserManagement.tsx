@@ -66,7 +66,7 @@ const REGIONS = ETHIOPIAN_REGIONS;
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
   const { formatDateTime } = useFormatters();
-  const { can, roles, roleLabel, scopeOf } = usePermissions();
+  const { can, roles, roleLabel, scopeOf, canReadWholeDirectory, myAtbiyaId } = usePermissions();
   const { t } = useLanguage();
   const pe = t.people;
   const f = t.forms;
@@ -127,10 +127,11 @@ const UserManagement = () => {
     memriyaRole: '',
   });
 
-  // Fetch users
+  // Fetch users — scoped to what this account may read. See getUsersInScope.
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => userService.getAllUsers(),
+    queryKey: ['users', canReadWholeDirectory, myAtbiyaId],
+    queryFn: () =>
+      userService.getUsersInScope({ wholeDirectory: canReadWholeDirectory, atbiyaId: myAtbiyaId }),
   });
 
   // Fetch Atbiya list (churches)

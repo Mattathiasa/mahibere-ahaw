@@ -47,6 +47,11 @@ export const membershipRequestService = {
    * Pending requests. Head office passes no atbiyaId and sees all; a parish
    * passes its own and sees only its own.
    *
+   * Omitting `atbiyaId` is now a CLAIM, not a convenience: the directory rule
+   * only allows an unfiltered list for a caller with wide scope, so a parish
+   * account that leaves it out gets permission-denied rather than everybody's
+   * queue. Pass `canReadWholeDirectory ? undefined : myAtbiyaId`.
+   *
    * Needs the composite index users(status, atbiyaId, requestedAt desc).
    */
   async listPending(atbiyaId?: string): Promise<MembershipRequest[]> {

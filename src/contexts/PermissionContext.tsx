@@ -53,6 +53,16 @@ interface PermissionContextType {
   myScope: RoleScope;
   /** True when the current user sees data across the whole organisation. */
   isHeadOffice: boolean;
+  /**
+   * True when this user may read member records outside their own congregation.
+   *
+   * Deliberately wider than `isHeadOffice`: it also covers diocese-scoped roles,
+   * whose members are the members of the congregations beneath them. Mirrors
+   * `hasWideDirectoryScope()` in firestore.rules — asking for more than that
+   * returns permission-denied, and asking for less shows a diocese officer only
+   * one congregation.
+   */
+  canReadWholeDirectory: boolean;
   /** The parish (hierarchy doc id) this user belongs to, or ''. */
   myAtbiyaId: string;
 
@@ -153,6 +163,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const myScope = scopeOf(myRole);
   const isHeadOffice = isSuperAdmin || myScope === 'global';
+  const canReadWholeDirectory = isHeadOffice || myScope === 'zone';
   const myAtbiyaId = user?.atbiyaId ?? user?.hierarchyEntityId ?? '';
 
   return (
@@ -172,6 +183,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       myRole,
       myScope,
       isHeadOffice,
+      canReadWholeDirectory,
       myAtbiyaId,
       reload: load,
       loading,

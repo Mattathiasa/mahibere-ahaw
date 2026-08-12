@@ -166,7 +166,13 @@ export default function Notifications() {
                             {language === 'am' ? notification.messageAmharic : notification.message}
                           </p>
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            <span>{t('from')}: {notification.senderName}</span>
+                            {/* Only when there is a name. A sender whose record
+                                carries none of the name fields is stored with an
+                                empty one, and "From:" followed by nothing read
+                                as a bug. */}
+                            {notification.senderName && (
+                              <span>{t('from')}: {notification.senderName}</span>
+                            )}
                             <span>{formatDistanceToNow(toDate(notification.createdAt), { addSuffix: true })}</span>
                           </div>
                         </div>

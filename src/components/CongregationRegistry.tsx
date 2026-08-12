@@ -83,7 +83,9 @@ export const CongregationRegistry: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      setAtbiyas(await hierarchyService.getAtbiyas(true));
+      // WithPrivate, because this page lists and searches on contact details and
+      // bank accounts, which no longer live on the publicly-readable parish doc.
+      setAtbiyas(await hierarchyService.getAtbiyasWithPrivate(true));
     } catch (e) {
       const code = (e as { code?: string })?.code ?? '';
       setError(code === 'permission-denied'

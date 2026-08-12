@@ -64,12 +64,24 @@ service cloud.firestore {
         : [];
     }
 
-    // Deliberately NOT status-gated: the super-admin escape hatch has to
+    // Only the UID-LIST path skips the status gate. That escape hatch has to
     // survive a corrupted status field, otherwise a bad write is unrecoverable
-    // from inside the app.
+    // from inside the app — and siteConfig/superAdmins is itself editable, so
+    // the list stays maintainable.
+    //
+    // The `role` FIELD path is status-gated. It used not to be, and because
+    // isAdmin() folds in isSuperAdmin(), suspending a super admin revoked
+    // nothing at all: they kept full read and write on every collection.
+    // Written as `role first, status second` rather than `isActive() && role`
+    // for cost, not style. isAdmin() folds this in, six `allow update`
+    // statements on /users each fold in isAdmin(), and Firestore re-evaluates
+    // the whole chain per statement — the isActive() form tipped that block over
+    // the 1000-expression cap, which fails CLOSED and denied every membership
+    // approval. Testing `role` first short-circuits for everyone who is not a
+    // super admin, which is almost everyone, so myStatus() rarely evaluates.
     function isSuperAdmin() {
       return signedIn() && (
-        userData().get('role', '') == 'SuperAdmin'
+        (userData().get('role', '') == 'SuperAdmin' && myStatus() == 'active')
         || request.auth.uid in superAdminUids()
       );
     }
@@ -91,6 +103,56 @@ service cloud.firestore {
     function hasGlobalScope()   { return isAdmin() || inRole('globalScopeRoles', ['Sinodos', 'KuamiSinodos', 'Memriya']); }
     function signupRole()       { return flags().get('signupRole', 'HiyawanMahderat'); }
 
+    // Who may read the member directory across congregation boundaries.
+    //
+    // Wider than hasGlobalScope() on purpose. A diocese oversees several
+    // congregations, and its members ARE the members of those congregations —
+    // but `users/{uid}` carries no diocese id, so a rule cannot express "in my
+    // diocese" without a subquery rules cannot perform. Restricting a diocese
+    // officer to one congregation would break their actual job.
+    //
+    // The exposure this was written to close is a PARISH-level role (Atbiya,
+    // EnkesekaseMaikel) enumerating the entire organisation, and that stays
+    // closed. Narrowing diocese roles too needs a `dioceseId` on the user
+    // document first.
+    function hasWideDirectoryScope() {
+      return hasGlobalScope() || inRole('zoneScopeRoles', ['Zone']);
+    }
+
+    // ── Module access ───────────────────────────────────────────────────────
+    //
+    // Finance, HR, inventory and documents used to be `read, write: if
+    // isActive()`. `write` covers delete, so the ordinary member role that
+    // self-sign-up assigns could read, alter and destroy every financial
+    // transaction, the entire employee roster (salaries included) and every
+    // asset record. canViewFinance / canViewHR / canAddTransaction gated only
+    // the UI.
+    //
+    // Each fallback is the set of seed roles holding the matching permission in
+    // DEFAULT_ROLE_PERMISSIONS. That matters: a deployed siteConfig/roleFlags
+    // predates these keys and will not carry them until an admin re-saves
+    // Software Control, so until then the fallback IS the rule — and it has to
+    // tighten access rather than open it.
+    function staffRoles()      { return ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya']; }
+    function staffPlusSubunit() { return ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel']; }
+
+    function canReadFinance()  { return isAdmin() || inRole('financeReadRoles', staffRoles()); }
+    function canWriteFinance() { return isAdmin() || inRole('financeWriteRoles', staffRoles()); }
+    // HR and inventory have no edit permission of their own, so one flag governs
+    // read and write for each. Still a large tightening over "any approved account".
+    function canUseHR()        { return isAdmin() || inRole('hrRoles', staffRoles()); }
+    function canUseInventory() { return isAdmin() || inRole('inventoryRoles', staffRoles()); }
+    function canReadDocs()     { return isAdmin() || inRole('documentReadRoles', staffPlusSubunit()); }
+    function canWriteDocs()    { return isAdmin() || inRole('documentWriteRoles', staffRoles()); }
+    function canWritePlans()   { return isAdmin() || inRole('planWriteRoles', staffRoles()); }
+    function canWriteReports() { return isAdmin() || inRole('reportWriteRoles', staffPlusSubunit()); }
+    function canWriteAnnouncements() {
+      return isAdmin() || inRole('announcementWriteRoles', ['Sinodos', 'KuamiSinodos', 'Memriya']);
+    }
+    function canWriteTeachings() {
+      return isAdmin() || inRole('teachingWriteRoles', ['Sinodos', 'KuamiSinodos', 'Memriya']);
+    }
+
     // Parish management is two capabilities, not one. There used to be a single
     // isAtbiyaManager() falling back to ['Atbiya'], which would have meant that
     // letting a parish leader maintain their own record also let them mint new
@@ -108,6 +170,32 @@ service cloud.firestore {
     // so a parish can keep its own record current without registry-wide power.
     function isOwnAtbiyaEditor() {
       return inRole('ownAtbiyaRoles', ['Atbiya']);
+    }
+
+    // ── usernames row shape ─────────────────────────────────────────────────
+    // A row carries only what username sign-in needs to resolve an address.
+    function usernameRowWellFormed() {
+      return request.resource.data.keys().hasOnly(['uid', 'email', 'createdAt'])
+        && request.resource.data.uid is string
+        && request.resource.data.email is string;
+    }
+
+    // The row's KEY must be the stored username of the account it points at.
+    // This is what makes squatting impossible: an attacker can only ever write
+    // the name their own user document already spells.
+    //
+    // Costs one cached get() on a path that fires twice in an account's life
+    // (sign-up, and a rename), never on an ordinary read or sign-in.
+    function usernameMatchesTarget(username) {
+      return exists(/databases/$(database)/documents/users/$(request.resource.data.uid))
+        && get(/databases/$(database)/documents/users/$(request.resource.data.uid))
+             .data.get('username', '').lower() == username;
+    }
+
+    // Parish fields that live in /atbiyaPrivate and must never be written back
+    // onto the publicly-readable /hierarchy document. See services/hierarchy.ts.
+    function privateParishKeys() {
+      return ['bankAccounts', 'contact'];
     }
 
     function changed(fields) {
@@ -130,8 +218,33 @@ service cloud.firestore {
       // app needs it to show the right "awaiting approval" message.
       allow get: if signedIn() && request.auth.uid == userId;
 
-      // Member directory, User Management, recipient pickers.
-      allow get, list: if canReadDirectory();
+      // ── Member directory, User Management, recipient pickers ────────────
+      //
+      // Previously `allow get, list: if canReadDirectory()` with no scoping at
+      // all. directoryRoles is derived from canViewMembers, which by default
+      // includes Zone and Atbiya — parish-level roles — so any parish officer
+      // could enumerate every member in the organisation: phone, date of birth,
+      // gender, marital status, children, employer, home address, and the home
+      // lat/lng that sign-up records inside `address`.
+      //
+      // Scoping lived only in an OPTIONAL `atbiyaId` argument the UI chose to
+      // pass (membershipRequestService.listPending, userService.getAllUsers),
+      // which is not a boundary — omitting it from the console returned
+      // everyone.
+      //
+      // `list` uses a bare field reference, not `.get(...)`: Firestore can only
+      // allow a list query it can PROVE satisfies the rule, and that proof comes
+      // from a matching `where('atbiyaId','==',…)` equality filter. A default
+      // value would make the condition unprovable and deny the query outright.
+      // Documents missing the field never match an equality filter anyway, so
+      // the default buys nothing here.
+      allow get: if canReadDirectory()
+        && (hasWideDirectoryScope()
+            || (myAtbiya() != '' && resource.data.get('atbiyaId', '') == myAtbiya()));
+
+      allow list: if canReadDirectory()
+        && (hasWideDirectoryScope()
+            || (myAtbiya() != '' && resource.data.atbiyaId == myAtbiya()));
 
       // ── Self sign-up ────────────────────────────────────────────────────
       // Always pending, never self-elevating. Once public sign-up exists, any
@@ -230,7 +343,25 @@ service cloud.firestore {
       // anything genuinely secret in its own collection instead.
       allow read: if true;
 
-      allow write: if isAdmin();
+      // The four documents below ARE the permission system: the super-admin uid
+      // list, the role registry, and the two projections the rules and clients
+      // read it through. `allow write: if isAdmin()` covered them along with
+      // everything else, so any admin role could append its own uid to
+      // superAdmins and become a super admin, or flag any role isAdmin in
+      // `roles` — making the `superAdminOnly` gate on /admin/permissions and
+      // /admin/software-control decorative.
+      //
+      // The exclusion has to live in THIS rule. A separate, more specific
+      // `match /siteConfig/superAdmins` block would not restrict anything:
+      // Firestore grants a request when ANY matching rule allows it, so a
+      // narrow block sitting beside a broad one is dead weight.
+      //
+      // Software Control and Permission Control are already superAdminOnly in
+      // the UI and are the only writers of these four, so this aligns the data
+      // boundary with the gate that was already there.
+      allow write: if isSuperAdmin()
+        || (isAdmin()
+            && !(docId in ['superAdmins', 'roles', 'roleFlags', 'rolePermissions']));
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -244,6 +375,19 @@ service cloud.firestore {
     //  `where('level','==','Atbiya')` is an equality filter, so Firestore can
     //  prove every returned document satisfies the rule and the public sign-up
     //  dropdown works unauthenticated. An UNFILTERED list stays denied.
+    //
+    //  What makes that public read SAFE is that the parish record no longer
+    //  holds anything private. `bankAccounts` and `contact` moved to
+    //  /atbiyaPrivate/{atbiyaId} — before that, the two rules below handed the
+    //  whole internet every parish's bank account number and every parish
+    //  leader's phone number and email. Anything added here from now on is
+    //  public by construction; if it should not be, it belongs in atbiyaPrivate.
+    //
+    //  `isPublic` is still NOT enforced here, so an unlisted parish's public
+    //  fields remain readable — hierarchyService filters it client-side only.
+    //  Enforcing it needs `where('isPublic','==',true)` on the query, which
+    //  needs `isPublic: true` backfilled onto every legacy parish doc first, for
+    //  the same reason the `active` field is filtered in memory below.
     // ════════════════════════════════════════════════════════════════════════
     match /hierarchy/{docId} {
       allow get:  if resource.data.level == 'Atbiya';
@@ -259,16 +403,25 @@ service cloud.firestore {
       // A parish may additionally create its OWN Mahedherat (small Bible-study
       // groups), which is the only kind of entity it can add. `parentId` is
       // pinned to its own parish, so it cannot hang a group off someone else's.
-      allow create: if isAdmin()
-        || (canRegisterAtbiya() && request.resource.data.level == 'Atbiya')
-        || (isOwnAtbiyaEditor()
-            && request.resource.data.level == 'Mahderat'
-            && request.resource.data.parentId == myAtbiya());
+      allow create: if !request.resource.data.keys().hasAny(privateParishKeys())
+        && (isAdmin()
+            || (canRegisterAtbiya() && request.resource.data.level == 'Atbiya')
+            || (isOwnAtbiyaEditor()
+                && request.resource.data.level == 'Mahderat'
+                && request.resource.data.parentId == myAtbiya()));
 
       // Kept as ONE clause on purpose. Written as separate `allow update`
       // statements, Firestore re-evaluates the whole helper chain per statement
       // and blows the 1000-expression cap, denying every parish edit.
-      allow update: if isAdmin()
+      //
+      // The private-key guard uses `changed()`, not a key allowlist: on an update
+      // `request.resource.data` is the MERGED result, so an un-migrated parish
+      // would still carry `contact` and a key check would deny every edit to it.
+      // Only a write that TOUCHES those fields is refused — which is exactly the
+      // browser tab still running the pre-split bundle after this deploys, and
+      // would otherwise quietly re-publish what the migration just moved.
+      allow update: if !changed(privateParishKeys())
+        && (isAdmin()
         || (canRegisterAtbiya() && resource.data.level == 'Atbiya')
         // A parish leader maintains its own record and its own groups, but can
         // move neither in the tree nor change what kind of entity they are.
@@ -278,7 +431,37 @@ service cloud.firestore {
                  (resource.data.level == 'Atbiya' && docId == myAtbiya())
                  || (resource.data.level == 'Mahderat'
                      && resource.data.get('parentId', '') == myAtbiya())
-               ));
+               )));
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  atbiyaPrivate — the parish fields that must NOT be world-readable
+    //
+    //  /hierarchy is deliberately readable by anonymous visitors so the public
+    //  sign-up dropdown works without an account. That was fine for a parish
+    //  NAME. It was not fine for what the documents had grown to hold:
+    //  `bankAccounts` (bank name, ACCOUNT NUMBER, account holder) and `contact`
+    //  (parish leader name, two phone numbers, email). Anyone on the internet
+    //  could run where('level','==','Atbiya') and dump the lot.
+    //
+    //  Rules cannot project fields, so the only way a public read stays safe is
+    //  for the document to hold nothing private. Those two fields live here
+    //  instead, keyed by the same hierarchy doc id.
+    //
+    //  Doc id == parish id is what makes the ownership check a free string
+    //  comparison rather than a get() on the parish record.
+    // ════════════════════════════════════════════════════════════════════════
+    //  Gated on isOwnAtbiyaEditor(), NOT on "belongs to this parish". Keying the
+    //  ownership check off myAtbiya() alone would have let every ordinary member
+    //  of a congregation read and rewrite its bank account numbers — a smaller
+    //  audience than the whole internet, but not the one this is for. The role
+    //  holding canEditOwnAtbiya is what /my-atbiya is gated on, and it is the
+    //  right boundary here too.
+    match /atbiyaPrivate/{atbiyaId} {
+      allow read, write: if isAdmin()
+        || hasGlobalScope()
+        || canRegisterAtbiya()
+        || (isOwnAtbiyaEditor() && myAtbiya() != '' && atbiyaId == myAtbiya());
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -310,15 +493,55 @@ service cloud.firestore {
     //  Holds no secrets: a username and the synthetic login email.
     // ════════════════════════════════════════════════════════════════════════
     match /usernames/{username} {
+      // Still open, because sign-in by username has to resolve the address
+      // BEFORE there is an account to authorise. That is also why this leaks:
+      // repairUsernameMapping writes the account's REAL email here once someone
+      // attaches a recovery address, so probing usernames harvests personal
+      // email addresses — undoing the care taken in sendPasswordReset, which
+      // refuses to distinguish auth/user-not-found for exactly that reason.
+      //
+      // Closing it needs the lookup to happen somewhere that can read without
+      // being the caller: `resolveLoginEmail` in functions/src/index.ts. Once
+      // that callable is DEPLOYED, this becomes `allow get: if isAdmin()`.
+      // Flipping it before then locks every username sign-in out, so it is
+      // deliberately left as a separate step.
       allow get: if true;
-      // Self sign-up writes its own row. A member manager writes the row for an
-      // account it just created for someone else — without this, an
-      // admin-created user whose email is a real address could never sign in by
-      // username, because authService only falls back to the synthetic
-      // @mahibereahaw.local address when no row exists.
-      allow create: if (signedIn() && request.resource.data.uid == request.auth.uid)
-        || isMemberManager();
-      allow update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+
+      // ── The squat, closed ───────────────────────────────────────────────
+      // `create` used to constrain `uid` and nothing else — not the `email`,
+      // and not WHICH name was being claimed. So any signed-in account (a
+      // 10-second-old self-sign-up included) could create usernames/<victim>
+      // pointing at an address it controlled. `login` resolves the typed name
+      // through this row, so the victim's username sign-in would attempt the
+      // attacker's address and fail permanently — and repairUsernameMapping
+      // refuses to heal a row owned by another uid, so only an admin deleting
+      // it could undo the damage. Legacy accounts, which have no row and rely
+      // on the deterministic @mahibereahaw.local fallback, were the exposed set.
+      //
+      // The fix is that a row must SPELL the stored username of the account it
+      // points at, which no squatted name ever does.
+      allow create: if usernameRowWellFormed()
+        && usernameMatchesTarget(username)
+        && (
+             (signedIn()
+              && request.resource.data.uid == request.auth.uid
+              && request.resource.data.email == request.auth.token.email)
+             // A member manager writes the row for an account it just created.
+             // Without this an admin-created user whose email is a real address
+             // could never sign in by username. The email is not pinned to the
+             // caller's own here — it belongs to the new account — but
+             // usernameMatchesTarget still ties the row to a real user document.
+             || isMemberManager()
+           );
+
+      allow update: if usernameRowWellFormed()
+        && usernameMatchesTarget(username)
+        && (isAdmin()
+            || (signedIn()
+                && resource.data.uid == request.auth.uid
+                && request.resource.data.uid == request.auth.uid
+                && request.resource.data.email == request.auth.token.email));
+
       // Renaming yourself has to release the old name. Without a self-delete
       // the previous row lingers, reserving the name against every future
       // sign-up AND still resolving it to a live account.
@@ -361,13 +584,46 @@ service cloud.firestore {
         && (resource.data.get('createdBy', '') == request.auth.uid || isAdmin());
     }
 
-    match /announcements/{docId}           { allow read, write: if isActive(); }
-    match /plans/{docId}                   { allow read, write: if isActive(); }
-    match /reports/{docId}                 { allow read, write: if isActive(); }
-    match /finance_transactions/{docId}    { allow read, write: if isActive(); }
-    match /finance_budgets/{docId}         { allow read, write: if isActive(); }
-    match /finance_reports/{docId}         { allow read, write: if isActive(); }
-    match /finance_requisitions/{docId}    { allow read, write: if isActive(); }
+    // Read stays open to every approved member for collaborative content —
+    // narrowing it would turn a permission mistake into a blank page, and these
+    // are things the membership is meant to see. WRITE is what moves: `write`
+    // covers delete, and an ordinary member had it on all of them.
+    match /announcements/{docId} {
+      allow read:  if isActive();
+      allow write: if canWriteAnnouncements();
+    }
+    match /plans/{docId} {
+      allow read:  if isActive();
+      allow write: if canWritePlans();
+    }
+    match /reports/{docId} {
+      allow read:  if isActive();
+      allow write: if canWriteReports();
+    }
+
+    // Finance moves on BOTH verbs. These are the church's books.
+    match /finance_transactions/{docId} {
+      allow read:  if canReadFinance();
+      allow write: if canWriteFinance();
+    }
+    match /finance_budgets/{docId} {
+      allow read:  if canReadFinance();
+      allow write: if canWriteFinance();
+    }
+    match /finance_reports/{docId} {
+      allow read:  if canReadFinance();
+      allow write: if canWriteFinance();
+    }
+    match /finance_requisitions/{docId} {
+      allow read:  if canReadFinance();
+      allow write: if canWriteFinance();
+    }
+
+    // NOTE: finance_tithes and finance_pledges are written by services/finance.ts
+    // but have NO rule here, so Firestore denies them outright and the Tithes and
+    // Pledges tabs silently render empty (both getters swallow the error). Left
+    // as-is deliberately — it is a separate, known defect, and inventing a rule
+    // for a path nobody has been able to exercise would be guessing at policy.
 
     // ════════════════════════════════════════════════════════════════════════
     //  notifications — a private inbox, one document per recipient
@@ -384,23 +640,92 @@ service cloud.firestore {
       allow read, update, delete: if isActive()
         && resource.data.userId == request.auth.uid;
 
-      // Deliberately open to any approved account: broadcasting an announcement
-      // and approving a membership request both write documents addressed to
-      // other people. Narrowing this would need another roleFlags array and
-      // another helper chain, and the /hierarchy rules already showed what
-      // happens when this file gets too deep — it exceeds the expression cap
-      // and fails closed.
-      allow create: if isActive();
+      // Addressing stays open to any approved account: broadcasting an
+      // announcement and approving a membership request both write documents
+      // addressed to other people. Narrowing THAT would need another roleFlags
+      // array and another helper chain, and the /hierarchy rules already showed
+      // what happens when this file gets too deep — it exceeds the expression
+      // cap and fails closed.
+      //
+      // The SENDER is a different matter and used to be free text. `senderName`
+      // was written by the client and rendered as provenance, so any approved
+      // member could deliver a message to every other member appearing to come
+      // from the Synod, with an attacker-chosen `link` beside it — in-app
+      // phishing with the app's own credibility behind it.
+      //
+      // Now the sender is a uid that must be the caller's, and the NAME must be
+      // one the caller's own user document actually holds.
+      //
+      // The name is still denormalised onto the notification rather than
+      // resolved from users/{senderId} at render time, because the recipient
+      // generally cannot read the sender's profile: the directory is scoped, and
+      // an ordinary member holds no directory permission at all. Pinning the
+      // string here is what makes a stored copy trustworthy.
+      //
+      // '' is accepted so a sender whose record carries none of these three
+      // fields can still send, attributed to nobody.
+      allow create: if isActive()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.get('senderName', '') in [
+             '',
+             userData().get('fullNameEnglish', ''),
+             userData().get('fullName', ''),
+             userData().get('username', '')
+           ]
+        && request.resource.data.keys().hasOnly([
+             'userId', 'senderId', 'senderName', 'title', 'message', 'type',
+             'link', 'status', 'createdAt'
+           ]);
     }
 
-    match /teachings/{docId}               { allow read, write: if isActive(); }
-    match /missionary_applications/{docId} { allow read, write: if isActive(); }
-    match /missionary_reports/{docId}      { allow read, write: if isActive(); }
-    match /documents/{docId}               { allow read, write: if isActive(); }
-    match /strategic_plans/{docId}         { allow read, write: if isActive(); }
-    match /partner_contacts/{docId}        { allow read, write: if isActive(); }
-    match /employees/{docId}               { allow read, write: if isActive(); }
-    match /assets/{docId}                  { allow read, write: if isActive(); }
+    match /teachings/{docId} {
+      allow read:  if isActive();
+      allow write: if canWriteTeachings();
+    }
+
+    // Member-submitted, head-office-decided. Anyone approved may file one; only
+    // an admin may alter or withdraw what was filed.
+    match /missionary_applications/{docId} {
+      allow read:   if isActive();
+      allow create: if isActive();
+      allow update, delete: if isAdmin();
+    }
+    match /missionary_reports/{docId} {
+      allow read:   if isActive();
+      allow create: if isActive();
+      allow update, delete: if isAdmin();
+    }
+
+    match /documents/{docId} {
+      allow read:  if canReadDocs();
+      allow write: if canWriteDocs();
+    }
+
+    // Head office authors the organisation's strategic plan; everyone reads it.
+    match /strategic_plans/{docId} {
+      allow read:  if isActive();
+      allow write: if isAdmin();
+    }
+
+    // Append-only from the app's side: PartnerContact.tsx only ever addDoc()s an
+    // enquiry. Nothing reads these back except an administrator, and nothing
+    // edits them at all, so the rule now says exactly that.
+    match /partner_contacts/{docId} {
+      allow create: if isActive();
+      allow read:   if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // Employee records, salaries included. This was the sharpest case of the
+    // blanket isActive() rule.
+    match /employees/{docId} {
+      allow read:  if canUseHR();
+      allow write: if canUseHR();
+    }
+    match /assets/{docId} {
+      allow read:  if canUseInventory();
+      allow write: if canUseInventory();
+    }
 
     // NOTE: the old /members/{docId} block was dead — members ARE users
     // (Members.tsx calls userService), so it only ever misled readers.

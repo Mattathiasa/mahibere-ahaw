@@ -30,6 +30,21 @@ export default function AdminRoute({ children, superAdminOnly = false }: AdminRo
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  // The /admin/* routes are not wrapped in ProtectedRoute — AdminRoute is their
+  // only gate — so the suspended-account redirect has to be repeated here.
+  // Without it a suspended administrator kept loading every admin console, and
+  // this check sits ABOVE the super-admin bypass on purpose: suspension has to
+  // mean something for them too.
+  if (user && user.status && user.status !== 'active') {
+    return (
+      <Navigate
+        to="/pending"
+        replace
+        state={{ atbiyaName: user.atbiyaName, atbiyaId: user.atbiyaId }}
+      />
+    );
+  }
+
   // Super Admin always passes
   if (isSuperAdmin) return <>{children}</>;
 

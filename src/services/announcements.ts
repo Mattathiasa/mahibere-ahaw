@@ -110,7 +110,9 @@ export const announcementService = {
           : announcement.content,
         type: 'info' as const,
         link: '/notifications',
-        senderName: author?.name,
+        // No sender here: notificationService stamps senderId/senderName from
+        // the signed-in account, because firestore.rules will only accept a
+        // sender the caller can prove is theirs.
       }))
     );
   },

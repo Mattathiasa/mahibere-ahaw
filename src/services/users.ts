@@ -36,9 +36,50 @@ export interface CreateUserData {
 }
 
 export const userService = {
+  /**
+   * The whole directory, unfiltered.
+   *
+   * Firestore now allows this ONLY for a caller with global scope — every admin
+   * role, plus any role whose scope is 'global'. A parish-scoped caller gets
+   * permission-denied, by design: this used to be readable by anyone holding
+   * canViewMembers, which includes parish-level roles, so a single parish
+   * officer could enumerate every member in the organisation along with their
+   * phone number, date of birth, address and home coordinates.
+   *
+   * Prefer `getUsersInScope` anywhere the caller might not be head office.
+   */
   async getAllUsers() {
     const querySnapshot = await getDocs(collection(db, 'users'));
     const users = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return { users };
+  },
+
+  /**
+   * The directory a caller is actually entitled to see.
+   *
+   * Head office and diocese roles read it all; everyone else reads their own
+   * congregation, which is the `where('atbiyaId','==',…)` equality filter the
+   * list rule needs in order to prove the query. A caller with neither wide
+   * scope nor a parish sees nobody — they have no directory to read.
+   *
+   * Pass `canReadWholeDirectory` and `myAtbiyaId` straight from
+   * `usePermissions()`; they mirror `hasWideDirectoryScope()` in the rules.
+   *
+   * Sorts in memory rather than with `orderBy('fullNameEnglish')`, which would
+   * silently drop every member whose record predates that field.
+   */
+  async getUsersInScope(scope: { wholeDirectory: boolean; atbiyaId?: string }) {
+    if (scope.wholeDirectory) return this.getAllUsers();
+    if (!scope.atbiyaId) return { users: [] as Array<{ id: string }> };
+
+    const snapshot = await getDocs(
+      query(collection(db, 'users'), where('atbiyaId', '==', scope.atbiyaId))
+    );
+    const users = snapshot.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a: any, b: any) =>
+        (a.fullNameEnglish ?? a.fullName ?? '').localeCompare(b.fullNameEnglish ?? b.fullName ?? '')
+      );
     return { users };
   },
 

@@ -43,11 +43,16 @@ const Members = () => {
   const { showElement } = useSoftwareControl();
   const moduleCfg = useModuleConfig('members');
   const { user: currentUser } = useAuth();
-  const { roleKeys, isHeadOffice, myAtbiyaId, roleLabel } = usePermissions();
+  const { roleKeys, isHeadOffice, canReadWholeDirectory, myAtbiyaId, roleLabel } = usePermissions();
 
+  // Scoped, not unfiltered: the directory rule now requires either global scope
+  // or an atbiyaId equality filter, so a parish officer reads their own
+  // congregation rather than the whole organisation. The key carries the scope
+  // so switching accounts cannot serve one parish's roster to another.
   const { data: membersData, isLoading } = useQuery({
-    queryKey: ['members'],
-    queryFn: () => userService.getAllUsers(),
+    queryKey: ['members', canReadWholeDirectory, myAtbiyaId],
+    queryFn: () =>
+      userService.getUsersInScope({ wholeDirectory: canReadWholeDirectory, atbiyaId: myAtbiyaId }),
   });
 
   const createMemberMutation = useMutation({

@@ -45,6 +45,22 @@ const ROLE_FLAGS = {
   memberManagerRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
   directoryRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel', 'HiyawanMahderat'],
   newsRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Atbiya'],
+  // Diocese-scoped roles. Read only by the directory rule, which lets them see
+  // across congregations because their members ARE the congregations' members.
+  zoneScopeRoles: ['Zone'],
+  // ── Module access ────────────────────────────────────────────────────────
+  // Finance, HR, inventory and documents used to be readable AND writable by any
+  // approved account, including the ordinary member role that sign-up assigns.
+  financeReadRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
+  financeWriteRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
+  hrRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
+  inventoryRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
+  documentReadRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel'],
+  documentWriteRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
+  planWriteRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya'],
+  reportWriteRoles: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel'],
+  announcementWriteRoles: ['Sinodos', 'KuamiSinodos', 'Memriya'],
+  teachingWriteRoles: ['Sinodos', 'KuamiSinodos', 'Memriya'],
   allRoleKeys: ['Sinodos', 'KuamiSinodos', 'Memriya', 'Zone', 'Atbiya', 'EnkesekaseMaikel', 'HiyawanMahderat'],
   signupRole: 'HiyawanMahderat',
   updatedAt: '2026-08-01T00:00:00.000Z',
@@ -68,6 +84,11 @@ const signupDoc = (atbiyaId = 'atbiya-bishoftu') => ({
   createdAt: '2026-08-01T00:00:00.000Z',
 });
 
+// 30s, not vitest's default 10s. The first call has to wait out the emulator's
+// JVM cold start, which regularly exceeds 10s on a laptop and fails the whole
+// suite before a single assertion runs.
+const HOOK_TIMEOUT_MS = 30_000;
+
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: PROJECT_ID,
@@ -79,7 +100,7 @@ beforeAll(async () => {
       port: Number(process.env.FIRESTORE_EMULATOR_PORT ?? 8080),
     },
   });
-});
+}, HOOK_TIMEOUT_MS);
 
 afterAll(async () => { await env?.cleanup(); });
 
@@ -130,9 +151,20 @@ beforeEach(async () => {
     });
 
     // ── Parishes ──────────────────────────────────────────────────────────
+    // Public fields only. `bankAccounts` and `contact` live in atbiyaPrivate now
+    // — /hierarchy is readable by anonymous visitors, so anything left here is
+    // published to the internet.
     await setDoc(doc(db, 'hierarchy/atbiya-bishoftu'), {
       name: 'Bishoftu Atbiya', nameAmharic: 'ቢሾፍቱ አጥቢያ', level: 'Atbiya',
-      parentId: 'zone-1', active: true, isPublic: true,
+      parentId: 'zone-1', active: true, isPublic: true, cityEn: 'Bishoftu',
+    });
+    await setDoc(doc(db, 'atbiyaPrivate/atbiya-bishoftu'), {
+      bankAccounts: [{ bankName: 'CBE', accountNumber: '1000123456789' }],
+      contact: { nameEn: 'Parish Secretary', phone: '0911223344' },
+    });
+    await setDoc(doc(db, 'atbiyaPrivate/atbiya-adama'), {
+      bankAccounts: [{ bankName: 'Awash', accountNumber: '01320987654321' }],
+      contact: { nameEn: 'Adama Secretary', phone: '0922334455' },
     });
     await setDoc(doc(db, 'hierarchy/atbiya-adama'), {
       name: 'Adama Atbiya', level: 'Atbiya', parentId: 'zone-1',
@@ -179,10 +211,22 @@ beforeEach(async () => {
       type: 'info', status: 'unread', createdAt: '2026-08-01T00:00:00.000Z',
     });
   });
-});
+}, HOOK_TIMEOUT_MS);
 
 const anon = () => env.unauthenticatedContext().firestore();
-const as = (uid: string) => env.authenticatedContext(uid).firestore();
+
+/**
+ * Signs in as a fixture account.
+ *
+ * The token carries an `email` claim because a real Firebase email/password
+ * token always does, and the `usernames` rules compare against
+ * `request.auth.token.email` — that is what stops a row being pointed at an
+ * address the caller does not own. Without the claim here the harness would
+ * deny writes the app performs successfully in production.
+ */
+const emailFor = (uid: string) => `${uid}@example.com`;
+const as = (uid: string) =>
+  env.authenticatedContext(uid, { email: emailFor(uid) }).firestore();
 
 describe('anonymous visitors', () => {
   it('1. can list parishes with the level==Atbiya filter (sign-up dropdown)', async () => {
@@ -521,12 +565,28 @@ describe('membership approval', () => {
 });
 
 describe('admins and super admins', () => {
-  it('an admin role can write siteConfig', async () => {
-    await assertSucceeds(setDoc(doc(as('admin-1'), 'siteConfig/roles'), { version: 2, roles: [] }));
+  it('an admin role can write ordinary siteConfig documents', async () => {
+    await assertSucceeds(setDoc(doc(as('admin-1'), 'siteConfig/landingPage'), { en: {} }));
+  });
+
+  // Used to be `an admin role can write siteConfig`, asserting exactly the hole
+  // that let any admin promote itself: siteConfig/roles and siteConfig/superAdmins
+  // sat in the same blanket `allow write: if isAdmin()` as the landing page copy.
+  it('an admin role CANNOT write the privilege documents', async () => {
+    await assertFails(setDoc(doc(as('admin-1'), 'siteConfig/roles'), { version: 2, roles: [] }));
+    await assertFails(setDoc(doc(as('admin-1'), 'siteConfig/superAdmins'), { uids: ['admin-1'] }));
+    await assertFails(setDoc(doc(as('admin-1'), 'siteConfig/roleFlags'), ROLE_FLAGS));
+    await assertFails(setDoc(doc(as('admin-1'), 'siteConfig/rolePermissions'), { Sinodos: [] }));
   });
 
   it('a super admin listed in siteConfig/superAdmins can write siteConfig', async () => {
     await assertSucceeds(setDoc(doc(as('super-1'), 'siteConfig/roles'), { version: 2, roles: [] }));
+  });
+
+  it('a super admin can still appoint another super admin', async () => {
+    await assertSucceeds(setDoc(doc(as('super-1'), 'siteConfig/superAdmins'), {
+      uids: ['super-1', 'admin-1'],
+    }));
   });
 
   it('an admin can read the audit log; an ordinary user cannot', async () => {
@@ -550,8 +610,11 @@ describe('roleFlags missing — the anti-lockout fallback', () => {
     });
   });
 
+  // Targets the landing page rather than siteConfig/roles: the privilege
+  // documents are super-admin-only now, which is a separate boundary from the
+  // anti-lockout fallback this block is about.
   it('10. a Sinodos can still write siteConfig via the hardcoded fallback', async () => {
-    await assertSucceeds(setDoc(doc(as('admin-1'), 'siteConfig/roles'), { version: 3, roles: [] }));
+    await assertSucceeds(setDoc(doc(as('admin-1'), 'siteConfig/landingPage'), { en: { hero: 'x' } }));
   });
 
   it('a super admin still gets in', async () => {
@@ -569,9 +632,11 @@ describe('roleFlags missing — the anti-lockout fallback', () => {
   // ownAtbiyaRoles does not exist in any roleFlags document written before this
   // permission was added, so the fallback is what every existing project runs
   // on until an admin re-saves the role registry.
+  // Edits a PUBLIC field. `contact` would now be refused on this document for
+  // everyone, including admins — it belongs in atbiyaPrivate.
   it('a parish leader can still edit their own parish', async () => {
     await assertSucceeds(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
-      contact: { phone: '0938714929' },
+      cityEn: 'Bishoftu Town',
     }));
   });
 
@@ -597,13 +662,13 @@ describe('parish registry', () => {
 
   it('a parish leader can edit their own parish record', async () => {
     await assertSucceeds(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
-      contact: { phone: '0938714929' },
+      cityEn: 'Bishoftu Town',
     }));
   });
 
   it('a parish leader cannot edit a different parish', async () => {
     await assertFails(updateDoc(doc(as('parish-2'), 'hierarchy/atbiya-bishoftu'), {
-      contact: { phone: '0000000000' },
+      cityEn: 'Hijacked',
     }));
   });
 
@@ -691,10 +756,14 @@ describe('notifications are private correspondence', () => {
 
   // Broadcasting an announcement, and approving a membership request, both
   // write notifications addressed to other people.
+  // Addressing someone else is still allowed — that is what a broadcast and a
+  // membership decision both are. The sender fields are now mandatory; see the
+  // H6 block for why.
   it('an approved user creates a notification for somebody else', async () => {
     await assertSucceeds(setDoc(doc(as('admin-1'), 'notifications/n-new'), {
       userId: 'active-1', title: 'Broadcast', message: 'hello',
       type: 'info', status: 'unread', createdAt: '2026-08-02T00:00:00.000Z',
+      senderId: 'admin-1', senderName: 'admin',
     }));
   });
 
@@ -718,8 +787,15 @@ describe('notifications are private correspondence', () => {
 
 describe('username → email rows', () => {
   it('a member manager can write the row for an account it just created', async () => {
+    // The account has to exist first, carrying the username the row spells —
+    // which is the real order of events in atbiyaAdminService.create.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users/newadmin-1'), {
+        username: 'newadmin', hierarchyLevel: 'Atbiya', role: 'user', status: 'active',
+      });
+    });
     await assertSucceeds(setDoc(doc(as('admin-1'), 'usernames/newadmin'), {
-      uid: 'some-other-uid', email: 'newadmin@example.com',
+      uid: 'newadmin-1', email: 'newadmin@example.com',
     }));
   });
 
@@ -741,7 +817,7 @@ describe('username → email rows', () => {
 
   it('a member can still write their own row', async () => {
     await assertSucceeds(setDoc(doc(as('active-1'), 'usernames/active'), {
-      uid: 'active-1', email: 'active@example.com',
+      uid: 'active-1', email: emailFor('active-1'),
     }));
   });
 
@@ -802,6 +878,374 @@ describe('news authoring', () => {
     await assertFails(setDoc(doc(as('active-1'), 'news/nope'), {
       slug: 'nope', status: 'published', scope: 'global',
       atbiyaId: null, authorId: 'active-1', title: { en: 'Nope' },
+    }));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Below: the eight findings from the August 2026 audit.
+//
+//  Each block names the hole it closes, because a rule that looks arbitrary is
+//  a rule someone eventually "simplifies" back open.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('H1 — parish bank accounts are not public', () => {
+  it('THE POINT — an anonymous visitor still lists parishes but gets no bank details', async () => {
+    const db = anon();
+    const snap = await getDocs(
+      query(collection(db, 'hierarchy'), where('level', '==', 'Atbiya'))
+    );
+    // The sign-up dropdown must keep working...
+    if (snap.empty) throw new Error('expected the public parish list to be readable');
+    // ...while carrying nothing private.
+    for (const d of snap.docs) {
+      const data = d.data();
+      if ('bankAccounts' in data || 'contact' in data) {
+        throw new Error(`parish ${d.id} still exposes private fields publicly`);
+      }
+    }
+  });
+
+  it('an anonymous visitor cannot read atbiyaPrivate', async () => {
+    await assertFails(getDoc(doc(anon(), 'atbiyaPrivate/atbiya-bishoftu')));
+    await assertFails(getDocs(collection(anon(), 'atbiyaPrivate')));
+  });
+
+  it('an ordinary member cannot read their own parish\'s bank details', async () => {
+    await assertFails(getDoc(doc(as('member-1'), 'atbiyaPrivate/atbiya-bishoftu')));
+  });
+
+  it('a parish leader reads and writes their OWN private record', async () => {
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'atbiyaPrivate/atbiya-bishoftu')));
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'atbiyaPrivate/atbiya-bishoftu'), {
+      contact: { phone: '0911999888' },
+    }, { merge: true }));
+  });
+
+  it('a parish leader cannot touch another parish\'s private record', async () => {
+    await assertFails(getDoc(doc(as('parish-1'), 'atbiyaPrivate/atbiya-adama')));
+    await assertFails(setDoc(doc(as('parish-1'), 'atbiyaPrivate/atbiya-adama'), {
+      contact: { phone: '0000000000' },
+    }, { merge: true }));
+  });
+
+  it('head office reads every parish\'s private record', async () => {
+    await assertSucceeds(getDocs(collection(as('admin-1'), 'atbiyaPrivate')));
+    await assertSucceeds(getDoc(doc(as('memriya-1'), 'atbiyaPrivate/atbiya-adama')));
+  });
+
+  // This is what protects the migration from a browser tab still running the
+  // pre-split bundle, which would otherwise re-publish what was just moved.
+  it('nobody can write the private fields back onto the public parish doc', async () => {
+    await assertFails(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
+      contact: { phone: '0938714929' },
+    }));
+    await assertFails(updateDoc(doc(as('admin-1'), 'hierarchy/atbiya-bishoftu'), {
+      bankAccounts: [{ bankName: 'CBE', accountNumber: '1' }],
+    }));
+    await assertFails(setDoc(doc(as('admin-1'), 'hierarchy/atbiya-leaky'), {
+      name: 'Leaky', level: 'Atbiya', parentId: 'zone-1',
+      contact: { phone: '0911000000' },
+    }));
+  });
+
+  it('an unrelated edit to an un-migrated parish still works', async () => {
+    // `contact` is present on the stored document; the guard must only refuse
+    // writes that CHANGE it, or every edit to a legacy parish would be denied.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'hierarchy/atbiya-legacy'), {
+        name: 'Legacy Atbiya', level: 'Atbiya', parentId: 'zone-1',
+        contact: { phone: '0911777666' },
+      });
+    });
+    await assertSucceeds(updateDoc(doc(as('admin-1'), 'hierarchy/atbiya-legacy'), {
+      cityEn: 'Somewhere',
+    }));
+  });
+});
+
+describe('H2 — username rows cannot be squatted', () => {
+  it('THE POINT — a fresh account cannot claim a name that is not its own', async () => {
+    // 'parish' is parish-1's username. Without the target check, member-1 could
+    // point it at an address they control and break that account's username
+    // sign-in permanently — repairUsernameMapping refuses to heal a row owned
+    // by another uid, so only an admin could undo it.
+    await assertFails(setDoc(doc(as('member-1'), 'usernames/parish'), {
+      uid: 'member-1', email: emailFor('member-1'),
+    }));
+  });
+
+  it('a row cannot be pointed at an address the caller does not own', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
+      uid: 'member-1', email: 'attacker@evil.example',
+    }));
+  });
+
+  it('a row cannot point at a uid with no user document', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'usernames/ghost'), {
+      uid: 'no-such-user', email: emailFor('member-1'),
+    }));
+  });
+
+  it('extra fields are refused', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
+      uid: 'member-1', email: emailFor('member-1'), role: 'SuperAdmin',
+    }));
+  });
+
+  it('a member CAN write the row matching their own stored username', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'usernames/member'), {
+      uid: 'member-1', email: emailFor('member-1'),
+    }));
+  });
+
+  // changeUsername updates the profile first for exactly this reason.
+  it('a rename works once the profile carries the new name', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'usernames/renamed'), {
+      uid: 'member-1', email: emailFor('member-1'),
+    }));
+    await assertSucceeds(updateDoc(doc(as('member-1'), 'users/member-1'), {
+      username: 'renamed',
+    }));
+    await assertSucceeds(setDoc(doc(as('member-1'), 'usernames/renamed'), {
+      uid: 'member-1', email: emailFor('member-1'),
+    }));
+  });
+});
+
+describe('H4 — the member directory is scoped to a congregation', () => {
+  it('THE POINT — a parish role cannot enumerate the whole organisation', async () => {
+    await assertFails(getDocs(collection(as('parish-1'), 'users')));
+  });
+
+  it('a parish role CAN list its own congregation', async () => {
+    await assertSucceeds(getDocs(
+      query(collection(as('parish-1'), 'users'), where('atbiyaId', '==', 'atbiya-bishoftu'))
+    ));
+  });
+
+  it('a parish role cannot list a DIFFERENT congregation', async () => {
+    await assertFails(getDocs(
+      query(collection(as('parish-1'), 'users'), where('atbiyaId', '==', 'atbiya-adama'))
+    ));
+  });
+
+  it('a parish role cannot read an individual member of another congregation', async () => {
+    await assertFails(getDoc(doc(as('parish-1'), 'users/parish-2')));
+  });
+
+  it('a parish role CAN read a member of its own congregation', async () => {
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'users/member-1')));
+  });
+
+  it('head office still lists everyone', async () => {
+    await assertSucceeds(getDocs(collection(as('admin-1'), 'users')));
+    await assertSucceeds(getDocs(collection(as('memriya-1'), 'users')));
+  });
+
+  // A diocese's members are the members of the congregations under it, and
+  // users/{uid} carries no diocese id — so rules cannot express "in my diocese".
+  // Narrowing these roles too needs that field first.
+  it('a diocese role still lists everyone, deliberately', async () => {
+    await assertSucceeds(getDocs(collection(as('active-1'), 'users')));
+  });
+
+  it('everyone can still read their own record', async () => {
+    await assertSucceeds(getDoc(doc(as('member-1'), 'users/member-1')));
+  });
+});
+
+describe('H5 — finance, HR and inventory are not open to every member', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'finance_transactions/t1'), { amount: 500, type: 'Tithe' });
+      await setDoc(doc(db, 'employees/e1'), { fullName: 'Abebe Kebede', salary: 12000 });
+      await setDoc(doc(db, 'assets/a1'), { name: 'Projector', value: 30000 });
+      await setDoc(doc(db, 'documents/d1'), { title: 'Minutes' });
+      await setDoc(doc(db, 'plans/p1'), { title: 'Q3 plan' });
+      await setDoc(doc(db, 'announcements/an1'), { title: 'Notice' });
+      await setDoc(doc(db, 'teachings/te1'), { title: 'Sermon' });
+    });
+  });
+
+  it('THE POINT — an ordinary member cannot read the employee roster', async () => {
+    await assertFails(getDoc(doc(as('member-1'), 'employees/e1')));
+    await assertFails(getDocs(collection(as('member-1'), 'employees')));
+  });
+
+  it('an ordinary member cannot DELETE the church books', async () => {
+    await assertFails(deleteDoc(doc(as('member-1'), 'finance_transactions/t1')));
+    await assertFails(deleteDoc(doc(as('member-1'), 'employees/e1')));
+    await assertFails(deleteDoc(doc(as('member-1'), 'assets/a1')));
+  });
+
+  it('an ordinary member cannot read or write finance at all', async () => {
+    await assertFails(getDoc(doc(as('member-1'), 'finance_transactions/t1')));
+    await assertFails(setDoc(doc(as('member-1'), 'finance_transactions/t2'), { amount: 1 }));
+  });
+
+  it('an ordinary member cannot alter plans, announcements or teachings', async () => {
+    await assertFails(updateDoc(doc(as('member-1'), 'plans/p1'), { title: 'Hijacked' }));
+    await assertFails(deleteDoc(doc(as('member-1'), 'announcements/an1')));
+    await assertFails(deleteDoc(doc(as('member-1'), 'teachings/te1')));
+  });
+
+  it('an ordinary member can still READ what the membership is meant to see', async () => {
+    await assertSucceeds(getDoc(doc(as('member-1'), 'plans/p1')));
+    await assertSucceeds(getDoc(doc(as('member-1'), 'announcements/an1')));
+    await assertSucceeds(getDoc(doc(as('member-1'), 'teachings/te1')));
+  });
+
+  it('a parish role holding the finance permissions can use finance', async () => {
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'finance_transactions/t1')));
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'finance_transactions/t2'), { amount: 250 }));
+  });
+
+  it('a parish role can use HR and inventory', async () => {
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'employees/e1')));
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'assets/a2'), { name: 'Chairs' }));
+  });
+
+  it('only announcement-writing roles may post an announcement', async () => {
+    await assertSucceeds(setDoc(doc(as('memriya-1'), 'announcements/an2'), { title: 'HQ notice' }));
+    // Atbiya holds no canCreateAnnouncement in DEFAULT_ROLE_PERMISSIONS.
+    await assertFails(setDoc(doc(as('parish-1'), 'announcements/an3'), { title: 'Parish notice' }));
+  });
+
+  it('partner enquiries are append-only and admin-read', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'partner_contacts/pc1'), {
+      name: 'Enquirer', message: 'Hello',
+    }));
+    await assertFails(getDoc(doc(as('member-1'), 'partner_contacts/pc1')));
+    await assertSucceeds(getDoc(doc(as('admin-1'), 'partner_contacts/pc1')));
+  });
+
+  it('a missionary application can be filed by anyone but amended only by an admin', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'missionary_applications/ma1'), {
+      applicantId: 'member-1', status: 'submitted',
+    }));
+    await assertFails(updateDoc(doc(as('member-1'), 'missionary_applications/ma1'), {
+      status: 'approved',
+    }));
+    await assertSucceeds(updateDoc(doc(as('admin-1'), 'missionary_applications/ma1'), {
+      status: 'approved',
+    }));
+  });
+
+  // The fallbacks are what a project runs on until an admin re-saves Software
+  // Control, so they have to TIGHTEN rather than open.
+  describe('with roleFlags absent', () => {
+    beforeEach(async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await deleteDoc(doc(ctx.firestore(), 'siteConfig/roleFlags'));
+      });
+    });
+
+    it('an ordinary member is still refused HR, finance and inventory', async () => {
+      await assertFails(getDoc(doc(as('member-1'), 'employees/e1')));
+      await assertFails(getDoc(doc(as('member-1'), 'finance_transactions/t1')));
+      await assertFails(deleteDoc(doc(as('member-1'), 'assets/a1')));
+    });
+
+    it('a parish role still reaches finance, HR and inventory', async () => {
+      await assertSucceeds(getDoc(doc(as('parish-1'), 'finance_transactions/t1')));
+      await assertSucceeds(getDoc(doc(as('parish-1'), 'employees/e1')));
+      await assertSucceeds(getDoc(doc(as('parish-1'), 'assets/a1')));
+    });
+
+    it('an admin still reaches everything', async () => {
+      await assertSucceeds(getDoc(doc(as('admin-1'), 'employees/e1')));
+      await assertSucceeds(setDoc(doc(as('admin-1'), 'finance_transactions/t3'), { amount: 9 }));
+    });
+  });
+});
+
+describe('H6 — the notification sender cannot be forged', () => {
+  const base = {
+    userId: 'member-1', title: 'Notice', message: 'Body',
+    type: 'info', status: 'unread', createdAt: '2026-08-11T00:00:00.000Z',
+  };
+
+  it('THE POINT — the sender name cannot be a role the caller is not', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'notifications/spoof'), {
+      ...base, senderId: 'member-1', senderName: 'ሲኖዶስ ዘአኀው',
+      link: '/phishing',
+    }));
+  });
+
+  it('the sender id cannot be somebody else', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'notifications/spoof2'), {
+      ...base, senderId: 'admin-1', senderName: 'admin',
+    }));
+  });
+
+  it('a notification with no sender at all is refused', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'notifications/nosender'), base));
+  });
+
+  it('an approved member CAN send under their own stored name', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'notifications/ok'), {
+      ...base, userId: 'parish-1', senderId: 'member-1', senderName: 'member',
+    }));
+  });
+
+  it('an unattributed notification is allowed', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'notifications/anon'), {
+      ...base, userId: 'parish-1', senderId: 'member-1', senderName: '',
+    }));
+  });
+
+  it('extra fields are refused', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'notifications/extra'), {
+      ...base, senderId: 'member-1', senderName: 'member', isAdminBroadcast: true,
+    }));
+  });
+
+  it('a pending account still cannot send at all', async () => {
+    await assertFails(setDoc(doc(as('pending-1'), 'notifications/nope'), {
+      ...base, senderId: 'pending-1', senderName: 'pending',
+    }));
+  });
+});
+
+describe('H7 — suspension revokes a super admin', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      // Super admin by the `role` FIELD, suspended.
+      await setDoc(doc(db, 'users/super-field'), {
+        username: 'superfield', hierarchyLevel: 'HiyawanMahderat',
+        role: 'SuperAdmin', status: 'suspended',
+      });
+      // Super admin by the UID LIST, suspended — the break-glass path.
+      await setDoc(doc(db, 'users/super-listed'), {
+        username: 'superlisted', hierarchyLevel: 'HiyawanMahderat',
+        role: 'user', status: 'suspended',
+      });
+      await setDoc(doc(db, 'siteConfig/superAdmins'), { uids: ['super-1', 'super-listed'] });
+      await setDoc(doc(db, 'users/admin-suspended'), {
+        username: 'adminsus', hierarchyLevel: 'Sinodos', role: 'user', status: 'suspended',
+      });
+    });
+  });
+
+  it('THE POINT — a suspended role:SuperAdmin loses everything', async () => {
+    await assertFails(setDoc(doc(as('super-field'), 'siteConfig/roles'), { version: 9, roles: [] }));
+    await assertFails(getDocs(collection(as('super-field'), 'users')));
+    await assertFails(getDoc(doc(as('super-field'), 'employees/e-none')));
+  });
+
+  it('a suspended admin role loses everything too', async () => {
+    await assertFails(setDoc(doc(as('admin-suspended'), 'siteConfig/landingPage'), { en: {} }));
+    await assertFails(getDocs(collection(as('admin-suspended'), 'users')));
+  });
+
+  // Kept on purpose: a corrupted status field must not make the project
+  // unrecoverable from inside the app.
+  it('the uid-list escape hatch still survives suspension', async () => {
+    await assertSucceeds(setDoc(doc(as('super-listed'), 'siteConfig/roles'), {
+      version: 9, roles: [],
     }));
   });
 });

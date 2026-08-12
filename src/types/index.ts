@@ -103,6 +103,17 @@ export interface Notification {
   /** Optional translations, shown when the UI language is Amharic. */
   titleAmharic?: string;
   messageAmharic?: string;
+  /**
+   * The sender's uid. Stamped by `notificationService`, and firestore.rules
+   * requires it to equal the caller's own uid — so unlike the name it once sat
+   * beside, this cannot be forged.
+   */
+  senderId?: string;
+  /**
+   * The sender's display name at send time. Still denormalised, because a
+   * recipient usually cannot read the sender's profile — but the rules now pin
+   * it to a name the sender's own record holds.
+   */
   senderName?: string;
   attachments?: string[];
 }

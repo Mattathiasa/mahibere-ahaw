@@ -10,7 +10,8 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  writeBatch
 } from 'firebase/firestore';
 import { auditLogService } from '@/services/auditLog';
 
@@ -35,6 +36,57 @@ export interface AtbiyaContact {
   phone?: string;
   phone2?: string;
   email?: string;
+}
+
+/**
+ * The parish fields that are NOT world-readable.
+ *
+ * `/hierarchy` is deliberately readable by anonymous visitors so the public
+ * sign-up dropdown works without an account. That was safe for a parish name.
+ * It was not safe once the records grew to hold bank account numbers and parish
+ * leaders' phone numbers — anyone could run `where('level','==','Atbiya')` and
+ * dump the registry.
+ *
+ * Firestore rules cannot project fields, so the only way a public read stays
+ * safe is for the public document to hold nothing private. These two live in
+ * `atbiyaPrivate/{atbiyaId}` instead, keyed by the same hierarchy doc id.
+ *
+ * They stay on the `Atbiya` type: the forms and cards work with one object, and
+ * the service is what splits and rejoins it. Anything sensitive added later
+ * belongs in this list.
+ */
+export interface AtbiyaPrivate {
+  bankAccounts?: AtbiyaBankAccount[];
+  contact?: AtbiyaContact;
+}
+
+const PRIVATE_KEYS = ['bankAccounts', 'contact'] as const;
+
+/** Splits a parish payload into its public document and its private one. */
+function splitAtbiya<T extends Partial<AtbiyaPrivate>>(
+  data: T
+): { publicPart: Omit<T, keyof AtbiyaPrivate>; privatePart: AtbiyaPrivate; hasPrivate: boolean } {
+  const publicPart = { ...data } as Record<string, unknown>;
+  const privatePart: AtbiyaPrivate = {};
+  let hasPrivate = false;
+
+  for (const key of PRIVATE_KEYS) {
+    if (key in publicPart) {
+      // `undefined` is not writable to Firestore and an absent key must stay
+      // absent, so only a present value crosses over.
+      if (publicPart[key] !== undefined) {
+        (privatePart as Record<string, unknown>)[key] = publicPart[key];
+        hasPrivate = true;
+      }
+      delete publicPart[key];
+    }
+  }
+
+  return {
+    publicPart: publicPart as Omit<T, keyof AtbiyaPrivate>,
+    privatePart,
+    hasPrivate,
+  };
 }
 
 export interface Atbiya {
@@ -185,24 +237,88 @@ export const hierarchyService = {
     return all.filter((a) => a.isPublic !== false);
   },
 
+  /**
+   * Every parish WITH its bank accounts and contacts rejoined.
+   *
+   * Reading `atbiyaPrivate` as a collection needs global scope or the parish
+   * registry permission, which is exactly who the registry page is for. For
+   * anyone else the list is denied and the parishes come back with their public
+   * fields only — the page still works, it just shows less.
+   */
+  getAtbiyasWithPrivate: async (includeInactive = false): Promise<Atbiya[]> => {
+    const [all, privateById] = await Promise.all([
+      hierarchyService.getAtbiyas(includeInactive),
+      hierarchyService.getAtbiyaPrivateMap(),
+    ]);
+    return all.map((a) => ({ ...a, ...(privateById.get(a.id) ?? {}) }));
+  },
+
+  /**
+   * Private parish fields keyed by parish id. Returns an empty map rather than
+   * throwing when the caller may not read the collection, so a merge site never
+   * has to care whether it is head office or a single parish.
+   */
+  getAtbiyaPrivateMap: async (): Promise<Map<string, AtbiyaPrivate>> => {
+    try {
+      const snap = await getDocs(collection(db, 'atbiyaPrivate'));
+      return new Map(snap.docs.map((d) => [d.id, d.data() as AtbiyaPrivate]));
+    } catch {
+      return new Map();
+    }
+  },
+
   getAtbiyaById: async (id: string): Promise<Atbiya | null> => {
     const snap = await getDoc(doc(db, 'hierarchy', id));
-    return snap.exists() ? ({ id: snap.id, ...snap.data() } as Atbiya) : null;
+    if (!snap.exists()) return null;
+
+    // Denied for a parish asking about someone else's record, and for anonymous
+    // traffic. Both are legitimate reads of the public half, so the failure is
+    // absorbed rather than surfaced.
+    let priv: AtbiyaPrivate = {};
+    try {
+      const privSnap = await getDoc(doc(db, 'atbiyaPrivate', id));
+      if (privSnap.exists()) priv = privSnap.data() as AtbiyaPrivate;
+    } catch { /* public half only */ }
+
+    return { id: snap.id, ...snap.data(), ...priv } as Atbiya;
   },
 
   createAtbiya: async (data: AtbiyaInput): Promise<Atbiya> => {
-    const payload = { ...data, level: 'Atbiya' as const };
-    const docRef = await addDoc(collection(db, 'hierarchy'), {
-      ...payload,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    auditLogService.dataChange('create', 'hierarchy', docRef.id, `Registered parish ${data.name}`);
-    return { id: docRef.id, ...payload };
+    const { publicPart, privatePart, hasPrivate } = splitAtbiya(data);
+    const payload = { ...publicPart, level: 'Atbiya' as const };
+
+    // The id is generated client-side rather than by addDoc so both documents
+    // can be written in one batch — a parish must never exist with its bank
+    // details stranded, or vice versa.
+    const ref = doc(collection(db, 'hierarchy'));
+    const batch = writeBatch(db);
+    batch.set(ref, { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    if (hasPrivate) {
+      batch.set(doc(db, 'atbiyaPrivate', ref.id), { ...privatePart, updatedAt: serverTimestamp() });
+    }
+    await batch.commit();
+
+    auditLogService.dataChange('create', 'hierarchy', ref.id, `Registered parish ${data.name}`);
+    return { id: ref.id, ...payload, ...privatePart } as Atbiya;
   },
 
   updateAtbiya: async (id: string, data: Partial<AtbiyaInput>): Promise<void> => {
-    await updateDoc(doc(db, 'hierarchy', id), { ...data, updatedAt: serverTimestamp() });
+    const { publicPart, privatePart, hasPrivate } = splitAtbiya(data);
+
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'hierarchy', id), { ...publicPart, updatedAt: serverTimestamp() });
+    if (hasPrivate) {
+      // merge, so an edit that touches only the contact block does not blank the
+      // bank accounts. Arrays are replaced wholesale, which is what removing a
+      // bank account needs.
+      batch.set(
+        doc(db, 'atbiyaPrivate', id),
+        { ...privatePart, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+    }
+    await batch.commit();
+
     auditLogService.dataChange('update', 'hierarchy', id, `Updated parish ${data.name ?? id}`);
   },
 

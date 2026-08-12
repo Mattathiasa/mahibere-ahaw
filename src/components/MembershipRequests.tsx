@@ -31,7 +31,8 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
   const { user } = useAuth();
   const { formatDate } = useFormatters();
   const {
-    can, isHeadOffice, myAtbiyaId, roles, roleLabel, isApproverRole, isSuperAdmin,
+    can, isHeadOffice, canReadWholeDirectory, myAtbiyaId, roles, roleLabel,
+    isApproverRole, isSuperAdmin,
   } = usePermissions();
   const { showElement } = useSoftwareControl();
   const { t } = useLanguage();
@@ -79,7 +80,15 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
     setLoading(true);
     setError(null);
     try {
-      setRequests(await membershipRequestService.listPending(isHeadOffice ? undefined : myAtbiyaId));
+      // canReadWholeDirectory, not isHeadOffice: a diocese officer oversees
+      // several congregations, and passing their own (often empty) atbiyaId
+      // would show them one parish's queue or none at all. This mirrors
+      // hasWideDirectoryScope() in firestore.rules.
+      setRequests(
+        await membershipRequestService.listPending(
+          canReadWholeDirectory ? undefined : myAtbiyaId
+        )
+      );
     } catch (e) {
       setError(
         e instanceof Error && e.message.includes('index')
@@ -90,7 +99,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
     } finally {
       setLoading(false);
     }
-  }, [isHeadOffice, myAtbiyaId, a]);
+  }, [canReadWholeDirectory, myAtbiyaId, a]);
 
   useEffect(() => {
     if (mayApprove) load();
@@ -101,7 +110,7 @@ export const MembershipRequests: React.FC<{ compact?: boolean }> = ({ compact = 
 
   // A parish-scoped approver with no parish assigned would query for '' and
   // always get nothing — say so rather than showing a misleading empty state.
-  const missingParish = !isHeadOffice && !myAtbiyaId;
+  const missingParish = !canReadWholeDirectory && !myAtbiyaId;
 
   async function handleApprove(req: MembershipRequest) {
     setBusyId(req.id);

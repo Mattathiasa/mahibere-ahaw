@@ -62,6 +62,18 @@ export interface RoleFlags {
   adminRoles: string[];
   approverRoles: string[];
   globalScopeRoles: string[];
+  /**
+   * Roles whose scope is a diocese — several congregations, but not the whole
+   * organisation.
+   *
+   * Read by the directory rule only. A diocese's members are the members of the
+   * congregations beneath it, and `users/{uid}` carries no diocese id, so rules
+   * cannot express "in my diocese" without a subquery they are not capable of.
+   * Until that field exists these roles keep organisation-wide directory read.
+   * The exposure that mattered was parish-level roles enumerating everyone, and
+   * that is what the scoping closes.
+   */
+  zoneScopeRoles: string[];
   /** May register a parish and edit ANY parish record. Head office. */
   atbiyaManagerRoles: string[];
   /** May edit only the parish the account belongs to. */
@@ -69,6 +81,32 @@ export interface RoleFlags {
   memberManagerRoles: string[];
   directoryRoles: string[];
   newsRoles: string[];
+
+  // ── Module access ────────────────────────────────────────────────────────
+  // These exist because every one of the collections below used to be
+  // `allow read, write: if isActive()` — so the ordinary member role that
+  // self-sign-up assigns could read, alter and DELETE every financial
+  // transaction, the whole employee roster and every asset record. The
+  // canViewFinance / canViewHR / canAddTransaction permissions gating those
+  // pages were only ever a UI boundary.
+  //
+  // Read and write are separate flags wherever the permission set distinguishes
+  // them. HR and inventory have no edit permission of their own, so one flag
+  // governs both — still a large tightening over "any approved account".
+  /** finance_transactions, finance_budgets, finance_reports, finance_requisitions. */
+  financeReadRoles: string[];
+  financeWriteRoles: string[];
+  /** employees — HR records, including salary. */
+  hrRoles: string[];
+  /** assets. */
+  inventoryRoles: string[];
+  documentReadRoles: string[];
+  documentWriteRoles: string[];
+  planWriteRoles: string[];
+  reportWriteRoles: string[];
+  announcementWriteRoles: string[];
+  teachingWriteRoles: string[];
+
   allRoleKeys: string[];
   /** Role assigned to self-service sign-ups. */
   signupRole: string;
@@ -172,11 +210,24 @@ export function deriveFlags(roles: Role[], signupRole = DEFAULT_SIGNUP_ROLE): Ro
       .filter((r) => r.canApproveMembers || r.permissions.includes('canApproveMembers'))
       .map((r) => r.key),
     globalScopeRoles: active.filter((r) => r.scope === 'global').map((r) => r.key),
+    zoneScopeRoles: active.filter((r) => r.scope === 'zone').map((r) => r.key),
     atbiyaManagerRoles: withPerm('canManageAtbiyas'),
     ownAtbiyaRoles: withPerm('canEditOwnAtbiya'),
     memberManagerRoles: withPerm('canAddMembers'),
     directoryRoles: withPerm('canViewMembers'),
     newsRoles: withPerm('canManageNews'),
+
+    financeReadRoles: withPerm('canViewFinance'),
+    financeWriteRoles: withPerm('canAddTransaction'),
+    hrRoles: withPerm('canViewHR'),
+    inventoryRoles: withPerm('canViewInventory'),
+    documentReadRoles: withPerm('canViewDocuments'),
+    documentWriteRoles: withPerm('canUploadDocuments'),
+    planWriteRoles: withPerm('canCreatePlan'),
+    reportWriteRoles: withPerm('canCreateReport'),
+    announcementWriteRoles: withPerm('canCreateAnnouncement'),
+    teachingWriteRoles: withPerm('canCreateTeaching'),
+
     allRoleKeys: roles.map((r) => r.key),
     signupRole,
     updatedAt: new Date().toISOString(),

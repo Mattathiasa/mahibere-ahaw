@@ -1,4 +1,5 @@
-import { auth, db } from '@/lib/firebase';
+import app, { auth, db } from '@/lib/firebase';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { AppError } from '@/lib/appError';
 import {
   signInWithEmailAndPassword,
@@ -27,14 +28,7 @@ export const authService = {
     // deterministic fallback keeps every pre-existing account working, since
     // those were all created with a synthetic @mahibereahaw.local address.
     if (!email.includes('@')) {
-      const typed = email;
-      const deterministic = `${typed.toLowerCase().replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
-      try {
-        const mapped = await getDoc(doc(db, 'usernames', typed.toLowerCase()));
-        email = (mapped.exists() && (mapped.data().email as string)) || deterministic;
-      } catch {
-        email = deterministic;
-      }
+      email = await this.resolveEmail(email);
     }
 
     let userCredential;
@@ -274,8 +268,19 @@ export const authService = {
    * Sign-in survives because `login` resolves the typed name through
    * `usernames/{name}`, so the new row carries the account's REAL current email.
    *
-   * Ordered so a failure never leaves the account unreachable: the new row
-   * exists before the old one is removed.
+   * Ordered `users` doc FIRST, then the new row, then the old one.
+   *
+   * That order is now forced: firestore.rules requires a `usernames` row to
+   * spell the stored username of the account it points at — the check that makes
+   * name-squatting impossible — so the profile has to carry the new name before
+   * the row can be written.
+   *
+   * If the row write then fails, the account is renamed with no row. Sign-in by
+   * the new name falls back to the deterministic @mahibereahaw.local address,
+   * which works for any account that never attached a recovery email; the rest
+   * can still sign in with their email, and `repairUsernameMapping` writes the
+   * missing row on that next sign-in. The old row is removed last, so nothing is
+   * released until the replacement is in place.
    */
   async changeUsername(next: string): Promise<void> {
     const firebaseUser = auth.currentUser;
@@ -296,14 +301,14 @@ export const authService = {
     }
 
     try {
+      await updateDoc(doc(db, 'users', firebaseUser.uid), {
+        username: trimmed,
+        updatedAt: new Date().toISOString(),
+      });
       await setDoc(doc(db, 'usernames', trimmed.toLowerCase()), {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         createdAt: serverTimestamp(),
-      });
-      await updateDoc(doc(db, 'users', firebaseUser.uid), {
-        username: trimmed,
-        updatedAt: new Date().toISOString(),
       });
     } catch {
       throw new AppError('usernameSaveFailed');
@@ -324,13 +329,39 @@ export const authService = {
   // free on the Spark plan. Nothing here needs Cloud Functions or the Admin
   // SDK, which the project deliberately avoids.
 
-  /** The address a username signs in with. Readable before sign-in. */
+  /**
+   * The address a username signs in with. Resolvable before sign-in.
+   *
+   * Tries the `resolveLoginEmail` Cloud Function first and falls back to reading
+   * `usernames/{name}` directly. Both paths exist on purpose: the callable is
+   * what lets that collection stop being world-readable (it currently leaks
+   * members' real email addresses to anyone who guesses a username), but until
+   * it is deployed the direct read is the only thing that works. Having both
+   * means the function and the rule change can ship in either order without
+   * locking anyone out of their account.
+   *
+   * Remove the fallback once `allow get` on /usernames is closed.
+   */
   async resolveEmail(usernameOrEmail: string): Promise<string> {
     const typed = usernameOrEmail.trim();
     if (typed.includes('@')) return typed;
-    const deterministic = `${typed.toLowerCase().replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
+
+    const key = typed.toLowerCase();
+    const deterministic = `${key.replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
+
     try {
-      const mapped = await getDoc(doc(db, 'usernames', typed.toLowerCase()));
+      const resolve = httpsCallable<{ username: string }, { email: string | null }>(
+        getFunctions(app),
+        'resolveLoginEmail'
+      );
+      const { data } = await resolve({ username: key });
+      return data.email || deterministic;
+    } catch {
+      // Not deployed, offline, or throttled — fall through to the direct read.
+    }
+
+    try {
+      const mapped = await getDoc(doc(db, 'usernames', key));
       return (mapped.exists() && (mapped.data().email as string)) || deterministic;
     } catch {
       return deterministic;

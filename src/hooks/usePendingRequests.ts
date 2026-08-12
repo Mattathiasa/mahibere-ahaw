@@ -19,18 +19,19 @@ import { useAuth } from '@/hooks/useAuth';
  */
 export function usePendingRequests() {
   const { user } = useAuth();
-  const { can, isHeadOffice, myAtbiyaId, isSuperAdmin, isApproverRole } = usePermissions();
+  const { can, canReadWholeDirectory, myAtbiyaId, isSuperAdmin, isApproverRole } = usePermissions();
 
   // Same test MembershipRequests uses, so the badge and the queue never disagree.
   const mayApprove =
     isSuperAdmin || can('canApproveMembers') || isApproverRole(user?.hierarchyLevel);
   // A parish-scoped approver with no parish would count every parish's
   // requests, which is not theirs to see.
-  const enabled = !!user && mayApprove && (isHeadOffice || !!myAtbiyaId);
+  const enabled = !!user && mayApprove && (canReadWholeDirectory || !!myAtbiyaId);
 
   const { data = 0, refetch } = useQuery({
-    queryKey: ['membership-requests', 'count', isHeadOffice ? 'all' : myAtbiyaId],
-    queryFn: () => membershipRequestService.countPending(isHeadOffice ? undefined : myAtbiyaId),
+    queryKey: ['membership-requests', 'count', canReadWholeDirectory ? 'all' : myAtbiyaId],
+    queryFn: () =>
+      membershipRequestService.countPending(canReadWholeDirectory ? undefined : myAtbiyaId),
     refetchInterval: 60_000,
     enabled,
   });
