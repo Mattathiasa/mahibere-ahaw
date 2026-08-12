@@ -18,6 +18,7 @@ import {
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseConfig } from '@/lib/firebase';
+import { syntheticEmail } from '@/services/signup';
 
 export interface CreateUserData {
   email: string;
@@ -89,19 +90,26 @@ export const userService = {
 
     try {
       const username = userData.username || `user${Date.now()}`;
-      const email = userData.email || `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
       const password = userData.password;
-      
+
       if (!password) {
         throw new AppError('passwordRequired');
       }
 
-      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      // The SIGN-IN address is always synthetic, never the address the admin
+      // typed. Username sign-in has to resolve a typed name to an address before
+      // there is an account to authorise, which meant a real address had to be
+      // written into the world-readable `usernames/{name}` document. A synthetic
+      // address is derivable from the username, so nothing personal needs
+      // publishing; the typed address stays below as profile data.
+      const loginEmail = syntheticEmail(username);
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, loginEmail, password);
       const id = userCredential.user.uid;
 
       const dataToSave = {
         ...userData,
-        email,
+        // Contact address, not the sign-in address.
+        email: userData.email ?? '',
         username,
         role: userData.role || 'user',
         // Admin-created accounts are usable immediately — only self-service

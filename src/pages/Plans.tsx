@@ -317,14 +317,19 @@ const Plans = () => {
                     >
                       Explore Strategy
                     </Button>
-                    <Button
-                      variant="destructive"
-                      className="h-14 w-14 rounded-2xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white transition-all duration-300 border-none group"
-                      onClick={() => handleDelete(plan.id, plan.name)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                    </Button>
+                    {/* canDeletePlan was declared, editable in Permission
+                        Control, and checked nowhere — the button showed for every
+                        role that could see the page. */}
+                    {rolePerms.canDeletePlan && (
+                      <Button
+                        variant="destructive"
+                        className="h-14 w-14 rounded-2xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white transition-all duration-300 border-none group"
+                        onClick={() => handleDelete(plan.id, plan.name)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

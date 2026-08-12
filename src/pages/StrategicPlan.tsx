@@ -18,14 +18,26 @@ const StrategicPlan = () => {
         queryFn: () => strategicPlanService.getAllGoals(),
     });
 
-    // Mock data if no backend data yet
-    const mockGoals = [
+    /**
+     * The organisation's published vision, shown when no goals have been recorded
+     * in Firestore yet.
+     *
+     * These two carried invented PROGRESS until now — `currentValue: 1200000` of
+     * `targetValue: 50000000` — and the page drew a percentage, a five-dot
+     * indicator and an animated bar from it. Nobody had measured any of that, and
+     * it read as tracked reality on a page a leader might quote from.
+     *
+     * The titles and target years are real published content and stay. The
+     * progress numbers are gone, and `currentValue: null` is what tells the render
+     * below to say so plainly.
+     */
+    const publishedVision = [
         {
             id: 1,
             title: pg.goalMembersTitle,
             description: pg.goalMembersDesc,
             targetYear: 2075,
-            currentValue: 1200000,
+            currentValue: null,
             targetValue: 50000000,
             unit: 'Members',
         },
@@ -34,13 +46,13 @@ const StrategicPlan = () => {
             title: pg.goalChurchesTitle,
             description: pg.goalChurchesDesc,
             targetYear: 2030,
-            currentValue: 2450,
+            currentValue: null,
             targetValue: 10000,
             unit: 'Churches',
         }
     ];
 
-    const displayGoals = goals && goals.length > 0 ? goals : mockGoals;
+    const displayGoals = goals && goals.length > 0 ? goals : publishedVision;
 
     return (
         <div className="space-y-12 animate-in fade-in duration-700 ease-out pb-20">
@@ -53,7 +65,13 @@ const StrategicPlan = () => {
 
             <div className="grid gap-10">
                 {displayGoals.map((goal: any, i: number) => {
-                    const percentage = Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100));
+                    // null when progress has never been recorded, so the page can
+                    // say that instead of drawing a 0% bar that looks measured.
+                    const tracked =
+                        typeof goal.currentValue === 'number' && goal.targetValue > 0;
+                    const percentage = tracked
+                        ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100))
+                        : null;
 
                     return (
                         <motion.div
@@ -91,41 +109,49 @@ const StrategicPlan = () => {
 
                                 <CardContent className="p-10 bg-gradient-to-b from-transparent to-[#2E5E99]/5">
                                     <div className="space-y-8">
-                                        <div className="flex items-end justify-between gap-4">
-                                            <div className="space-y-1">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">{t('progressToDate')}</p>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-6xl font-black text-[#0D2440] dark:text-white tracking-tighter">{percentage}%</span>
-                                                    <div className="h-10 w-10 p-2 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center animate-bounce">
-                                                        <TrendingUp className="h-6 w-6" />
+                                        {percentage !== null ? (
+                                          <>
+                                            <div className="flex items-end justify-between gap-4">
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">{t('progressToDate')}</p>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-6xl font-black text-[#0D2440] dark:text-white tracking-tighter">{percentage}%</span>
+                                                        <div className="h-10 w-10 p-2 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center animate-bounce">
+                                                            <TrendingUp className="h-6 w-6" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="hidden sm:block text-right">
+                                                    <p className="text-sm font-bold opacity-60 italic mb-2">{pg.steadyGrowth}</p>
+                                                    <div className="flex gap-2">
+                                                        {[1, 2, 3, 4, 5].map(dot => (
+                                                            <div key={dot} className={`h-2 w-2 rounded-full ${percentage >= dot * 20 ? 'bg-emerald-500' : 'bg-[#2E5E99]/10'}`} />
+                                                        ))}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="hidden sm:block text-right">
-                                                <p className="text-sm font-bold opacity-60 italic mb-2">{pg.steadyGrowth}</p>
-                                                <div className="flex gap-2">
-                                                    {[1, 2, 3, 4, 5].map(dot => (
-                                                        <div key={dot} className={`h-2 w-2 rounded-full ${percentage >= dot * 20 ? 'bg-emerald-500' : 'bg-[#2E5E99]/10'}`} />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="relative pt-4">
-                                            <Progress value={percentage} className="h-6 rounded-full bg-[#2E5E99]/10" />
-                                            {/* Glowing indicator */}
-                                            <motion.div
-                                                className="absolute top-4 left-0 h-6 bg-gradient-to-r from-transparent to-white/40 rounded-full"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${percentage}%` }}
-                                                transition={{ duration: 1.5, ease: 'easeOut' }}
-                                            />
-                                        </div>
+                                            <div className="relative pt-4">
+                                                <Progress value={percentage} className="h-6 rounded-full bg-[#2E5E99]/10" />
+                                                {/* Glowing indicator */}
+                                                <motion.div
+                                                    className="absolute top-4 left-0 h-6 bg-gradient-to-r from-transparent to-white/40 rounded-full"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${percentage}%` }}
+                                                    transition={{ duration: 1.5, ease: 'easeOut' }}
+                                                />
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <p className="text-sm font-semibold italic text-[#0D2440]/50 dark:text-white/40">
+                                            {pg.goalProgressUntracked}
+                                          </p>
+                                        )}
 
                                         <div className="grid grid-cols-2 gap-8 pt-6">
                                             <div className="p-8 rounded-[2.5rem] bg-white/60 dark:bg-slate-800/60 border border-white/40 shadow-lg group-hover:translate-y-[-4px] transition-transform duration-500">
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60 mb-2">{t('current')} {goal.unit}</p>
-                                                <p className="text-4xl font-black text-[#0D2440] dark:text-white tracking-tighter">{goal.currentValue.toLocaleString()}</p>
+                                                <p className="text-4xl font-black text-[#0D2440] dark:text-white tracking-tighter">{typeof goal.currentValue === 'number' ? goal.currentValue.toLocaleString() : '—'}</p>
                                             </div>
                                             <div className="p-8 rounded-[2.5rem] bg-[#2E5E99] text-white shadow-xl shadow-[#2E5E99]/20 group-hover:translate-y-[-4px] transition-transform duration-500 delay-75">
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">{t('target')} {goal.unit}</p>

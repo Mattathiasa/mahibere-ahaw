@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { userService } from '@/services/users';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/hooks/useTranslation';
+import { usePermissions } from '@/contexts/PermissionContext';
 
 interface User {
   id: string;
@@ -44,15 +45,32 @@ export function RecipientSelector({
   maxRecipients = 10,
 }: RecipientSelectorProps) {
   const { t, language } = useTranslation();
+  const { canReadWholeDirectory, myAtbiyaId } = usePermissions();
   const [open, setOpen] = useState(false);
 
-  // Get users by hierarchy level
-  const { data: usersData, isLoading } = useQuery({
-    queryKey: ['users', 'by-hierarchy', hierarchyLevel],
-    queryFn: () => userService.getUsersByHierarchyLevel(hierarchyLevel),
+  /**
+   * Candidates this account may actually see.
+   *
+   * Two bugs met here. The list was read from `usersData?.users`, but
+   * `getUsersByHierarchyLevel` returns a bare ARRAY — so `users` was always `[]`
+   * and this picker has been permanently empty everywhere it is used (Finance's
+   * three dialogs and Plans).
+   *
+   * Fixing the shape alone would not have been enough: that query filtered on
+   * `hierarchyLevel` only, and the member directory rule now requires either wide
+   * scope or an `atbiyaId` equality filter, so it would have gone from silently
+   * empty to permission-denied. Reading the scoped directory and filtering by role
+   * in memory satisfies both — the same trade `atbiyaAdminService.list` makes.
+   */
+  const { data: scoped, isLoading } = useQuery({
+    queryKey: ['users', 'in-scope', canReadWholeDirectory, myAtbiyaId],
+    queryFn: () =>
+      userService.getUsersInScope({ wholeDirectory: canReadWholeDirectory, atbiyaId: myAtbiyaId }),
   });
 
-  const users = usersData?.users || [];
+  const users: User[] = ((scoped?.users ?? []) as User[]).filter(
+    (u) => !hierarchyLevel || u.hierarchyLevel === hierarchyLevel
+  );
   const selectedUsers = users.filter((user: User) => value.includes(user.id));
 
   const handleSelect = (userId: string) => {

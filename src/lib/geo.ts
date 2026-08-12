@@ -83,14 +83,20 @@ export function parseMapUrl(url: string): LatLng | null {
  * than dropped: a group that nobody has pinned yet still exists and a member
  * should still be able to choose it.
  */
-export function byDistanceFrom<T extends Partial<LatLng>>(
+// Constrained to `object`, not `Partial<LatLng>`. Every property of
+// `Partial<LatLng>` is optional, which makes it a WEAK type: TypeScript then
+// rejects any argument sharing no property with it, so an unpinned
+// `{ id: 'unpinned' }` — the exact case this function exists to handle — was a
+// type error at every call site. Six of the twenty-four baseline errors were this
+// one signature.
+export function byDistanceFrom<T extends object>(
   origin: LatLng,
-  items: T[]
+  items: readonly T[]
 ): Array<T & { km: number | null }> {
   return items
     .map((item) => ({
       ...item,
-      km: hasCoords(item) ? haversineKm(origin, item) : null,
+      km: hasCoords(item as Partial<LatLng>) ? haversineKm(origin, item as LatLng) : null,
     }))
     .sort((a, b) => {
       if (a.km === null && b.km === null) return 0;

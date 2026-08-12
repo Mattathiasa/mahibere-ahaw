@@ -47,6 +47,9 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
       plannedIncome: '',
       plannedExpenses: '',
       notes: '',
+      // `attachments` was omitted, so submitting a budget left the previous
+      // submission's files attached to a form that looked empty.
+      attachments: [],
       recipients: [],
     });
   };

@@ -13,7 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { usePermissions } from '@/contexts/PermissionContext';
-import { getTransactions, getBudgets, getFinancialReports, getMemberTithes, DEFAULT_CHURCH_BANKS, MemberTithe } from '@/services/finance';
+import { getTransactions, getBudgets, getFinancialReports, getMemberTithes, MemberTithe } from '@/services/finance';
 import { userService } from '@/services/users';
 import { hierarchyService } from '@/services/hierarchy';
 import { dashboardService } from '@/services/dashboard';
@@ -43,6 +43,10 @@ export default function Finance() {
   const [reports, setReports] = useState<FinancialReport[]>([]);
   const [tithes, setTithes] = useState<MemberTithe[]>([]);
   const [loading, setLoading] = useState(true);
+  // Set when Firestore refuses the finance collections. Without this the page
+  // rendered every total as 0 ETB, which reads as "the church has no money"
+  // rather than "you are not allowed to see this".
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // System counts
   const [totalMembersCount, setTotalMembersCount] = useState<number>(0);
@@ -68,7 +72,10 @@ export default function Finance() {
   const { canReadWholeDirectory, myAtbiyaId } = usePermissions();
   const canAddTransaction = financePerms.canAddTransaction && showElement('finance.addTransaction');
   const canCreateBudget = financePerms.canCreateBudget && showElement('finance.createBudget');
-  const canGenerateReport = showElement('finance.generateReport');
+  // Both gates: the role must hold the permission AND Software Control must not
+  // have hidden the button. canGenerateFinancialReport was checked nowhere.
+  const canGenerateReport =
+    financePerms.canGenerateFinancialReport && showElement('finance.generateReport');
 
   useEffect(() => {
     loadData();
@@ -100,7 +107,9 @@ export default function Finance() {
         userService
           .getUsersInScope({ wholeDirectory: canReadWholeDirectory, atbiyaId: myAtbiyaId })
           .catch(() => ({ users: [] })),
-        dashboardService.getDashboardData().catch(() => null),
+        dashboardService
+          .getDashboardData({ wholeDirectory: canReadWholeDirectory, atbiyaId: myAtbiyaId })
+          .catch(() => null),
         hierarchyService.getEntitiesByLevel('Atbiya').catch(() => []),
       ]);
 
@@ -120,7 +129,12 @@ export default function Finance() {
 
       setSmsSentCount(memberCount * 1);
     } catch (error) {
-      console.error('Error loading finance data:', error);
+      const code = (error as { code?: string })?.code ?? '';
+      if (code === 'permission-denied') {
+        setAccessDenied(true);
+      } else {
+        console.error('Error loading finance data:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -169,6 +183,25 @@ export default function Finance() {
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
         <LoadingSkeleton type="card" count={4} />
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="space-y-6">
+        <ConfigurablePageHeader
+          module="finance"
+          defaultTitle={t('finance')}
+          defaultDescription={tree.permissions.noAccessDefault}
+        />
+        <Card className="rounded-2xl">
+          <CardContent className="py-12 text-center text-muted-foreground">
+            {tree.permissions.deniedBody
+              .replace('{permission}', tree.permissions.canViewFinanceLabel)
+              .replace('{location}', tree.permissions.deniedLocation)}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -272,31 +305,17 @@ export default function Finance() {
         </div>
       </div>
 
-      {/* Church Bank Accounts Breakdown */}
-      <Card className="rounded-2xl border shadow-sm overflow-hidden">
-        <CardHeader className="bg-slate-50 dark:bg-slate-900 pb-3 border-b">
-          <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#2E5E99] flex items-center gap-2">
-            <CreditCard className="h-4 w-4" /> የቤተክርስቲያን የባንክ ሂሳቦች (Church Bank Accounts)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {DEFAULT_CHURCH_BANKS.map((b) => (
-              <div key={b.id} className="border p-4 rounded-xl space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="flex justify-between items-start">
-                  <h5 className="font-bold text-xs text-[#0D2440] dark:text-white">{b.bankName}</h5>
-                  <Badge variant="outline" className="text-[10px] bg-sky-500/10 text-sky-600">{fin.accountActive}</Badge>
-                </div>
-                <p className="text-xs font-mono text-muted-foreground">{b.accountNumber}</p>
-                <div className="pt-2 flex justify-between items-center text-xs">
-                  <span className="text-slate-500">{b.accountType}</span>
-                  <span className="font-bold text-emerald-600">{b.balance.toLocaleString()} ETB</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/*
+        The "Church Bank Accounts" card was removed here.
+        It rendered DEFAULT_CHURCH_BANKS — three INVENTED CBE/Awash/Dashen account
+        numbers with invented balances — under an Amharic heading claiming they were
+        the church's accounts. Fabricated banking details presented as real are not
+        placeholder copy; somebody could have transferred money against them.
+
+        Real bank details do exist, per congregation, in atbiyaPrivate/{atbiyaId}
+        (see services/hierarchy.ts). Rebuilding this card on that data would be a
+        genuine feature; hardcoding a fake was not.
+      */}
 
       {/* Finance Section Header Bar */}
       <div className="bg-[#2E5E99] text-white px-6 py-3.5 rounded-2xl flex items-center gap-3 font-bold text-lg shadow-md">

@@ -138,7 +138,7 @@ export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLo
               value={formData.attachments}
               onChange={(files) => setFormData({ ...formData, attachments: files })}
               maxFiles={10}
-              maxSize={20}
+              maxSizeMB={20}
             />
           </div>
 

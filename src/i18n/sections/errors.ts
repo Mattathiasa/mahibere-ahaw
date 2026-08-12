@@ -16,6 +16,14 @@ export const errorsEn = {
 
   // ── Sign-in ───────────────────────────────────────────────────────────────
   wrongPassword: 'Incorrect password. Please try again.',
+  /**
+   * Shown instead of `wrongPassword` when a USERNAME was typed. An account that
+   * has attached a recovery email signs in with that email, not its username, and
+   * "incorrect password" sent those people round in circles retrying a password
+   * that was in fact correct.
+   */
+  wrongPasswordTryEmail:
+    'Incorrect password. If you registered with an email address, sign in with that address instead of your username.',
   noAccount: 'No account found with this username or email.',
   invalidIdentifier: 'The email or username format is invalid.',
   accountDisabled: 'This account has been disabled. Contact your administrator.',
@@ -77,6 +85,8 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
   generic: 'የሆነ ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።',
 
   wrongPassword: 'የይለፍ ቃሉ ትክክል አይደለም። እባክዎ እንደገና ይሞክሩ።',
+  wrongPasswordTryEmail:
+    'የይለፍ ቃሉ ትክክል አይደለም። በኢሜይል አድራሻ ተመዝግበው ከሆነ በተጠቃሚ ስምዎ ፋንታ በዚያ ኢሜይል ይግቡ።',
   noAccount: 'በዚህ የተጠቃሚ ስም ወይም ኢሜይል የተመዘገበ መለያ የለም።',
   invalidIdentifier: 'የኢሜይሉ ወይም የተጠቃሚ ስሙ አጻጻፍ ትክክል አይደለም።',
   accountDisabled: 'ይህ መለያ ታግዷል። አስተዳዳሪዎን ያነጋግሩ።',

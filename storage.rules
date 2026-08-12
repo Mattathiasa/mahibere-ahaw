@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Cloud Storage — deny everything.
+//
+//  This app does not use Cloud Storage. Every upload goes to Cloudinary
+//  (services/cloudinary.ts), and `getStorage()` was initialised in
+//  lib/firebase.ts without a single caller.
+//
+//  The bucket existed anyway, and its rules were neither in this repository nor
+//  reviewed by anything — which for a bucket provisioned before 2024 can mean
+//  the old default of "any signed-in user may read and write". Deny-by-default,
+//  in version control, is the answer to a store nobody is using.
+//
+//  If Storage is ever genuinely adopted, replace this with real per-path rules
+//  and mirror the roleFlags pattern from firestore.rules. Do not simply widen
+//  this file — the point of it is that an unused surface stays shut.
+// ════════════════════════════════════════════════════════════════════════════
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

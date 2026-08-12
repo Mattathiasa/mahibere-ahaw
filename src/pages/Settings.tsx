@@ -96,7 +96,10 @@ const Settings = () => {
   // Initialize notifications from user profile
   useEffect(() => {
     if (currentUser?.notificationPreferences) {
-      setNotifications(currentUser.notificationPreferences);
+      // Merged over the current defaults rather than replacing them: every field
+      // on the stored object is optional, and a record saved before a switch
+      // existed would otherwise leave that switch undefined.
+      setNotifications((current) => ({ ...current, ...currentUser.notificationPreferences }));
     } else {
       const savedNotifications = localStorage.getItem('notifications');
       if (savedNotifications) {
@@ -1026,7 +1029,13 @@ const Settings = () => {
                         size="sm"
                         className="w-full justify-start"
                         onClick={() => {
-                          localStorage.clear();
+                          // Named keys, not localStorage.clear(). Clearing
+                          // everything also wiped `theme` and `app-language`, so
+                          // "clear cache" silently threw the reader back to the
+                          // default theme and language.
+                          for (const key of ['user', 'notifications', 'preferences']) {
+                            localStorage.removeItem(key);
+                          }
                           sessionStorage.clear();
                           toast.success(a.setCacheCleared);
                         }}
@@ -1155,11 +1164,16 @@ const Settings = () => {
                       if (window.confirm(a.setResetConfirm)) {
                         localStorage.removeItem('notifications');
                         localStorage.removeItem('preferences');
+                        // Every switch, not five of seven — `plans` and `finance`
+                        // were missing, so "reset to defaults" left them at
+                        // whatever they happened to be.
                         setNotifications({
                           email: true,
                           push: true,
                           meetings: true,
                           reports: false,
+                          plans: false,
+                          finance: false,
                           weekly: true,
                         });
                         setPreferences({

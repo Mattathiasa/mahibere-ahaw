@@ -223,8 +223,14 @@ const anon = () => env.unauthenticatedContext().firestore();
  * `request.auth.token.email` — that is what stops a row being pointed at an
  * address the caller does not own. Without the claim here the harness would
  * deny writes the app performs successfully in production.
+ *
+ * SYNTHETIC, because that is what these accounts actually sign in with: every
+ * account created from a username gets `<name>@mahibereahaw.local`, and only
+ * someone who attached a recovery email has a real address. Using @example.com
+ * here made the rename cases fail against a correct rule.
  */
-const emailFor = (uid: string) => `${uid}@example.com`;
+const emailFor = (uid: string) =>
+  `${uid.replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
 const as = (uid: string) =>
   env.authenticatedContext(uid, { email: emailFor(uid) }).firestore();
 
@@ -261,10 +267,19 @@ describe('anonymous visitors', () => {
   it('can read every siteConfig document the public pages need', async () => {
     for (const id of ['landingPage', 'pageStrings', 'integrations', 'churchRules',
                       'roleFlags', 'roles', 'translations_overrides',
-                      'rolePermissions', 'userPermissionOverrides', 'superAdmins',
-                      'softwareControl', 'moduleConfig']) {
+                      'rolePermissions', 'softwareControl', 'moduleConfig']) {
       await assertSucceeds(getDoc(doc(anon(), `siteConfig/${id}`)));
     }
+  });
+
+  // `userPermissionOverrides` and `superAdmins` used to be in the list above.
+  // They are not things a public page needs — PermissionContext loads each
+  // document independently now and treats a denial as "not for you" — and
+  // publishing them handed out a per-uid permission map and a target list of
+  // administrator uids.
+  it('but NOT the two that are nobody\'s business', async () => {
+    await assertFails(getDoc(doc(anon(), 'siteConfig/userPermissionOverrides')));
+    await assertFails(getDoc(doc(anon(), 'siteConfig/superAdmins')));
   });
 
   it('still cannot WRITE siteConfig', async () => {
@@ -794,8 +809,10 @@ describe('username → email rows', () => {
         username: 'newadmin', hierarchyLevel: 'Atbiya', role: 'user', status: 'active',
       });
     });
+    // No address: the sign-in address is derivable from the name, and a manager
+    // has no business asserting one on someone else's behalf.
     await assertSucceeds(setDoc(doc(as('admin-1'), 'usernames/newadmin'), {
-      uid: 'newadmin-1', email: 'newadmin@example.com',
+      uid: 'newadmin-1',
     }));
   });
 
@@ -817,7 +834,7 @@ describe('username → email rows', () => {
 
   it('a member can still write their own row', async () => {
     await assertSucceeds(setDoc(doc(as('active-1'), 'usernames/active'), {
-      uid: 'active-1', email: emailFor('active-1'),
+      uid: 'active-1',
     }));
   });
 
@@ -971,38 +988,59 @@ describe('H2 — username rows cannot be squatted', () => {
     // sign-in permanently — repairUsernameMapping refuses to heal a row owned
     // by another uid, so only an admin could undo it.
     await assertFails(setDoc(doc(as('member-1'), 'usernames/parish'), {
-      uid: 'member-1', email: emailFor('member-1'),
+      uid: 'member-1',
     }));
   });
 
-  it('a row cannot be pointed at an address the caller does not own', async () => {
+  // THE email leak, closed at the write. `usernames` is world-readable, and
+  // repairUsernameMapping used to write the account's real inbox here on every
+  // sign-in. Only synthetic addresses are accepted now.
+  it('a real email address cannot be stored in the public row', async () => {
     await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
-      uid: 'member-1', email: 'attacker@evil.example',
+      uid: 'member-1', email: 'someone@gmail.com',
+    }));
+    await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
+      uid: 'member-1', email: 'member.1@example.org',
+    }));
+  });
+
+  it('a synthetic address belonging to ANOTHER account is refused', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
+      uid: 'member-1', email: emailFor('parish-1'),
+    }));
+  });
+
+  // Load-bearing for renames: after one, the account's sign-in address still
+  // spells the OLD username, so the row has to carry it. It encodes a username
+  // that is already this document's key, so it publishes nothing new.
+  it('a synthetic address IS allowed, so renames keep working', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'usernames/member'), {
+      uid: 'member-1', email: emailFor('member-1'),
     }));
   });
 
   it('a row cannot point at a uid with no user document', async () => {
     await assertFails(setDoc(doc(as('member-1'), 'usernames/ghost'), {
-      uid: 'no-such-user', email: emailFor('member-1'),
+      uid: 'no-such-user',
     }));
   });
 
   it('extra fields are refused', async () => {
     await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
-      uid: 'member-1', email: emailFor('member-1'), role: 'SuperAdmin',
+      uid: 'member-1', role: 'SuperAdmin',
     }));
   });
 
   it('a member CAN write the row matching their own stored username', async () => {
     await assertSucceeds(setDoc(doc(as('member-1'), 'usernames/member'), {
-      uid: 'member-1', email: emailFor('member-1'),
+      uid: 'member-1',
     }));
   });
 
   // changeUsername updates the profile first for exactly this reason.
   it('a rename works once the profile carries the new name', async () => {
     await assertFails(setDoc(doc(as('member-1'), 'usernames/renamed'), {
-      uid: 'member-1', email: emailFor('member-1'),
+      uid: 'member-1',
     }));
     await assertSucceeds(updateDoc(doc(as('member-1'), 'users/member-1'), {
       username: 'renamed',
@@ -1247,5 +1285,149 @@ describe('H7 — suspension revokes a super admin', () => {
     await assertSucceeds(setDoc(doc(as('super-listed'), 'siteConfig/roles'), {
       version: 9, roles: [],
     }));
+  });
+});
+
+describe('M1 — collections that had no rules at all', () => {
+  // finance_tithes, finance_pledges and report_backs were written by
+  // services/finance.ts and services/reportBacks.ts but had no `match` block, so
+  // Firestore default-denied every read and write. The getters swallow the error
+  // and return [], so the Tithes and Pledges tabs looked empty rather than
+  // forbidden, and the create paths threw. None of it has ever worked.
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'finance_tithes/t1'), { memberName: 'Abebe', amount: 500 });
+      await setDoc(doc(db, 'finance_pledges/p1'), { memberName: 'Abebe', pledgedAmount: 5000 });
+      await setDoc(doc(db, 'report_backs/rb1'), { reportId: 'r1', content: 'Noted' });
+    });
+  });
+
+  it('a finance role can now read and write tithes and pledges', async () => {
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'finance_tithes/t1')));
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'finance_tithes/t2'), { amount: 250 }));
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'finance_pledges/p1')));
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'finance_pledges/p2'), { pledgedAmount: 100 }));
+  });
+
+  it('an ordinary member cannot', async () => {
+    await assertFails(getDoc(doc(as('member-1'), 'finance_tithes/t1')));
+    await assertFails(setDoc(doc(as('member-1'), 'finance_tithes/t3'), { amount: 1 }));
+    await assertFails(getDoc(doc(as('member-1'), 'finance_pledges/p1')));
+    await assertFails(deleteDoc(doc(as('member-1'), 'finance_pledges/p1')));
+  });
+
+  it('anonymous visitors cannot touch the church books', async () => {
+    await assertFails(getDoc(doc(anon(), 'finance_tithes/t1')));
+    await assertFails(getDoc(doc(anon(), 'finance_pledges/p1')));
+    await assertFails(getDoc(doc(anon(), 'report_backs/rb1')));
+  });
+
+  it('report-backs follow the report gate: all approved members read, staff write', async () => {
+    await assertSucceeds(getDoc(doc(as('member-1'), 'report_backs/rb1')));
+    await assertFails(setDoc(doc(as('member-1'), 'report_backs/rb2'), { content: 'Nope' }));
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'report_backs/rb3'), { content: 'Filed' }));
+  });
+
+  it('the fallbacks hold when roleFlags is absent', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), 'siteConfig/roleFlags'));
+    });
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'finance_tithes/t1')));
+    await assertFails(getDoc(doc(as('member-1'), 'finance_tithes/t1')));
+  });
+});
+
+describe('M2/M3/M8 — audit integrity and config reads', () => {
+  // `userId == request.auth.uid` used to be the ONLY check, so anyone could
+  // append plausible entries — "Approved membership request" under their own
+  // name — to the trail an administrator reads to reconstruct what happened.
+  const entry = (over: Record<string, unknown> = {}) => ({
+    userId: 'member-1',
+    userName: 'member',
+    action: 'update',
+    targetType: 'users',
+    targetId: 'someone',
+    description: 'Approved membership request',
+    platform: 'web',
+    device: 'Chrome · macOS',
+    createdAt: new Date(),
+    ...over,
+  });
+
+  it('an entry cannot be backdated to hide among real ones', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'auditLogs/backdated'), entry({
+      createdAt: new Date('2020-01-01T00:00:00.000Z'),
+    })));
+  });
+
+  it('an invented action is refused', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'auditLogs/bogus'), entry({
+      action: 'approve-everything',
+    })));
+  });
+
+  it('extra fields are refused', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'auditLogs/extra'), entry({
+      severity: 'none',
+    })));
+  });
+
+  it('an entry still cannot be attributed to somebody else', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'auditLogs/spoof'), entry({
+      userId: 'admin-1',
+    })));
+  });
+
+  it('mobileAudit cannot claim a role the account does not hold', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'mobileAudit/member-1'), {
+      displayName: 'Member', hierarchyLevel: 'Sinodos', platform: 'android',
+    }));
+  });
+
+  it('mobileAudit cannot claim an address the account does not own', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'mobileAudit/member-1'), {
+      displayName: 'Member', email: 'someone.else@example.org', platform: 'android',
+    }));
+  });
+
+  it('mobileAudit accepts the account\'s own details', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'mobileAudit/member-1'), {
+      displayName: 'Member',
+      hierarchyLevel: 'HiyawanMahderat',
+      email: emailFor('member-1'),
+      platform: 'android',
+      appVersion: '1.0.0',
+      lastSeen: '2026-08-12T00:00:00.000Z',
+    }));
+  });
+
+  // M8 — siteConfig is public by default because the login and sign-up pages
+  // resolve role labels before anyone has an account. Two documents are not.
+  it('an anonymous visitor still reads the public config', async () => {
+    await assertSucceeds(getDoc(doc(anon(), 'siteConfig/landingPage')));
+    await assertSucceeds(getDoc(doc(anon(), 'siteConfig/roles')));
+    await assertSucceeds(getDoc(doc(anon(), 'siteConfig/roleFlags')));
+  });
+
+  it('THE POINT — the super-admin uid list is not public', async () => {
+    await assertFails(getDoc(doc(anon(), 'siteConfig/superAdmins')));
+    await assertFails(getDoc(doc(as('member-1'), 'siteConfig/superAdmins')));
+    await assertSucceeds(getDoc(doc(as('admin-1'), 'siteConfig/superAdmins')));
+    // A uid-list super admin whose role is otherwise ordinary can still read it,
+    // which is what lets the client work out that it IS one.
+    await assertSucceeds(getDoc(doc(as('super-1'), 'siteConfig/superAdmins')));
+  });
+
+  it('per-user permission overrides are not public', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'siteConfig/userPermissionOverrides'), {
+        'member-1': { canViewFinance: true },
+      });
+    });
+    await assertFails(getDoc(doc(anon(), 'siteConfig/userPermissionOverrides')));
+    // Signed-in is as narrow as this can get while the document remains one map
+    // keyed by uid — each user genuinely needs their own entry resolved.
+    await assertSucceeds(getDoc(doc(as('member-1'), 'siteConfig/userPermissionOverrides')));
   });
 });

@@ -136,12 +136,15 @@ export const atbiyaAdminService = {
     roleKey: string
   ): Promise<string> {
     const username = input.username.trim();
-    const email = (input.email ?? '').trim() || syntheticEmail(username);
+    // Contact address only — createUser always signs the account in with the
+    // synthetic address derived from the username, so nothing personal has to be
+    // published in the world-readable username map.
+    const contactEmail = (input.email ?? '').trim();
 
     try {
       const created = await userService.createUser({
         username,
-        email,
+        email: contactEmail,
         password: input.password,
         fullNameEnglish: input.fullNameEnglish.trim(),
         fullNameAmharic: (input.fullNameAmharic ?? '').trim(),
@@ -155,12 +158,11 @@ export const atbiyaAdminService = {
         signupSource: 'admin',
       });
 
-      // Username → email map so this administrator can sign in by username even
-      // when they were given a real email address. Best-effort: sign-in by
-      // email always works regardless.
+      // Reserves the username. Carries no address: this document is
+      // world-readable and the sign-in address is derivable from the name.
       try {
         await setDoc(doc(db, 'usernames', username.toLowerCase()), {
-          uid: created.id, email, createdAt: serverTimestamp(),
+          uid: created.id, createdAt: serverTimestamp(),
         });
       } catch { /* non-fatal */ }
 

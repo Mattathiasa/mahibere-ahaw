@@ -30,7 +30,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const Dashboard = () => {
   const navigate = useNavigate();
   const permissions = useRolePermissions();
-  const { can } = usePermissions();
+  const { can, canReadWholeDirectory, myAtbiyaId } = usePermissions();
   const { t: tree } = useLanguage();
   const pg = tree.pages;
   const { formatTime } = useFormatters();
@@ -53,20 +53,30 @@ const Dashboard = () => {
   const ethDate = toEthiopianDateString();
 
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => dashboardService.getDashboardData(),
+    // Scope is part of the key: a member count is per-congregation, so caching it
+    // under a bare 'dashboard' would serve one parish's figures to another.
+    queryKey: ['dashboard', canReadWholeDirectory, myAtbiyaId],
+    queryFn: () =>
+      dashboardService.getDashboardData({
+        wholeDirectory: canReadWholeDirectory,
+        atbiyaId: myAtbiyaId,
+      }),
     refetchInterval: 30000,
   });
 
-  // Each tile is gated by the permission for the data behind it. Without this a
-  // member who cannot read the member directory is shown "Total Members: 0" —
-  // dashboardService.safeQuery swallows the denial and reports a size of zero,
-  // so the number looks like a fact rather than a missing permission.
+  // Each tile is gated twice.
+  //
+  // By PERMISSION, so a member who cannot read the directory is not shown a
+  // member count at all. And by whether the read actually succeeded: the service
+  // reports every collection it was refused in `blocked`, and a refused tile is
+  // dropped rather than drawn as 0 — a zero looks like a fact about the church
+  // rather than a fact about the reader's permissions.
+  const blocked = dashboardData?.blocked ?? [];
   const stats = dashboardData ? [
-    { title: t('totalMembers'),        value: dashboardData.stats.totalMembers.toString(),        icon: UsersIcon, color: 'text-primary',    bgColor: 'bg-primary/10',   show: can('canViewMembers') },
-    { title: t('activeAnnouncements'), value: dashboardData.stats.activeAnnouncements.toString(), icon: Bell,      color: 'text-secondary',  bgColor: 'bg-secondary/10', show: can('canViewAnnouncements') },
-    { title: t('pendingReports'),      value: dashboardData.stats.pendingReports.toString(),      icon: FileText,  color: 'text-accent',     bgColor: 'bg-accent/10',    show: can('canViewReports') },
-    { title: t('upcomingMeetings'),    value: dashboardData.stats.upcomingMeetings.toString(),    icon: Calendar,  color: 'text-primary',    bgColor: 'bg-primary/10',   show: can('canViewMeetings') },
+    { title: t('totalMembers'),        value: dashboardData.stats.totalMembers.toString(),        icon: UsersIcon, color: 'text-primary',    bgColor: 'bg-primary/10',   show: can('canViewMembers') && !blocked.includes('members') },
+    { title: t('activeAnnouncements'), value: dashboardData.stats.activeAnnouncements.toString(), icon: Bell,      color: 'text-secondary',  bgColor: 'bg-secondary/10', show: can('canViewAnnouncements') && !blocked.includes('announcements') },
+    { title: t('pendingReports'),      value: dashboardData.stats.pendingReports.toString(),      icon: FileText,  color: 'text-accent',     bgColor: 'bg-accent/10',    show: can('canViewReports') && !blocked.includes('reports') },
+    { title: t('upcomingMeetings'),    value: dashboardData.stats.upcomingMeetings.toString(),    icon: Calendar,  color: 'text-primary',    bgColor: 'bg-primary/10',   show: can('canViewMeetings') && !blocked.includes('meetings') },
   ].filter((s) => s.show) : [];
 
   const recentAnnouncements = dashboardData?.recentAnnouncements || [];

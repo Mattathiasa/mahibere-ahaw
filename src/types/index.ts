@@ -67,6 +67,32 @@ export interface User {
   updatedAt?: string;
   /** Cloudinary (or any) profile picture URL. */
   profilePicture?: string;
+
+  /**
+   * Per-channel notification switches, set on the Settings page.
+   *
+   * Settings has always WRITTEN this (`Settings.tsx:234`) and always read it back
+   * (`:98`), but it was missing from this interface and from the AuthContext
+   * mapping — so the write landed in Firestore and the read found nothing, and
+   * every choice reverted on reload. `localStorage` was carrying it in the
+   * meantime, per device.
+   */
+  notificationPreferences?: {
+    email?: boolean;
+    push?: boolean;
+    meetings?: boolean;
+    reports?: boolean;
+    plans?: boolean;
+    finance?: boolean;
+    weekly?: boolean;
+  };
+
+  /**
+   * Ministries this member has volunteered for. Same story as
+   * `notificationPreferences`: `Volunteer.tsx` writes it and reads it, but it was
+   * absent here and unmapped, so a selection never survived a reload.
+   */
+  volunteerMinistries?: string[];
 }
 
 export interface LoginCredentials {
@@ -75,7 +101,11 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
+  /**
+   * No `token` here. `login` used to return the ID token and stash it in
+   * localStorage, which nothing consumed and which made `isAuthenticated()` trust
+   * a string that outlived the session. The Firebase SDK owns session state.
+   */
   user: User;
 }
 
@@ -195,13 +225,27 @@ export interface FinancialReportInput {
   atbiyaId?: string;
 }
 
-export enum TeachingServiceType {
-  SUNDAY_SCHOOL = 'SUNDAY_SCHOOL',
-  BIBLE_STUDY = 'BIBLE_STUDY',
-  YOUTH_SERVICE = 'YOUTH_SERVICE',
-  PRAYER_MEETING = 'PRAYER_MEETING',
-  SPECIAL_EVENT = 'SPECIAL_EVENT',
-}
+/**
+ * The service a teaching belongs to.
+ *
+ * A union of the exact strings stored in Firestore, not an enum of invented
+ * tokens. It used to be an enum with five SCREAMING_SNAKE values
+ * (`SUNDAY_SCHOOL`, `BIBLE_STUDY`, …) that matched nothing: `CreateTeachingDialog`
+ * has always written these seven human-readable strings, and every one of them
+ * was a type error — seven of the twenty-four in the baseline.
+ *
+ * The stored values are what they are, so the type moved to fit the data rather
+ * than the data being migrated to fit the type. `services/teachings.ts` types the
+ * field as a bare `string`, so nothing was validating it either way.
+ */
+export type TeachingServiceType =
+  | 'Sunday Morning'
+  | 'Wednesday Bible Study'
+  | "Men's Breakfast"
+  | "Women's Ministry"
+  | 'Youth Service'
+  | 'Special Event'
+  | 'Other';
 
 export enum TeachingStatus {
   DRAFT = 'Draft',

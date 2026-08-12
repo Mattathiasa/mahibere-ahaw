@@ -65,7 +65,21 @@ const Reports = () => {
     queryFn: () => planService.getAllPlans(),
   });
 
-  const reports = reportsData?.reports || [];
+  /**
+   * `canViewAllReports` finally does something.
+   *
+   * It was declared, editable in Permission Control, mapped in
+   * `useRolePermissions` — and read by no call site, so every role that could
+   * open this page saw every report in the organisation. A role without it now
+   * sees only the reports it wrote.
+   *
+   * A UI filter, not a boundary: `/reports` is readable by any approved account
+   * at the rules layer, which is deliberate for collaborative content.
+   */
+  const allReports = reportsData?.reports || [];
+  const reports = permissions.canViewAllReports
+    ? allReports
+    : allReports.filter((r: any) => r.authorId === user?.id);
   const plans = plansData?.plans || [];
 
   const createMutation = useMutation({
@@ -418,13 +432,18 @@ const Reports = () => {
                               {report.comments?.length || 0} Professional Feedback{report.comments?.length !== 1 ? 's' : ''}
                             </span>
                           </div>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleAddComment(report.id)}
-                            className="h-12 px-8 rounded-xl border-dashed border-2 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 font-black text-xs uppercase tracking-widest"
-                          >
-                            {t('addComment')}
-                          </Button>
+                          {/* canCommentOnReport was declared and checked
+                              nowhere, so every role that could open a report
+                              could also comment on it. */}
+                          {permissions.canCommentOnReport && (
+                            <Button
+                              variant="outline"
+                              onClick={() => handleAddComment(report.id)}
+                              className="h-12 px-8 rounded-xl border-dashed border-2 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 font-black text-xs uppercase tracking-widest"
+                            >
+                              {t('addComment')}
+                            </Button>
+                          )}
                         </div>
 
                         <AnimatePresence mode="popLayout">

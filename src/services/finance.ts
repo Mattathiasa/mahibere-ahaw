@@ -22,6 +22,7 @@ import {
   FinancialReportInput,
 } from '@/types';
 import { toEthiopianDateString } from '@/lib/date-utils';
+import { auditLogService } from '@/services/auditLog';
 
 export interface MemberTithe {
   id: string;
@@ -78,6 +79,13 @@ export const createTransaction = async (data: FinanceTransactionInput): Promise<
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  // Every money path is audited. The whole finance module used to mutate
+  // silently: there was no record of who entered, altered or deleted a
+  // transaction, which is the one place a trail is not optional.
+  auditLogService.dataChange(
+    'create', 'finance_transactions', docRef.id,
+    `Recorded ${data.type} of ${data.amount} (${data.category})`
+  );
   return { id: docRef.id, ...data } as any;
 };
 
@@ -109,12 +117,17 @@ export const getTransactionById = async (id: string): Promise<FinanceTransaction
 export const updateTransaction = async (id: string, data: Partial<FinanceTransactionInput>): Promise<FinanceTransaction> => {
   const docRef = doc(db, 'finance_transactions', id);
   await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+  auditLogService.dataChange(
+    'update', 'finance_transactions', id,
+    `Amended transaction${data.amount !== undefined ? ` amount to ${data.amount}` : ''}`
+  );
   const updated = await getDoc(docRef);
   return { id: updated.id, ...updated.data() } as any;
 };
 
 export const deleteTransaction = async (id: string): Promise<void> => {
   await deleteDoc(doc(db, 'finance_transactions', id));
+  auditLogService.dataChange('delete', 'finance_transactions', id, 'Deleted a transaction');
 };
 
 // Monthly Budgets
@@ -124,6 +137,10 @@ export const createBudget = async (data: MonthlyBudgetInput): Promise<MonthlyBud
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  auditLogService.dataChange(
+    'create', 'finance_budgets', docRef.id,
+    `Created budget for ${data.month}/${data.year}`
+  );
   return { id: docRef.id, ...data } as any;
 };
 
@@ -163,6 +180,7 @@ export const updateBudget = async (id: string, data: Partial<MonthlyBudgetInput>
 
 export const deleteBudget = async (id: string): Promise<void> => {
   await deleteDoc(doc(db, 'finance_budgets', id));
+  auditLogService.dataChange('delete', 'finance_budgets', id, 'Deleted a budget');
 };
 
 // Financial Reports
@@ -172,6 +190,9 @@ export const createFinancialReport = async (data: FinancialReportInput): Promise
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  auditLogService.dataChange(
+    'create', 'finance_reports', docRef.id, `Generated financial report "${data.title}"`
+  );
   return { id: docRef.id, ...data } as any;
 };
 
@@ -189,6 +210,29 @@ export const getFinancialReports = async (params?: {
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
 };
+
+/**
+ * Reads a collection, distinguishing "you may not" from "there is nothing".
+ *
+ * These getters used to `catch { return [] }`, which meant a permission denial and
+ * an empty church looked identical: the Tithes and Pledges tabs rendered blank for
+ * years while the rules denied them outright (there was no rule for either
+ * collection at all). A denial is now re-thrown so the caller can say so, and only
+ * a genuinely missing index or offline read yields an empty list.
+ */
+async function readOrThrowDenied<T>(q: any, label: string): Promise<T[]> {
+  try {
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(
+      (d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) } as T)
+    );
+  } catch (err) {
+    const code = (err as { code?: string })?.code ?? '';
+    if (code === 'permission-denied') throw err;
+    console.warn(`[finance] could not read ${label}`, err);
+    return [];
+  }
+}
 
 // Member Tithes (አሥራትና መባ) Services
 export const createMemberTithe = async (data: Omit<MemberTithe, 'id'>): Promise<MemberTithe> => {
@@ -210,15 +254,11 @@ export const createMemberTithe = async (data: Omit<MemberTithe, 'id'>): Promise<
   return { id: docRef.id, ...data };
 };
 
-export const getMemberTithes = async (): Promise<MemberTithe[]> => {
-  try {
-    const q = query(collection(db, 'finance_tithes'), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
-  } catch (err) {
-    return [];
-  }
-};
+export const getMemberTithes = async (): Promise<MemberTithe[]> =>
+  readOrThrowDenied<MemberTithe>(
+    query(collection(db, 'finance_tithes'), orderBy('createdAt', 'desc')),
+    'tithes'
+  );
 
 // Pledges Campaign Services
 export const createPledge = async (data: Omit<BuildingPledge, 'id'>): Promise<BuildingPledge> => {
@@ -230,15 +270,11 @@ export const createPledge = async (data: Omit<BuildingPledge, 'id'>): Promise<Bu
   return { id: docRef.id, ...data };
 };
 
-export const getPledges = async (): Promise<BuildingPledge[]> => {
-  try {
-    const q = query(collection(db, 'finance_pledges'), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
-  } catch (err) {
-    return [];
-  }
-};
+export const getPledges = async (): Promise<BuildingPledge[]> =>
+  readOrThrowDenied<BuildingPledge>(
+    query(collection(db, 'finance_pledges'), orderBy('createdAt', 'desc')),
+    'pledges'
+  );
 
 export const updatePledgePayment = async (id: string, additionalAmount: number): Promise<void> => {
   const docRef = doc(db, 'finance_pledges', id);
@@ -266,15 +302,11 @@ export const createRequisitionVoucher = async (data: Omit<RequisitionVoucher, 'i
   return { id: docRef.id, voucherNumber, ...data };
 };
 
-export const getRequisitions = async (): Promise<RequisitionVoucher[]> => {
-  try {
-    const q = query(collection(db, 'finance_requisitions'), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
-  } catch (err) {
-    return [];
-  }
-};
+export const getRequisitions = async (): Promise<RequisitionVoucher[]> =>
+  readOrThrowDenied<RequisitionVoucher>(
+    query(collection(db, 'finance_requisitions'), orderBy('createdAt', 'desc')),
+    'requisitions'
+  );
 
 export const updateRequisitionStatus = async (id: string, status: RequisitionVoucher['status'], approvedBy?: string): Promise<void> => {
   const docRef = doc(db, 'finance_requisitions', id);
@@ -282,11 +314,15 @@ export const updateRequisitionStatus = async (id: string, status: RequisitionVou
     status,
     ...(approvedBy ? { approvedBy } : {}),
   });
+  auditLogService.dataChange('update', 'finance_requisitions', id, `Voucher marked ${status}`);
 };
 
 // Church Bank Accounts
-export const DEFAULT_CHURCH_BANKS: ChurchBankAccount[] = [
-  { id: '1', bankName: 'Commercial Bank of Ethiopia (CBE)', accountNumber: '1000123456789', accountType: 'Main Church Account', balance: 185400, currency: 'ETB' },
-  { id: '2', bankName: 'Awash Bank', accountNumber: '01320987654321', accountType: 'Building Fund Account', balance: 94200, currency: 'ETB' },
-  { id: '3', bankName: 'Dashen Bank', accountNumber: '52891122334455', accountType: 'Charity & Welfare Account', balance: 32100, currency: 'ETB' },
-];
+//
+// DEFAULT_CHURCH_BANKS used to live here: three fabricated account numbers with
+// fabricated balances, rendered on the Finance page as the church's own accounts.
+// Invented banking details shown as real are a liability, not a placeholder.
+//
+// Per-congregation bank details are real data and live in
+// atbiyaPrivate/{atbiyaId} — see the AtbiyaBankAccount type in
+// services/hierarchy.ts. Anything rebuilt here should read from there.

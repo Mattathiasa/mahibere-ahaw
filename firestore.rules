@@ -173,11 +173,30 @@ service cloud.firestore {
     }
 
     // ── usernames row shape ─────────────────────────────────────────────────
-    // A row carries only what username sign-in needs to resolve an address.
+    //
+    // `email` is OPTIONAL and, when present, must be a synthetic
+    // @mahibereahaw.local address. That single condition is what stops this
+    // world-readable collection publishing members' personal addresses: it used
+    // to accept any string, and repairUsernameMapping wrote the account's real
+    // inbox here on every sign-in.
+    //
+    // The field cannot simply be banned. After a rename an account's sign-in
+    // address still spells the OLD username — `oldname@mahibereahaw.local` is not
+    // derivable from `newname` — so the row has to carry it or the rename breaks
+    // sign-in. A synthetic address is safe to publish: it encodes a username that
+    // is already this document's key.
+    function hasUsernameEmail() {
+      return request.resource.data.keys().hasAny(['email']);
+    }
+
     function usernameRowWellFormed() {
       return request.resource.data.keys().hasOnly(['uid', 'email', 'createdAt'])
         && request.resource.data.uid is string
-        && request.resource.data.email is string;
+        && (
+             !hasUsernameEmail()
+             || (request.resource.data.email is string
+                 && request.resource.data.email.matches('.*@mahibereahaw[.]local'))
+           );
     }
 
     // The row's KEY must be the stored username of the account it points at.
@@ -339,9 +358,26 @@ service cloud.firestore {
       // permission documents on every route including public ones.
       //
       // An allowlist was tried here and broke exactly that: translation
-      // overrides stopped loading on the public pages. Keep this open and put
-      // anything genuinely secret in its own collection instead.
-      allow read: if true;
+      // overrides stopped loading on the public pages. So the default stays open
+      // and only the two documents that are nobody's business are carved out —
+      // by docId, in this same rule, for the reason spelled out under `write`
+      // below (a narrower match block cannot restrict).
+      //
+      //   superAdmins            — the uid list. A target list for an attacker,
+      //                            and of no use to an ordinary member. Readable
+      //                            by admins, which includes every super admin.
+      //   userPermissionOverrides — per-uid permission grants and denials for the
+      //                            whole organisation. Signed-in only: each user
+      //                            genuinely needs their OWN entry resolved, and
+      //                            the document is one map keyed by uid, so
+      //                            "signed in" is as narrow as it gets without
+      //                            splitting it per user.
+      //
+      // roles / roleFlags / rolePermissions stay public: the login and sign-up
+      // pages resolve role labels before anyone has an account.
+      allow read: if !(docId in ['superAdmins', 'userPermissionOverrides'])
+        || (docId == 'userPermissionOverrides' && signedIn())
+        || (docId == 'superAdmins' && isAdmin());
 
       // The four documents below ARE the permission system: the super-admin uid
       // list, the role registry, and the two projections the rules and clients
@@ -525,13 +561,14 @@ service cloud.firestore {
         && (
              (signedIn()
               && request.resource.data.uid == request.auth.uid
-              && request.resource.data.email == request.auth.token.email)
+              && (!hasUsernameEmail()
+                  || request.resource.data.email == request.auth.token.email))
              // A member manager writes the row for an account it just created.
-             // Without this an admin-created user whose email is a real address
-             // could never sign in by username. The email is not pinned to the
-             // caller's own here — it belongs to the new account — but
-             // usernameMatchesTarget still ties the row to a real user document.
-             || isMemberManager()
+             // Without this an admin-created user could never sign in by
+             // username. It may not set an address at all: the new account's
+             // sign-in address is derivable from the name, and the manager has no
+             // business asserting an address on someone else's behalf.
+             || (isMemberManager() && !hasUsernameEmail())
            );
 
       allow update: if usernameRowWellFormed()
@@ -540,7 +577,8 @@ service cloud.firestore {
             || (signedIn()
                 && resource.data.uid == request.auth.uid
                 && request.resource.data.uid == request.auth.uid
-                && request.resource.data.email == request.auth.token.email));
+                && (!hasUsernameEmail()
+                    || request.resource.data.email == request.auth.token.email)));
 
       // Renaming yourself has to release the old name. Without a self-delete
       // the previous row lingers, reserving the name against every future
@@ -555,13 +593,45 @@ service cloud.firestore {
     match /auditLogs/{docId} {
       // Any signed-in user appends their own entries; entries are immutable.
       // Not status-gated, so a blocked sign-in attempt is still recorded.
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      //
+      // The shape is constrained because `userId == request.auth.uid` was the ONLY
+      // check: `action` and `description` were free text, so anyone could append
+      // plausible entries — "Approved membership request" under their own name —
+      // into the trail an administrator later reads to work out what happened. A
+      // forgeable audit log is worse than none, because it is trusted.
+      //
+      // `createdAt == request.time` is the important one: it stops entries being
+      // backdated or postdated to hide among real ones.
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.action in ['login', 'logout', 'create', 'update', 'delete']
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasOnly([
+             'userId', 'userName', 'userEmail', 'hierarchyLevel', 'action',
+             'targetType', 'targetId', 'description', 'platform', 'device',
+             'createdAt'
+           ]);
       allow read: if isAdmin();
       allow update, delete: if false;
     }
 
+    // One self-reported record per device, upserted by the mobile app on login.
+    //
+    // `hierarchyLevel` and `email` are pinned to the caller's own user document.
+    // They were accepted as free text, and Software Control displays them as fact
+    // — so a member could present themselves as a Sinodos in the device list an
+    // administrator uses to see who is running what.
     match /mobileAudit/{userId} {
-      allow create, update: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.get('hierarchyLevel', '')
+             in ['', userData().get('hierarchyLevel', '')]
+        && request.resource.data.get('email', '') in ['', request.auth.token.email]
+        && request.resource.data.keys().hasOnly([
+             'displayName', 'email', 'hierarchyLevel', 'platform', 'appVersion',
+             'buildNumber', 'deviceModel', 'osVersion', 'firstSeen', 'lastSeen',
+             'sessionCount'
+           ]);
       allow read: if (signedIn() && request.auth.uid == userId) || isAdmin();
       allow delete: if false;
     }
@@ -619,11 +689,19 @@ service cloud.firestore {
       allow write: if canWriteFinance();
     }
 
-    // NOTE: finance_tithes and finance_pledges are written by services/finance.ts
-    // but have NO rule here, so Firestore denies them outright and the Tithes and
-    // Pledges tabs silently render empty (both getters swallow the error). Left
-    // as-is deliberately — it is a separate, known defect, and inventing a rule
-    // for a path nobody has been able to exercise would be guessing at policy.
+    // Tithes and pledges had NO rule at all, so Firestore denied every read and
+    // write and the two tabs rendered empty forever — getMemberTithes and
+    // getPledges swallow the error and return [], so it looked like no data
+    // rather than no access. The create paths just threw. Same finance gate as
+    // the rest of the books.
+    match /finance_tithes/{docId} {
+      allow read:  if canReadFinance();
+      allow write: if canWriteFinance();
+    }
+    match /finance_pledges/{docId} {
+      allow read:  if canReadFinance();
+      allow write: if canWriteFinance();
+    }
 
     // ════════════════════════════════════════════════════════════════════════
     //  notifications — a private inbox, one document per recipient
@@ -681,6 +759,13 @@ service cloud.firestore {
     match /teachings/{docId} {
       allow read:  if isActive();
       allow write: if canWriteTeachings();
+    }
+
+    // Also had no rule, so services/reportBacks.ts has never been able to read or
+    // write anything. Follow-ups ON a report, so they share the report gate.
+    match /report_backs/{docId} {
+      allow read:  if isActive();
+      allow write: if canWriteReports();
     }
 
     // Member-submitted, head-office-decided. Anyone approved may file one; only

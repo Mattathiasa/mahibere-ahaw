@@ -194,7 +194,7 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
               value={formData.attachments}
               onChange={(files) => setFormData({ ...formData, attachments: files })}
               maxFiles={5}
-              maxSize={10}
+              maxSizeMB={10}
             />
           </div>
 

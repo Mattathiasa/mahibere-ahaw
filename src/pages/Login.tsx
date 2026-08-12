@@ -41,26 +41,21 @@ const Login = () => {
       // Only auto-redirect if coming from a protected route (has 'from' in state)
       const fromProtectedRoute = (location.state as any)?.from;
 
-      if (authService.isAuthenticated() && fromProtectedRoute) {
-        try {
-          // Verify token is valid
-          await authService.getCurrentUser();
-          // If valid, redirect back to the protected route
+      // `getCurrentUser` is the gate rather than `isAuthenticated`, because it
+      // waits for onAuthStateChanged: on a cold load the SDK has not restored the
+      // session yet, so the synchronous check reads false for a signed-in user.
+      // That used to be masked by `isAuthenticated` trusting a token string in
+      // localStorage — which is the very thing that made it lie about expired
+      // sessions. Rejection here is the ordinary "nobody signed in" path.
+      try {
+        await authService.getCurrentUser();
+        if (fromProtectedRoute) {
           navigate(fromProtectedRoute.pathname, { replace: true });
           return;
-        } catch (error) {
-          // Token invalid, clear and stay on login
-          authService.clearAuth();
         }
-      } else if (authService.isAuthenticated()) {
-        // If authenticated but came directly to login, verify token silently
-        try {
-          await authService.getCurrentUser();
-          // Token is valid but user explicitly came to login page, stay here
-        } catch (error) {
-          // Token invalid, clear it
-          authService.clearAuth();
-        }
+        // Signed in, but they came to /login deliberately — leave them here.
+      } catch {
+        authService.clearAuth();
       }
       setIsCheckingAuth(false);
     };

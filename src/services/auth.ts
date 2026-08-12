@@ -1,6 +1,6 @@
-import app, { auth, db } from '@/lib/firebase';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { auth, db } from '@/lib/firebase';
 import { AppError } from '@/lib/appError';
+import { syntheticEmail, isSyntheticEmail } from '@/services/signup';
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -27,7 +27,8 @@ export const authService = {
     // `usernames/{username}` map exists precisely for this lookup; the
     // deterministic fallback keeps every pre-existing account working, since
     // those were all created with a synthetic @mahibereahaw.local address.
-    if (!email.includes('@')) {
+    const typedAUsername = !email.includes('@');
+    if (typedAUsername) {
       email = await this.resolveEmail(email);
     }
 
@@ -45,7 +46,13 @@ export const authService = {
         case 'auth/invalid-login-credentials':
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
-          throw new AppError('wrongPassword');
+          // Firebase does not distinguish "no such account" from "wrong
+          // password", so a username that resolves to an address nobody signs in
+          // with lands here. That is exactly what happens to an account which
+          // attached a recovery email: its sign-in address became the real one,
+          // and the username no longer resolves to it. Point those users at their
+          // email rather than telling them their correct password is wrong.
+          throw new AppError(typedAUsername ? 'wrongPasswordTryEmail' : 'wrongPassword');
         case 'auth/user-not-found':
           throw new AppError('noAccount');
         case 'auth/invalid-email':
@@ -120,16 +127,15 @@ export const authService = {
       ministryType: userData.ministryType || 'General',
     };
 
-    const token = await firebaseUser.getIdToken();
-
-    // Store token and user for compatibility with existing code
-    localStorage.setItem('auth_token', token);
+    // The ID token is deliberately NOT stored. It used to be written to
+    // localStorage and `isAuthenticated()` returned true on the mere presence of
+    // that string — so an expired token left the app convinced it was signed in,
+    // and any XSS could read a live credential. The Firebase SDK already persists
+    // and refreshes the session; the copy added exposure and nothing else.
+    //
+    // The `user` blob stays: auditLogService reads the actor from it when signing
+    // out, after auth state has already been torn down.
     localStorage.setItem('user', JSON.stringify(user));
-
-    // Both values are known and trustworthy only here, so this is where a
-    // username row that has drifted from the account's real sign-in address
-    // gets put right — notably after someone adds a recovery email.
-    this.repairUsernameMapping(user.username, user.id, user.email);
 
     auditLogService.log({
       action: 'login',
@@ -138,7 +144,7 @@ export const authService = {
       actor: { id: user.id, name: user.fullName, email: user.email, hierarchyLevel: user.hierarchyLevel },
     });
 
-    return { token, user };
+    return { user };
   },
 
   async logout(): Promise<void> {
@@ -158,7 +164,6 @@ export const authService = {
     await auditLogService.log({ action: 'logout', targetType: 'auth', description: 'Signed out', actor });
 
     await signOut(auth);
-    localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
   },
 
@@ -177,13 +182,23 @@ export const authService = {
             // the next reload, and showed the wrong name entirely once someone
             // attached a recovery email.
             username: userData.username || firebaseUser.email?.split('@')[0] || 'user',
-            email: firebaseUser.email || '',
+            // Contact address from the profile, not the synthetic sign-in one.
+            email: userData.email || firebaseUser.email || '',
             role: userData.role || 'user',
             firstName: userData.firstName,
             lastName: userData.lastName,
-            fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Church Member',
+            fullName: userData.fullNameEnglish || userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Church Member',
             phone: userData.phone,
             hierarchyLevel: userData.hierarchyLevel || 'Atbiya',
+            // Org placement and membership state. These were omitted, and since
+            // this overwrites the cached `user` blob, calling it (Login, Settings)
+            // stripped the parish off the cache that auditLogService reads its
+            // actor from. Same fields AuthContext already maps.
+            hierarchyEntityId: userData.hierarchyEntityId,
+            atbiyaId: userData.atbiyaId,
+            atbiyaName: userData.atbiyaName,
+            mahderatId: userData.mahderatId,
+            status: userData.status || 'active',
             ministryType: userData.ministryType || 'General',
           };
 
@@ -206,16 +221,22 @@ export const authService = {
     }
   },
 
-  getToken(): string | null {
-    return localStorage.getItem('auth_token');
-  },
-
+  /**
+   * Whether a session is live RIGHT NOW.
+   *
+   * Note the synchronous limitation: on a cold page load the SDK has not yet
+   * restored the persisted session, so this reads false for a moment even for a
+   * signed-in user. Anything that needs the settled answer must await
+   * `getCurrentUser()`, which resolves through `onAuthStateChanged`.
+   *
+   * This used to fall back to a token string in localStorage, which made it
+   * report true long after that token expired.
+   */
   isAuthenticated(): boolean {
-    return !!auth.currentUser || !!this.getToken();
+    return !!auth.currentUser;
   },
 
   clearAuth(): void {
-    localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
   },
 
@@ -268,6 +289,15 @@ export const authService = {
    * Sign-in survives because `login` resolves the typed name through
    * `usernames/{name}`, so the new row carries the account's REAL current email.
    *
+   * The new row records the account's CURRENT sign-in address whenever that is a
+   * synthetic one, because after a rename it no longer matches the new name:
+   * `oldname@mahibereahaw.local` cannot be derived from `newname`. Without it a
+   * rename would silently break sign-in by the new username. A synthetic address
+   * is safe to publish — it encodes a username that was already public as this
+   * collection's key. A REAL address is omitted, and the rules refuse it; such an
+   * account signs in with its email anyway, which is what Settings tells the user
+   * when they attach one.
+   *
    * Ordered `users` doc FIRST, then the new row, then the old one.
    *
    * That order is now forced: firestore.rules requires a `usernames` row to
@@ -307,7 +337,7 @@ export const authService = {
       });
       await setDoc(doc(db, 'usernames', trimmed.toLowerCase()), {
         uid: firebaseUser.uid,
-        email: firebaseUser.email,
+        ...(isSyntheticEmail(firebaseUser.email) ? { email: firebaseUser.email } : {}),
         createdAt: serverTimestamp(),
       });
     } catch {
@@ -330,35 +360,29 @@ export const authService = {
   // SDK, which the project deliberately avoids.
 
   /**
-   * The address a username signs in with. Resolvable before sign-in.
+   * The address a username signs in with. Resolvable before sign-in, which is
+   * why `usernames/{name}` is world-readable.
    *
-   * Tries the `resolveLoginEmail` Cloud Function first and falls back to reading
-   * `usernames/{name}` directly. Both paths exist on purpose: the callable is
-   * what lets that collection stop being world-readable (it currently leaks
-   * members' real email addresses to anyone who guesses a username), but until
-   * it is deployed the direct read is the only thing that works. Having both
-   * means the function and the rule change can ship in either order without
-   * locking anyone out of their account.
+   * New accounts are always created with the synthetic address, and their rows
+   * carry no `email` at all, so for them this is pure derivation and the read
+   * finds nothing to return. The read remains for accounts created BEFORE that
+   * change, whose sign-in address is a real inbox recorded only here — dropping
+   * it would break username sign-in for every one of them.
    *
-   * Remove the fallback once `allow get` on /usernames is closed.
+   * That residue is the remaining half of the leak: probing a username still
+   * returns a pre-existing member's real email. Closing it means stripping the
+   * field from those rows, which costs those accounts their username sign-in, so
+   * it waits on a count of how many there are. See the plan's §2 Stage B.
+   *
+   * A Cloud Function would have resolved this properly by keeping the map
+   * private, but the project is on Spark and nothing here may assume a server.
    */
   async resolveEmail(usernameOrEmail: string): Promise<string> {
     const typed = usernameOrEmail.trim();
     if (typed.includes('@')) return typed;
 
     const key = typed.toLowerCase();
-    const deterministic = `${key.replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
-
-    try {
-      const resolve = httpsCallable<{ username: string }, { email: string | null }>(
-        getFunctions(app),
-        'resolveLoginEmail'
-      );
-      const { data } = await resolve({ username: key });
-      return data.email || deterministic;
-    } catch {
-      // Not deployed, offline, or throttled — fall through to the direct read.
-    }
+    const deterministic = syntheticEmail(key);
 
     try {
       const mapped = await getDoc(doc(db, 'usernames', key));
@@ -408,10 +432,15 @@ export const authService = {
    *
    * Firebase only mails the address on the Auth account, so this genuinely has
    * to change the sign-in email. `verifyBeforeUpdateEmail` does not take effect
-   * until the link is clicked, so the `usernames` row is deliberately NOT
-   * rewritten here — it keeps pointing at the old address, and username sign-in
-   * keeps working throughout. `repairUsernameMapping` fixes it up on the next
-   * successful sign-in.
+   * until the link is clicked, and the `usernames` row is deliberately NOT
+   * rewritten — putting a real address in that world-readable document is the
+   * leak this project is unwinding.
+   *
+   * The consequence is that once the link is clicked, this account signs in with
+   * its EMAIL rather than its username: the row still resolves to the old
+   * synthetic address, which no longer authenticates. The confirmation toast in
+   * Settings already says exactly that, which is the only place it can be said —
+   * nothing client-side can observe the link being clicked.
    */
   async addRecoveryEmail(currentPassword: string, newEmail: string): Promise<void> {
     const firebaseUser = auth.currentUser;
@@ -438,20 +467,8 @@ export const authService = {
     }
   },
 
-  /**
-   * Keeps `usernames/{username}` pointing at the address the account actually
-   * signs in with. Runs after a successful sign-in, when both values are known
-   * and the rules allow the user to write their own row. Best-effort: a failure
-   * here must never break a sign-in that already succeeded.
-   */
-  async repairUsernameMapping(username: string, uid: string, email: string): Promise<void> {
-    const key = username.trim().toLowerCase();
-    if (!key || !email) return;
-    try {
-      const existing = await getDoc(doc(db, 'usernames', key));
-      if (existing.exists() && existing.data().email === email) return;
-      if (existing.exists() && existing.data().uid !== uid) return; // not ours to touch
-      await setDoc(doc(db, 'usernames', key), { uid, email, createdAt: serverTimestamp() });
-    } catch { /* non-fatal */ }
-  },
+  // repairUsernameMapping used to live here. It wrote the account's real email
+  // into the world-readable `usernames` row on every sign-in, which is precisely
+  // how personal addresses ended up published — and it is what the rules now
+  // refuse, since a row may only carry `uid` and `createdAt`.
 };

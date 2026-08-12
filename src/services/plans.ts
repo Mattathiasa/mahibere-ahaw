@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { auditLogService } from '@/services/auditLog';
 import { AppError } from '@/lib/appError';
 import {
   collection,
@@ -38,7 +39,14 @@ export const planService = {
     }
 
     const snapshot = await getDocs(q);
-    return { plans: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
+    // Typed as id + open record rather than bare `{ id }`. TypeScript drops the
+    // index signature when spreading `DocumentData`, so every consumer reading a
+    // real field off a plan — `plan.name` in Reports, for one — was a type error.
+    return {
+      plans: snapshot.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as { id: string } & Record<string, any>
+      ),
+    };
   },
 
   async getPlanById(id: string) {
@@ -56,16 +64,19 @@ export const planService = {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    auditLogService.dataChange('create', 'plans', docRef.id, `Created plan "${data.name}"`);
     return { id: docRef.id, ...data };
   },
 
   async updatePlan(id: string, data: UpdatePlanData) {
     const docRef = doc(db, 'plans', id);
     await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    auditLogService.dataChange('update', 'plans', id, `Updated plan "${data.name ?? id}"`);
   },
 
   async deletePlan(id: string) {
     await deleteDoc(doc(db, 'plans', id));
+    auditLogService.dataChange('delete', 'plans', id, 'Deleted a plan');
   },
 
   async addComment(planId: string, data: { content: string, userId: string }) {

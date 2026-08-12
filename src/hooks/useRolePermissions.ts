@@ -20,6 +20,17 @@ export const useRolePermissions = () => {
     canCreatePlan:         can('canCreatePlan'),
     canCreateReport:       can('canCreateReport'),
     canViewAllReports:     can('canViewAllReports'),
+
+    // These were declared in ALL_PERMISSIONS, editable in Permission Control, and
+    // read by nothing at all — toggling any of them changed no behaviour anywhere.
+    // Exposed here so the pages can gate the buttons they belong to.
+    canEditAnnouncement:   can('canEditAnnouncement'),
+    canDeleteAnnouncement: can('canDeleteAnnouncement'),
+    canDeletePlan:         can('canDeletePlan'),
+    canGenerateFinancialReport: can('canGenerateFinancialReport'),
+    canCommentOnReport:    can('canCommentOnReport'),
+    canSubmitMissionaryApplication: can('canSubmitMissionaryApplication'),
+    canSubmitMissionaryReport:      can('canSubmitMissionaryReport'),
     canAddMembers:         can('canAddMembers'),
     canEditMembers:        can('canEditMembers'),
     canDeleteMembers:      can('canDeleteMembers'),

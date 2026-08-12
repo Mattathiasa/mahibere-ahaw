@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { auditLogService } from '@/services/auditLog';
 import {
     collection,
     getDocs,
@@ -45,6 +46,7 @@ export const documentService = {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
+        auditLogService.dataChange('create', 'documents', docRef.id, `Created folder "${name}"`);
         return { id: docRef.id, name, type: 'folder', parentId };
     },
 
@@ -69,6 +71,7 @@ export const documentService = {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
+        auditLogService.dataChange('create', 'documents', docRef.id, `Uploaded "${file.name}"`);
         return {
             id: docRef.id,
             name: file.name,
@@ -82,5 +85,6 @@ export const documentService = {
 
     deleteDocument: async (id: string) => {
         await deleteDoc(doc(db, 'documents', id));
+        auditLogService.dataChange('delete', 'documents', id, 'Deleted a document');
     },
 };

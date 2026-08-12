@@ -362,8 +362,12 @@ const Announcements = () => {
             <AnnouncementCard
               key={announcement.id}
               announcement={announcement}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              // AnnouncementCard renders each button only when it receives the
+              // matching handler, so withholding it IS the gate.
+              // canEditAnnouncement and canDeleteAnnouncement were enforced
+              // nowhere before this.
+              onEdit={rolePerms.canEditAnnouncement ? handleEdit : undefined}
+              onDelete={rolePerms.canDeleteAnnouncement ? handleDelete : undefined}
             />
           ))
         ) : (

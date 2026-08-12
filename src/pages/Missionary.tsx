@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { LearnMore } from '@/components/LearnMore';
@@ -24,6 +25,7 @@ const Missionary = () => {
     const p = tree.pages;
     const { formatDate } = useFormatters();
     const queryClient = useQueryClient();
+    const rolePerms = useRolePermissions();
     const moduleCfg = useModuleConfig('missionary');
     const [activeTab, setActiveTab] = useState('application');
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -170,7 +172,17 @@ const Missionary = () => {
                                         required
                                     />
                                 </div>
-                                <Button type="submit" disabled={createApplicationMutation.isPending}>
+                                {/* canSubmitMissionaryApplication was enforced
+                                    nowhere. The route now admits anyone holding
+                                    either it or canViewMissionary, so the button
+                                    itself has to check. */}
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        createApplicationMutation.isPending ||
+                                        !rolePerms.canSubmitMissionaryApplication
+                                    }
+                                >
                                     {createApplicationMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Submit Application
                                 </Button>
@@ -299,7 +311,13 @@ const Missionary = () => {
                                             <Button type="button" variant="outline" onClick={() => setIsReportDialogOpen(false)}>
                                                 Cancel
                                             </Button>
-                                            <Button type="submit" disabled={createReportMutation.isPending}>
+                                            <Button
+                                                type="submit"
+                                                disabled={
+                                                    createReportMutation.isPending ||
+                                                    !rolePerms.canSubmitMissionaryReport
+                                                }
+                                            >
                                                 {createReportMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                                 Submit Report
                                             </Button>

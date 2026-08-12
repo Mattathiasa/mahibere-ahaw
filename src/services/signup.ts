@@ -43,9 +43,24 @@ export interface SignupInput {
   atbiyaName: string;
 }
 
+/** The domain for addresses that exist only to satisfy Firebase Auth. */
+export const SYNTHETIC_EMAIL_DOMAIN = 'mahibereahaw.local';
+
 /** Same synthetic-email scheme userService.createUser has always used. */
 export function syntheticEmail(username: string): string {
-  return `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
+  return `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@${SYNTHETIC_EMAIL_DOMAIN}`;
+}
+
+/**
+ * Is this a placeholder address rather than a real inbox?
+ *
+ * Matters because a synthetic address is safe to store in the world-readable
+ * `usernames` map — it encodes only a username that is already the document key —
+ * whereas a real one is somebody's personal email. firestore.rules enforces the
+ * same distinction.
+ */
+export function isSyntheticEmail(email: string | null | undefined): boolean {
+  return !!email && email.toLowerCase().endsWith(`@${SYNTHETIC_EMAIL_DOMAIN}`);
 }
 
 function friendlyAuthError(code: string, fallback: string): string {
@@ -85,11 +100,23 @@ export const signupService = {
    */
   async register(input: SignupInput): Promise<{ atbiyaName: string }> {
     const username = input.username.trim();
-    const email = input.email.trim() || syntheticEmail(username);
+
+    // The SIGN-IN address is always synthetic, even when the member gave a real
+    // one. It used to be whichever they typed, and because username sign-in has
+    // to resolve a typed name to an address before there is an account to
+    // authorise, that real address had to be written into the world-readable
+    // `usernames/{name}` document — publishing the personal email of everyone who
+    // registered with one.
+    //
+    // Synthetic addresses are derivable from the username, so the map no longer
+    // needs to carry an address at all. The real one is kept below as ordinary,
+    // access-controlled profile data.
+    const loginEmail = syntheticEmail(username);
+    const contactEmail = input.email.trim();
 
     let uid: string | null = null;
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, input.password);
+      const cred = await createUserWithEmailAndPassword(auth, loginEmail, input.password);
       uid = cred.user.uid;
 
       const flags = await roleRegistryService.getFlags();
@@ -98,7 +125,8 @@ export const signupService = {
       // firestore.rules — an extra field makes the whole write fail.
       const profile = {
         username,
-        email,
+        // Contact address, not the sign-in address. Blank when they gave none.
+        email: contactEmail,
         fullNameEnglish: input.fullNameEnglish.trim(),
         fullNameAmharic: input.fullNameAmharic.trim(),
         fullName: input.fullNameEnglish.trim(),
@@ -134,11 +162,13 @@ export const signupService = {
 
       await setDoc(doc(db, 'users', uid), profile);
 
-      // Username → email map, so this member can later sign in by username.
-      // Best-effort: sign-in by email always works regardless.
+      // Reserves the username. No address: the sign-in address is derivable from
+      // the name, and this document is world-readable.
+      // Best-effort — sign-in works regardless, since resolveEmail falls back to
+      // the same derivation when the row is missing.
       try {
         await setDoc(doc(db, 'usernames', username.toLowerCase()), {
-          uid, email, createdAt: serverTimestamp(),
+          uid, createdAt: serverTimestamp(),
         });
       } catch { /* non-fatal */ }
 
@@ -147,7 +177,7 @@ export const signupService = {
         targetType: 'users',
         targetId: uid,
         description: `Membership request from ${profile.fullNameEnglish} for ${input.atbiyaName}`,
-        actor: { id: uid, name: profile.fullNameEnglish, email },
+        actor: { id: uid, name: profile.fullNameEnglish, email: contactEmail || loginEmail },
       });
 
       await signOut(auth);

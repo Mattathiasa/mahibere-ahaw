@@ -26,9 +26,21 @@ import type { ModuleKey } from '@/services/moduleConfig';
  * data, and several collections remain readable by any approved account.
  */
 interface RequirePermissionProps {
-  permission: PermissionKey;
-  /** Drives the admin-editable page header shown above the refusal. */
-  module: ModuleKey;
+  /**
+   * The permission required. Pass an ARRAY when holding any one of them is
+   * enough — `/missionary` needs that, because `HiyawanMahderat` holds
+   * `canSubmitMissionaryApplication` but not `canViewMissionary`, and the page is
+   * where you submit. Gating it on the view permission alone would lock the one
+   * role granted the submit right out of using it.
+   */
+  permission: PermissionKey | PermissionKey[];
+  /**
+   * Drives the admin-editable page header shown above the refusal. Optional:
+   * several gated pages (notifications, settings, user management) have no
+   * `ModuleKey`, and inventing one would add a row to the Module Config editor
+   * for a page that has nothing configurable.
+   */
+  module?: ModuleKey;
   /**
    * Page name for the header. Optional: every `ModuleKey` is also a key in
    * `nav` or `pages`, so the translated name is derived from `module` by
@@ -63,19 +75,36 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
     );
   }
 
-  if (can(permission)) return <>{children}</>;
+  const required = Array.isArray(permission) ? permission : [permission];
+  // Split from the return below on purpose: an arrow function sharing a line with
+  // a JSX fragment makes scripts/check-hardcoded-strings.mjs read `=>` as a tag
+  // and report the code after it as untranslated UI text.
+  const allowed = required.some((p) => can(p));
+  if (allowed) return <>{children}</>;
 
+  // Names the FIRST requirement. With an any-of list that is the one to ask for:
+  // it is the page's own view permission, the others being incidental rights that
+  // happen to imply access.
   const body = t.permissions.deniedBody
-    .replace('{permission}', permissionLabel(t, permission))
+    .replace('{permission}', permissionLabel(t, required[0]))
     .replace('{location}', t.permissions.deniedLocation);
+
+  const heading = title ?? (module ? moduleTitle(t, module) ?? module : t.admin.accessDenied);
 
   return (
     <div className="space-y-6">
-      <ConfigurablePageHeader
-        module={module}
-        defaultTitle={title ?? moduleTitle(t, module) ?? module}
-        defaultDescription={description ?? t.permissions.noAccessDefault}
-      />
+      {module ? (
+        <ConfigurablePageHeader
+          module={module}
+          defaultTitle={heading}
+          defaultDescription={description ?? t.permissions.noAccessDefault}
+        />
+      ) : (
+        <div>
+          <h1 className="text-2xl font-bold">{heading}</h1>
+          <p className="text-muted-foreground">{description ?? t.permissions.noAccessDefault}</p>
+        </div>
+      )}
       <SectionCard title={t.admin.accessDenied} icon={Lock}>
         <p className="text-muted-foreground">{body}</p>
       </SectionCard>

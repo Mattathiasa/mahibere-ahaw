@@ -55,6 +55,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         createdAt: userData.createdAt,
                         updatedAt: userData.updatedAt,
                         profilePicture: userData.profilePicture,
+                        // Both are written by their own pages and were read back
+                        // from here — but were never mapped, so every saved
+                        // preference reverted on the next reload.
+                        notificationPreferences: userData.notificationPreferences,
+                        volunteerMinistries: userData.volunteerMinistries,
                     };
 
                     setUser(user);
@@ -66,7 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
                 setUser(null);
                 localStorage.removeItem('user');
-                localStorage.removeItem('auth_token');
             }
             setLoading(false);
         });

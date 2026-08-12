@@ -88,27 +88,33 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [registry, setRegistry] = useState<RoleRegistry>(cachedRegistry ?? DEFAULT_ROLE_REGISTRY);
   const [loading, setLoading] = useState(!cachedRegistry);
 
+  /**
+   * Each document is loaded independently, NOT with Promise.all.
+   *
+   * Two of these four are no longer world-readable: `superAdmins` is admin-only
+   * and `userPermissionOverrides` is signed-in only. Under Promise.all a single
+   * denial rejected the whole batch, so an anonymous visitor on the landing page
+   * would have lost the role registry and permission overrides too — readable
+   * documents, dropped because an unreadable one shared their promise.
+   *
+   * A denial here is expected, not exceptional: it means "not for you", and the
+   * empty default is the right answer.
+   */
   const load = async () => {
-    try {
-      const [ro, uo, sa, reg] = await Promise.all([
-        permissionService.getRolePermissions(),
-        permissionService.getUserOverrides(),
-        permissionService.getSuperAdmins(),
-        roleRegistryService.get(),
-      ]);
-      cachedRoleOverrides = ro;
-      cachedUserOverrides = uo;
-      cachedSuperAdmins = sa;
-      cachedRegistry = reg;
-      setRoleOverrides(ro);
-      setUserOverrides(uo);
-      setSuperAdmins(sa);
-      setRegistry(reg);
-    } catch (err) {
-      console.warn('[PermissionContext] Failed to load permissions, using defaults.', err);
-    } finally {
-      setLoading(false);
-    }
+    const settled = await Promise.allSettled([
+      permissionService.getRolePermissions(),
+      permissionService.getUserOverrides(),
+      permissionService.getSuperAdmins(),
+      roleRegistryService.get(),
+    ]);
+
+    const [ro, uo, sa, reg] = settled;
+    if (ro.status === 'fulfilled') { cachedRoleOverrides = ro.value; setRoleOverrides(ro.value); }
+    if (uo.status === 'fulfilled') { cachedUserOverrides = uo.value; setUserOverrides(uo.value); }
+    if (sa.status === 'fulfilled') { cachedSuperAdmins = sa.value; setSuperAdmins(sa.value); }
+    if (reg.status === 'fulfilled') { cachedRegistry = reg.value; setRegistry(reg.value); }
+
+    setLoading(false);
   };
 
   // Re-resolve whenever the signed-in user changes. The cached copies give an

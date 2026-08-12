@@ -110,7 +110,7 @@ const App = () => (
 
                   {/* Protected Dashboard Routes */}
                   <Route path="/quickboard" element={<ProtectedRoute><Suspense fallback={appFallback}><Quickboard /></Suspense></ProtectedRoute>} />
-                  <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Dashboard /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewDashboard"><Suspense fallback={appFallback}><Dashboard /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/announcements" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewAnnouncements" module="announcements"><Suspense fallback={appFallback}><Announcements /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/plans" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewPlans" module="plans"><Suspense fallback={appFallback}><Plans /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/reports" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewReports" module="reports"><Suspense fallback={appFallback}><Reports /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
@@ -121,7 +121,7 @@ const App = () => (
                   <Route path="/hr" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewHR" module="hr"><Suspense fallback={appFallback}><HR /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/inventory" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewInventory" module="inventory"><Suspense fallback={appFallback}><Inventory /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/assets" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewInventory" module="inventory"><Suspense fallback={appFallback}><Inventory /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/hierarchy" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Hierarchy /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/hierarchy" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewHierarchy" module="hierarchy"><Suspense fallback={appFallback}><Hierarchy /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   {/* Not under /admin/* on purpose: these are gated by the
                       canManageAtbiyas / parish-scope permissions, which a role
                       can hold without being an admin role. */}
@@ -134,18 +134,18 @@ const App = () => (
                   {/* Gated in-page: writing an org unit needs isAdmin(), but
                       anyone who may see the hierarchy can read it. */}
                   <Route path="/organisation" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Organisation /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><HigeDenb /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/church-rules" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><ChurchLaws /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Notifications /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/news-manager" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><NewsManager /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Settings /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/user-management" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><UserManagement /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/users" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><UserManagement /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/missionary" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Missionary /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/teachings" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Teaching /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewHigeDenb" module="higeDenb"><Suspense fallback={appFallback}><HigeDenb /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/church-rules" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewChurchRules" module="churchRules"><Suspense fallback={appFallback}><ChurchLaws /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewNotifications"><Suspense fallback={appFallback}><Notifications /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/news-manager" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canManageNews" module="news"><Suspense fallback={appFallback}><NewsManager /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewSettings"><Suspense fallback={appFallback}><Settings /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/user-management" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewUserManagement"><Suspense fallback={appFallback}><UserManagement /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/users" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewUserManagement"><Suspense fallback={appFallback}><UserManagement /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/missionary" element={<ProtectedRoute><DashboardLayout><RequirePermission permission={['canViewMissionary', 'canSubmitMissionaryApplication']} module="missionary"><Suspense fallback={appFallback}><Missionary /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/teachings" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewTeachings" module="teachings"><Suspense fallback={appFallback}><Teaching /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/strategic-plan" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewStrategicPlan" module="strategicPlan"><Suspense fallback={appFallback}><StrategicPlan /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/partner" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><PartnerContact /></Suspense></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/volunteer" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Volunteer /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/volunteer" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewVolunteer" module="volunteer"><Suspense fallback={appFallback}><Volunteer /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/documents" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewDocuments" module="documents"><Suspense fallback={appFallback}><MemriyaDocuments /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   
                   {/* Redirect to NotFound module */}

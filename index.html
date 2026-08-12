@@ -84,6 +84,17 @@
     <div id="boot-splash">
       <div class="seal"><img src="/logo.png" alt="Mahibere Ahaw" /></div>
     </div>
+    <!--
+      CAUTION: the SHA-256 of the script below is pinned in the
+      Content-Security-Policy in vercel.json. Allowing it with 'unsafe-inline'
+      instead would have permitted every inline script on every page and left the
+      policy close to decorative.
+
+      Editing this script AT ALL — whitespace and its inner comment included —
+      changes the hash, and the browser then silently refuses to run it: the
+      splash paints light-themed for a dark-mode reader. `npm run check` fails on
+      a drifted hash and prints the replacement. See scripts/check-csp-hash.mjs.
+    -->
     <script>
       // Inline and synchronous: it has to run before the splash paints.
       try {

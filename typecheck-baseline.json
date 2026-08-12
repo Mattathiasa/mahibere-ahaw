@@ -1,16 +1,4 @@
 {
-  "total": 24,
-  "files": {
-    "src/components/CreateBudgetDialog.tsx": 1,
-    "src/components/CreateFinancialReportDialog.tsx": 1,
-    "src/components/CreatePlanDialog.tsx": 1,
-    "src/components/CreateReportDialog.tsx": 1,
-    "src/components/CreateTeachingDialog.tsx": 7,
-    "src/components/CreateTransactionDialog.tsx": 1,
-    "src/components/ui/recipient-selector.tsx": 1,
-    "src/pages/Reports.tsx": 1,
-    "src/pages/Settings.tsx": 3,
-    "src/pages/Volunteer.tsx": 1,
-    "src/test/geo.test.ts": 6
-  }
+  "total": 0,
+  "files": {}
 }

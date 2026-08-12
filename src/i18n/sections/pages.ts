@@ -411,7 +411,12 @@ export const pagesEn = {
   higeDenbCommunicationTitle: 'Communication Protocol',
   higeDenbCommunicationBody: 'Official announcements can only be made by Memriya level and above. All communications must follow the established chain of command. Urgent matters should be escalated through proper channels to ensure timely response and appropriate action.',
 
-  // ── Strategic plan sample goals ───────────────────────────────────────────
+  // ── Strategic plan ────────────────────────────────────────────────────────
+  // The two goals below are the published vision and stay. What was removed is
+  // the invented PROGRESS against them — StrategicPlan.tsx hardcoded
+  // `currentValue: 1200000` of `targetValue: 50000000` and drew a percentage bar
+  // from it, so a figure nobody had measured was presented as tracked reality.
+  goalProgressUntracked: 'Progress against this goal is not being tracked yet.',
   goalMembersTitle: '50 Million Members in 50 Years',
   goalMembersDesc: 'Our long term vision for church growth and evangelism.',
   goalChurchesTitle: 'Plant 10,000 New Churches',
@@ -861,6 +866,7 @@ export const pagesAm: Record<keyof typeof pagesEn, string> = {
   higeDenbCommunicationTitle: 'የመገናኛ ሥርዓት',
   higeDenbCommunicationBody: 'ይፋዊ ማስታወቂያ ማውጣት የሚችሉት ከመምሪያ ደረጃና ከዚያ በላይ ያሉ ብቻ ናቸው። ሁሉም ግንኙነቶች የተዘረጋውን የትእዛዝ ሰንሰለት መከተል አለባቸው። አስቸኳይ ጉዳዮች ወቅታዊ ምላሽና ተገቢ እርምጃ እንዲያገኙ በተገቢው መስመር ወደ ላይ መተላለፍ አለባቸው።',
 
+  goalProgressUntracked: 'የዚህ ግብ ክንውን እስካሁን አልተመዘገበም።',
   goalMembersTitle: 'በ50 ዓመት 50 ሚሊዮን አባላት',
   goalMembersDesc: 'ለቤተ ክርስቲያኒቱ ዕድገትና ለወንጌል ስርጭት ያለን የረጅም ጊዜ ራእይ።',
   goalChurchesTitle: '10,000 አዳዲስ አብያተ ክርስቲያናት መትከል',

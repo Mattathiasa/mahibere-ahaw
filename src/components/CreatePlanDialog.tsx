@@ -87,7 +87,7 @@ export function CreatePlanDialog({ open, onOpenChange, onSubmit, isLoading }: Cr
               value={formData.attachments}
               onChange={(files) => setFormData({ ...formData, attachments: files })}
               maxFiles={5}
-              maxSize={10}
+              maxSizeMB={10}
             />
           </div>
 
