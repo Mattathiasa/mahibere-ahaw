@@ -44,6 +44,14 @@ Thumbs.db
 .vercel
 .env*.local
 
+# Service-account keys. These are long-lived credentials with full project
+# access — the migration script needs one, and the console downloads it with a
+# generated name. Keep them out of the repo entirely; these patterns are a
+# backstop, not a licence to store one here.
+service-account*.json
+*-firebase-adminsdk-*.json
+application_default_credentials.json
+
 # Firebase functions build output
 functions/lib/
 

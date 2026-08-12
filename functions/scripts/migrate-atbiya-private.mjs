@@ -39,6 +39,7 @@
  * migrated.
  */
 
+import { existsSync } from 'node:fs';
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
@@ -54,6 +55,30 @@ const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT
 if (!projectId) {
   console.error('Set GOOGLE_CLOUD_PROJECT to the Firebase project id.');
   process.exit(1);
+}
+
+// Fail early and legibly. Without credentials the Admin SDK throws
+// "Could not load the default credentials" from six frames deep inside
+// google-gax, AFTER printing the migration banner — which reads like the
+// migration ran and broke, rather than never having started.
+if (!usingEmulator && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  const adc = `${process.env.HOME}/.config/gcloud/application_default_credentials.json`;
+  if (!existsSync(adc)) {
+    console.error(
+      'No credentials.\n\n' +
+      'This needs Admin SDK access: the rules deliberately refuse `contact` and\n' +
+      '`bankAccounts` writes on /hierarchy for every client, so the migration\n' +
+      'cannot run as a signed-in user — not even a super admin.\n\n' +
+      'Either:\n' +
+      '  1. Firebase Console -> Project Settings -> Service Accounts ->\n' +
+      '     "Generate new private key", save it OUTSIDE this repository, then\n' +
+      '     GOOGLE_APPLICATION_CREDENTIALS=~/mahibere-ahaw-key.json \\\n' +
+      '       GOOGLE_CLOUD_PROJECT=mahibere-ahaw \\\n' +
+      '       node functions/scripts/migrate-atbiya-private.mjs --dry-run\n\n' +
+      '  2. gcloud auth application-default login\n'
+    );
+    process.exit(1);
+  }
 }
 
 initializeApp(
