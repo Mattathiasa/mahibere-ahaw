@@ -35,7 +35,13 @@ export const documentService = {
             orderBy('name', 'asc')
         );
         const snapshot = await getDocs(q);
-        return { documents: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
+        // Cast the spread — TypeScript drops `DocumentData`'s index signature, so
+        // the result would type as bare `{ id: string }[]`.
+        return {
+            documents: snapshot.docs.map(
+                (d) => ({ id: d.id, ...(d.data() as Record<string, any>) }) as Document
+            ),
+        };
     },
 
     createFolder: async (name: string, parentId: string | null) => {

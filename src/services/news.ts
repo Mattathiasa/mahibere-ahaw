@@ -35,7 +35,13 @@ export interface NewsPost {
   scope: NewsScope;
   atbiyaId: string | null;
   /** Denormalized so the homepage badge needs no join. */
-  atbiyaName: { en?: string; am?: string } | null;
+  /**
+   * Parish name per language. A partial record over every supported Language,
+   * not the `{ en?, am? }` pair it used to be: NewsSection looks this up in the
+   * reader's active language, so an Afaan Oromoo or Tigrinya name had nowhere to
+   * live and indexing it was an implicit `any` the compiler was not checking.
+   */
+  atbiyaName: Partial<Record<Language, string>> | null;
   authorId: string;
   authorName: string;
   authorRole?: string;

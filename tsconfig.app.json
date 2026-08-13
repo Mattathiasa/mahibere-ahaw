@@ -15,10 +15,18 @@
     "jsx": "react-jsx",
 
     /* Linting */
-    "strict": false,
+    // Was `false`, alongside noImplicitAny:false and (in the root config)
+    // strictNullChecks:false. The audit found 24 baseline type errors hiding
+    // behind that, four of which were real user-facing bugs — an always-empty
+    // recipient picker, file-size caps that never applied, two profile fields
+    // that never persisted, and a dropdown whose values matched no enum member.
+    //
+    // With those fixed the baseline reached 0, and turning strict on cost five
+    // further fixes. Keep it on: the ratchet in scripts/check-types.mjs only stops
+    // the count RISING, whereas this stops the class of bug entirely.
+    "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
 
     "baseUrl": ".",

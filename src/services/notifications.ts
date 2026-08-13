@@ -1,5 +1,6 @@
 import { auth, db } from '@/lib/firebase';
 import { AppError } from '@/lib/appError';
+import type { Notification } from '@/types';
 import {
   collection,
   getDocs,
@@ -159,7 +160,12 @@ export const notificationService = {
     }
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Cast the spread: TypeScript drops `DocumentData`'s index signature, so
+    // without this the result types as bare `{ id: string }[]` and every consumer
+    // reading a real field off a notification is an error.
+    return snapshot.docs.map(
+      (d) => ({ id: d.id, ...(d.data() as Record<string, any>) }) as Notification
+    );
   },
 
   async getUnreadCount(userId: string) {

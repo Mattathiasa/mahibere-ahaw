@@ -445,7 +445,9 @@ export const OrthodoxCross3D: React.FC<{ className?: string }> = ({ className })
       canvas.removeEventListener('touchmove', onTouchMove);
       gsap.globalTimeline.getChildren().forEach((tw) => {
         const targets = (tw as gsap.core.Tween).targets?.() ?? [];
-        if (targets.some((tg: object) =>
+        // `unknown`, not `object`: gsap types `targets()` as `unknown[]`, and the
+        // comparisons below are identity checks that need no narrowing.
+        if (targets.some((tg: unknown) =>
           tg === root.scale || tg === root.position || tg === spinG.rotation ||
           tg === floatG.position || tg === floatG.rotation || tg === keyLight ||
           tg === dust.rotation || tg === camera.position)) {

@@ -125,7 +125,10 @@ const Settings = () => {
     }
   }, [currentUser]);
 
-  const initials = currentUser?.fullName
+  // `?.` on the wrong link: it guarded `currentUser` but not `fullName`, which is
+  // optional, so a member whose record has no name crashed this page rather than
+  // falling through to 'U'.
+  const initials = (currentUser?.fullName ?? '')
     .split(' ')
     .map((n) => n[0])
     .join('')

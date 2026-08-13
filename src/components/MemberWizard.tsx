@@ -85,7 +85,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
     setFormData((prev) => ({
       ...prev,
       [field]: prev[field].includes(value)
-        ? prev[field].filter((item) => item !== value)
+        ? prev[field].filter((item: string) => item !== value)
         : [...prev[field], value],
     }));
   };
@@ -539,7 +539,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                       <div className="flex flex-col gap-2 pt-2">
                         <span className="text-xs opacity-50">{f.assignedRoles}</span>
                         <div className="flex flex-wrap gap-2">
-                          {formData.churchRoles.map(r => <span key={r} className="px-3 py-1 bg-[#2E5E99]/10 text-[#2E5E99] rounded-full text-[9px] font-black uppercase">{r}</span>)}
+                          {formData.churchRoles.map((r: string) => <span key={r} className="px-3 py-1 bg-[#2E5E99]/10 text-[#2E5E99] rounded-full text-[9px] font-black uppercase">{r}</span>)}
                         </div>
                       </div>
                     </div>
