@@ -1431,3 +1431,86 @@ describe('M2/M3/M8 — audit integrity and config reads', () => {
     await assertSucceeds(getDoc(doc(as('member-1'), 'siteConfig/userPermissionOverrides')));
   });
 });
+
+describe('parish map pins', () => {
+  // Congregation coordinates live in atbiyaPrivate, not on the publicly-readable
+  // /hierarchy record. `mapUrl` already hints at where a parish is, but a precise
+  // pin for every congregation in the country is a different kind of dataset and
+  // is wanted only for internal mapping.
+  it('THE POINT — a pin cannot be written onto the public parish record', async () => {
+    await assertFails(updateDoc(doc(as('admin-1'), 'hierarchy/atbiya-bishoftu'), {
+      lat: 8.7521, lng: 38.9789,
+    }));
+    await assertFails(updateDoc(doc(as('memriya-1'), 'hierarchy/atbiya-bishoftu'), {
+      lat: 8.7521, lng: 38.9789,
+    }));
+    await assertFails(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
+      lat: 8.7521, lng: 38.9789,
+    }));
+  });
+
+  it('nor smuggled in when the parish is first registered', async () => {
+    await assertFails(setDoc(doc(as('admin-1'), 'hierarchy/atbiya-pinned'), {
+      name: 'Pinned Atbiya', level: 'Atbiya', parentId: 'zone-1',
+      lat: 9.01, lng: 38.76,
+    }));
+  });
+
+  // THE REGRESSION THIS DESIGN RISKS. Mahedherat are also /hierarchy documents
+  // and store their meeting place as top-level lat/lng — legitimately, because a
+  // member choosing between groups has to see where each one meets. The guard is
+  // scoped to level == 'Atbiya' precisely so this keeps working.
+  it('a Mahedher can still be pinned on its own public record', async () => {
+    await assertSucceeds(updateDoc(doc(as('parish-1'), 'hierarchy/mahder-bole'), {
+      lat: 8.9950, lng: 38.7890,
+    }));
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'hierarchy/mahder-new'), {
+      name: 'New Mahedher', level: 'Mahderat', parentId: 'atbiya-bishoftu',
+      lat: 9.01, lng: 38.76,
+    }));
+  });
+
+  it('head office and admins can write a pin to atbiyaPrivate', async () => {
+    await assertSucceeds(setDoc(doc(as('admin-1'), 'atbiyaPrivate/atbiya-bishoftu'), {
+      lat: 8.7521, lng: 38.9789,
+    }, { merge: true }));
+    await assertSucceeds(setDoc(doc(as('memriya-1'), 'atbiyaPrivate/atbiya-adama'), {
+      lat: 8.54, lng: 39.27,
+    }, { merge: true }));
+  });
+
+  it('a congregation can pin ITSELF but not another', async () => {
+    await assertSucceeds(setDoc(doc(as('parish-1'), 'atbiyaPrivate/atbiya-bishoftu'), {
+      lat: 8.7521, lng: 38.9789,
+    }, { merge: true }));
+    await assertFails(setDoc(doc(as('parish-1'), 'atbiyaPrivate/atbiya-adama'), {
+      lat: 8.54, lng: 39.27,
+    }, { merge: true }));
+  });
+
+  it('an ordinary member and an anonymous visitor can read no pins at all', async () => {
+    await assertFails(getDoc(doc(as('member-1'), 'atbiyaPrivate/atbiya-bishoftu')));
+    await assertFails(getDocs(collection(as('member-1'), 'atbiyaPrivate')));
+    await assertFails(getDoc(doc(anon(), 'atbiyaPrivate/atbiya-bishoftu')));
+  });
+
+  it('the public parish list still carries no coordinates', async () => {
+    const snap = await getDocs(
+      query(collection(anon(), 'hierarchy'), where('level', '==', 'Atbiya'))
+    );
+    for (const d of snap.docs) {
+      const data = d.data();
+      if ('lat' in data || 'lng' in data) {
+        throw new Error(`parish ${d.id} exposes coordinates publicly`);
+      }
+    }
+  });
+
+  // Unrelated edits to a parish must keep working — the guard refuses writes that
+  // TOUCH the private keys, not every write to a document that has them.
+  it('an ordinary parish edit is unaffected', async () => {
+    await assertSucceeds(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
+      cityEn: 'Bishoftu Town',
+    }));
+  });
+});

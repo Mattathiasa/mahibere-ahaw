@@ -42,6 +42,7 @@ const AtbiyaRegistry = lazy(() => import("./pages/AtbiyaRegistry"));
 const MyAtbiya = lazy(() => import("./pages/MyAtbiya"));
 const MembershipRequestsPage = lazy(() => import("./pages/MembershipRequestsPage"));
 const Organisation = lazy(() => import("./pages/Organisation"));
+const ChurchMap = lazy(() => import("./pages/ChurchMap"));
 const NewsIndex = lazy(() => import("./pages/NewsIndex"));
 const About = lazy(() => import("./pages/About"));
 const NewsPostPage = lazy(() => import("./pages/NewsPost"));
@@ -134,6 +135,10 @@ const App = () => (
                   {/* Gated in-page: writing an org unit needs isAdmin(), but
                       anyone who may see the hierarchy can read it. */}
                   <Route path="/organisation" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><Organisation /></Suspense></DashboardLayout></ProtectedRoute>} />
+                  {/* Not under /admin/* for the same reason as the registry above:
+                      canManageAtbiyas is held by head office roles that are not
+                      admin roles, which is exactly who AdminRoute would turn away. */}
+                  <Route path="/church-map" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canManageAtbiyas" module="churchMap"><Suspense fallback={appFallback}><ChurchMap /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/hige-denb" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewHigeDenb" module="higeDenb"><Suspense fallback={appFallback}><HigeDenb /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/church-rules" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewChurchRules" module="churchRules"><Suspense fallback={appFallback}><ChurchLaws /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewNotifications"><Suspense fallback={appFallback}><Notifications /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />

@@ -14,6 +14,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { auditLogService } from '@/services/auditLog';
+import { hasCoords, type LatLng } from '@/lib/geo';
 
 // ─── Atbiya (parish) registry ────────────────────────────────────────────────
 // Parishes are `hierarchy` documents with level === 'Atbiya'. They live here
@@ -48,19 +49,32 @@ export interface AtbiyaContact {
  * dump the registry.
  *
  * Firestore rules cannot project fields, so the only way a public read stays
- * safe is for the public document to hold nothing private. These two live in
+ * safe is for the public document to hold nothing private. These live in
  * `atbiyaPrivate/{atbiyaId}` instead, keyed by the same hierarchy doc id.
  *
  * They stay on the `Atbiya` type: the forms and cards work with one object, and
  * the service is what splits and rejoins it. Anything sensitive added later
  * belongs in this list.
+ *
+ * `lat`/`lng` are here by choice rather than necessity. A church building is not
+ * a secret and `mapUrl` on the public document already hints at where one is —
+ * but a precise pin for every congregation in the country is a different kind of
+ * dataset, and it is only wanted for internal mapping. Putting it here means the
+ * public site can never render a church-finder map without moving it first.
  */
 export interface AtbiyaPrivate {
   bankAccounts?: AtbiyaBankAccount[];
   contact?: AtbiyaContact;
+  /**
+   * Plain numbers, not a Firestore GeoPoint — for the reason recorded in
+   * services/mahderat.ts: a GeoPoint does not survive the generic `{...spread}`
+   * these services use for updates, and nothing here needs a geo query.
+   */
+  lat?: number;
+  lng?: number;
 }
 
-const PRIVATE_KEYS = ['bankAccounts', 'contact'] as const;
+const PRIVATE_KEYS = ['bankAccounts', 'contact', 'lat', 'lng'] as const;
 
 /** Splits a parish payload into its public document and its private one. */
 function splitAtbiya<T extends Partial<AtbiyaPrivate>>(
@@ -109,6 +123,17 @@ export interface Atbiya {
   cityAm?: string;
   bankAccounts?: AtbiyaBankAccount[];
   contact?: AtbiyaContact;
+  /**
+   * The map pin. Stored in `atbiyaPrivate` — see AtbiyaPrivate — but carried here
+   * so the form and the map work with one parish object.
+   *
+   * Absent means "never pinned", which is what `atbiyaCoords` and `hasCoords`
+   * test for. Deliberately NOT defaulted in `emptyAtbiya()`: 0,0 is a point in
+   * the Gulf of Guinea, and a parish that looks pinned but is not is worse than
+   * one that is honestly blank.
+   */
+  lat?: number;
+  lng?: number;
   mapUrl?: string;
   photoUrl?: string;
   description?: string;
@@ -143,7 +168,16 @@ export const emptyAtbiya = (): AtbiyaInput => ({
   foundedAt: '',
   active: true,
   isPublic: true,
+  // No lat/lng: absent is what "unpinned" means. See the note on Atbiya.lat.
 });
+
+/**
+ * The pin, or null when this congregation has never been placed on the map.
+ * Mirrors `mahderCoords` in services/mahderat.ts.
+ */
+export function atbiyaCoords(a: Pick<Atbiya, 'lat' | 'lng'>): LatLng | null {
+  return hasCoords({ lat: a.lat, lng: a.lng }) ? { lat: a.lat!, lng: a.lng! } : null;
+}
 
 export const hierarchyService = {
   // Get all entities by level
@@ -246,24 +280,36 @@ export const hierarchyService = {
    * fields only — the page still works, it just shows less.
    */
   getAtbiyasWithPrivate: async (includeInactive = false): Promise<Atbiya[]> => {
-    const [all, privateById] = await Promise.all([
+    const [all, priv] = await Promise.all([
       hierarchyService.getAtbiyas(includeInactive),
       hierarchyService.getAtbiyaPrivateMap(),
     ]);
-    return all.map((a) => ({ ...a, ...(privateById.get(a.id) ?? {}) }));
+    return all.map((a) => ({ ...a, ...(priv.byId.get(a.id) ?? {}) }));
   },
 
   /**
-   * Private parish fields keyed by parish id. Returns an empty map rather than
-   * throwing when the caller may not read the collection, so a merge site never
-   * has to care whether it is head office or a single parish.
+   * Private parish fields keyed by parish id.
+   *
+   * Returns an empty map rather than throwing when the caller may not read the
+   * collection, so a merge site never has to care whether it is head office or a
+   * single parish. `denied` is what stops that convenience becoming a lie: without
+   * it, "no parish has been pinned" and "you cannot see the pins" are the same
+   * empty map, and the church map would report an empty registry to anyone whose
+   * read was refused.
    */
-  getAtbiyaPrivateMap: async (): Promise<Map<string, AtbiyaPrivate>> => {
+  getAtbiyaPrivateMap: async (): Promise<{
+    byId: Map<string, AtbiyaPrivate>;
+    denied: boolean;
+  }> => {
     try {
       const snap = await getDocs(collection(db, 'atbiyaPrivate'));
-      return new Map(snap.docs.map((d) => [d.id, d.data() as AtbiyaPrivate]));
-    } catch {
-      return new Map();
+      return {
+        byId: new Map(snap.docs.map((d) => [d.id, d.data() as AtbiyaPrivate])),
+        denied: false,
+      };
+    } catch (err) {
+      const code = (err as { code?: string })?.code ?? '';
+      return { byId: new Map(), denied: code === 'permission-denied' };
     }
   },
 

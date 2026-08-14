@@ -23,6 +23,7 @@ export const navEn = {
   atbiyaRegistry: 'Congregation Registry',
   myAtbiya: 'My Congregation',
   organisation: 'Organisation Structure',
+  churchMap: 'Church Map',
   settings: 'Settings',
   softwareControl: 'Software Control',
   logout: 'Log Out',
@@ -61,6 +62,7 @@ export const navAm: Record<keyof typeof navEn, string> = {
   atbiyaRegistry: 'የአጥቢያ መዝገብ',
   myAtbiya: 'የእኔ አጥቢያ',
   organisation: 'ተቋማዊ መዋቅር',
+  churchMap: 'የአጥቢያዎች ካርታ',
   settings: 'ቅንብሮች',
   softwareControl: 'የሶፍትዌር ቁጥጥር',
   logout: 'ይውጡ',
@@ -95,6 +97,7 @@ export const navOm: Partial<Record<keyof typeof navEn, string>> = {
   atbiyaRegistry: 'Galmee Waldaa Naannoo',
   myAtbiya: 'Waldaa Naannoo Koo',
   organisation: 'Caasaa Dhaabbataa',
+  churchMap: 'Kaartaa Waldaalee',
   // om/ti keep their existing wording — it already reads "local
   // congregation" rather than transliterating "Atbiya".
   settings: 'Sajoo',
@@ -131,6 +134,7 @@ export const navTi: Partial<Record<keyof typeof navEn, string>> = {
   atbiyaRegistry: 'መዝገብ ኣጥቢያ',
   myAtbiya: 'ናተይ ኣጥቢያ',
   organisation: 'ትካላዊ ኣቃውማ',
+  churchMap: 'ካርታ ኣብያተ ክርስትያን',
   settings: 'ቅንብራት',
   softwareControl: 'ቁጽጽር ሶፍትዌር',
   logout: 'ውጻእ',

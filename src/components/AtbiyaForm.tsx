@@ -1,7 +1,9 @@
 import React from 'react';
 import { Plus, Trash2, Landmark } from 'lucide-react';
 import type { AtbiyaInput, AtbiyaBankAccount } from '@/services/hierarchy';
+import type { LatLng } from '@/lib/geo';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
+import { LocationPicker } from '@/components/LocationPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -88,6 +90,14 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
   function removeBank(i: number) {
     setDraft((d) => ({ ...d, bankAccounts: (d.bankAccounts ?? []).filter((_, idx) => idx !== i) }));
   }
+  /**
+   * Clearing the pin writes `undefined`, not 0 — Firestore rejects `undefined` on
+   * a create, and `hierarchyService` only carries a private key across when it has
+   * a value, so an unset pin correctly stays absent rather than landing at 0,0.
+   */
+  function setPin(next: LatLng | null) {
+    setDraft((d) => ({ ...d, lat: next?.lat, lng: next?.lng }));
+  }
 
   return (
     <div className="space-y-5 py-2">
@@ -172,6 +182,17 @@ export const AtbiyaForm: React.FC<AtbiyaFormProps> = ({
         <Input value={draft.mapUrl ?? ''} onChange={(e) => set('mapUrl', e.target.value)}
           disabled={disabled} placeholder="https://maps.app.goo.gl/…" />
       </Field>
+
+      {/* The pin. Stored in atbiyaPrivate rather than on the public parish record
+          — hierarchyService.splitAtbiya routes it — so this lands correctly from
+          all three callers of this form, including the parish's own console. */}
+      <LocationPicker
+        value={{ lat: draft.lat, lng: draft.lng }}
+        onChange={setPin}
+        disabled={disabled}
+        label={a.parishLocation}
+        hint={a.parishLocationHint}
+      />
 
       <Divider label={a.contactPerson} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

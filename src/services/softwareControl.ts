@@ -14,7 +14,7 @@ export const NAV_KEYS = [
   'finance', 'hr', 'inventory', 'churchRules', 'higeDenb', 'strategicPlan',
   'documents', 'userManagement', 'hierarchy', 'settings',
   'news', 'missionary', 'teachings', 'volunteer', 'notifications', 'softwareControl',
-  'myAtbiya', 'organisation',
+  'myAtbiya', 'organisation', 'churchMap',
 ] as const;
 
 /**

@@ -213,8 +213,14 @@ service cloud.firestore {
 
     // Parish fields that live in /atbiyaPrivate and must never be written back
     // onto the publicly-readable /hierarchy document. See services/hierarchy.ts.
+    //
+    // `lat`/`lng` are on this list, which is why every use of it must be scoped to
+    // level == 'Atbiya'. Mahedherat are ALSO /hierarchy documents and they store
+    // their meeting place as top-level lat/lng quite legitimately — a member
+    // choosing between groups has to be able to see where each one meets. An
+    // unscoped guard would refuse every Mahedher pin.
     function privateParishKeys() {
-      return ['bankAccounts', 'contact'];
+      return ['bankAccounts', 'contact', 'lat', 'lng'];
     }
 
     function changed(fields) {
@@ -439,7 +445,10 @@ service cloud.firestore {
       // A parish may additionally create its OWN Mahedherat (small Bible-study
       // groups), which is the only kind of entity it can add. `parentId` is
       // pinned to its own parish, so it cannot hang a group off someone else's.
-      allow create: if !request.resource.data.keys().hasAny(privateParishKeys())
+      // The private-key guard applies only to PARISH documents. A Mahedher's
+      // lat/lng belongs on its public record — see privateParishKeys().
+      allow create: if !(request.resource.data.level == 'Atbiya'
+                         && request.resource.data.keys().hasAny(privateParishKeys()))
         && (isAdmin()
             || (canRegisterAtbiya() && request.resource.data.level == 'Atbiya')
             || (isOwnAtbiyaEditor()
@@ -456,7 +465,9 @@ service cloud.firestore {
       // Only a write that TOUCHES those fields is refused — which is exactly the
       // browser tab still running the pre-split bundle after this deploys, and
       // would otherwise quietly re-publish what the migration just moved.
-      allow update: if !changed(privateParishKeys())
+      //
+      // Scoped to parishes, so a Mahedher can still be pinned on its own record.
+      allow update: if !(resource.data.level == 'Atbiya' && changed(privateParishKeys()))
         && (isAdmin()
         || (canRegisterAtbiya() && resource.data.level == 'Atbiya')
         // A parish leader maintains its own record and its own groups, but can

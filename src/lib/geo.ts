@@ -89,6 +89,47 @@ export function parseMapUrl(url: string): LatLng | null {
 // `{ id: 'unpinned' }` — the exact case this function exists to handle — was a
 // type error at every call site. Six of the twenty-four baseline errors were this
 // one signature.
+/**
+ * Splits a list into the items that carry coordinates and those that do not.
+ *
+ * The church map is as much a data-completeness tool as a map: the useful number
+ * for whoever maintains the registry is how many congregations still have no pin,
+ * and the unpinned list is the worklist for fixing that.
+ */
+export function splitByPinned<T extends object>(
+  items: readonly T[]
+): { pinned: T[]; unpinned: T[] } {
+  const pinned: T[] = [];
+  const unpinned: T[] = [];
+  for (const item of items) {
+    (hasCoords(item as Partial<LatLng>) ? pinned : unpinned).push(item);
+  }
+  return { pinned, unpinned };
+}
+
+/**
+ * The south-west / north-east corners enclosing every point, in the tuple shape
+ * Leaflet's `fitBounds` takes. Null when there is nothing to enclose.
+ *
+ * A single point yields a zero-area box, which `fitBounds` renders at maximum
+ * zoom — so callers should treat one point as a `setView`, not a fit. See
+ * ChurchMapCanvas.
+ */
+export function boundsOf(
+  points: readonly LatLng[]
+): [[number, number], [number, number]] | null {
+  if (points.length === 0) return null;
+  let south = points[0].lat, north = points[0].lat;
+  let west = points[0].lng, east = points[0].lng;
+  for (const p of points) {
+    if (p.lat < south) south = p.lat;
+    if (p.lat > north) north = p.lat;
+    if (p.lng < west) west = p.lng;
+    if (p.lng > east) east = p.lng;
+  }
+  return [[south, west], [north, east]];
+}
+
 export function byDistanceFrom<T extends object>(
   origin: LatLng,
   items: readonly T[]

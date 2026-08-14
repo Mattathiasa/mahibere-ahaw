@@ -3,6 +3,7 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-lea
 import L from 'leaflet';
 import { Crosshair, Loader2, MapPin, X } from 'lucide-react';
 import { DEFAULT_CENTER, hasCoords, parseMapUrl, type LatLng } from '@/lib/geo';
+import { makePinIcon } from '@/lib/mapIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,20 +19,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
  */
 
 /**
- * Leaflet's default marker icon is loaded by URL relative to the CSS, which a
- * bundler rewrites and breaks — the classic "markers are invisible" bug. An
- * inline SVG divIcon sidesteps it entirely and needs no image assets.
+ * Moved to lib/mapIcon.ts when the church map needed the same pin in other
+ * colours. The reason it is an inline SVG rather than Leaflet's default marker is
+ * recorded there.
  */
-const pinIcon = L.divIcon({
-  className: '',
-  html: `<svg width="28" height="28" viewBox="0 0 24 24" fill="#2E5E99" stroke="white" stroke-width="1.5"
-           style="filter: drop-shadow(0 2px 3px rgba(0,0,0,.4))">
-           <path d="M12 21s7-6.4 7-11a7 7 0 1 0-14 0c0 4.6 7 11 7 11z"/>
-           <circle cx="12" cy="10" r="2.5" fill="white" stroke="none"/>
-         </svg>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 26],
-});
+const pinIcon = makePinIcon();
 
 /** Click anywhere on the map to move the pin there. */
 const ClickToPlace: React.FC<{ onPick: (p: LatLng) => void }> = ({ onPick }) => {

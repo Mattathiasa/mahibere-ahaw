@@ -11,7 +11,8 @@ import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 export type ModuleKey =
   | 'members' | 'plans' | 'reports' | 'announcements' | 'meetings' | 'finance'
   | 'hr' | 'inventory' | 'teachings' | 'documents' | 'hierarchy' | 'missionary'
-  | 'volunteer' | 'strategicPlan' | 'churchRules' | 'higeDenb' | 'news';
+  | 'volunteer' | 'strategicPlan' | 'churchRules' | 'higeDenb' | 'news'
+  | 'churchMap';
 
 export interface FieldConfig {
   key: string;
@@ -62,7 +63,7 @@ const f = (
 export const MODULE_KEYS: ModuleKey[] = [
   'members', 'plans', 'reports', 'announcements', 'meetings', 'finance',
   'hr', 'inventory', 'teachings', 'documents', 'hierarchy', 'missionary',
-  'volunteer', 'strategicPlan', 'churchRules', 'higeDenb', 'news',
+  'volunteer', 'strategicPlan', 'churchRules', 'higeDenb', 'news', 'churchMap',
 ];
 
 export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
@@ -213,6 +214,15 @@ export const DEFAULT_MODULE_CONFIG: ModuleConfig = {
     options: {},
   },
   higeDenb: {
+    headerTitle: '', headerDescription: '',
+    learnMore: '',
+    fields: [],
+    options: {},
+  },
+  // No `fields`: the church map edits one thing, a congregation's pin, and that
+  // is edited on the congregation itself. Present so its header text is
+  // admin-editable like every other page.
+  churchMap: {
     headerTitle: '', headerDescription: '',
     learnMore: '',
     fields: [],

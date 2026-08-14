@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church, UserPlus, Building2, type LucideIcon } from 'lucide-react';
+import { Bell, Home, FileText, Calendar, Users, BookOpen, Menu, Settings, Network, ChevronLeft, ChevronRight, LogOut, Sun, Moon, Languages, DollarSign, Scale, Globe, Handshake, Heart, FolderOpen, ShieldHalf, Newspaper, Layout, Church, UserPlus, Building2, Map as MapIcon, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
@@ -75,6 +75,10 @@ const getNavigationItems = ({
     { name: 'hierarchy', href: '/hierarchy', icon: Network, permission: 'canViewHierarchy' },
     // Every org level, congregations included, behind one entry.
     { name: 'organisation', href: '/organisation', icon: Building2, show: can('canViewHierarchy') || can('canManageAtbiyas') },
+    // Beside the registry it complements: the same congregations, placed rather
+    // than listed. Gated on the permission that already governs the registry, so
+    // super admins and head office see it and nobody else does.
+    { name: 'churchMap', href: '/church-map', icon: MapIcon, permission: 'canManageAtbiyas' },
     { name: 'myAtbiya', href: '/my-atbiya', icon: Church, show: runsAnAtbiya },
     // Head office approves on any congregation's behalf but runs none itself,
     // so /my-atbiya is empty for them and the queue needs its own home.

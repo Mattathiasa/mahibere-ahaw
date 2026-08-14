@@ -2,7 +2,8 @@
 // Pure maths, no DOM — same reason atbiyaRoles.test.ts pins node.
 import { describe, expect, it } from 'vitest';
 import {
-  byDistanceFrom, formatDistance, hasCoords, haversineKm, parseMapUrl,
+  boundsOf, byDistanceFrom, formatDistance, hasCoords, haversineKm, parseMapUrl,
+  splitByPinned,
 } from '@/lib/geo';
 
 const BOLE = { lat: 8.9950, lng: 38.7890 };
@@ -109,5 +110,57 @@ describe('byDistanceFrom', () => {
 
   it('does not drop anything', () => {
     expect(byDistanceFrom(BOLE, groups)).toHaveLength(groups.length);
+  });
+});
+
+describe('splitByPinned', () => {
+  const items = [
+    { id: 'pinned-a', ...BOLE },
+    { id: 'unpinned' },
+    { id: 'pinned-b', ...BISHOFTU },
+    // A half-filled record is NOT a pin: hasCoords needs both numbers, and a
+    // congregation with only a latitude would otherwise plot on the Greenwich
+    // meridian, hundreds of kilometres out to sea.
+    { id: 'half', lat: 9.01 },
+  ];
+
+  it('separates what can be plotted from what cannot', () => {
+    const { pinned, unpinned } = splitByPinned(items);
+    expect(pinned.map((p: any) => p.id)).toEqual(['pinned-a', 'pinned-b']);
+    expect(unpinned.map((p: any) => p.id)).toEqual(['unpinned', 'half']);
+  });
+
+  it('loses nothing', () => {
+    const { pinned, unpinned } = splitByPinned(items);
+    expect(pinned.length + unpinned.length).toBe(items.length);
+  });
+
+  it('handles an empty list', () => {
+    expect(splitByPinned([])).toEqual({ pinned: [], unpinned: [] });
+  });
+});
+
+describe('boundsOf', () => {
+  it('is null with nothing to enclose', () => {
+    expect(boundsOf([])).toBeNull();
+  });
+
+  it('encloses every point', () => {
+    const bounds = boundsOf([BOLE, MEGENAGNA, BISHOFTU]);
+    expect(bounds).not.toBeNull();
+    const [[south, west], [north, east]] = bounds!;
+    // Bishoftu is the southernmost and easternmost; Megenagna the northernmost.
+    expect(south).toBe(BISHOFTU.lat);
+    expect(north).toBe(MEGENAGNA.lat);
+    expect(west).toBe(BOLE.lng);
+    expect(east).toBe(BISHOFTU.lng);
+  });
+
+  it('gives a zero-area box for one point', () => {
+    // Which is why ChurchMapCanvas treats a single point as a setView rather
+    // than a fitBounds — Leaflet renders a zero-area box at maximum zoom.
+    const [[south, west], [north, east]] = boundsOf([BOLE])!;
+    expect(south).toBe(north);
+    expect(west).toBe(east);
   });
 });
