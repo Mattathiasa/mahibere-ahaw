@@ -9,6 +9,7 @@ A modern church management system focused on the home page and login functionali
 - **Theme Support**: Light and dark mode toggle
 - **Multi-language**: Amharic (default), English, Afaan Oromoo and Tigrinya
 - **Responsive**: Mobile-friendly design
+- **Parish Map**: Interactive map of parish locations
 
 ## Getting Started
 
