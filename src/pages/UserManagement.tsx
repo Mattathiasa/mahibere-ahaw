@@ -699,6 +699,7 @@ const UserManagement = () => {
                     <EthiopianDatePicker
                       value={formData.dateOfBirth}
                       onChange={(isoDate) => setFormData({ ...formData, dateOfBirth: isoDate })}
+                      allowGregorian
                     />
                   </div>
                   <div className="space-y-2">
@@ -1246,6 +1247,7 @@ const UserManagement = () => {
                 <EthiopianDatePicker
                   value={formData.dateOfBirth}
                   onChange={(isoDate) => setFormData({ ...formData, dateOfBirth: isoDate })}
+                  allowGregorian
                 />
               </div>
               <div className="space-y-2">

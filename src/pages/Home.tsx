@@ -14,7 +14,7 @@ import { ThreeBackground } from '../components/ThreeBackground';
 import { OrthodoxCross3D } from '../components/OrthodoxCross3D';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LANGUAGE_CODE, nextLanguage } from '@/i18n/languages';
+import { LANGUAGE_ENDONYM, nextLanguage } from '@/i18n/languages';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import {
   featureLinkTarget, resolveLink,
@@ -251,8 +251,8 @@ const Home: React.FC = () => {
             <button onClick={toggleTheme} className="p-3 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors">
               {theme === 'light' ? <Moon className="h-5 w-5 text-[#2E5E99]" /> : <Sun className="h-5 w-5 text-[#7BA4D0]" />}
             </button>
-            <button onClick={toggleLanguage} className="p-3 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs uppercase text-[#2E5E99]">
-              {LANGUAGE_CODE[upcomingLanguage]}
+            <button onClick={toggleLanguage} className="px-3 py-2 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs text-[#2E5E99]">
+              {LANGUAGE_ENDONYM[upcomingLanguage]}
             </button>
             <Button onClick={() => navigate('/login')} className="flex bg-[#2E5E99] hover:bg-[#2E5E99]/90 px-4 sm:px-8 py-2 sm:py-3 text-xs sm:text-base rounded-2xl shadow-xl shadow-[#2E5E99]/20">
               {t.nav.login}

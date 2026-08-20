@@ -14,7 +14,7 @@ import { usePermissions } from '@/contexts/PermissionContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LANGUAGE_CODE, LANGUAGE_ENDONYM, nextLanguage } from '@/i18n/languages';
+import { LANGUAGE_ENDONYM, nextLanguage } from '@/i18n/languages';
 import { ThreeBackground } from './ThreeBackground';
 
 interface DashboardLayoutProps {
@@ -239,7 +239,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             >
               <Languages className={`h-5 w-5 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`} />
               <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                {LANGUAGE_CODE[upcomingLanguage]}
+                {LANGUAGE_ENDONYM[upcomingLanguage]}
               </span>
             </Button>
             <ProfileDropdown />

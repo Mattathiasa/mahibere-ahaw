@@ -5,7 +5,7 @@ import { Sun, Moon, ArrowLeft } from 'lucide-react';
 import { BrandMark } from '@/components/BrandMark';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LANGUAGE_CODE, nextLanguage } from '@/i18n/languages';
+import { LANGUAGE_ENDONYM, nextLanguage } from '@/i18n/languages';
 import { Button } from '@/pages/home-components/Button';
 
 /**
@@ -45,8 +45,8 @@ export const PublicChrome: React.FC<{ children: React.ReactNode; backTo?: string
               {theme === 'light' ? <Moon className="h-4 w-4 text-[#2E5E99]" /> : <Sun className="h-4 w-4 text-[#7BA4D0]" />}
             </button>
             <button onClick={cycleLanguage}
-              className="p-2.5 rounded-xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs uppercase text-[#2E5E99]">
-              {LANGUAGE_CODE[nextLanguage(language)]}
+              className="px-3 py-2 rounded-xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs text-[#2E5E99]">
+              {LANGUAGE_ENDONYM[nextLanguage(language)]}
             </button>
             <Button onClick={() => navigate('/login')}
               className="bg-[#2E5E99] hover:bg-[#204a7c] px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-xl">

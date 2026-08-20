@@ -174,13 +174,27 @@ export function todayISO(): string {
 
 /**
  * Returns an array of Ethiopian year numbers for pickers.
- * @param minYear earliest year (default 1990)
+ * @param minYear earliest year (default 1900)
  * @param maxOffset years ahead of today (default 5)
  */
-export function getEthiopianYearOptions(minYear = 1990, maxOffset = 5): number[] {
+export function getEthiopianYearOptions(minYear = 1900, maxOffset = 5): number[] {
   const currentEthYear = toEthiopianDate().year;
   const years: number[] = [];
   for (let y = currentEthYear + maxOffset; y >= minYear; y--) {
+    years.push(y);
+  }
+  return years;
+}
+
+/**
+ * Returns an array of Gregorian year numbers for pickers.
+ * @param minYear earliest year (default 1900)
+ * @param maxOffset years ahead of today (default 5)
+ */
+export function getGregorianYearOptions(minYear = 1900, maxOffset = 5): number[] {
+  const currentYear = new Date().getFullYear();
+  const years: number[] = [];
+  for (let y = currentYear + maxOffset; y >= minYear; y--) {
     years.push(y);
   }
   return years;

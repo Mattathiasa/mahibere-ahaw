@@ -2,13 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Globe } from 'lucide-react';
 import {
   toEthiopianDate,
   toGregorianDate,
   todayISO,
   ETHIOPIAN_MONTHS,
   getEthiopianYearOptions,
+  getGregorianYearOptions,
   isEthiopianLeapYear,
   EthiopianDate,
 } from '@/lib/ethiopian-calendar';
@@ -20,6 +22,8 @@ interface EthiopianDatePickerProps {
   className?: string;
   /** If true, auto-initializes to today when value is empty (default: true) */
   defaultToToday?: boolean;
+  /** If true, show a toggle to switch between Ethiopian and Gregorian calendar entry. */
+  allowGregorian?: boolean;
 }
 
 // Amharic weekday abbreviations — week starts Sunday (እሑድ)
@@ -50,6 +54,7 @@ export function EthiopianDatePicker({
   placeholder = 'ቀን ይምረጡ',
   className = '',
   defaultToToday = true,
+  allowGregorian = false,
 }: EthiopianDatePickerProps) {
   const [open, setOpen] = useState(false);
 
@@ -107,7 +112,41 @@ export function EthiopianDatePicker({
 
   const maxDays = view.month === 13 ? (isEthiopianLeapYear(view.year) ? 6 : 5) : 30;
   const firstDow = getFirstDayOfWeek(view.year, view.month);
-  const yearOptions = getEthiopianYearOptions(1990, 5);
+  const yearOptions = getEthiopianYearOptions(1900, 5);
+
+  // ── Gregorian calendar mode ──
+  const [calMode, setCalMode] = useState<'ethiopian' | 'gregorian'>('ethiopian');
+  const [gYear, setGYear] = useState(() => {
+    const d = new Date();
+    return d.getFullYear();
+  });
+  const [gMonth, setGMonth] = useState(() => {
+    const d = new Date();
+    return d.getMonth() + 1;
+  });
+  const [gDay, setGDay] = useState(() => {
+    const d = new Date();
+    return d.getDate();
+  });
+  const gregorianYearOptions = getGregorianYearOptions(1900, 5);
+  const GREG_MONTHS = [
+    { id: 1, name: 'January' }, { id: 2, name: 'February' }, { id: 3, name: 'March' },
+    { id: 4, name: 'April' }, { id: 5, name: 'May' }, { id: 6, name: 'June' },
+    { id: 7, name: 'July' }, { id: 8, name: 'August' }, { id: 9, name: 'September' },
+    { id: 10, name: 'October' }, { id: 11, name: 'November' }, { id: 12, name: 'December' },
+  ];
+  const gregMaxDays = new Date(gYear, gMonth, 0).getDate();
+  const handleGregorianDayClick = (day: number) => {
+    const yy = gYear;
+    const mm = String(gMonth).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    const iso = `${yy}-${mm}-${dd}`;
+    const eth = toEthiopianDate(iso);
+    const monthObj = ETHIOPIAN_MONTHS.find(m => m.id === eth.month) ?? ETHIOPIAN_MONTHS[0];
+    const formatted = `${monthObj.name} ${eth.day}, ${eth.year} ዓ.ም.`;
+    if (onChange) onChange(iso, formatted, eth);
+    setOpen(false);
+  };
 
   const handleDayClick = (day: number) => {
     const newSel = { year: view.year, month: view.month, day };
@@ -285,7 +324,43 @@ export function EthiopianDatePicker({
           </div>
         </div>
 
-        {/* ── Footer: show Gregorian equivalent ── */}
+        {/* ── Gregorian mode ── */}
+        {calMode === 'gregorian' && (
+          <div className="p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Select value={gMonth.toString()} onValueChange={(v) => setGMonth(parseInt(v))}>
+                <SelectTrigger className="h-8 text-xs font-bold rounded-lg"><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {GREG_MONTHS.map((m) => (
+                    <SelectItem key={m.id} value={m.id.toString()} className="text-xs">{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={gYear.toString()} onValueChange={(v) => setGYear(parseInt(v))}>
+                <SelectTrigger className="h-8 text-xs font-bold rounded-lg w-24"><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {gregorianYearOptions.map((y) => (
+                    <SelectItem key={y} value={y.toString()} className="text-xs">{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: gregMaxDays }, (_, i) => i + 1).map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => handleGregorianDayClick(day)}
+                  className="h-9 w-full rounded-lg text-xs font-bold flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Footer: show equivalent date ── */}
         <div className="px-4 pb-3 pt-1 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground font-medium">
@@ -298,6 +373,16 @@ export function EthiopianDatePicker({
           <div className="mt-0.5 text-center text-xs font-black text-[#0D2440] dark:text-white">
             {displayLabel}
           </div>
+          {allowGregorian && (
+            <button
+              type="button"
+              onClick={() => setCalMode(calMode === 'ethiopian' ? 'gregorian' : 'ethiopian')}
+              className="mt-2 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#2E5E99] dark:text-[#7BA4D0] hover:underline"
+            >
+              <Globe className="h-3 w-3" />
+              {calMode === 'ethiopian' ? 'Switch to Gregorian' : 'Switch to Ethiopian'}
+            </button>
+          )}
         </div>
       </PopoverContent>
     </Popover>

@@ -8,7 +8,7 @@ import {
 import logo from '@/assets/logo.png';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LANGUAGE_CODE, nextLanguage } from '@/i18n/languages';
+import { LANGUAGE_ENDONYM, nextLanguage } from '@/i18n/languages';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { hierarchyService, type Atbiya } from '@/services/hierarchy';
 import { signupService, type SignupInput } from '@/services/signup';
@@ -197,8 +197,8 @@ const Signup: React.FC = () => {
             {theme === 'light' ? <Moon className="h-5 w-5 text-[#2E5E99]" /> : <Sun className="h-5 w-5 text-[#7BA4D0]" />}
           </button>
           <button onClick={cycleLanguage}
-            className="p-3 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs uppercase text-[#2E5E99]">
-            {LANGUAGE_CODE[nextLanguage(language)]}
+            className="px-3 py-2 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs text-[#2E5E99]">
+            {LANGUAGE_ENDONYM[nextLanguage(language)]}
           </button>
         </div>
       </div>
@@ -267,6 +267,7 @@ const Signup: React.FC = () => {
                   <EthiopianDatePicker
                     value={form.dateOfBirth}
                     onChange={(iso) => set('dateOfBirth', iso)}
+                    allowGregorian
                   />
                 </Field>
               </div>

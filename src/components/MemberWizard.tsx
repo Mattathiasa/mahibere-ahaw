@@ -233,6 +233,7 @@ export const MemberWizard = ({ onClose, onSubmit, initialData }: MemberWizardPro
                       value={formData.dateOfBirth}
                       onChange={(isoDate) => setFormData({ ...formData, dateOfBirth: isoDate })}
                       className="h-14 bg-white/50 backdrop-blur-sm"
+                      allowGregorian
                     />
                   </div>
                   <div className="space-y-2">

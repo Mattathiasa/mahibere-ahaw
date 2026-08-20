@@ -290,6 +290,7 @@ export function EmployeeRegistrationWizard({
                 <EthiopianDatePicker
                   value={formData.dateOfBirth}
                   onChange={(isoDate) => handleFieldChange('dateOfBirth', isoDate)}
+                  allowGregorian
                 />
               </div>
 

@@ -344,6 +344,7 @@ const Settings = () => {
                   <EthiopianDatePicker
                     value={profileData.dateOfBirth}
                     onChange={(isoDate) => setProfileData({ ...profileData, dateOfBirth: isoDate })}
+                    allowGregorian
                   />
                 </div>
                 <div className="space-y-2">
