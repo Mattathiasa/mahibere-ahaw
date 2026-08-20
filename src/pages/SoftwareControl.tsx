@@ -5,7 +5,7 @@ import {
   LayoutPanelLeft, MousePointerClick, ExternalLink, ScrollText, RefreshCw,
   LogIn, LogOut, FilePlus2, FilePen, FileX2, Smartphone, Monitor,
   ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon, UserPlus,
-  CalendarClock,
+  CalendarClock, Search, Server, Database, Key, Activity,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -21,7 +21,7 @@ import {
   roleRegistryService, roleLabel, validateRegistry, DEFAULT_SIGNUP_ROLE,
   type Role,
 } from '@/services/roleRegistry';
-import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS_VERSION, type PermissionKey } from '@/lib/rolePermissions';
+import { ALL_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS_VERSION, type PermissionKey } from '@/lib/rolePermissions';
 import { userService } from '@/services/users';
 import { PermissionMatrix } from '@/components/PermissionMatrix';
 import { RoleEditorDialog } from '@/components/RoleEditorDialog';
@@ -69,6 +69,12 @@ const SoftwareControl: React.FC = () => {
 
   // The congregation registry is a tab on /organisation alongside every other
   // level; roles holding `canManageAtbiyas` reach it without being super admins.
+
+  // ── Users tab ──────────────────────────────────────────────────────────
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'pending' | 'suspended'>('all');
 
   // Audit logs
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -167,6 +173,18 @@ const SoftwareControl: React.FC = () => {
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
+  }
+
+  async function loadUsers() {
+    setUsersLoading(true);
+    try {
+      const { users } = await userService.getAllUsers();
+      setAllUsers(users as any[]);
+    } catch {
+      setAllUsers([]);
+    } finally {
+      setUsersLoading(false);
+    }
   }
 
   async function loadLogs(action: 'all' | AuditAction = logFilter) {
@@ -339,6 +357,7 @@ const SoftwareControl: React.FC = () => {
         <Tabs defaultValue="roles" onValueChange={(v) => {
           // Loaded lazily so the page opens fast.
           if (v === 'audit' && logs.length === 0) loadLogs();
+          if (v === 'users' && allUsers.length === 0) loadUsers();
         }}>
           <TabsList className="mb-6 w-full flex-wrap h-auto">
             <TabsTrigger value="roles" className="flex-1 gap-2">
@@ -355,6 +374,12 @@ const SoftwareControl: React.FC = () => {
             </TabsTrigger>
             <TabsTrigger value="meetings" className="flex-1 gap-2">
               <CalendarClock className="h-4 w-4" /> {a.scMeetings}
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex-1 gap-2">
+              <UsersIcon className="h-4 w-4" /> {a.scUsers}
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex-1 gap-2">
+              <Server className="h-4 w-4" /> {a.scSystem}
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex-1 gap-2">
               <ScrollText className="h-4 w-4" /> {a.scAudit}
@@ -562,6 +587,257 @@ const SoftwareControl: React.FC = () => {
 
           <TabsContent value="requests">
             <MembershipRequests />
+          </TabsContent>
+
+          {/* ════════ ALL USERS ════════ */}
+          <TabsContent value="users" className="space-y-6">
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: a.scTotalUsers, value: allUsers.length, icon: UsersIcon, color: 'text-[#2E5E99]' },
+                { label: a.scActiveUsers, value: allUsers.filter((u) => (u.status ?? 'active') === 'active').length, icon: CheckCircle2, color: 'text-green-600' },
+                { label: a.scPendingUsers, value: allUsers.filter((u) => u.status === 'pending').length, icon: AlertCircle, color: 'text-amber-600' },
+                { label: a.scSuspendedUsers, value: allUsers.filter((u) => u.status === 'suspended').length, icon: AlertCircle, color: 'text-red-600' },
+              ].map((stat) => (
+                <div key={stat.label} className="p-4 rounded-xl border border-border bg-muted/20">
+                  <div className="flex items-center gap-2 mb-1">
+                    <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                    <span className="text-xs text-muted-foreground font-medium">{stat.label}</span>
+                  </div>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <div>
+                  <CardTitle>{a.scUsersTitle}</CardTitle>
+                  <CardDescription>{a.scUsersDesc}</CardDescription>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => loadUsers()}>
+                  <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {(['all', 'active', 'pending', 'suspended'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setUserFilter(f)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors border ${
+                        userFilter === f
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background border-border hover:border-primary/50'
+                      }`}
+                    >
+                      {f === 'all' ? a.scUserFilterAll : f === 'active' ? a.scUserFilterActive : f === 'pending' ? a.scUserFilterPending : a.scUserFilterSuspended}
+                    </button>
+                  ))}
+                  <div className="relative ml-auto w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={a.scUserSearch}
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      className="h-9 pl-9"
+                    />
+                  </div>
+                </div>
+
+                {usersLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (() => {
+                  const filtered = allUsers.filter((u) => {
+                    const status = u.status ?? 'active';
+                    if (userFilter !== 'all' && status !== userFilter) return false;
+                    if (userSearch.trim()) {
+                      const q = userSearch.toLowerCase();
+                      const haystack = [u.fullNameEnglish, u.fullName, u.fullNameAmharic, u.email, u.username, u.hierarchyLevel, u.atbiyaName]
+                        .filter(Boolean).join(' ').toLowerCase();
+                      if (!haystack.includes(q)) return false;
+                    }
+                    return true;
+                  });
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <UsersIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                        <p className="font-medium">{a.scNoUsers}</p>
+                        <p className="text-sm">{a.scNoUsersHint}</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
+                            <th className="py-2 pr-4">{a.scColName}</th>
+                            <th className="py-2 pr-4">{a.scColRole}</th>
+                            <th className="py-2 pr-4">{a.scColStatus}</th>
+                            <th className="py-2 pr-4">{a.scColAtbiya}</th>
+                            <th className="py-2">{a.scColJoined}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((u) => {
+                            const status = u.status ?? 'active';
+                            const roleObj = roles.find((r) => r.key === u.hierarchyLevel);
+                            return (
+                              <tr key={u.id} className="border-b border-border/50">
+                                <td className="py-2.5 pr-4">
+                                  <div className="font-medium">{u.fullNameEnglish ?? u.fullName ?? '—'}</div>
+                                  {u.fullNameAmharic && <div className="text-xs text-muted-foreground font-ethiopic">{u.fullNameAmharic}</div>}
+                                  <div className="text-xs text-muted-foreground">{u.email || u.username}</div>
+                                </td>
+                                <td className="py-2.5 pr-4">
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {roleObj ? roleLabel(roleObj, 'en') : u.hierarchyLevel ?? '—'}
+                                  </Badge>
+                                </td>
+                                <td className="py-2.5 pr-4">
+                                  <Badge variant="outline" className={`text-[10px] ${
+                                    status === 'active' ? 'bg-green-500/10 text-green-700 border-green-500/30' :
+                                    status === 'pending' ? 'bg-amber-500/10 text-amber-700 border-amber-500/30' :
+                                    status === 'suspended' ? 'bg-red-500/10 text-red-700 border-red-500/30' :
+                                    'bg-slate-500/10 text-slate-700 border-slate-500/30'
+                                  }`}> {status}
+                                  </Badge>
+                                </td>
+                                <td className="py-2.5 pr-4 text-xs text-muted-foreground">
+                                  {u.atbiyaName ?? '—'}
+                                </td>
+                                <td className="py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                  {u.createdAt?.toDate ? formatDateTime(u.createdAt.toDate()) : u.createdAt ?? '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ════════ SYSTEM OVERVIEW ════════ */}
+          <TabsContent value="system" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Server className="h-5 w-5" /> {a.scSystemTitle}
+                </CardTitle>
+                <CardDescription>{a.scSystemDesc}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Health indicator */}
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20">
+                  <Activity className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-bold text-green-700">{a.scSystemHealth}</p>
+                    <p className="text-xs text-green-600">{a.scHealthy}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Role Registry */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold flex items-center gap-2">
+                      <Key className="h-4 w-4" /> Role Registry
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scRegistryVersion}</span>
+                        <Badge variant="outline">v{registryVersion}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scPermissionsVersion}</span>
+                        <Badge variant="outline">v{PERMISSIONS_VERSION}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Permissions status</span>
+                        <Badge variant={permissionsOutOfDate ? 'destructive' : 'default'} className="text-[10px]">
+                          {permissionsOutOfDate ? a.scPermissionsOutOfDate : a.scPermissionsUpToDate}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scSignupRole}</span>
+                        <Badge variant="outline">{signupRole}</Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold flex items-center gap-2">
+                      <Database className="h-4 w-4" /> Statistics
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scTotalRoles}</span>
+                        <span className="font-bold">{roles.length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scAdminRoles}</span>
+                        <span className="font-bold">{roles.filter((r) => r.isAdmin).length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scApproverRoles}</span>
+                        <span className="font-bold">{roles.filter((r) => r.canApproveMembers).length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scTotalUsers}</span>
+                        <span className="font-bold">{Object.values(roleUsage).reduce((a, b) => a + b, 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Config metadata */}
+                {config.meta && (
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="text-sm font-bold mb-3">Configuration</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scLastConfigSave}</span>
+                        <span className="text-sm">{config.meta.updatedAt ? formatDateTime(new Date(config.meta.updatedAt)) : '—'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{a.scSavedBy}</span>
+                        <span className="text-sm">{config.meta.updatedBy ?? '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Nav & element counts */}
+                <div className="pt-4 border-t border-border">
+                  <h3 className="text-sm font-bold mb-3">Control Coverage</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="p-3 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground">{a.scTabs}</p>
+                      <p className="text-lg font-bold">{Object.keys(config.navAccess).length}</p>
+                      <p className="text-[10px] text-muted-foreground">restricted tabs</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground">{a.scButtons}</p>
+                      <p className="text-lg font-bold">{Object.keys(config.elements).length}</p>
+                      <p className="text-[10px] text-muted-foreground">custom rules</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground">Total permissions</p>
+                      <p className="text-lg font-bold">{ALL_PERMISSIONS.length}</p>
+                      <p className="text-[10px]">available in system</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* ════════ AUDIT LOGS ════════ */}
