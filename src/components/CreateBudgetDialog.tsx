@@ -140,7 +140,7 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
             <RecipientSelector
               label={fin.sendToOptional}
               placeholder={fin.sendBudgetPlaceholder}
-              hierarchyLevel="Memriya"
+              hierarchyLevel=""
               value={formData.recipients}
               onChange={(recipients) => setFormData({ ...formData, recipients })}
             />
@@ -156,11 +156,11 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Cancel
+              {t.admin.cancel}
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Budget
+              {t.admin.createBudget ?? 'Create Budget'}
             </Button>
           </div>
         </form>

@@ -202,7 +202,7 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
             <RecipientSelector
               label={fin.sendToOptional}
               placeholder={fin.sendToPlaceholder}
-              hierarchyLevel="Memriya"
+              hierarchyLevel=""
               value={formData.recipients}
               onChange={(recipients) => setFormData({ ...formData, recipients })}
               maxRecipients={3}
@@ -211,11 +211,11 @@ export function CreateTransactionDialog({ open, onOpenChange, onSubmit, isLoadin
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Cancel
+              {t.admin.cancel}
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Add Transaction
+              {t.admin.add}
             </Button>
           </div>
         </form>

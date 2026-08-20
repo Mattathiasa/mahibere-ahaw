@@ -185,6 +185,8 @@ export const PERMISSIONS_VERSION = 2;
 // strings — the seven bylaw levels below are simply the roles we ship with.
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
+  SuperAdmin: [...ALL_PERMISSIONS], // system owner — all permissions
+
   Sinodos: [...ALL_PERMISSIONS], // all permissions
 
   KuamiSinodos: ALL_PERMISSIONS.filter(p => p !== 'canViewUserManagement'),

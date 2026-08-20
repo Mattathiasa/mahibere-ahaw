@@ -121,12 +121,12 @@ const MemriyaDocuments = () => {
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                         <FolderOpen className="h-8 w-8 text-primary" />
-                        {moduleCfg.headerTitle || 'Memriya Documents'}
+                        {moduleCfg.headerTitle || tree.admin.docsManageFiles.replace('{scope}', tree.admin.docsScopeGeneral)}
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        {moduleCfg.headerDescription || tree.admin.docsManageFiles.replace('{scope}', user?.hierarchyLevel === 'Memriya' ? tree.admin.docsScopeOwn : tree.admin.docsScopeGeneral)}
+                        {moduleCfg.headerDescription || tree.admin.docsManageFiles.replace('{scope}', tree.admin.docsScopeGeneral)}
                     </p>
-                    <LearnMore title={moduleCfg.headerTitle || 'Memriya Documents'} content={moduleCfg.learnMore} />
+                    <LearnMore title={moduleCfg.headerTitle || tree.admin.docsManageFiles.replace('{scope}', tree.admin.docsScopeGeneral)} content={moduleCfg.learnMore} />
                 </div>
             </div>
 

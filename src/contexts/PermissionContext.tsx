@@ -131,6 +131,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const isSuperAdmin =
     user?.role === 'SuperAdmin' ||
+    user?.hierarchyLevel === 'SuperAdmin' ||
     (user?.id ? superAdmins.includes(user.id) : false);
 
   const myRole = user?.hierarchyLevel ?? DEFAULT_SIGNUP_ROLE;

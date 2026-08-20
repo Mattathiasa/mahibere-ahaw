@@ -128,6 +128,12 @@ interface SeedSpec {
 /** Amharic names are taken from the bylaws org chart in `data/churchStructure.ts`. */
 const SEED_SPECS: SeedSpec[] = [
   {
+    key: 'SuperAdmin',
+    labels: { en: 'Super Admin', am: 'ሁሉንድም አስተዳዳሪ', om: 'Super Admin', ti: 'ሱፐር ኣድሚን' },
+    description: 'System owner — bypasses all permission checks and has unrestricted access to everything.',
+    scope: 'global', isAdmin: true, canApproveMembers: true, color: 'red',
+  },
+  {
     key: 'Sinodos',
     labels: { en: 'Sinodos', am: 'ሲኖዶስ ዘአኀው', om: 'Sinodos', ti: 'ሲኖዶስ' },
     description: 'Supreme general assembly and final decision-making body.',

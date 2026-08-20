@@ -436,8 +436,7 @@ const UserManagement = () => {
         </div>
         <SectionCard title={a.accessDenied} icon={Users}>
           <p className="text-muted-foreground">
-            Your role does not include the "View User Management" permission. A super
-            admin can grant it in Software Control → Roles.
+            {a.accessDeniedUserMgmt}
           </p>
         </SectionCard>
       </div>
@@ -535,8 +534,8 @@ const UserManagement = () => {
                       <SelectContent>
                         <SelectItem value="Zone">{a.scopeDiocese}</SelectItem>
                         <SelectItem value="Atbiya">{a.scopeCongregation}</SelectItem>
-                        <SelectItem value="EnkesekaseMaikel">Enkesekase Maikel / እንቀሰቃሴ ማዕከል</SelectItem>
-                        <SelectItem value="Mahderat">Mahderat (Small Group) / ማህደራት (ትንሽ ቡድን)</SelectItem>
+                        <SelectItem value="EnkesekaseMaikel">{a.entityEnkesekaseMaikel}</SelectItem>
+                        <SelectItem value="Mahderat">{a.entityMahderat}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -594,7 +593,7 @@ const UserManagement = () => {
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setShowCreateEntityDialog(false)}>
-                    Cancel
+                    {a.cancel}
                   </Button>
                   <Button type="submit" disabled={createEntityMutation.isPending}>
                     {createEntityMutation.isPending ? a.creating : a.createEntity}
@@ -607,7 +606,7 @@ const UserManagement = () => {
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <UserPlus className="h-4 w-4" />
-                Create New User
+                {a.createNewUser}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -860,8 +859,7 @@ const UserManagement = () => {
                         </div>
                       );
                     })()}
-                  </div>
-                  {formData.hierarchyLevel === 'Memriya' && (
+                  </div>                   {scopeOf(formData.hierarchyLevel) === 'global' && (
                     <div className="space-y-2">
                       <Label htmlFor="memriyaRole">{a.memriyaRole}</Label>
                       <Select
@@ -1018,7 +1016,7 @@ const UserManagement = () => {
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancel
+                    {a.cancel}
                   </Button>
                   <Button type="submit" disabled={createUserMutation.isPending}>
                     {createUserMutation.isPending ? a.creating : a.createUser}
@@ -1033,13 +1031,13 @@ const UserManagement = () => {
             onClick={() => setShowBulkImport(true)}
             className="gap-2"
           >
-            <Upload className="h-4 w-4" /> Bulk Import
+            <Upload className="h-4 w-4" /> {a.scActionCreate} {a.usersTitle}
           </Button>
           <Button
             onClick={() => setShowInviteDialog(true)}
             className="bg-[#2E5E99] hover:bg-[#204a7c] text-white font-semibold gap-2 rounded-xl"
           >
-            <UserPlus className="h-4 w-4" /> Create User
+            <UserPlus className="h-4 w-4" /> {a.createUser}
           </Button>
         </div>
       </div>
@@ -1079,9 +1077,8 @@ const UserManagement = () => {
             activeTab === 'logs'
               ? 'bg-white text-[#2E5E99] shadow-sm'
               : 'text-white/80 hover:text-white hover:bg-white/10'
-          }`}
-        >
-          Logs
+          }`}          >
+          {a.logsTab}
         </button>
         <button
           onClick={() => setActiveTab('roles')}
@@ -1089,9 +1086,8 @@ const UserManagement = () => {
             activeTab === 'roles'
               ? 'bg-white text-[#2E5E99] shadow-sm'
               : 'text-white/80 hover:text-white hover:bg-white/10'
-          }`}
-        >
-          Role management
+          }`}          >
+          {a.rolesTab}
         </button>
       </div>
 
@@ -1155,17 +1151,17 @@ const UserManagement = () => {
                           </TableCell>
                           <TableCell>
                             <Badge className="bg-[#40A8B1] text-white font-bold text-[10px] px-2.5 py-0.5 uppercase">
-                              {user.role || user.hierarchyLevel || 'OWNER'}
+                              {roleLabel(user.hierarchyLevel || user.role)}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs text-slate-500 font-medium">
-                            2 minutes ago
+                            {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : '—'}
                           </TableCell>
                           <TableCell className="text-xs">{user.phone || '—'}</TableCell>
-                          <TableCell className="text-xs">{user.email || `${user.username || 'user'}@mahibereahaw.org`}</TableCell>
+                          <TableCell className="text-xs">{user.email || a.emailFallback}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold text-[10px]">
-                              Active
+                            <Badge variant="outline" className={`font-bold text-[10px] ${user.status === 'suspended' ? 'bg-red-500/10 text-red-600 border-red-500/20' : user.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'}`}>
+                              {user.status === 'suspended' ? a.statusSuspended : user.status === 'pending' ? a.statusPending : a.statusActive}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
@@ -1360,7 +1356,7 @@ const UserManagement = () => {
                   );
                 })()}
               </div>
-              {formData.hierarchyLevel === 'Memriya' && (
+              {scopeOf(formData.hierarchyLevel) === 'global' && (
                 <div className="space-y-2">
                   <Label htmlFor="edit-memriyaRole">{a.memriyaRole}</Label>
                   <Select
@@ -1487,7 +1483,7 @@ const UserManagement = () => {
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
-                Cancel
+                {a.cancel}
               </Button>
               <Button type="submit" disabled={updateUserMutation.isPending}>
                 {updateUserMutation.isPending ? a.updating : a.updateUser}
