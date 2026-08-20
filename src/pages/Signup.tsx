@@ -198,7 +198,7 @@ const Signup: React.FC = () => {
           </button>
           <button onClick={cycleLanguage}
             className="px-3 py-2 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs text-[#2E5E99]">
-            {LANGUAGE_ENDONYM[nextLanguage(language)]}
+            {LANGUAGE_ENDONYM[language]}
           </button>
         </div>
       </div>

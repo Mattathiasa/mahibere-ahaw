@@ -152,7 +152,7 @@ const Login = () => {
           className={`gap-2 rounded-xl border-[#2E5E99]/10 backdrop-blur-md font-bold text-xs ${theme === 'dark' ? 'bg-[#0D2440]/50 hover:bg-[#0D2440]/70 text-white' : 'bg-white/50 hover:bg-white/70 text-[#0D2440]'}`}
         >
           <Languages className="h-4 w-4 text-[#2E5E99]" />
-          <span>{LANGUAGE_ENDONYM[upcomingLanguage]}</span>
+          <span>{LANGUAGE_ENDONYM[language]}</span>
         </Button>
       </motion.div>
 

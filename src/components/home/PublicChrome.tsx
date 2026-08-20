@@ -46,7 +46,7 @@ export const PublicChrome: React.FC<{ children: React.ReactNode; backTo?: string
             </button>
             <button onClick={cycleLanguage}
               className="px-3 py-2 rounded-xl bg-[#2E5E99]/5 hover:bg-[#2E5E99]/10 transition-colors font-bold text-xs text-[#2E5E99]">
-              {LANGUAGE_ENDONYM[nextLanguage(language)]}
+              {LANGUAGE_ENDONYM[language]}
             </button>
             <Button onClick={() => navigate('/login')}
               className="bg-[#2E5E99] hover:bg-[#204a7c] px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-xl">

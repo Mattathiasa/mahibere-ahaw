@@ -234,12 +234,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              title={LANGUAGE_ENDONYM[upcomingLanguage]}
+              title={LANGUAGE_ENDONYM[language]}
               className="gap-1 hover:bg-[#2E5E99]/10 font-bold"
             >
               <Languages className={`h-5 w-5 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`} />
               <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                {LANGUAGE_ENDONYM[upcomingLanguage]}
+                {LANGUAGE_ENDONYM[language]}
               </span>
             </Button>
             <ProfileDropdown />
@@ -326,7 +326,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               >
                 <Languages className={`h-4 w-4 ${theme === 'dark' ? 'text-[#7BA4D0]' : 'text-[#2E5E99]'}`} />
                 <span className={`text-xs ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                  {LANGUAGE_ENDONYM[upcomingLanguage]}
+                  {LANGUAGE_ENDONYM[language]}
                 </span>
               </Button>
               <div className="w-px h-8 bg-[#2E5E99]/20 mx-2" />
