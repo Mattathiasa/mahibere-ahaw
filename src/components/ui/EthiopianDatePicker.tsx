@@ -360,27 +360,40 @@ export function EthiopianDatePicker({
           </div>
         )}
 
-        {/* ── Footer: show equivalent date ── */}
-        <div className="px-4 pb-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+        {/* ── Footer: show both calendars simultaneously ── */}
+        <div className="px-4 pb-3 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
+          {/* Ethiopian date */}
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-muted-foreground font-medium">
-              {selMonthObj.englishName} / Gregorian:
+            <span className="text-muted-foreground font-medium flex items-center gap-1">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#2E5E99]" />
+              Ethiopian
             </span>
-            <span className="font-black text-[#2E5E99] dark:text-[#7BA4D0] font-mono">
-              {ethToISO(sel.year, sel.month, sel.day)}
+            <span className="font-black text-[#0D2440] dark:text-white">
+              {displayLabel}
             </span>
           </div>
-          <div className="mt-0.5 text-center text-xs font-black text-[#0D2440] dark:text-white">
-            {displayLabel}
+          {/* Gregorian date */}
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-muted-foreground font-medium flex items-center gap-1">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Gregorian
+            </span>
+            <span className="font-black text-[#2E5E99] dark:text-[#7BA4D0] font-mono">
+              {(() => {
+                const iso = ethToISO(sel.year, sel.month, sel.day);
+                const d = new Date(iso);
+                return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+              })()}
+            </span>
           </div>
           {allowGregorian && (
             <button
               type="button"
               onClick={() => setCalMode(calMode === 'ethiopian' ? 'gregorian' : 'ethiopian')}
-              className="mt-2 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#2E5E99] dark:text-[#7BA4D0] hover:underline"
+              className="w-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#2E5E99] dark:text-[#7BA4D0] hover:underline pt-1"
             >
               <Globe className="h-3 w-3" />
-              {calMode === 'ethiopian' ? 'Switch to Gregorian' : 'Switch to Ethiopian'}
+              {calMode === 'ethiopian' ? 'Switch to Gregorian calendar' : 'Switch to Ethiopian calendar'}
             </button>
           )}
         </div>
