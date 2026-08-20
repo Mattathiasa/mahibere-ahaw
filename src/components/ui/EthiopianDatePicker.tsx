@@ -24,6 +24,8 @@ interface EthiopianDatePickerProps {
   defaultToToday?: boolean;
   /** If true, show a toggle to switch between Ethiopian and Gregorian calendar entry. */
   allowGregorian?: boolean;
+  /** Which calendar to open in by default. Falls back to localStorage 'calendar-preference'. */
+  defaultCalendar?: 'ethiopian' | 'gregorian';
 }
 
 // Amharic weekday abbreviations — week starts Sunday (እሑድ)
@@ -55,7 +57,12 @@ export function EthiopianDatePicker({
   className = '',
   defaultToToday = true,
   allowGregorian = false,
+  defaultCalendar,
 }: EthiopianDatePickerProps) {
+  // Resolve initial calendar mode: prop > localStorage > 'ethiopian'
+  const initialCalendar = defaultCalendar
+    ?? (localStorage.getItem('calendar-preference') as 'ethiopian' | 'gregorian')
+    ?? 'ethiopian';
   const [open, setOpen] = useState(false);
 
   // Resolve the initial Ethiopian date from `value` prop, or fall back to today.
@@ -115,7 +122,7 @@ export function EthiopianDatePicker({
   const yearOptions = getEthiopianYearOptions(1900, 5);
 
   // ── Gregorian calendar mode ──
-  const [calMode, setCalMode] = useState<'ethiopian' | 'gregorian'>('ethiopian');
+  const [calMode, setCalMode] = useState<'ethiopian' | 'gregorian'>(initialCalendar);
   const [gYear, setGYear] = useState(() => {
     const d = new Date();
     return d.getFullYear();

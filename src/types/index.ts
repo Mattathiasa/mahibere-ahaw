@@ -93,6 +93,12 @@ export interface User {
    * absent here and unmapped, so a selection never survived a reload.
    */
   volunteerMinistries?: string[];
+
+  /**
+   * Which calendar the user prefers for date-of-birth entry.
+   * Persisted to Firestore via Settings → Language & region.
+   */
+  calendarPreference?: 'ethiopian' | 'gregorian';
 }
 
 export interface LoginCredentials {

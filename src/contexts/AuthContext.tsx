@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         // preference reverted on the next reload.
                         notificationPreferences: userData.notificationPreferences,
                         volunteerMinistries: userData.volunteerMinistries,
+                        calendarPreference: userData.calendarPreference,
                     };
 
                     setUser(user);

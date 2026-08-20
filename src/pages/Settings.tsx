@@ -72,7 +72,7 @@ const Settings = () => {
   const [preferences, setPreferences] = useState({
     compactMode: false,
     animations: true,
-    dateFormat: 'gregorian',
+    dateFormat: (currentUser?.calendarPreference ?? 'ethiopian') as 'ethiopian' | 'gregorian',
     timeZone: 'eat',
   });
 
@@ -122,6 +122,11 @@ const Settings = () => {
         woreda: currentUser.address?.woreda || '',
       });
       setProfilePicture((currentUser as any)?.profilePicture || '');
+      // Sync calendar preference from profile to local state
+      if (currentUser.calendarPreference) {
+        setPreferences(prev => ({ ...prev, dateFormat: currentUser.calendarPreference! }));
+        localStorage.setItem('calendar-preference', currentUser.calendarPreference);
+      }
     }
   }, [currentUser]);
 
@@ -243,6 +248,10 @@ const Settings = () => {
 
   const handleSavePreferences = () => {
     localStorage.setItem('preferences', JSON.stringify(preferences));
+    // Persist calendar preference to the user's Firestore profile so every
+    // device and session picks it up.
+    localStorage.setItem('calendar-preference', preferences.dateFormat);
+    updateProfileMutation.mutate({ calendarPreference: preferences.dateFormat });
     toast.success(a.setPrefsSaved);
   };
 
@@ -345,6 +354,7 @@ const Settings = () => {
                     value={profileData.dateOfBirth}
                     onChange={(isoDate) => setProfileData({ ...profileData, dateOfBirth: isoDate })}
                     allowGregorian
+                    defaultCalendar={preferences.dateFormat}
                   />
                 </div>
                 <div className="space-y-2">
