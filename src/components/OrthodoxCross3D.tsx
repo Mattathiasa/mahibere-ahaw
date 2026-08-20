@@ -1,8 +1,19 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
 
 import { useLanguage } from '@/contexts/LanguageContext';
+
+/** Check whether WebGL is available in this browser. */
+function isWebGLAvailable(): boolean {
+  try {
+    const c = document.createElement('canvas');
+    return !!(c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl'));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Interactive 3D Ethiopian Orthodox processional cross — realistic gold,
  * Three.js + GSAP. Drag to rotate (with inertia), wheel/pinch to zoom,
@@ -14,17 +25,29 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export const OrthodoxCross3D: React.FC<{ className?: string }> = ({ className }) => {
   const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [webglOk, setWebglOk] = useState(true);
 
   useEffect(() => {
+    if (!isWebGLAvailable()) {
+      setWebglOk(false);
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance',
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+      });
+    } catch {
+      setWebglOk(false);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -465,6 +488,33 @@ export const OrthodoxCross3D: React.FC<{ className?: string }> = ({ className })
       renderer.dispose();
     };
   }, []);
+
+  if (!webglOk) {
+    // Graceful fallback: a static SVG cross so the layout is preserved
+    // without WebGL.
+    return (
+      <div
+        className={className}
+        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        aria-label={t.common.crossAlt}
+      >
+        <svg viewBox="0 0 100 140" width="120" height="168" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Ethiopian processional cross silhouette */}
+          <path
+            d="M50 0 C55 0 58 8 58 18 L58 42 L82 42 C88 42 92 46 92 52 C92 58 88 62 82 62 L58 62 L58 82 L78 82 C84 82 88 86 88 92 C88 98 84 102 78 102 L58 102 L58 130 C58 136 54 140 50 140 C46 140 42 136 42 130 L42 102 L22 102 C16 102 12 98 12 92 C12 86 16 82 22 82 L42 82 L42 62 L18 62 C12 62 8 58 8 52 C8 46 12 42 18 42 L42 42 L42 18 C42 8 45 0 50 0Z"
+            fill="url(#gold)"
+          />
+          <defs>
+            <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FFD700" />
+              <stop offset="50%" stopColor="#FFC35C" />
+              <stop offset="100%" stopColor="#DAA520" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    );
+  }
 
   return (
     <canvas
