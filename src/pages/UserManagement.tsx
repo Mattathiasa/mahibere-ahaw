@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, UserPlus, History, Search, Pencil, Trash2, Building2 } from 'lucide-react';
+import { Users, UserPlus, History, Search, Pencil, Trash2, Building2, Upload } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/contexts/PermissionContext';
@@ -20,6 +20,7 @@ import { hierarchyService } from '@/services/hierarchy';
 import { isValidPhone, normalizeEthiopianPhone } from '@/lib/phone';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { InviteUsersDialog } from '@/components/InviteUsersDialog';
+import { BulkImportDialog } from '@/components/BulkImportDialog';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 
 import { useFormatters } from '@/lib/formatters';
@@ -90,6 +91,7 @@ const UserManagement = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCreateEntityDialog, setShowCreateEntityDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [activeTab, setActiveTab] = useState<'admins' | 'logs' | 'roles'>('admins');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -801,9 +803,6 @@ const UserManagement = () => {
                         setFormData({
                           ...formData,
                           hierarchyLevel: value,
-                          // Keep the placement only while the new role still
-                          // uses it, so switching to a head-office role clears
-                          // the parish rather than leaving a stale one behind.
                           atbiyaId: needsAtbiya(value) ? formData.atbiyaId : '',
                           mahderatId: needsMahderat(value) ? formData.mahderatId : '',
                         });
@@ -812,12 +811,55 @@ const UserManagement = () => {
                       <SelectTrigger id="hierarchyLevel">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        {assignableRoles.map((r) => (
-                          <SelectItem key={r.key} value={r.key}>{roleLabel(r.key)}</SelectItem>
-                        ))}
+                      <SelectContent className="max-h-80">
+                        {(['global', 'zone', 'atbiya', 'mahder'] as const).map((scope) => {
+                          const scoped = assignableRoles.filter((r) => scopeOf(r.key) === scope);
+                          if (scoped.length === 0) return null;
+                          const scopeLabel = scope === 'global' ? a.scopeGlobal : scope === 'zone' ? a.scopeDiocese : scope === 'atbiya' ? a.scopeCongregation : a.scopeMahder;
+                          return (
+                            <div key={scope}>
+                              <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/50">
+                                {scopeLabel}
+                              </div>
+                              {scoped.map((r) => (
+                                <SelectItem key={r.key} value={r.key} className="pl-6">
+                                  {roleLabel(r.key)}
+                                  {r.isAdmin && ' ★'}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
+                    {/* Role hint */}
+                    {(() => {
+                      const selected = assignableRoles.find((r) => r.key === formData.hierarchyLevel);
+                      if (!selected) return null;
+                      return (
+                        <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                          <p className="text-xs font-medium">{selected.description}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selected.isAdmin && <Badge variant="default" className="text-[10px]">{a.scAdmin}</Badge>}
+                            {selected.canApproveMembers && <Badge variant="secondary" className="text-[10px]">{a.scApprover}</Badge>}
+                            <Badge variant="outline" className="text-[10px] capitalize">Scope: {selected.scope}</Badge>
+                            <Badge variant="outline" className="text-[10px]">{selected.permissions.length} permissions</Badge>
+                          </div>
+                          {selected.permissions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {selected.permissions.slice(0, 6).map((p) => (
+                                <span key={p} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                                  {p.replace('can', '').replace(/([A-Z])/g, ' $1').trim()}
+                                </span>
+                              ))}
+                              {selected.permissions.length > 6 && (
+                                <span className="text-[10px] text-muted-foreground">+{selected.permissions.length - 6} more</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   {formData.hierarchyLevel === 'Memriya' && (
                     <div className="space-y-2">
@@ -987,10 +1029,17 @@ const UserManagement = () => {
           </Dialog>
 
           <Button
+            variant="outline"
+            onClick={() => setShowBulkImport(true)}
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" /> Bulk Import
+          </Button>
+          <Button
             onClick={() => setShowInviteDialog(true)}
             className="bg-[#2E5E99] hover:bg-[#204a7c] text-white font-semibold gap-2 rounded-xl"
           >
-            <UserPlus className="h-4 w-4" /> Invite users
+            <UserPlus className="h-4 w-4" /> Create User
           </Button>
         </div>
       </div>
@@ -1173,11 +1222,8 @@ const UserManagement = () => {
         </SectionCard>
       )}
 
-      {/* Invite Users Dialog */}
-      <InviteUsersDialog
-        open={showInviteDialog}
-        onOpenChange={setShowInviteDialog}
-      />
+      {/* Invite Users Dialog */}      <InviteUsersDialog open={showInviteDialog} onOpenChange={setShowInviteDialog} />
+      <BulkImportDialog open={showBulkImport} onOpenChange={setShowBulkImport} />
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -1278,12 +1324,41 @@ const UserManagement = () => {
                   <SelectTrigger id="edit-hierarchyLevel">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    {assignableRoles.map((r) => (
-                      <SelectItem key={r.key} value={r.key}>{roleLabel(r.key)}</SelectItem>
-                    ))}
+                  <SelectContent className="max-h-80">
+                    {(['global', 'zone', 'atbiya', 'mahder'] as const).map((scope) => {
+                      const scoped = assignableRoles.filter((r) => scopeOf(r.key) === scope);
+                      if (scoped.length === 0) return null;
+                      const scopeLabel = scope === 'global' ? a.scopeGlobal : scope === 'zone' ? a.scopeDiocese : scope === 'atbiya' ? a.scopeCongregation : a.scopeMahder;
+                      return (
+                        <div key={scope}>
+                          <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/50">
+                            {scopeLabel}
+                          </div>
+                          {scoped.map((r) => (
+                            <SelectItem key={r.key} value={r.key} className="pl-6">
+                              {roleLabel(r.key)}
+                              {r.isAdmin && ' ★'}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                {/* Role hint in edit dialog */}
+                {(() => {
+                  const selected = assignableRoles.find((r) => r.key === formData.hierarchyLevel);
+                  if (!selected) return null;
+                  return (
+                    <div className="rounded-lg border border-border bg-muted/30 p-2">
+                      <p className="text-xs text-muted-foreground">{selected.description}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selected.isAdmin && <Badge variant="default" className="text-[9px]">Admin</Badge>}
+                        {selected.canApproveMembers && <Badge variant="secondary" className="text-[9px]">Approver</Badge>}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               {formData.hierarchyLevel === 'Memriya' && (
                 <div className="space-y-2">

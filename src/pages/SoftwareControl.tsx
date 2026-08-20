@@ -354,6 +354,50 @@ const SoftwareControl: React.FC = () => {
           ))}
         </div>
 
+        {/* Onboarding checklist — shown when setup is incomplete */}
+        {(() => {
+          const totalUsers = Object.values(roleUsage).reduce((a, b) => a + b, 0);
+          const hasAdmin = roles.some((r) => r.isAdmin && r.active !== false);
+          const hasCongregations = (atbiyaCount: number) => atbiyaCount > 0;
+          const hasRoles = roles.length > 0;
+          const hasUsers = totalUsers > 0;
+          const hasRestrictedTabs = Object.keys(config.navAccess).length > 0;
+          const hasRestrictedButtons = Object.keys(config.elements).length > 0;
+
+          const items = [
+            { done: hasRoles, label: 'Define roles', hint: 'Roles are set up in the Roles tab' },
+            { done: hasAdmin, label: 'At least one admin role', hint: 'A role with admin access exists' },
+            { done: hasUsers, label: `Add users (${totalUsers} so far)`, hint: 'Create accounts in User Management' },
+            { done: hasRestrictedTabs, label: 'Configure tab visibility', hint: 'Restrict which roles see each sidebar tab' },
+            { done: hasRestrictedButtons, label: 'Configure button visibility', hint: 'Control who can see action buttons' },
+          ];
+          const incomplete = items.filter((i) => !i.done).length;
+          if (incomplete === 0) return null; // all done — hide the checklist
+
+          return (
+            <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+              <p className="text-sm font-bold">
+                Setup checklist — {items.length - incomplete}/{items.length} complete
+              </p>
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div key={item.label} className="flex items-center gap-3">
+                    <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${
+                      item.done ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {item.done ? <CheckCircle2 className="h-3.5 w-3.5" /> : <span className="h-2 w-2 rounded-full bg-current" />}
+                    </div>
+                    <div>
+                      <p className={`text-sm ${item.done ? 'text-muted-foreground line-through' : 'font-medium'}`}>{item.label}</p>
+                      {!item.done && <p className="text-[11px] text-muted-foreground">{item.hint}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         <Tabs defaultValue="roles" onValueChange={(v) => {
           // Loaded lazily so the page opens fast.
           if (v === 'audit' && logs.length === 0) loadLogs();

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Phone, MapPin, Download, Filter, Users } from 'lucide-react';
+import { Search, Phone, MapPin, Download, Filter, Users, ArrowUp, ArrowDown } from 'lucide-react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -24,6 +24,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { MemberWizard } from '@/components/MemberWizard';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import { roleLabel } from '@/services/roleRegistry';
+import { Label } from '@/components/ui/label';
 
 import { useLanguage } from '@/contexts/LanguageContext';
 const Members = () => {
@@ -39,6 +41,9 @@ const Members = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showPromoteDialog, setShowPromoteDialog] = useState(false);
+  const [promoteTarget, setPromoteTarget] = useState<any>(null);
+  const [promoteRole, setPromoteRole] = useState('');
   const permissions = useRolePermissions();
   const { showElement } = useSoftwareControl();
   const moduleCfg = useModuleConfig('members');
@@ -90,6 +95,22 @@ const Members = () => {
     onError: (error: any) => {
       toast.error(error.message || 'Delete failed');
     }
+  });
+
+  // Promote/demote: change a member's hierarchyLevel
+  const promoteMutation = useMutation({
+    mutationFn: ({ id, newRole }: { id: string; newRole: string }) =>
+      userService.updateUser(id, { hierarchyLevel: newRole }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Role updated successfully.');
+      setShowPromoteDialog(false);
+      setPromoteTarget(null);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to update role.');
+    },
   });
 
   const members = membersData?.users || [];
@@ -523,6 +544,9 @@ const Members = () => {
                           <Button variant="ghost" size="sm" onClick={() => { setSelectedMember(member); setIsEditing(true); setIsWizardOpen(true); }} className="h-10 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-[#2E5E99] hover:bg-[#2E5E99]/5">
                             {t('edit')}
                           </Button>
+                          <Button variant="ghost" size="sm" onClick={() => { setPromoteTarget(member); setPromoteRole(member.hierarchyLevel || ''); setShowPromoteDialog(true); }} className="h-10 px-3 rounded-xl font-black uppercase text-[9px] tracking-widest text-amber-600 hover:bg-amber-500/10">
+                            <ArrowUp className="h-3 w-3 mr-1" /> Promote
+                          </Button>
                         </div>
                         <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
                           <Button
@@ -557,6 +581,73 @@ const Members = () => {
           <p className="font-bold text-muted-foreground mt-2 italic">{t('memberSearchDesc')}</p>
         </motion.div>
       )}
+
+      {/* Promote/Demote Dialog */}
+      <Dialog open={showPromoteDialog} onOpenChange={setShowPromoteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowUp className="h-5 w-5 text-amber-600" /> Promote / Change Role
+            </DialogTitle>
+          </DialogHeader>
+          {promoteTarget && (
+            <div className="space-y-4 py-2">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#2E5E99] to-[#0D2440] flex items-center justify-center text-white font-bold text-sm">
+                  {(promoteTarget.fullNameEnglish || promoteTarget.fullName || 'U').charAt(0)}
+                </div>
+                <div>
+                  <p className="font-bold text-sm">{promoteTarget.fullNameEnglish || promoteTarget.fullName}</p>
+                  <p className="text-xs text-muted-foreground">Current role: {roleLabel(promoteTarget.hierarchyLevel || '')}</p>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold">New role</Label>
+                <Select value={promoteRole} onValueChange={setPromoteRole}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent className="max-h-80">
+                    {(['global', 'zone', 'atbiya', 'mahder'] as const).map((scope) => {
+                      const scoped = roles.filter((r) => scopeOf(r.key) === scope && r.active !== false);
+                      if (scoped.length === 0) return null;
+                      return (
+                        <div key={scope}>
+                          <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/50">
+                            {scope === 'global' ? 'Global' : scope === 'zone' ? 'Diocese' : scope === 'atbiya' ? 'Congregation' : 'Small Group'}
+                          </div>
+                          {scoped.map((r) => (
+                            <SelectItem key={r.key} value={r.key} className="pl-6">
+                              {roleLabel(r.key)}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                {promoteRole && (() => {
+                  const selected = roles.find((r) => r.key === promoteRole);
+                  if (!selected) return null;
+                  return (
+                    <p className="text-[11px] text-muted-foreground">
+                      {selected.description}
+                      {selected.permissions.length > 0 && ` — ${selected.permissions.length} permissions.`}
+                    </p>
+                  );
+                })()}
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setShowPromoteDialog(false)}>Cancel</Button>
+                <Button
+                  onClick={() => promoteMutation.mutate({ id: promoteTarget.id, newRole: promoteRole })}
+                  disabled={promoteMutation.isPending || !promoteRole || promoteRole === promoteTarget.hierarchyLevel}
+                >
+                  {promoteMutation.isPending ? 'Updating…' : 'Update Role'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
