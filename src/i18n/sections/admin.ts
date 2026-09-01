@@ -261,6 +261,12 @@ export const adminEn = {
   resetPasswordTitle: 'Send a password reset link',
   noEmailNoReset: 'This account has no email address, so no reset link can be sent.',
   signsInByUsername: 'Signs in by username only',
+  setRecoveryWhy: 'Your account signs in with a username, not a real email address, so no reset link can reach you if you forget your password. Add an email here to make recovery possible.',
+  /** `{email}` is the address the confirmation link was sent to. */
+  setRecoverySent: 'Confirmation sent to {email}. Click the link in that email, then sign in with the new address.',
+  setRecoveryHow: 'We send a confirmation link to that address. The change only takes effect once you click it — until then, keep signing in exactly as you do now. Afterwards, sign in with the new email address.',
+  /** `{email}` is the address the account is already reachable at. */
+  setRecoveryReachable: 'Your account is reachable at {email}. If you forget your password, use “Forgot password?” on the sign-in page and a reset link will be sent there.',
   signsInWith: 'Signs in with',
   signInHint: 'With an email, the person signs in with it and can reset their own password. Without one they sign in with their username, and only an administrator can issue them a new password.',
   suspend: 'Suspend',
@@ -1298,6 +1304,10 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
   resetPasswordTitle: 'የይለፍ ቃል መቀየሪያ አገናኝ ላክ',
   noEmailNoReset: 'ይህ መለያ ኢሜይል ስለሌለው መቀየሪያ አገናኝ ሊላክ አይችልም።',
   signsInByUsername: 'በተጠቃሚ ስም ብቻ ይገባል',
+  setRecoveryWhy: 'መለያዎ የሚገባው በተጠቃሚ ስም እንጂ በእውነተኛ ኢሜይል አይደለም፤ ስለዚህ የይለፍ ቃልዎን ቢረሱ የማደሻ አገናኝ ሊደርስዎ አይችልም። ማገገም እንዲቻል እዚህ ኢሜይል ያስገቡ።',
+  setRecoverySent: 'የማረጋገጫ አገናኝ ወደ {email} ተልኳል። በኢሜይሉ ውስጥ ያለውን አገናኝ ይጫኑ፤ ከዚያ በአዲሱ አድራሻ ይግቡ።',
+  setRecoveryHow: 'ወደዚያ አድራሻ የማረጋገጫ አገናኝ እንልካለን። ለውጡ ተግባራዊ የሚሆነው እርስዎ አገናኙን ሲጫኑ ብቻ ነው — እስከዚያ ድረስ አሁን በሚያደርጉት መንገድ መግባትዎን ይቀጥሉ። ከዚያ በኋላ በአዲሱ ኢሜይል ይግቡ።',
+  setRecoveryReachable: 'መለያዎ በ{email} ይደረሳል። የይለፍ ቃልዎን ቢረሱ በመግቢያ ገጹ ላይ “የይለፍ ቃል ረሱ?” የሚለውን ይጠቀሙ፤ የማደሻ አገናኝ ወደዚያ ይላካል።',
   signsInWith: 'የሚገባበት',
   signInHint: 'ኢሜይል ካለ ሰውየው በኢሜይሉ ገብቶ የራሱን የይለፍ ቃል መቀየር ይችላል። ከሌለ በተጠቃሚ ስም ይገባል፤ አዲስ የይለፍ ቃል ሊሰጠው የሚችለውም አስተዳዳሪ ብቻ ነው።',
   suspend: 'አግድ',

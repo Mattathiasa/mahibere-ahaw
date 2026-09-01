@@ -194,7 +194,7 @@ const Settings = () => {
     onSuccess: (_data, variables) => {
       setRecoveryData({ password: '', email: '' });
       toast.success(
-        `Confirmation sent to ${variables.email}. Click the link in that email, then sign in with the new address.`,
+        t.admin.setRecoverySent.replace('{email}', variables.email),
         { duration: 10000 }
       );
     },
@@ -841,11 +841,7 @@ const Settings = () => {
                 <h3 className="font-semibold mb-1">{a.setPasswordRecovery}</h3>
                 {usesSyntheticEmail ? (
                   <>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Your account signs in with a username, not a real email
-                      address, so no reset link can reach you if you forget your
-                      password. Add an email here to make recovery possible.
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">{a.setRecoveryWhy}</p>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="recovery-password">{a.setCurrentPassword}</Label>
@@ -866,12 +862,7 @@ const Settings = () => {
                           onChange={(e) => setRecoveryData({ ...recoveryData, email: e.target.value })}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        We send a confirmation link to that address. The change
-                        only takes effect once you click it — until then, keep
-                        signing in exactly as you do now. Afterwards, sign in
-                        with the new email address.
-                      </p>
+                      <p className="text-xs text-muted-foreground">{a.setRecoveryHow}</p>
                       <Button
                         onClick={() => addRecoveryEmailMutation.mutate(recoveryData)}
                         disabled={
@@ -886,9 +877,7 @@ const Settings = () => {
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Your account is reachable at <strong>{currentUser?.email}</strong>.
-                    If you forget your password, use "Forgot password?" on the
-                    sign-in page and a reset link will be sent there.
+                    {a.setRecoveryReachable.replace('{email}', currentUser?.email ?? '')}
                   </p>
                 )}
               </div>
