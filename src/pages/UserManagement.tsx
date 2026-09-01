@@ -1176,9 +1176,19 @@ const UserManagement = () => {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-semibold text-slate-900 dark:text-white">{user.fullName}</p>
+                                <p className="font-semibold text-slate-900 dark:text-white">{displayName(user)}</p>
                                 {user.fullNameAmharic && (
                                   <p className="text-xs text-muted-foreground">{user.fullNameAmharic}</p>
+                                )}
+                                {/*
+                                  The username is what an account without an
+                                  email signs in with, and there was previously
+                                  nowhere in the app to read one off the screen —
+                                  you could search for a username only if you
+                                  already knew it.
+                                */}
+                                {user.username && (
+                                  <p className="text-xs text-muted-foreground">@{user.username}</p>
                                 )}
                               </div>
                             </div>

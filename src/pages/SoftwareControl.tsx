@@ -735,7 +735,15 @@ const SoftwareControl: React.FC = () => {
                                 <td className="py-2.5 pr-4">
                                   <div className="font-medium">{u.fullNameEnglish ?? u.fullName ?? '—'}</div>
                                   {u.fullNameAmharic && <div className="text-xs text-muted-foreground font-ethiopic">{u.fullNameAmharic}</div>}
-                                  <div className="text-xs text-muted-foreground">{u.email || u.username}</div>
+                                  {/*
+                                    Was `u.email || u.username`, which hid the
+                                    username for exactly the accounts whose
+                                    username nobody knows: the admin-created
+                                    ones, which always have an address of some
+                                    kind. Both are shown now.
+                                  */}
+                                  {u.username && <div className="text-xs text-muted-foreground">@{u.username}</div>}
+                                  {u.email && <div className="text-xs text-muted-foreground break-all">{u.email}</div>}
                                 </td>
                                 <td className="py-2.5 pr-4">
                                   <Badge variant="outline" className="text-[10px]">
