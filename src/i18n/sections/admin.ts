@@ -1011,6 +1011,44 @@ export const adminEn = {
   docsScopeGeneral: 'the Memriya',
   /** `{scope}` is filled from docsScopeOwn / docsScopeGeneral. */
   docsManageFiles: 'Manage files and folders for {scope}.',
+  // ── Member role change (Members page promote/demote) ──────────────────────
+  roleUpdated: 'Role updated successfully.',
+  roleUpdateFailed: 'Failed to update role.',
+  newRole: 'New role',
+  updateRole: 'Update role',
+
+  // ── Bulk CSV import ───────────────────────────────────────────────────────
+  biCsvNeedsRows: 'CSV must have a header row and at least one data row.',
+  biNeedTemplate: 'Need a template?',
+  biDownloadTemplate: 'Download CSV template',
+  biCsvFile: 'CSV file',
+  biDefaultRole: 'Default role (when CSV has no role column)',
+  biDone: 'Done',
+
+  // ── Create-user dialog ────────────────────────────────────────────────────
+  inviteUsersDesc: 'Create an account directly. The user can sign in immediately with the credentials below.',
+
+  // ── Software Control: setup checklist ─────────────────────────────────────
+  scChkDefineRoles: 'Define roles',
+  scChkDefineRolesHint: 'Roles are set up in the Roles tab',
+  scChkAdminRole: 'At least one admin role',
+  scChkAdminRoleHint: 'A role with admin access exists',
+  scChkAddUsers: 'Add users',
+  scChkAddUsersHint: 'Create accounts in User Management',
+  scChkTabVisibility: 'Configure tab visibility',
+  scChkTabVisibilityHint: 'Restrict which roles see each sidebar tab',
+  scChkButtonVisibility: 'Configure button visibility',
+  scChkButtonVisibilityHint: 'Control who can see action buttons',
+
+  // ── Software Control: System tab ──────────────────────────────────────────
+  scPermissionsStatus: 'Permissions status',
+  scConfiguration: 'Configuration',
+  scControlCoverage: 'Control coverage',
+  scRestrictedTabs: 'restricted tabs',
+  scCustomRules: 'custom rules',
+  scTotalPermissions: 'Total permissions',
+  scAvailableInSystem: 'available in system',
+
 };
 
 /**
@@ -1981,6 +2019,39 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
   docsScopeOwn: 'የእርስዎ መምሪያ',
   docsScopeGeneral: 'መምሪያው',
   docsManageFiles: 'ለ{scope} ፋይሎችንና አቃፊዎችን ያስተዳድሩ።',
+  roleUpdated: 'ኃላፊነቱ በተሳካ ሁኔታ ተዘምኗል።',
+  roleUpdateFailed: 'ኃላፊነቱን ማዘመን አልተሳካም።',
+  newRole: 'አዲስ ኃላፊነት',
+  updateRole: 'ኃላፊነት አዘምን',
+
+  biCsvNeedsRows: 'CSV የራስጌ መስመርና ቢያንስ አንድ የመረጃ መስመር ሊኖረው ይገባል።',
+  biNeedTemplate: 'አብነት ይፈልጋሉ?',
+  biDownloadTemplate: 'የCSV አብነት አውርድ',
+  biCsvFile: 'የCSV ፋይል',
+  biDefaultRole: 'ነባሪ ኃላፊነት (CSV የኃላፊነት ዓምድ ከሌለው)',
+  biDone: 'ተጠናቀቀ',
+
+  inviteUsersDesc: 'መለያውን በቀጥታ ይፍጠሩ። ተጠቃሚው ከታች ባሉት መረጃዎች ወዲያውኑ መግባት ይችላል።',
+
+  scChkDefineRoles: 'ኃላፊነቶችን ይግለጹ',
+  scChkDefineRolesHint: 'ኃላፊነቶች በኃላፊነቶች ትር ውስጥ ይዘጋጃሉ',
+  scChkAdminRole: 'ቢያንስ አንድ የአስተዳዳሪ ኃላፊነት',
+  scChkAdminRoleHint: 'የአስተዳዳሪ ፈቃድ ያለው ኃላፊነት አለ',
+  scChkAddUsers: 'ተጠቃሚዎችን ይጨምሩ',
+  scChkAddUsersHint: 'በተጠቃሚ አስተዳደር ውስጥ መለያዎችን ይፍጠሩ',
+  scChkTabVisibility: 'የትሮችን ታይነት ያዋቅሩ',
+  scChkTabVisibilityHint: 'የትኞቹ ኃላፊነቶች እያንዳንዱን የጎን ትር እንደሚያዩ ይገድቡ',
+  scChkButtonVisibility: 'የአዝራሮችን ታይነት ያዋቅሩ',
+  scChkButtonVisibilityHint: 'የተግባር አዝራሮችን ማን ማየት እንደሚችል ይቆጣጠሩ',
+
+  scPermissionsStatus: 'የፈቃዶች ሁኔታ',
+  scConfiguration: 'ቅንብር',
+  scControlCoverage: 'የቁጥጥር ሽፋን',
+  scRestrictedTabs: 'የተገደቡ ትሮች',
+  scCustomRules: 'ብጁ ደንቦች',
+  scTotalPermissions: 'ጠቅላላ ፈቃዶች',
+  scAvailableInSystem: 'በሥርዓቱ ውስጥ ይገኛሉ',
+
 };
 
 /**

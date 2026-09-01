@@ -58,7 +58,7 @@ export function BulkImportDialog({ open, onOpenChange }: BulkImportDialogProps) 
       const text = ev.target?.result as string;
       const lines = text.split('\n').filter((l) => l.trim());
       if (lines.length < 2) {
-        toast.error('CSV must have a header row and at least one data row.');
+        toast.error(a.biCsvNeedsRows);
         return;
       }
 
@@ -160,16 +160,16 @@ export function BulkImportDialog({ open, onOpenChange }: BulkImportDialogProps) 
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Need a template?</span>
+              <span className="text-sm font-medium">{a.biNeedTemplate}</span>
             </div>
             <Button size="sm" variant="outline" onClick={downloadTemplate} className="gap-1">
-              <Download className="h-3 w-3" /> Download CSV template
+              <Download className="h-3 w-3" /> {a.biDownloadTemplate}
             </Button>
           </div>
 
           {/* File upload */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-bold">CSV File</Label>
+            <Label className="text-xs font-bold">{a.biCsvFile}</Label>
             <input
               ref={fileRef}
               type="file"
@@ -181,7 +181,7 @@ export function BulkImportDialog({ open, onOpenChange }: BulkImportDialogProps) 
 
           {/* Default role */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-bold">Default role (when CSV has no role column)</Label>
+            <Label className="text-xs font-bold">{a.biDefaultRole}</Label>
             <Select value={defaultRole} onValueChange={setDefaultRole}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -202,9 +202,9 @@ export function BulkImportDialog({ open, onOpenChange }: BulkImportDialogProps) 
                 <table className="w-full text-xs">
                   <thead className="bg-muted/50 sticky top-0">
                     <tr>
-                      <th className="p-2 text-left">Name</th>
-                      <th className="p-2 text-left">Phone</th>
-                      <th className="p-2 text-left">Role</th>
+                      <th className="p-2 text-left">{a.scColName}</th>
+                      <th className="p-2 text-left">{a.phone}</th>
+                      <th className="p-2 text-left">{a.role}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -253,9 +253,9 @@ export function BulkImportDialog({ open, onOpenChange }: BulkImportDialogProps) 
             className="bg-cyan-600 hover:bg-cyan-700"
           >
             {importing ? (
-              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Importing…</>
+              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {a.busyImporting}</>
             ) : result ? (
-              <><CheckCircle2 className="h-4 w-4 mr-1" /> Done</>
+              <><CheckCircle2 className="h-4 w-4 mr-1" /> {a.biDone}</>
             ) : (
               <><Upload className="h-4 w-4 mr-1" /> Import {rows.length} user{rows.length === 1 ? '' : 's'}</>
             )}

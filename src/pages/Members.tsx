@@ -48,7 +48,7 @@ const Members = () => {
   const { showElement } = useSoftwareControl();
   const moduleCfg = useModuleConfig('members');
   const { user: currentUser } = useAuth();
-  const { roleKeys, isHeadOffice, canReadWholeDirectory, myAtbiyaId, roleLabel } = usePermissions();
+  const { roleKeys, isHeadOffice, canReadWholeDirectory, myAtbiyaId, roleLabel, roles, scopeOf } = usePermissions();
 
   // Scoped, not unfiltered: the directory rule now requires either global scope
   // or an atbiyaId equality filter, so a parish officer reads their own
@@ -104,12 +104,12 @@ const Members = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Role updated successfully.');
+      toast.success(tree.admin.roleUpdated);
       setShowPromoteDialog(false);
       setPromoteTarget(null);
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Failed to update role.');
+      toast.error(err?.message || tree.admin.roleUpdateFailed);
     },
   });
 
@@ -602,17 +602,20 @@ const Members = () => {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold">New role</Label>
+                <Label className="text-xs font-bold">{tree.admin.newRole}</Label>
                 <Select value={promoteRole} onValueChange={setPromoteRole}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent className="max-h-80">
                     {(['global', 'zone', 'atbiya', 'mahder'] as const).map((scope) => {
                       const scoped = roles.filter((r) => scopeOf(r.key) === scope && r.active !== false);
                       if (scoped.length === 0) return null;
+                      const scopeLabel = scope === 'global' ? tree.admin.scopeGlobal
+                        : scope === 'zone' ? tree.admin.scopeDiocese
+                        : scope === 'atbiya' ? tree.admin.scopeCongregation : tree.admin.scopeMahder;
                       return (
                         <div key={scope}>
                           <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/50">
-                            {scope === 'global' ? 'Global' : scope === 'zone' ? 'Diocese' : scope === 'atbiya' ? 'Congregation' : 'Small Group'}
+                            {scopeLabel}
                           </div>
                           {scoped.map((r) => (
                             <SelectItem key={r.key} value={r.key} className="pl-6">
@@ -636,12 +639,12 @@ const Members = () => {
                 })()}
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setShowPromoteDialog(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setShowPromoteDialog(false)}>{tree.admin.cancel}</Button>
                 <Button
                   onClick={() => promoteMutation.mutate({ id: promoteTarget.id, newRole: promoteRole })}
                   disabled={promoteMutation.isPending || !promoteRole || promoteRole === promoteTarget.hierarchyLevel}
                 >
-                  {promoteMutation.isPending ? 'Updating…' : 'Update Role'}
+                  {promoteMutation.isPending ? tree.admin.busyUpdating : tree.admin.updateRole}
                 </Button>
               </div>
             </div>

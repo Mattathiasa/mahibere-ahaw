@@ -160,7 +160,7 @@ export function CreateBudgetDialog({ open, onOpenChange, onSubmit, isLoading }: 
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t.admin.createBudget ?? 'Create Budget'}
+              {fin.createBudget}
             </Button>
           </div>
         </form>

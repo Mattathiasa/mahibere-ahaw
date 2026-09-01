@@ -365,11 +365,11 @@ const SoftwareControl: React.FC = () => {
           const hasRestrictedButtons = Object.keys(config.elements).length > 0;
 
           const items = [
-            { done: hasRoles, label: 'Define roles', hint: 'Roles are set up in the Roles tab' },
-            { done: hasAdmin, label: 'At least one admin role', hint: 'A role with admin access exists' },
-            { done: hasUsers, label: `Add users (${totalUsers} so far)`, hint: 'Create accounts in User Management' },
-            { done: hasRestrictedTabs, label: 'Configure tab visibility', hint: 'Restrict which roles see each sidebar tab' },
-            { done: hasRestrictedButtons, label: 'Configure button visibility', hint: 'Control who can see action buttons' },
+            { done: hasRoles, label: a.scChkDefineRoles, hint: a.scChkDefineRolesHint },
+            { done: hasAdmin, label: a.scChkAdminRole, hint: a.scChkAdminRoleHint },
+            { done: hasUsers, label: `${a.scChkAddUsers} (${totalUsers})`, hint: a.scChkAddUsersHint },
+            { done: hasRestrictedTabs, label: a.scChkTabVisibility, hint: a.scChkTabVisibilityHint },
+            { done: hasRestrictedButtons, label: a.scChkButtonVisibility, hint: a.scChkButtonVisibilityHint },
           ];
           const incomplete = items.filter((i) => !i.done).length;
           if (incomplete === 0) return null; // all done — hide the checklist
@@ -804,7 +804,7 @@ const SoftwareControl: React.FC = () => {
                         <Badge variant="outline">v{PERMISSIONS_VERSION}</Badge>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Permissions status</span>
+                        <span className="text-sm text-muted-foreground">{a.scPermissionsStatus}</span>
                         <Badge variant={permissionsOutOfDate ? 'destructive' : 'default'} className="text-[10px]">
                           {permissionsOutOfDate ? a.scPermissionsOutOfDate : a.scPermissionsUpToDate}
                         </Badge>
@@ -845,7 +845,7 @@ const SoftwareControl: React.FC = () => {
                 {/* Config metadata */}
                 {config.meta && (
                   <div className="pt-4 border-t border-border">
-                    <h3 className="text-sm font-bold mb-3">Configuration</h3>
+                    <h3 className="text-sm font-bold mb-3">{a.scConfiguration}</h3>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">{a.scLastConfigSave}</span>
@@ -861,22 +861,22 @@ const SoftwareControl: React.FC = () => {
 
                 {/* Nav & element counts */}
                 <div className="pt-4 border-t border-border">
-                  <h3 className="text-sm font-bold mb-3">Control Coverage</h3>
+                  <h3 className="text-sm font-bold mb-3">{a.scControlCoverage}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="p-3 rounded-lg bg-muted/30">
                       <p className="text-xs text-muted-foreground">{a.scTabs}</p>
                       <p className="text-lg font-bold">{Object.keys(config.navAccess).length}</p>
-                      <p className="text-[10px] text-muted-foreground">restricted tabs</p>
+                      <p className="text-[10px] text-muted-foreground">{a.scRestrictedTabs}</p>
                     </div>
                     <div className="p-3 rounded-lg bg-muted/30">
                       <p className="text-xs text-muted-foreground">{a.scButtons}</p>
                       <p className="text-lg font-bold">{Object.keys(config.elements).length}</p>
-                      <p className="text-[10px] text-muted-foreground">custom rules</p>
+                      <p className="text-[10px] text-muted-foreground">{a.scCustomRules}</p>
                     </div>
                     <div className="p-3 rounded-lg bg-muted/30">
-                      <p className="text-xs text-muted-foreground">Total permissions</p>
+                      <p className="text-xs text-muted-foreground">{a.scTotalPermissions}</p>
                       <p className="text-lg font-bold">{ALL_PERMISSIONS.length}</p>
-                      <p className="text-[10px]">available in system</p>
+                      <p className="text-[10px]">{a.scAvailableInSystem}</p>
                     </div>
                   </div>
                 </div>

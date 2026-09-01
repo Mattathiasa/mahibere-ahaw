@@ -31,6 +31,7 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
   const { t } = useLanguage();
   const pe = t.people;
   const a = t.admin;
+  const f = t.forms;
   const queryClient = useQueryClient();
   const { roles, scopeOf } = usePermissions();
 
@@ -129,10 +130,10 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-cyan-600" />
-            {a.inviteUser ?? 'Create User Account'}
+            {a.inviteUsers}
           </DialogTitle>
           <DialogDescription>
-            Create an account directly. The user can sign in immediately with the credentials below.
+            {a.inviteUsersDesc}
           </DialogDescription>
         </DialogHeader>
 
@@ -212,7 +213,7 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
             </Label>
             <Select value={roleKey} onValueChange={setRoleKey}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a role…" />
+                <SelectValue placeholder={a.selectRole} />
               </SelectTrigger>
               <SelectContent>
                 {assignableRoles.map((r) => (
@@ -301,9 +302,9 @@ export function InviteUsersDialog({ open, onOpenChange }: InviteUsersDialogProps
             className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold"
           >
             {createMutation.isPending ? (
-              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Creating…</>
+              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {a.busyCreating}</>
             ) : (
-              <><CheckCircle2 className="h-4 w-4 mr-1" /> Create Account</>
+              <><CheckCircle2 className="h-4 w-4 mr-1" /> {a.createAccount}</>
             )}
           </Button>
         </DialogFooter>

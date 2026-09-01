@@ -159,7 +159,7 @@ export function CreateFinancialReportDialog({ open, onOpenChange, onSubmit, isLo
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {fin.generateReport ?? 'Generate Report'}
+              {fin.generateReport}
             </Button>
           </div>
         </form>

@@ -1349,8 +1349,8 @@ const UserManagement = () => {
                     <div className="rounded-lg border border-border bg-muted/30 p-2">
                       <p className="text-xs text-muted-foreground">{selected.description}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {selected.isAdmin && <Badge variant="default" className="text-[9px]">Admin</Badge>}
-                        {selected.canApproveMembers && <Badge variant="secondary" className="text-[9px]">Approver</Badge>}
+                        {selected.isAdmin && <Badge variant="default" className="text-[9px]">{a.scAdmin}</Badge>}
+                        {selected.canApproveMembers && <Badge variant="secondary" className="text-[9px]">{a.scApprover}</Badge>}
                       </div>
                     </div>
                   );

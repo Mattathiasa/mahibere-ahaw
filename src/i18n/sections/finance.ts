@@ -137,6 +137,7 @@ export const financeEn = {
   // ── Budget dialog ─────────────────────────────────────────────────────────
   createMonthlyBudget: 'Create monthly budget',
   createMonthlyBudgetDesc: 'Plan your monthly income and expenses.',
+  createBudget: 'Create budget',
   monthRequired: 'Month *',
   yearRequired: 'Year *',
   plannedIncomeRequired: 'Planned income (Birr) *',
@@ -149,6 +150,7 @@ export const financeEn = {
   // ── Financial report dialog ───────────────────────────────────────────────
   generateFinancialReport: 'Generate financial report',
   generateFinancialReportDesc: 'Create a comprehensive financial report with document attachments.',
+  generateReport: 'Generate report',
   reportTitleEn: 'Report title (English) *',
   reportTitleEnPlaceholder: 'e.g., Monthly Financial Report - December 2024',
   reportTitleAm: 'Report title (Amharic) *',
@@ -282,6 +284,7 @@ export const financeAm: Record<keyof typeof financeEn, string> = {
 
   createMonthlyBudget: 'ወርኃዊ በጀት ፍጠር',
   createMonthlyBudgetDesc: 'ወርኃዊ ገቢዎንና ወጪዎን ያቅዱ።',
+  createBudget: 'በጀት ፍጠር',
   monthRequired: 'ወር *',
   yearRequired: 'ዓመት *',
   plannedIncomeRequired: 'የታቀደ ገቢ (ብር) *',
@@ -293,6 +296,7 @@ export const financeAm: Record<keyof typeof financeEn, string> = {
 
   generateFinancialReport: 'የገንዘብ ሪፖርት አዘጋጅ',
   generateFinancialReportDesc: 'የተሟላ የገንዘብ ሪፖርት ከሰነድ አባሪዎች ጋር ያዘጋጁ።',
+  generateReport: 'ሪፖርት አዘጋጅ',
   reportTitleEn: 'የሪፖርቱ ርዕስ (እንግሊዝኛ) *',
   reportTitleEnPlaceholder: 'ለምሳሌ ወርኃዊ የገንዘብ ሪፖርት - ታኅሣሥ 2024',
   reportTitleAm: 'የሪፖርቱ ርዕስ (አማርኛ) *',

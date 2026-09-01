@@ -698,7 +698,7 @@ const Settings = () => {
                 <Label>{a.setDateFormat}</Label>
                 <Select
                   value={preferences.dateFormat}
-                  onValueChange={(value) => setPreferences({ ...preferences, dateFormat: value })}
+                  onValueChange={(value) => setPreferences({ ...preferences, dateFormat: value as 'ethiopian' | 'gregorian' })}
                 >
                   <SelectTrigger>
                     <SelectValue />
