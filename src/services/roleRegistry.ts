@@ -371,6 +371,41 @@ const rolesRef = doc(db, 'siteConfig', 'roles');
 const flagsRef = doc(db, 'siteConfig', 'roleFlags');
 const mirrorRef = doc(db, 'siteConfig', 'rolePermissions');
 
+/**
+ * Adds any seed role the stored registry has never heard of.
+ *
+ * A role introduced by a later release is absent from every registry saved
+ * before it existed, and nothing else can add it: `ensureSeeded` writes only
+ * when the document is missing, and `reconcileRoles` corrects roles it finds
+ * but deliberately never introduces one.
+ *
+ * That gap is not cosmetic. `validateRegistry` requires every seed, so an
+ * installation seeded before the addition cannot save its registry AT ALL —
+ * not the new role, not an unrelated permission toggle. And
+ * `siteConfig/roleFlags`, which firestore.rules reads on every gated request,
+ * is written only by that same save. Adding a built-in role was therefore a
+ * breaking change for every existing deployment; it happened for real with
+ * SuperAdmin.
+ *
+ * Version-independent and a no-op once applied, so like `applyRenamedLabels`
+ * it runs on every read rather than waiting for a permissions bump — a
+ * registry missing a seed is broken whatever version it claims.
+ */
+export function withMissingSeeds(roles: Role[]): Role[] {
+  const present = new Set(roles.map((role) => role.key));
+  const missing = SEED_ROLES.filter((seed) => !present.has(seed.key));
+  if (missing.length === 0) return roles;
+
+  // Reinserted at the seed's own index, so the hierarchy still reads top-down
+  // instead of new roles piling up at the end.
+  const merged = [...roles];
+  for (const seed of missing) {
+    const at = SEED_ROLES.findIndex((s) => s.key === seed.key);
+    merged.splice(Math.min(at, merged.length), 0, { ...seed });
+  }
+  return merged;
+}
+
 function normalize(raw: unknown): RoleRegistry | null {
   const data = raw as Partial<RoleRegistry> | undefined;
   if (!data || !Array.isArray(data.roles) || data.roles.length === 0) return null;
@@ -398,9 +433,9 @@ function normalize(raw: unknown): RoleRegistry | null {
     // shipped since, so the built-in roles are brought back in line here.
     // The label migration runs unconditionally: it is version-independent and
     // a no-op once applied.
-    roles: applyRenamedLabels(
+    roles: withMissingSeeds(applyRenamedLabels(
       storedPermissionsVersion < PERMISSIONS_VERSION ? reconcileRoles(parsed) : parsed
-    ),
+    )),
     permissionsVersion: storedPermissionsVersion,
     meta: data.meta,
   };

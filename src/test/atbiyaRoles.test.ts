@@ -3,7 +3,8 @@
 // start in this repo, which is why the rules tests pin node too.
 import { describe, expect, it, vi } from 'vitest';
 import {
-  applyRenamedLabels, deriveFlags, reconcileRoles, SEED_ROLES, type Role,
+  applyRenamedLabels, deriveFlags, reconcileRoles, withMissingSeeds, validateRegistry,
+  SEED_ROLES, type Role,
 } from '@/services/roleRegistry';
 
 /**
@@ -231,5 +232,62 @@ describe('postLoginPath', () => {
     const { postLoginPath } = await import('@/lib/postLogin');
     expect(await postLoginPath({ hierarchyLevel: 'Atbiya', atbiyaId: 'atbiya-1' }))
       .toBe('/dashboard');
+  });
+});
+
+/**
+ * Adding a built-in role used to be a breaking change for every existing
+ * installation.
+ *
+ * `siteConfig/roles` is written once, when an admin first opens Software
+ * Control. After that `ensureSeeded` is a no-op, and `reconcileRoles` was a
+ * plain `map` — it corrected roles it found but could not introduce one. So a
+ * registry saved before a seed existed never gained it, while `validateRegistry`
+ * demands every seed. The result was that Save & Publish threw on ANY change,
+ * and `siteConfig/roleFlags` — which firestore.rules reads on every gated
+ * request — could no longer be written at all.
+ *
+ * This happened for real with SuperAdmin. These tests are here so it cannot
+ * happen again the next time a seed is added.
+ */
+describe('withMissingSeeds restores a seed added by a later release', () => {
+  /** A registry saved before SuperAdmin existed: the seven bylaw roles. */
+  const legacy = (): Role[] =>
+    SEED_ROLES.filter((r) => r.key !== 'SuperAdmin').map((r) => ({ ...r }));
+
+  it('adds a seed role the stored registry has never heard of', () => {
+    const stored = legacy();
+    expect(stored.some((r) => r.key === 'SuperAdmin')).toBe(false);
+
+    const keys = withMissingSeeds(stored).map((r) => r.key);
+    expect(keys).toContain('SuperAdmin');
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('leaves the restored registry able to save', () => {
+    // The exact failure that bricked production.
+    expect(validateRegistry(legacy())).toMatch(/SuperAdmin/);
+    expect(validateRegistry(withMissingSeeds(legacy()))).toBeNull();
+  });
+
+  it('restores the seed at its own position, not the end', () => {
+    const keys = withMissingSeeds(legacy()).map((r) => r.key);
+    expect(keys.indexOf('SuperAdmin')).toBe(
+      SEED_ROLES.findIndex((r) => r.key === 'SuperAdmin')
+    );
+  });
+
+  it('is a no-op once every seed is present', () => {
+    const complete = SEED_ROLES.map((r) => ({ ...r }));
+    expect(withMissingSeeds(complete).map((r) => r.key)).toEqual(complete.map((r) => r.key));
+  });
+
+  it('keeps an operator\'s renames and deactivations on a restored registry', () => {
+    const stored = legacy().map((r) =>
+      r.key === 'Zone' ? { ...r, labels: { en: 'Bishopric' }, active: false } : r
+    );
+    const zone = withMissingSeeds(stored).find((r) => r.key === 'Zone');
+    expect(zone?.labels.en).toBe('Bishopric');
+    expect(zone?.active).toBe(false);
   });
 });

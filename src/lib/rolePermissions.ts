@@ -176,6 +176,11 @@ export const PERMISSION_GROUPS = [...new Set(ALL_PERMISSIONS.map(p => PERMISSION
  *   2 — added canViewHR / canViewInventory / canEditOwnAtbiya; narrowed
  *       HiyawanMahderat to an ordinary member (no members, meetings,
  *       announcements or canAddMembers)
+ *
+ * Adding a NEW built-in role does not belong here — that is not a change to an
+ * existing role's permissions, and bumping would reset every operator's
+ * customisations as a side effect. `withMissingSeeds` in roleRegistry handles
+ * it version-independently instead.
  */
 export const PERMISSIONS_VERSION = 2;
 
