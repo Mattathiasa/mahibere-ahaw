@@ -279,17 +279,28 @@ const Members = () => {
                     setIsEditing(false);
                   }}
                   onSubmit={(data) => {
+                    // The wizard speaks fullNameEnglish/phoneNumber; the user
+                    // record and everything that sorts or searches it speak
+                    // fullName/phone. Without this bridge a wizard-enrolled
+                    // member has no fullName at all, which crashed User
+                    // Management and dropped them out of getUsersByAtbiya,
+                    // whose orderBy silently omits documents missing the field.
+                    const record = {
+                      ...data,
+                      fullName: (data as any).fullName || data.fullNameEnglish || '',
+                      phone: (data as any).phone || (data as any).phoneNumber || '',
+                    };
                     if (isEditing && selectedMember?.id) {
-                      updateMemberMutation.mutate({ id: selectedMember.id, data });
+                      updateMemberMutation.mutate({ id: selectedMember.id, data: record });
                     } else {
                       // Stamp new members with the creating parish so parish
                       // admins only see their own; head office sees all.
                       // `parishName` used to be written as the creator's role
                       // (literally "Atbiya"), which made it useless as a label.
                       const stamped = isHeadOffice
-                        ? data
+                        ? record
                         : {
-                            ...data,
+                            ...record,
                             parishId: myParishId,
                             atbiyaId: myParishId,
                             parishName: currentUser?.atbiyaName ?? '',

@@ -416,8 +416,15 @@ const UserManagement = () => {
   };
 
   const users = usersData?.users || [];
+  // Every name here is optional in practice. MemberWizard writes only
+  // fullNameEnglish, and the older admin paths write only fullName, so a bare
+  // `user.fullName.toLowerCase()` threw a TypeError and took the whole page
+  // down as soon as one wizard-enrolled member existed.
+  const displayName = (user: any) =>
+    user.fullName || user.fullNameEnglish || user.fullNameAmharic || user.username || '';
+
   const filteredUsers = users.filter((user: any) =>
-    user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    displayName(user).toLowerCase().includes(searchQuery.toLowerCase()) ||
     (user.username && user.username.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -1125,7 +1132,7 @@ const UserManagement = () => {
                     </TableRow>
                   ) : (
                     filteredUsers.map((user: any) => {
-                      const initials = user.fullName
+                      const initials = displayName(user)
                         .split(' ')
                         .map((n: string) => n[0])
                         .join('')
