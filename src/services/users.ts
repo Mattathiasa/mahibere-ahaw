@@ -18,7 +18,7 @@ import {
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseConfig } from '@/lib/firebase';
-import { syntheticEmail } from '@/services/signup';
+import { syntheticEmail, isSyntheticEmail } from '@/services/signup';
 
 export interface CreateUserData {
   email: string;
@@ -96,21 +96,36 @@ export const userService = {
         throw new AppError('passwordRequired');
       }
 
-      // The SIGN-IN address is always synthetic, never the address the admin
-      // typed. Username sign-in has to resolve a typed name to an address before
-      // there is an account to authorise, which meant a real address had to be
-      // written into the world-readable `usernames/{name}` document. A synthetic
-      // address is derivable from the username, so nothing personal needs
-      // publishing; the typed address stays below as profile data.
-      const loginEmail = syntheticEmail(username);
+      // The SIGN-IN address. A real inbox is used when one was supplied,
+      // because it is the only way Firebase's own password reset can ever reach
+      // this person: the project is on Spark, so there is no Admin SDK to set a
+      // password server-side, and sendPasswordReset refuses a synthetic address
+      // outright. Without a real address we keep the derived synthetic one, so
+      // accounts with no inbox still sign in by username exactly as before.
+      //
+      // The real address deliberately does NOT go into `usernames/{name}`: that
+      // document is world-readable and publishing personal emails there is the
+      // enumeration leak firestore.rules exists to refuse. The trade is that an
+      // account created WITH an email signs in with that email rather than its
+      // username — which is precisely what authService.login's
+      // 'wrongPasswordTryEmail' message already tells anyone who tries.
+      const contactEmail = (userData.email ?? '').trim();
+      const hasRealInbox = !!contactEmail && !isSyntheticEmail(contactEmail);
+      const loginEmail = hasRealInbox ? contactEmail.toLowerCase() : syntheticEmail(username);
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, loginEmail, password);
       const id = userCredential.user.uid;
 
       const dataToSave = {
         ...userData,
-        // Contact address, not the sign-in address.
-        email: userData.email ?? '',
+        // Contact address. Equal to the sign-in address whenever a real inbox
+        // was supplied; otherwise the account signs in as `loginEmail` above.
+        email: contactEmail,
         username,
+        // Written for every account, not only the wizard's. getUsersByAtbiya
+        // orders by this field and Firestore omits documents that lack it, so
+        // an account without it disappears from the parish roster, the
+        // promote-to-administrator picker and meeting audiences.
+        fullNameEnglish: userData.fullNameEnglish || userData.fullName || '',
         role: userData.role || 'user',
         // Admin-created accounts are usable immediately — only self-service
         // sign-ups go through the parish approval queue.
@@ -123,6 +138,17 @@ export const userService = {
       delete dataToSave.password;
 
       await setDoc(doc(db, 'users', id), dataToSave);
+
+      // Reserves the name so a later sign-up cannot claim it. Carries no
+      // address: the rules accept only a synthetic one here, and a member
+      // manager has no business asserting an address on someone else's behalf.
+      // Best-effort — sign-in resolves the name deterministically without it.
+      try {
+        await setDoc(doc(db, 'usernames', username.toLowerCase()), {
+          uid: id, createdAt: serverTimestamp(),
+        });
+      } catch { /* non-fatal */ }
+
       await deleteApp(secondaryApp);
 
       return { id, ...dataToSave };

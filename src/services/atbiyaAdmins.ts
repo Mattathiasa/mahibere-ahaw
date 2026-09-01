@@ -262,7 +262,25 @@ export const atbiyaAdminService = {
     if (!isRealEmail(email)) {
       throw new AppError('adminNoEmailOnAccount');
     }
-    await sendPasswordResetEmail(auth, email);
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? '';
+      // An account created before the sign-in address became the contact
+      // address has no Auth record at this email, so Firebase answers
+      // user-not-found. This used to escape as the raw string
+      // "Firebase: Error (auth/user-not-found).", which told the operator
+      // nothing about what to do; adminNoEmailOnAccount says to issue a
+      // replacement account instead.
+      if (code === 'auth/user-not-found') throw new AppError('adminNoEmailOnAccount');
+      if (code === 'auth/too-many-requests') throw new AppError('tooManyAttemptsShort');
+      if (code === 'auth/invalid-email') throw new AppError('emailInvalid');
+      throw new AppError('resetEmailFailed');
+    }
+
+    // Only on success. Previously this line sat after an unguarded await, so a
+    // failed send left no audit entry at all.
     auditLogService.dataChange('update', 'users', email, 'Sent a password reset email to a parish administrator');
   },
 };

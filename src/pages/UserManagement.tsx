@@ -28,6 +28,12 @@ import { ETHIOPIAN_REGIONS } from '@/types';
 interface UserFormData {
   username: string;
   password: string;
+  /**
+   * A real inbox. userService.createUser makes this the account's SIGN-IN
+   * address when it is present, which is what lets "Forgot password?" reach
+   * the person — there is no Admin SDK to reset a password server-side.
+   */
+  email: string;
   fullName: string;
   fullNameAmharic: string;
   phone: string;
@@ -108,6 +114,7 @@ const UserManagement = () => {
     password: '',
     fullName: '',
     fullNameAmharic: '',
+    email: '',
     phone: '',
     region: '',
     zone: '',
@@ -308,9 +315,10 @@ const UserManagement = () => {
     setFormData({
       username: user.username || '',
       password: '',
-      fullName: user.fullName,
+      fullName: user.fullName || user.fullNameEnglish || '',
       fullNameAmharic: user.fullNameAmharic || '',
-      phone: user.phone,
+      email: user.email || '',
+      phone: user.phone || '',
       region: user.address?.region || '',
       zone: user.address?.zone || '',
       woreda: user.address?.woreda || '',
@@ -393,6 +401,7 @@ const UserManagement = () => {
       password: '',
       fullName: '',
       fullNameAmharic: '',
+      email: '',
       phone: '',
       region: '',
       zone: '',
@@ -646,6 +655,24 @@ const UserManagement = () => {
                       required
                       minLength={6}
                     />
+                  </div>
+                  {/*
+                    Optional, but it is what makes the account recoverable: with
+                    a real address the person signs in with it and can use
+                    "Forgot password?" themselves. Without one they sign in by
+                    username and only an administrator can ever issue them a new
+                    password.
+                  */}
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="email">{a.email}</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder={pe.emailExamplePlaceholder}
+                    />
+                    <p className="text-[11px] text-muted-foreground">{a.signInHint}</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="fullName">{a.fullNameEnglish} *</Label>

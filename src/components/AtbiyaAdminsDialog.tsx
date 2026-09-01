@@ -13,6 +13,7 @@ import { userService } from '@/services/users';
 import type { User } from '@/types';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { errorMessage } from '@/lib/appError';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { Field } from '@/components/AtbiyaForm';
 import { AtbiyaAdminFields } from '@/components/AtbiyaAdminFields';
@@ -261,9 +262,9 @@ export const AtbiyaAdminsDialog: React.FC<AtbiyaAdminsDialogProps> = ({
     setError(null);
     try {
       await atbiyaAdminService.sendReset(admin.email);
-      setNotice(`A password reset link was sent to ${admin.email}.`);
+      setNotice(t.pages.resetLinkSent.replace('{email}', admin.email));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not send the reset email.');
+      setError(errorMessage(t, e));
     } finally {
       setBusyId(null);
     }
@@ -332,7 +333,9 @@ export const AtbiyaAdminsDialog: React.FC<AtbiyaAdminsDialogProps> = ({
                           @{a.username} · {roleLabel(a.hierarchyLevel)}
                         </p>
                         <p className="text-xs text-muted-foreground break-all">
-                          {isRealEmail(a.email) ? a.email : 'Signs in by username only'}
+                          {isRealEmail(a.email)
+                            ? `${tx.signsInWith}: ${a.email}`
+                            : tx.signsInByUsername}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -352,9 +355,7 @@ export const AtbiyaAdminsDialog: React.FC<AtbiyaAdminsDialogProps> = ({
                           </Button>
                         )}
                         <Button size="sm" variant="outline" disabled={busyId === a.id || !isRealEmail(a.email)}
-                          title={isRealEmail(a.email)
-                            ? 'Send a password reset link'
-                            : 'This account has no email address, so no reset link can be sent.'}
+                          title={isRealEmail(a.email) ? tx.resetPasswordTitle : tx.noEmailNoReset}
                           onClick={() => handleReset(a)}>
                           <KeyRound className="h-4 w-4 mr-1" /> {tx.resetPassword}
                         </Button>

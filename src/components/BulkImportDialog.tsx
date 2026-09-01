@@ -106,7 +106,10 @@ export function BulkImportDialog({ open, onOpenChange }: BulkImportDialogProps) 
           fullName: row.fullName || username,
           fullNameAmharic: row.fullNameAmharic,
           phone: row.phone.replace(/\s/g, ''),
-          email: row.email || `${username}@mahibereahaw.org`,
+          // Blank, not a fabricated address. A made-up @mahibereahaw.org
+          // passed isRealEmail, so the parish admin screen offered a reset
+          // button for an inbox that does not exist.
+          email: row.email || '',
           hierarchyLevel: roleKey,
           status: 'active',
           signupSource: 'admin',
