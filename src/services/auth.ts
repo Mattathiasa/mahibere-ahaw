@@ -399,6 +399,18 @@ export const authService = {
    * which is not a real inbox — there is no way to mail them and no Admin SDK
    * to set a password server-side, so the caller is told plainly rather than
    * being shown a success message for a link nobody will ever receive.
+   *
+   * A TYPED USERNAME cannot be told apart from that case. `usernames/{name}`
+   * may now only carry `uid` (the rules refuse an address there, and
+   * repairUsernameMapping is gone), so `resolveEmail` falls back to the
+   * synthetic address for every account created since — including the
+   * admin-created ones that DO own a real inbox and are perfectly recoverable.
+   * Only legacy rows still resolve. That is why `noEmailOnAccount` tells the
+   * reader to type their email address instead rather than asserting the
+   * account has none: from the name alone we genuinely cannot know.
+   *
+   * Resolving a name properly needs a lookup that can read without being the
+   * caller — `resolveLoginEmail` in functions/src/index.ts, still undeployed.
    */
   async sendPasswordReset(usernameOrEmail: string): Promise<{ sentTo: string }> {
     const input = usernameOrEmail.trim();

@@ -51,8 +51,17 @@ export const errorsEn = {
   resetEmailFailed: 'Could not send the reset email. Please try again.',
   /** `{detail}` carries the Firebase message for an error we have no wording for. */
   loginFailedDetail: 'Sign-in failed: {detail}',
+  /**
+   * Shown when a USERNAME was typed. `usernames/{name}` may only carry `uid`,
+   * so a name can no longer be resolved to a real inbox — an account created
+   * with an email is perfectly recoverable, we simply cannot tell from the name
+   * alone. Saying "this account has no email address" was therefore wrong for
+   * exactly the parish administrators being onboarded, and sent them to ask for
+   * a new password when their own inbox would have worked. Same ambiguity, and
+   * the same remedy, as `wrongPasswordTryEmail`.
+   */
   noEmailOnAccount:
-    'This account signs in with a username and has no email address, so a reset link cannot be sent. Ask your parish administrator to issue you a new password.',
+    'A reset link cannot be sent to a username. If your account has an email address, type that address here instead. If it signs in by username only, ask your parish administrator to issue you a new password.',
   emailTaken: 'Another account already uses that email address.',
   emailChangeFailed: 'Could not start the email change. Please try again.',
 
@@ -111,7 +120,7 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
   resetEmailFailed: 'የይለፍ ቃል ማደሻ ኢሜይል መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
   loginFailedDetail: 'መግባት አልተሳካም፦ {detail}',
   noEmailOnAccount:
-    'ይህ መለያ የሚገባው በተጠቃሚ ስም ስለሆነና የኢሜይል አድራሻ ስለሌለው የማደሻ አገናኝ መላክ አይቻልም። አዲስ የይለፍ ቃል እንዲሰጥዎ የአጥቢያዎን አስተዳዳሪ ይጠይቁ።',
+    'በተጠቃሚ ስም የማደሻ አገናኝ መላክ አይቻልም። መለያዎ የኢሜይል አድራሻ ካለው በዚህ ቦታ ስምዎን ሳይሆን ኢሜይልዎን ያስገቡ። መለያዎ የሚገባው በተጠቃሚ ስም ብቻ ከሆነ አዲስ የይለፍ ቃል እንዲሰጥዎ የአጥቢያዎን አስተዳዳሪ ይጠይቁ።',
   emailTaken: 'ሌላ መለያ አስቀድሞ ይህንን የኢሜይል አድራሻ ይጠቀማል።',
   emailChangeFailed: 'የኢሜይል ለውጡን መጀመር አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
 
