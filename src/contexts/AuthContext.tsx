@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { User } from '@/types';
 
@@ -22,6 +22,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 try {
                     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                     const userData = userDoc.exists() ? userDoc.data() : {};
+
+                    // A missing document is NOT a default active member. Every
+                    // field below falls back to something permissive, so an
+                    // account whose record was deleted used to restore as an
+                    // active Atbiya-level user and walk straight past
+                    // ProtectedRoute — into an app where the rules then denied
+                    // every read, which looks like breakage rather than a
+                    // closed door. Fresh sign-in already refuses this case in
+                    // authService.login; the restore path did not.
+                    if (!userDoc.exists()) {
+                        await signOut(auth).catch(() => {});
+                        setUser(null);
+                        localStorage.removeItem('user');
+                        setLoading(false);
+                        return;
+                    }
 
                     const user: User = {
                         id: firebaseUser.uid,

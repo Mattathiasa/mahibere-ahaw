@@ -32,6 +32,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { errorMessage } from '@/lib/appError';
+import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +48,14 @@ import type { Translations } from '@/i18n/translations';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+
+/** The few fields the delete dialog reads off a user row. */
+interface PurgeTarget {
+  id: string;
+  username?: string;
+  fullName?: string;
+  fullNameEnglish?: string;
+}
 
 const SoftwareControl: React.FC = () => {
   const navigate = useNavigate();
@@ -74,7 +88,17 @@ const SoftwareControl: React.FC = () => {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userSearch, setUserSearch] = useState('');
-  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'pending' | 'suspended'>('all');
+  // 'rejected' is included because a declined sign-up stays a users document —
+  // membershipRequests.reject only flips the status — so without this pill the
+  // largest bucket of test junk was invisible under every filter but 'all'.
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'pending' | 'rejected' | 'suspended'>('all');
+
+  // ── Permanent delete ───────────────────────────────────────────────────
+  const [purgeTarget, setPurgeTarget] = useState<PurgeTarget | null>(null);
+  const [purgeTyped, setPurgeTyped] = useState('');
+  const [purgeBusy, setPurgeBusy] = useState(false);
+  const [purgeFootprint, setPurgeFootprint] =
+    useState<{ signedInBefore: boolean; newsPosts: number; financeRows: number } | null>(null);
 
   // Audit logs
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -184,6 +208,39 @@ const SoftwareControl: React.FC = () => {
       setAllUsers([]);
     } finally {
       setUsersLoading(false);
+    }
+  }
+
+  /** The string that must be typed to arm the delete. */
+  const purgeConfirmWord = (u: PurgeTarget | null) =>
+    u?.username || u?.fullNameEnglish || u?.fullName || '';
+
+  function openPurge(u: PurgeTarget) {
+    setPurgeTarget(u);
+    setPurgeTyped('');
+    setPurgeFootprint(null);
+    // Only read the footprint when somebody actually opens the dialog.
+    userService.userFootprint(u.id).then(setPurgeFootprint).catch(() => setPurgeFootprint(null));
+  }
+
+  async function confirmPurge() {
+    if (!purgeTarget) return;
+    setPurgeBusy(true);
+    try {
+      const { leftovers } = await userService.purgeUser(purgeTarget.id);
+      // Honest about a partial sweep rather than reporting a clean one. The
+      // notification half needs the admin clause in firestore.rules deployed.
+      if (leftovers.length > 0) {
+        toast.warning(a.scPurgePartial.replace('{what}', leftovers.join(', ')));
+      } else {
+        toast.success(a.scPurgeDone);
+      }
+      setPurgeTarget(null);
+      await loadUsers();
+    } catch (e) {
+      toast.error(errorMessage(t, e));
+    } finally {
+      setPurgeBusy(false);
     }
   }
 
@@ -665,7 +722,7 @@ const SoftwareControl: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  {(['all', 'active', 'pending', 'suspended'] as const).map((f) => (
+                  {(['all', 'active', 'pending', 'rejected', 'suspended'] as const).map((f) => (
                     <button
                       key={f}
                       onClick={() => setUserFilter(f)}
@@ -675,7 +732,11 @@ const SoftwareControl: React.FC = () => {
                           : 'bg-background border-border hover:border-primary/50'
                       }`}
                     >
-                      {f === 'all' ? a.scUserFilterAll : f === 'active' ? a.scUserFilterActive : f === 'pending' ? a.scUserFilterPending : a.scUserFilterSuspended}
+                      {f === 'all' ? a.scUserFilterAll
+                        : f === 'active' ? a.scUserFilterActive
+                        : f === 'pending' ? a.scUserFilterPending
+                        : f === 'rejected' ? a.scUserFilterRejected
+                        : a.scUserFilterSuspended}
                     </button>
                   ))}
                   <div className="relative ml-auto w-full sm:w-64">
@@ -723,7 +784,8 @@ const SoftwareControl: React.FC = () => {
                             <th className="py-2 pr-4">{a.scColRole}</th>
                             <th className="py-2 pr-4">{a.scColStatus}</th>
                             <th className="py-2 pr-4">{a.scColAtbiya}</th>
-                            <th className="py-2">{a.scColJoined}</th>
+                            <th className="py-2 pr-4">{a.scColJoined}</th>
+                            <th className="py-2 text-right">{a.operations}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -762,8 +824,18 @@ const SoftwareControl: React.FC = () => {
                                 <td className="py-2.5 pr-4 text-xs text-muted-foreground">
                                   {u.atbiyaName ?? '—'}
                                 </td>
-                                <td className="py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                                <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
                                   {u.createdAt?.toDate ? formatDateTime(u.createdAt.toDate()) : u.createdAt ?? '—'}
+                                </td>
+                                <td className="py-2.5 text-right">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    title={a.scPurgeTitle}
+                                    onClick={() => openPurge(u)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
                                 </td>
                               </tr>
                             );
@@ -1006,6 +1078,60 @@ const SoftwareControl: React.FC = () => {
         onSave={upsertRole}
         onClose={() => { setRoleDialogOpen(false); setEditingRole(null); }}
       />
+
+      <AlertDialog open={!!purgeTarget} onOpenChange={(o) => !o && setPurgeTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{a.scPurgeTitle}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  {a.scPurgeBody.replace('{name}',
+                    purgeTarget?.fullNameEnglish ?? purgeTarget?.fullName ?? purgeConfirmWord(purgeTarget))}
+                </p>
+                <p className="text-amber-700 dark:text-amber-500">{a.scPurgeAuthWarning}</p>
+
+                {purgeFootprint && (purgeFootprint.signedInBefore
+                  || purgeFootprint.newsPosts > 0 || purgeFootprint.financeRows > 0) && (
+                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-1">
+                    <p className="font-bold">{a.scPurgeHasHistory}</p>
+                    <ul className="list-disc pl-5">
+                      {purgeFootprint.signedInBefore && <li>{a.scPurgeSignedIn}</li>}
+                      {purgeFootprint.newsPosts > 0 && (
+                        <li>{a.scPurgeNews.replace('{n}', String(purgeFootprint.newsPosts))}</li>
+                      )}
+                      {purgeFootprint.financeRows > 0 && (
+                        <li>{a.scPurgeFinance.replace('{n}', String(purgeFootprint.financeRows))}</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <p className="text-xs">
+                    {a.scPurgeTypeToConfirm.replace('{word}', purgeConfirmWord(purgeTarget))}
+                  </p>
+                  <Input
+                    value={purgeTyped}
+                    onChange={(e) => setPurgeTyped(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmPurge(); }}
+              disabled={purgeBusy || purgeTyped.trim() !== purgeConfirmWord(purgeTarget)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {purgeBusy ? a.busyDeleting : a.scPurgeAction}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

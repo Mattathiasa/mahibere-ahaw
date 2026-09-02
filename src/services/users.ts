@@ -20,6 +20,9 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { firebaseConfig } from '@/lib/firebase';
 import { syntheticEmail, isSyntheticEmail } from '@/services/signup';
+import { permissionService } from '@/services/permissionService';
+import { roleRegistryService } from '@/services/roleRegistry';
+import { auth } from '@/lib/firebase';
 
 export interface CreateUserData {
   email: string;
@@ -197,10 +200,136 @@ export const userService = {
     auditLogService.dataChange('delete', 'users', id, 'Suspended user account');
   },
 
-  /** Hard delete, for genuinely erroneous records. Admin-only via rules. */
-  async purgeUser(id: string) {
+  /**
+   * What a purge would leave behind, so the confirmation can show it.
+   *
+   * Three cheap reads, run only when somebody opens the dialog. The point is to
+   * make a real member with history look obviously different from a throwaway
+   * `user1738…` with none — the records below survive the deletion and end up
+   * attributed to a name nobody can look up.
+   */
+  async userFootprint(id: string): Promise<{
+    signedInBefore: boolean;
+    newsPosts: number;
+    financeRows: number;
+  }> {
+    const [snap, news, finance] = await Promise.all([
+      getDoc(doc(db, 'users', id)),
+      getDocs(query(collection(db, 'news'), where('authorId', '==', id))).catch(() => null),
+      getDocs(query(collection(db, 'finance_transactions'), where('userId', '==', id)))
+        .catch(() => null),
+    ]);
+    return {
+      signedInBefore: !!snap.data()?.lastLoginAt,
+      newsPosts: news?.size ?? 0,
+      financeRows: finance?.size ?? 0,
+    };
+  },
+
+  /**
+   * Refuses a purge that would lock the organisation out of itself.
+   *
+   * Lives in the service rather than the dialog so it holds wherever purgeUser
+   * is called from. Both cases are unrecoverable from inside the app: an admin
+   * who deletes their own record loses admin on the very next request, and a
+   * project with no admin left cannot open Software Control to appoint one.
+   */
+  async assertPurgeAllowed(id: string): Promise<void> {
+    if (auth.currentUser?.uid === id) throw new AppError('cannotDeleteSelf');
+
+    const [registry, superUids, { users }] = await Promise.all([
+      roleRegistryService.get(),
+      permissionService.getSuperAdmins().catch(() => [] as string[]),
+      this.getAllUsers(),
+    ]);
+
+    const adminRoles = new Set(
+      registry.roles.filter((r) => r.isAdmin && r.active !== false).map((r) => r.key)
+    );
+    // A uid on the super-admin list counts even if its role does not, because
+    // firestore.rules grants it everything on that basis alone.
+    const admins = (users as Array<Record<string, unknown>>).filter((u) => {
+      const status = (u.status as string) ?? 'active';
+      if (status !== 'active') return false;
+      return adminRoles.has(u.hierarchyLevel as string)
+        || u.role === 'SuperAdmin'
+        || superUids.includes(u.id as string);
+    });
+
+    if (admins.length <= 1 && admins.some((u) => u.id === id)) {
+      throw new AppError('cannotDeleteLastAdmin');
+    }
+  },
+
+  /**
+   * Permanently deletes an account.
+   *
+   * NOT the whole account: there is no Admin SDK on the Spark plan, so the
+   * Firebase Auth credential cannot be removed from a browser and survives this.
+   * That login can still authenticate; it simply has no member record, which
+   * `authService.login` reports and refuses. Clearing the leftovers needs
+   * functions/scripts/purge-auth-orphans.mjs, run with real credentials.
+   *
+   * The order below matters, and is chosen so that an interrupted purge leaves
+   * an account that still WORKS rather than one that is half-erased:
+   *
+   *   1. super-admin list first — a uid listed there is granted everything by
+   *      firestore.rules with no status and no document check, so a crash after
+   *      the document was deleted would leave a login with total access and no
+   *      record to revoke.
+   *   2. notifications next — they are addressed by uid, and once the user
+   *      document is gone no one satisfies the rule that guards them.
+   *   3. the username reservation, read off the document while it still exists.
+   *   4. the document itself, last.
+   *
+   * Returns whatever could not be cleaned rather than throwing, so the caller
+   * can say what is left instead of claiming a clean sweep.
+   */
+  async purgeUser(id: string): Promise<{ leftovers: string[] }> {
+    await this.assertPurgeAllowed(id);
+    const leftovers: string[] = [];
+
+    const snap = await getDoc(doc(db, 'users', id));
+    const username = (snap.data()?.username as string | undefined)?.toLowerCase();
+
+    // 1. Privileges, before anything else.
+    try {
+      const uids = await permissionService.getSuperAdmins();
+      if (uids.includes(id)) {
+        await permissionService.setSuperAdmins(
+          uids.filter((u) => u !== id),
+          auth.currentUser?.email ?? 'admin'
+        );
+      }
+    } catch { leftovers.push('superAdmins'); }
+
+    // 2. Notifications, while an admin can still reach them.
+    try {
+      const notes = await getDocs(
+        query(collection(db, 'notifications'), where('userId', '==', id))
+      );
+      await Promise.all(notes.docs.map((d) => deleteDoc(d.ref)));
+    } catch { leftovers.push('notifications'); }
+
+    // 3. The name reservation. Without this the username is held forever: it
+    //    still resolves to this account's sign-in address, and no new account
+    //    can claim it.
+    if (username) {
+      try { await deleteDoc(doc(db, 'usernames', username)); }
+      catch { leftovers.push('usernames'); }
+    }
+
+    // 4. The record.
     await deleteDoc(doc(db, 'users', id));
-    auditLogService.dataChange('delete', 'users', id, 'Permanently deleted user record');
+
+    // Audit entries are immutable and denormalise the actor, so this outlives
+    // both the deleted account and whoever deleted it.
+    auditLogService.dataChange(
+      'delete', 'users', id,
+      `Permanently deleted user record${username ? ` (@${username})` : ''}`
+    );
+
+    return { leftovers };
   },
 
   async getUserById(id: string) {

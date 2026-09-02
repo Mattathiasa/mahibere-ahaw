@@ -747,6 +747,50 @@ describe('parish registry', () => {
   });
 });
 
+/**
+ * Deleting a user account.
+ *
+ * `allow delete` on /users has been in the rules for a while with nothing
+ * asserting it either way, and it only became reachable once Software Control
+ * grew a permanent-delete action. These pin down who may do it, and the two
+ * collateral collections a purge has to reach — the username reservation, which
+ * otherwise holds the name forever, and the departed person's notifications,
+ * which otherwise become unreachable by everyone.
+ */
+describe('permanently deleting a user', () => {
+  it('an admin may delete a user document', async () => {
+    await assertSucceeds(deleteDoc(doc(as('admin-1'), 'users/active-1')));
+  });
+
+  it('an ordinary member may not delete anyone, including themselves', async () => {
+    await assertFails(deleteDoc(doc(as('active-1'), 'users/active-1')));
+  });
+
+  it('a parish role may not delete one of its own members', async () => {
+    await assertFails(deleteDoc(doc(as('parish-1'), 'users/active-1')));
+  });
+
+  it('an admin may release the username reservation', async () => {
+    // Seeded here rather than relying on the shared fixture: an admin passes
+    // the delete rule on a NON-existent document too, so without a real row
+    // this would pass while proving nothing.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'usernames/departing'), { uid: 'active-1' });
+    });
+    await assertSucceeds(deleteDoc(doc(as('admin-1'), 'usernames/departing')));
+  });
+
+  it("an admin may delete a departed user's notifications", async () => {
+    // Without this the rows strand: isActive() is false for the deleted uid and
+    // no other uid matches userId, so nobody could ever remove them.
+    await assertSucceeds(deleteDoc(doc(as('admin-1'), 'notifications/n-parish')));
+  });
+
+  it('a member still cannot delete somebody else\'s notification', async () => {
+    await assertFails(deleteDoc(doc(as('active-1'), 'notifications/n-parish')));
+  });
+});
+
 describe('notifications are private correspondence', () => {
   it('a user reads their own notification', async () => {
     await assertSucceeds(getDoc(doc(as('active-1'), 'notifications/n-active')));

@@ -1002,6 +1002,7 @@ export const adminEn = {
   busyRecording: 'Recording…',
   busyPublishing: 'Publishing…',
   busySuspending: 'Suspending…',
+  busyDeleting: 'Deleting…',
   saveChanges: 'Save changes',
   saveAllChanges: 'Save all changes',
   uploadAndImport: 'Upload & import',
@@ -1073,6 +1074,20 @@ export const adminEn = {
   scCustomRules: 'custom rules',
   scTotalPermissions: 'Total permissions',
   scAvailableInSystem: 'available in system',
+
+  // ── Permanently deleting an account ───────────────────────────────────────
+  scUserFilterRejected: 'Rejected',
+  scPurgeTitle: 'Delete this account permanently?',
+  scPurgeBody: 'The record for {name} will be removed for good. This cannot be undone, and unlike suspending, there is nothing left to restore.',
+  scPurgeAuthWarning: 'Their sign-in itself cannot be removed from here — it survives, but stops working, because it will no longer be linked to a member record. Clearing those leftovers needs the purge-auth-orphans script.',
+  scPurgeHasHistory: 'This account has been used. Records it created will remain, attributed to a name nobody can look up:',
+  scPurgeSignedIn: 'Has signed in before — this is not an untouched test account.',
+  scPurgeNews: 'Wrote {n} news post(s).',
+  scPurgeFinance: 'Appears on {n} finance record(s).',
+  scPurgeTypeToConfirm: 'Type {word} to confirm.',
+  scPurgeAction: 'Delete permanently',
+  scPurgeDone: 'Account deleted.',
+  scPurgePartial: 'Account deleted, but this could not be cleaned up: {what}. It may need the security rules deployed.',
 
 };
 
@@ -2035,6 +2050,7 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
   busyRecording: 'በመመዝገብ ላይ…',
   busyPublishing: 'በማሳተም ላይ…',
   busySuspending: 'በማገድ ላይ…',
+  busyDeleting: 'በመሰረዝ ላይ…',
   saveChanges: 'ለውጦችን አስቀምጥ',
   saveAllChanges: 'ሁሉንም ለውጦች አስቀምጥ',
   uploadAndImport: 'ጫንና አስመጣ',
@@ -2098,6 +2114,19 @@ export const adminAm: Record<keyof typeof adminEn, string> = {
   scCustomRules: 'ብጁ ደንቦች',
   scTotalPermissions: 'ጠቅላላ ፈቃዶች',
   scAvailableInSystem: 'በሥርዓቱ ውስጥ ይገኛሉ',
+
+  scUserFilterRejected: 'ውድቅ የተደረጉ',
+  scPurgeTitle: 'ይህን መለያ በቋሚነት ይሰረዝ?',
+  scPurgeBody: 'የ{name} መዝገብ በቋሚነት ይወገዳል። ይህ መመለስ አይቻልም፤ ከማገድ በተለየ የሚመለስ ነገር አይኖርም።',
+  scPurgeAuthWarning: 'መግቢያው ራሱ ከዚህ ሊወገድ አይችልም — ይቀራል፣ ነገር ግን ከአባል መዝገብ ጋር ስለማይገናኝ አይሠራም። እነዚያን ቅሪቶች ለማጽዳት የpurge-auth-orphans ስክሪፕት ያስፈልጋል።',
+  scPurgeHasHistory: 'ይህ መለያ ጥቅም ላይ ውሏል። የፈጠራቸው መዝገቦች ይቀራሉ፤ ማንም ሊያገኘው በማይችል ስም ይመዘገባሉ፦',
+  scPurgeSignedIn: 'ከዚህ በፊት ገብቷል — ያልተነካ የሙከራ መለያ አይደለም።',
+  scPurgeNews: '{n} ዜና(ዎች) ጽፏል።',
+  scPurgeFinance: 'በ{n} የገንዘብ መዝገብ(ቦች) ላይ ይገኛል።',
+  scPurgeTypeToConfirm: 'ለማረጋገጥ {word} ብለው ይጻፉ።',
+  scPurgeAction: 'በቋሚነት ሰርዝ',
+  scPurgeDone: 'መለያው ተሰርዟል።',
+  scPurgePartial: 'መለያው ተሰርዟል፤ ነገር ግን ይህ ሊጸዳ አልቻለም፦ {what}። የደህንነት ደንቦቹ መተግበር ሊያስፈልጋቸው ይችላል።',
 
 };
 

@@ -743,8 +743,13 @@ service cloud.firestore {
     //  queries still prove out against this rule.
     // ════════════════════════════════════════════════════════════════════════
     match /notifications/{docId} {
+      // The admin clause exists so an account can actually be deleted. Without
+      // it nobody could remove another person's notifications, and purging their
+      // user document stranded these rows: `isActive()` is false for the
+      // departed uid and no other uid matches `userId`, so they became
+      // unreadable and undeletable by everyone, permanently.
       allow read, update, delete: if isActive()
-        && resource.data.userId == request.auth.uid;
+        && (resource.data.userId == request.auth.uid || isAdmin());
 
       // Addressing stays open to any approved account: broadcasting an
       // announcement and approving a membership request both write documents

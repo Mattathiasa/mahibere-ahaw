@@ -30,6 +30,8 @@ export const errorsEn = {
   tooManyAttempts: 'Too many failed attempts. Please wait a few minutes and try again.',
   tooManyAttemptsShort: 'Too many attempts. Please wait a few minutes and try again.',
   notSignedIn: 'No user is currently signed in.',
+  cannotDeleteSelf: 'You cannot delete the account you are signed in with.',
+  cannotDeleteLastAdmin: 'This is the only account left with administrator access. Give someone else admin first, or the organisation would be locked out of its own settings.',
   networkProblem: 'Network problem — check your connection and try again.',
 
   // ── Password ──────────────────────────────────────────────────────────────
@@ -102,6 +104,8 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
   tooManyAttempts: 'በተደጋጋሚ ስህተት ተሞክሯል። እባክዎ ጥቂት ደቂቃዎችን ጠብቀው እንደገና ይሞክሩ።',
   tooManyAttemptsShort: 'በተደጋጋሚ ተሞክሯል። እባክዎ ጥቂት ደቂቃዎችን ጠብቀው እንደገና ይሞክሩ።',
   notSignedIn: 'በአሁኑ ጊዜ የገባ ተጠቃሚ የለም።',
+  cannotDeleteSelf: 'እርስዎ የገቡበትን መለያ መሰረዝ አይችሉም።',
+  cannotDeleteLastAdmin: 'የአስተዳዳሪ ፈቃድ ያለው የቀረ ብቸኛ መለያ ይህ ነው። መጀመሪያ ለሌላ ሰው የአስተዳዳሪ ፈቃድ ይስጡ፤ አለበለዚያ ድርጅቱ ከራሱ ቅንብሮች ውጭ ይሆናል።',
   networkProblem: 'የአውታረ መረብ ችግር — ግንኙነትዎን አረጋግጠው እንደገና ይሞክሩ።',
 
   passwordTooShort: 'አዲሱ የይለፍ ቃል ቢያንስ 6 ፊደላት መሆን አለበት።',
