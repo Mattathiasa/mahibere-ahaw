@@ -2,8 +2,8 @@
 // Pure maths, no DOM — same reason atbiyaRoles.test.ts pins node.
 import { describe, expect, it } from 'vitest';
 import {
-  boundsOf, byDistanceFrom, formatDistance, hasCoords, haversineKm, parseMapUrl,
-  splitByPinned,
+  boundsOf, byDistanceFrom, centroidOf, formatDistance, hasCoords, haversineKm,
+  parseMapUrl, splitByPinned,
 } from '@/lib/geo';
 
 const BOLE = { lat: 8.9950, lng: 38.7890 };
@@ -162,5 +162,37 @@ describe('boundsOf', () => {
     const [[south, west], [north, east]] = boundsOf([BOLE])!;
     expect(south).toBe(north);
     expect(west).toBe(east);
+  });
+});
+
+describe('centroidOf', () => {
+  it('is null with nothing to average', () => {
+    expect(centroidOf([])).toBeNull();
+  });
+
+  it('returns the point itself for one point', () => {
+    expect(centroidOf([BOLE])).toEqual(BOLE);
+  });
+
+  it('averages several points', () => {
+    const c = centroidOf([BOLE, MEGENAGNA])!;
+    expect(c.lat).toBeCloseTo((BOLE.lat + MEGENAGNA.lat) / 2, 9);
+    expect(c.lng).toBeCloseTo((BOLE.lng + MEGENAGNA.lng) / 2, 9);
+  });
+
+  it('lands inside the bounds of its inputs', () => {
+    const pts = [BOLE, MEGENAGNA, BISHOFTU];
+    const c = centroidOf(pts)!;
+    const [[south, west], [north, east]] = boundsOf(pts)!;
+    expect(c.lat).toBeGreaterThanOrEqual(south);
+    expect(c.lat).toBeLessThanOrEqual(north);
+    expect(c.lng).toBeGreaterThanOrEqual(west);
+    expect(c.lng).toBeLessThanOrEqual(east);
+  });
+
+  it('produces a usable coordinate', () => {
+    // Guards the Gulf of Guinea failure: an averaged pin must still be a real
+    // place, never {0,0} from summing nothing.
+    expect(hasCoords(centroidOf([BOLE, BISHOFTU]))).toBe(true);
   });
 });

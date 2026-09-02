@@ -10,6 +10,7 @@ import {
 import { isValidPhone, normalizeEthiopianPhone } from '@/lib/phone';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Field } from '@/components/AtbiyaForm';
+import { LocationPicker } from '@/components/LocationPicker';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -205,6 +206,20 @@ export const OrgUnitRegistry: React.FC<OrgUnitRegistryProps> = ({
             onChange={(e) => set('location', e.target.value)} />
         </Field>
       </div>
+
+      {/*
+        The pin, which is what puts this body on the church-wide map. Separate
+        from the free-text location above: that is a written address for a
+        reader, this is a coordinate for the map, and neither substitutes for
+        the other.
+      */}
+      <LocationPicker
+        value={{ lat: draft.lat, lng: draft.lng }}
+        onChange={(next) => setDraft((d) => ({ ...d, lat: next?.lat, lng: next?.lng }))}
+        disabled={saving}
+        label={tx.unitLocationPin}
+        hint={tx.unitLocationPinHint}
+      />
 
       <Field label={tx.notes}>
         <Textarea rows={2} value={draft.description ?? ''} disabled={saving}

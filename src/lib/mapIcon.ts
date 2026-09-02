@@ -46,8 +46,25 @@ export function makePinIcon({
   });
 }
 
-/** Marker colours by what is being shown. */
+/**
+ * Marker colours by what is being shown.
+ *
+ * Ordered by rank in the structure, and paired with sizes at the call site so a
+ * reader can tell the levels apart at a glance without consulting the legend:
+ * the head office is the largest and darkest mark on the map, a Mahedher the
+ * smallest and lightest.
+ */
 export const PIN_COLORS = {
+  /** The head office (ጠቅላይ ጽሕፈት ቤት). One of these exists. */
+  teklay: '#0D2440',
+  /** A diocese (ሀገረ ስብከት), pinned by someone. */
+  zone: '#40A8B1',
+  /**
+   * A diocese with no pin of its own, drawn at the centre of its congregations.
+   * Deliberately a different colour rather than a different size: an estimate
+   * must not be mistakable for a surveyed position at any zoom.
+   */
+  zoneApprox: '#9BC9CE',
   /** A congregation. */
   atbiya: '#2E5E99',
   /** A Mahedher (small group) — lighter, so the two layers read apart. */

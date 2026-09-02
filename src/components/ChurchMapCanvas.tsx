@@ -26,8 +26,11 @@ export interface MapPoint {
   title: string;
   /** Secondary line — city, or the congregation a group belongs to. */
   subtitle?: string;
-  /** Which layer this belongs to, and therefore its colour. */
-  kind: 'atbiya' | 'mahder';
+  /**
+   * Which layer this belongs to, and therefore its colour and size. Ordered by
+   * rank in the structure — see PIN_COLORS.
+   */
+  kind: 'teklay' | 'zone' | 'zoneApprox' | 'atbiya' | 'mahder';
   /** Rendered inside the popup under the title. */
   detail?: React.ReactNode;
   /** Drawn dimmed, for a congregation marked inactive. */
@@ -78,14 +81,30 @@ interface ChurchMapCanvasProps {
    */
   placing?: { id: string; title: string; at: LatLng | null } | null;
   onPlace?: (p: LatLng) => void;
-  height?: number;
+  /**
+   * Any CSS length. A string lets a caller hand over a viewport-relative height
+   * that keeps working through a resize or a rotation, which a pixel number read
+   * from `window.innerHeight` at render time does not.
+   */
+  height?: number | string;
+  /**
+   * Drawn over the map's bottom-left corner. An overlay rather than a sibling in
+   * page flow so the key stays with the thing it explains when the map is tall
+   * enough to scroll past.
+   */
+  legend?: React.ReactNode;
 }
 
 export const ChurchMapCanvas: React.FC<ChurchMapCanvasProps> = ({
-  points, placing = null, onPlace, height = 520,
+  points, placing = null, onPlace, height = 520, legend = null,
 }) => {
+  // Sized by rank as well as coloured, so the levels separate visually before
+  // anyone reads the legend.
   const icons = useMemo(
     () => ({
+      teklay: makePinIcon({ color: PIN_COLORS.teklay, size: 36 }),
+      zone: makePinIcon({ color: PIN_COLORS.zone, size: 30 }),
+      zoneApprox: makePinIcon({ color: PIN_COLORS.zoneApprox, size: 30 }),
       atbiya: makePinIcon({ color: PIN_COLORS.atbiya }),
       mahder: makePinIcon({ color: PIN_COLORS.mahder, size: 22 }),
       selected: makePinIcon({ color: PIN_COLORS.selected, size: 34, highlighted: true }),
@@ -93,11 +112,13 @@ export const ChurchMapCanvas: React.FC<ChurchMapCanvasProps> = ({
     []
   );
 
-  const coords = points.map((p) => ({ lat: p.lat, lng: p.lng }));
+  // Memoised: both of these fed a full marker rebuild on every render, which
+  // stopped being free once the map carried every level of the structure.
+  const coords = useMemo(() => points.map((p) => ({ lat: p.lat, lng: p.lng })), [points]);
   const first = coords[0] ?? placing?.at ?? DEFAULT_CENTER;
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-border" style={{ height }}>
+    <div className="relative rounded-2xl overflow-hidden border border-border" style={{ height }}>
       <MapContainer
         center={[first.lat, first.lng]}
         zoom={coords.length > 0 ? 6 : 11}
@@ -150,6 +171,14 @@ export const ChurchMapCanvas: React.FC<ChurchMapCanvasProps> = ({
           </Marker>
         )}
       </MapContainer>
+
+      {/* Above Leaflet's own panes, which sit at z-index 400-700. */}
+      {legend && (
+        <div className="absolute bottom-3 left-3 z-[1000] rounded-xl border border-border
+                        bg-background/90 backdrop-blur-sm px-3 py-2 shadow-lg">
+          {legend}
+        </div>
+      )}
     </div>
   );
 };

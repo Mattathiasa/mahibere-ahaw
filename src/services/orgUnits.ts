@@ -4,6 +4,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { auditLogService } from '@/services/auditLog';
+import { hasCoords, type LatLng } from '@/lib/geo';
 
 /**
  * The church's organisational units.
@@ -30,6 +31,22 @@ export interface OrgUnit {
   leaderName?: string;
   leaderPhone?: string;
   location?: string;
+  /**
+   * The map pin, for the church-wide map. Plain numbers rather than a GeoPoint,
+   * for the reason recorded in services/mahderat.ts: a GeoPoint does not survive
+   * the generic `{...spread}` these services use for updates.
+   *
+   * Note these sit on the PUBLIC hierarchy document, so any approved member can
+   * read them — unlike a parish pin, which lives in `atbiyaPrivate`. That is a
+   * deliberate difference: a diocese or head office is a public-facing address,
+   * not a national dataset of every congregation's precise location.
+   *
+   * Absent means "never pinned". Never defaulted to 0,0 — that is a point in the
+   * Gulf of Guinea, and a unit that looks placed but is not is worse than one
+   * that is honestly blank.
+   */
+  lat?: number;
+  lng?: number;
   description?: string;
   /** Ethiopian-calendar date as written in the register. */
   foundedAt?: string;
@@ -38,6 +55,14 @@ export interface OrgUnit {
 }
 
 export type OrgUnitInput = Omit<OrgUnit, 'id' | 'level'>;
+
+/**
+ * The pin, or null when this unit has never been placed on the map.
+ * Mirrors `atbiyaCoords` and `mahderCoords`.
+ */
+export function orgUnitCoords(u: Pick<OrgUnit, 'lat' | 'lng'>): LatLng | null {
+  return hasCoords({ lat: u.lat, lng: u.lng }) ? { lat: u.lat!, lng: u.lng! } : null;
+}
 
 export const emptyOrgUnit = (parentId: string | null = null): OrgUnitInput => ({
   name: '',

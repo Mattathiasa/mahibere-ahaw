@@ -108,6 +108,25 @@ export function splitByPinned<T extends object>(
 }
 
 /**
+ * The mean position of some points, or null when there are none.
+ *
+ * Used to place a body that has no pin of its own at the middle of the units
+ * beneath it — a diocese at the centre of its congregations. That is an
+ * ESTIMATE, and callers must render it as one: a marker that looks surveyed but
+ * was averaged is worse than an honest gap, which is the same reasoning that
+ * keeps `emptyAtbiya()` from defaulting lat/lng to 0,0.
+ *
+ * A plain arithmetic mean, not a spherical centroid. Over one country the
+ * difference is metres, and the result is only ever a label position.
+ */
+export function centroidOf(points: readonly LatLng[]): LatLng | null {
+  if (points.length === 0) return null;
+  let lat = 0, lng = 0;
+  for (const p of points) { lat += p.lat; lng += p.lng; }
+  return { lat: lat / points.length, lng: lng / points.length };
+}
+
+/**
  * The south-west / north-east corners enclosing every point, in the tuple shape
  * Leaflet's `fitBounds` takes. Null when there is nothing to enclose.
  *
