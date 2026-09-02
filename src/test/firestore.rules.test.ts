@@ -16,7 +16,7 @@
  */
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { beforeAll, afterAll, beforeEach, describe, it } from 'vitest';
+import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   initializeTestEnvironment,
   assertFails,
@@ -231,8 +231,13 @@ const anon = () => env.unauthenticatedContext().firestore();
  */
 const emailFor = (uid: string) =>
   `${uid.replace(/[^a-z0-9]/g, '')}@mahibereahaw.local`;
-const as = (uid: string) =>
-  env.authenticatedContext(uid, { email: emailFor(uid) }).firestore();
+/**
+ * `email` overrides the token's address, for the rules that compare a written
+ * value against `request.auth.token.email`. Defaults to the synthetic form, so
+ * every existing call is unaffected.
+ */
+const as = (uid: string, claims: { email?: string } = {}) =>
+  env.authenticatedContext(uid, { email: claims.email ?? emailFor(uid) }).firestore();
 
 describe('anonymous visitors', () => {
   it('1. can list parishes with the level==Atbiya filter (sign-up dropdown)', async () => {
@@ -992,16 +997,61 @@ describe('H2 — username rows cannot be squatted', () => {
     }));
   });
 
-  // THE email leak, closed at the write. `usernames` is world-readable, and
-  // repairUsernameMapping used to write the account's real inbox here on every
-  // sign-in. Only synthetic addresses are accepted now.
-  it('a real email address cannot be stored in the public row', async () => {
+  // An account whose Auth identity is a real inbox has to publish it here or
+  // it can never be signed into by name — `resolveEmail` would hand Firebase
+  // the synthetic address, which is not its identity. `usernames` is
+  // world-readable by `get`, so this is a deliberate trade: guessing a username
+  // reveals that person's address. What it must NOT allow is one account
+  // publishing ANOTHER's, which is the difference between a known cost and an
+  // enumeration hole.
+  it('an account CAN publish its own real sign-in address', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1', { email: 'member@gmail.com' }), 'usernames/member'), {
+      uid: 'member-1', email: 'member@gmail.com',
+    }));
+  });
+
+  it("a real address that is NOT the writer's own is refused", async () => {
+    // The address of somebody else, asserted onto the writer's own row.
+    await assertFails(setDoc(doc(as('member-1', { email: 'member@gmail.com' }), 'usernames/member'), {
+      uid: 'member-1', email: 'someone.else@gmail.com',
+    }));
+    // And with no address on the token at all, no real address is publishable.
     await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
       uid: 'member-1', email: 'someone@gmail.com',
     }));
-    await assertFails(setDoc(doc(as('member-1'), 'usernames/member'), {
-      uid: 'member-1', email: 'member.1@example.org',
+  });
+
+  // The member manager creates the account but must not speak for it: the row's
+  // address is written by the new account itself, through the secondary app.
+  it('a member manager cannot assert an address for the account it creates', async () => {
+    await assertFails(setDoc(doc(as('admin-1', { email: 'admin@gmail.com' }), 'usernames/member'), {
+      uid: 'member-1', email: 'member@gmail.com',
     }));
+  });
+
+  // The whole point, end to end: the sequence userService.createUser performs,
+  // then the read authService.resolveEmail makes with nobody signed in. If this
+  // passes, a parish administrator can be signed in by NAME and not only by
+  // address — which is what was broken.
+  it('a typed username resolves to the real sign-in address, anonymously', async () => {
+    const REAL = 'yohannes@gmail.com';
+
+    // 1. the member manager writes the profile (primary app, as the admin)
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users/yohannes-1'), {
+        username: 'yohannes', hierarchyLevel: 'Atbiya', role: 'user', status: 'active',
+      });
+    });
+
+    // 2. the new account publishes its OWN address (secondary app, as itself)
+    await assertSucceeds(setDoc(doc(as('yohannes-1', { email: REAL }), 'usernames/yohannes'), {
+      uid: 'yohannes-1', email: REAL,
+    }));
+
+    // 3. the login screen resolves the name before anyone is signed in
+    const snap = await getDoc(doc(anon(), 'usernames/yohannes'));
+    expect(snap.exists()).toBe(true);
+    expect(snap.data()?.email).toBe(REAL);
   });
 
   it('a synthetic address belonging to ANOTHER account is refused', async () => {

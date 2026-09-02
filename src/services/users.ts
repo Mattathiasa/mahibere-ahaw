@@ -13,7 +13,8 @@ import {
   where,
   orderBy,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  getFirestore
 } from 'firebase/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -139,13 +140,26 @@ export const userService = {
 
       await setDoc(doc(db, 'users', id), dataToSave);
 
-      // Reserves the name so a later sign-up cannot claim it. Carries no
-      // address: the rules accept only a synthetic one here, and a member
-      // manager has no business asserting an address on someone else's behalf.
-      // Best-effort — sign-in resolves the name deterministically without it.
+      // Reserves the name so a later sign-up cannot claim it, and — when the
+      // account signs in with a real inbox — records WHICH address that is, so
+      // `authService.resolveEmail` can turn the typed username back into it.
+      // Without the address the name resolves to the synthetic form, which is
+      // not this account's Auth identity, and sign-in by username fails.
+      //
+      // Written through the SECONDARY app, which is signed in as the account
+      // just created: the rules accept an address on this row only from the
+      // account that owns it, so the member manager doing the creating cannot
+      // assert it — and has no business asserting one on someone else's behalf.
+      //
+      // Best-effort. Without the row a synthetic account still resolves
+      // deterministically; a real-inbox account signs in by email and heals the
+      // row itself on the way through `authService.login`.
       try {
-        await setDoc(doc(db, 'usernames', username.toLowerCase()), {
-          uid: id, createdAt: serverTimestamp(),
+        const secondaryDb = getFirestore(secondaryApp);
+        await setDoc(doc(secondaryDb, 'usernames', username.toLowerCase()), {
+          uid: id,
+          ...(hasRealInbox ? { email: loginEmail } : {}),
+          createdAt: serverTimestamp(),
         });
       } catch { /* non-fatal */ }
 

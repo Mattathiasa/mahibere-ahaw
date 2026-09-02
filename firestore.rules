@@ -189,13 +189,30 @@ service cloud.firestore {
       return request.resource.data.keys().hasAny(['email']);
     }
 
+    // A row may carry an address only if it is one the writer is entitled to
+    // publish: the synthetic @mahibereahaw.local form, or the writer's OWN
+    // verified sign-in address.
+    //
+    // Synthetic-only was too strict to sign in with. An account created with a
+    // real inbox signs in AS that address, so a row without it resolves the
+    // typed name to a synthetic address nobody owns and username sign-in fails
+    // for every parish administrator created since. There is no server-side
+    // lookup to do this privately: Spark has no Admin SDK, and the resolution
+    // has to happen BEFORE there is an account to authorise.
+    //
+    // The exposure this accepts, deliberately: `usernames` is world-readable by
+    // `get`, so anyone who can GUESS a username learns that person's address.
+    // There is no `list`, so the directory still cannot be dumped, and the
+    // clause below means an address can only ever be published by its own
+    // owner — never asserted onto somebody else.
     function usernameRowWellFormed() {
       return request.resource.data.keys().hasOnly(['uid', 'email', 'createdAt'])
         && request.resource.data.uid is string
         && (
              !hasUsernameEmail()
              || (request.resource.data.email is string
-                 && request.resource.data.email.matches('.*@mahibereahaw[.]local'))
+                 && (request.resource.data.email.matches('.*@mahibereahaw[.]local')
+                     || (signedIn() && request.resource.data.email == request.auth.token.email)))
            );
     }
 
@@ -540,18 +557,18 @@ service cloud.firestore {
     //  Holds no secrets: a username and the synthetic login email.
     // ════════════════════════════════════════════════════════════════════════
     match /usernames/{username} {
-      // Still open, because sign-in by username has to resolve the address
-      // BEFORE there is an account to authorise. That is also why this leaks:
-      // repairUsernameMapping writes the account's REAL email here once someone
-      // attaches a recovery address, so probing usernames harvests personal
-      // email addresses — undoing the care taken in sendPasswordReset, which
-      // refuses to distinguish auth/user-not-found for exactly that reason.
+      // Open, because sign-in by username has to resolve the address BEFORE
+      // there is an account to authorise. A row may carry the account's real
+      // address (see usernameRowWellFormed), so a `get` on a GUESSED username
+      // reveals that person's email. That is the accepted cost of username
+      // sign-in working at all on Spark; `list` stays closed, so the set of
+      // names cannot be harvested, only probed one at a time.
       //
-      // Closing it needs the lookup to happen somewhere that can read without
-      // being the caller: `resolveLoginEmail` in functions/src/index.ts. Once
-      // that callable is DEPLOYED, this becomes `allow get: if isAdmin()`.
-      // Flipping it before then locks every username sign-in out, so it is
-      // deliberately left as a separate step.
+      // Closing it properly needs the lookup to happen somewhere that can read
+      // without being the caller — a `resolveLoginEmail` callable, which does
+      // not exist yet and needs Blaze. Once it is DEPLOYED this becomes
+      // `allow get: if isAdmin()`; flipping it before then locks every username
+      // sign-in out, so it stays a separate step.
       allow get: if true;
 
       // ── The squat, closed ───────────────────────────────────────────────

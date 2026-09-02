@@ -109,6 +109,13 @@ export const authService = {
       throw err;
     }
 
+    // Keep the username → sign-in address mapping current, so this account can
+    // be reached by NAME next time and not only by address. Accounts created
+    // before the row carried an address heal themselves here, on their first
+    // sign-in by email, instead of needing a migration. Deliberately not
+    // awaited: sign-in must not fail or stall on a best-effort repair.
+    void this.syncUsernameMapping(firebaseUser, userData.username);
+
     const user: User = {
       id: firebaseUser.uid,
       username: userData.username || firebaseUser.email?.split('@')[0] || 'user',
@@ -377,6 +384,43 @@ export const authService = {
    * A Cloud Function would have resolved this properly by keeping the map
    * private, but the project is on Spark and nothing here may assume a server.
    */
+  /**
+   * Publishes this account's own sign-in address on its `usernames` row.
+   *
+   * This is what makes sign-in by username work for an account whose Auth
+   * identity is a real inbox: without the row, `resolveEmail` falls back to the
+   * synthetic address, which is not the identity, and the attempt fails with
+   * what looks like a wrong password.
+   *
+   * Self-only by construction AND by rule. It refuses a row owned by another
+   * uid, and `firestore.rules` independently accepts an address here only when
+   * it equals `request.auth.token.email` — so this can never assert somebody
+   * else's address, whatever it is asked to write.
+   *
+   * A synthetic identity needs no row: it is derivable from the name.
+   */
+  async syncUsernameMapping(firebaseUser: FirebaseUser, username?: string): Promise<void> {
+    const name = (username ?? '').trim().toLowerCase();
+    const email = firebaseUser.email ?? '';
+    if (!name || !email || isSyntheticEmail(email)) return;
+
+    try {
+      const ref = doc(db, 'usernames', name);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        await setDoc(ref, { uid: firebaseUser.uid, email, createdAt: serverTimestamp() });
+        return;
+      }
+      // Never touch a row that belongs to somebody else — a name this account
+      // no longer holds after a rename, or one it never held.
+      if (snap.data().uid !== firebaseUser.uid) return;
+      if (snap.data().email === email) return;
+
+      await updateDoc(ref, { uid: firebaseUser.uid, email });
+    } catch { /* non-fatal — the account can still sign in by address */ }
+  },
+
   async resolveEmail(usernameOrEmail: string): Promise<string> {
     const typed = usernameOrEmail.trim();
     if (typed.includes('@')) return typed;
@@ -400,17 +444,13 @@ export const authService = {
    * to set a password server-side, so the caller is told plainly rather than
    * being shown a success message for a link nobody will ever receive.
    *
-   * A TYPED USERNAME cannot be told apart from that case. `usernames/{name}`
-   * may now only carry `uid` (the rules refuse an address there, and
-   * repairUsernameMapping is gone), so `resolveEmail` falls back to the
-   * synthetic address for every account created since — including the
-   * admin-created ones that DO own a real inbox and are perfectly recoverable.
-   * Only legacy rows still resolve. That is why `noEmailOnAccount` tells the
-   * reader to type their email address instead rather than asserting the
-   * account has none: from the name alone we genuinely cannot know.
-   *
-   * Resolving a name properly needs a lookup that can read without being the
-   * caller — `resolveLoginEmail` in functions/src/index.ts, still undeployed.
+   * A TYPED USERNAME resolves through `usernames/{name}` when that row records
+   * the account's address — which `syncUsernameMapping` writes on sign-in and
+   * `userService.createUser` writes up front. An account that has never signed
+   * in since, or that genuinely has no inbox, still falls back to the synthetic
+   * address and lands on `noEmailOnAccount`. The two are indistinguishable from
+   * the name alone, which is why that message tells the reader to try their
+   * email address rather than asserting the account has none.
    */
   async sendPasswordReset(usernameOrEmail: string): Promise<{ sentTo: string }> {
     const input = usernameOrEmail.trim();
