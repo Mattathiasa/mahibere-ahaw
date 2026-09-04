@@ -310,17 +310,6 @@ const Login = () => {
                 </p>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
-                className={`text-center text-xs space-y-2 p-4 rounded-xl border border-dashed border-[#2E5E99]/20 ${theme === 'dark' ? 'bg-[#2E5E99]/5 text-white/40' : 'bg-[#E7F0FA] text-[#0D2440]/50'}`}
-              >
-                <p className="font-bold uppercase tracking-widest mb-2">{t('loginAuthNote')}</p>
-                <div className="flex justify-center gap-4 font-mono">
-                  <span>{t('loginAuthDesc')}</span>
-                </div>
-              </motion.div>
             </form>
           </CardContent>
         </Card>
