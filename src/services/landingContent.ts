@@ -225,6 +225,7 @@ export interface LandingContent {
 const CONTACT_CHANNELS = {
   youtube: 'https://www.youtube.com/@MahiberAhawTV',
   telegram: 'https://t.me/mahibere_ahaw',
+  facebook: 'https://www.facebook.com/share/1ESM67DnRT/',
   phones: ['+251 911 00 00 00'],
   emails: ['meleketeahew@gmail.com'],
   mapUrl: '',
@@ -376,6 +377,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       socialsLabel: 'Follow Us',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
     },
     footer: {
       description: 'Integrating ancient spiritual values with the precision of modern engineering. Join the movement of digital discipleship.',
@@ -383,6 +385,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       copyright: '© 2025 Mahibere Ahaw Ecosystem. All rights reserved.',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
       phone: CONTACT_CHANNELS.phones[0],
       emailLabel: 'Email',
       platformHeading: 'Platform',
@@ -544,6 +547,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       socialsLabel: 'ይከተሉን',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
     },
     footer: {
       description: 'የጥንታዊ መንፈሳዊ እሴቶችን ከዘመናዊ ምህንድስና ትክክለኛነት ጋር በማዋሃድ። የዲጂታል ደቀ መዝሙርነት እንቅስቃሴን ይቀላቀሉ።',
@@ -551,6 +555,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       copyright: '© 2025 ማኅበረ አኀው ስነ-ምህዳር። ሁሉም መብቶች የተጠበቁ ናቸው።',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
       phone: CONTACT_CHANNELS.phones[0],
       emailLabel: 'ኢሜይል',
       platformHeading: 'መድረክ',
@@ -699,6 +704,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       socialsLabel: 'Nu Hordofaa',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
     },
     footer: {
       description: 'Aadaa hafuuraa durii fi ogummaa injinariingii ammayyaa waliin makuun. Sosochii bartummaa dijitaalaa bira gaa\'i.',
@@ -706,6 +712,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       copyright: '© 2025 Mahibere Ahaw Ecosystem. Mirgi hundi eegamaadha.',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
       phone: CONTACT_CHANNELS.phones[0],
       emailLabel: 'Imeelii',
       platformHeading: 'Pilaatfoormii',
@@ -853,6 +860,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       socialsLabel: 'ተኸታተሉና',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
     },
     footer: {
       description: 'ጥንታዊ መንፈሳዊ ክብርታት ምስ ዘመናዊ ምህንድስና ብምውህሃድ። ናብ ምንቅስቓስ ዲጂታላዊ ደቀ መዛሙርትነት ተጸንበሩ።',
@@ -860,6 +868,7 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       copyright: '© 2025 ማሕበረ ኣኀው። ኩሉ መሰላት ዝተሓለወ እዩ።',
       youtube: CONTACT_CHANNELS.youtube,
       telegram: CONTACT_CHANNELS.telegram,
+      facebook: CONTACT_CHANNELS.facebook,
       phone: CONTACT_CHANNELS.phones[0],
       emailLabel: 'ኢመይል',
       platformHeading: 'መድረኽ',

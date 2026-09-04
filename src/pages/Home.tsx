@@ -838,6 +838,12 @@ const Home: React.FC = () => {
                     <Send className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
                   </a>
                 )}
+                {footer.facebook && (
+                  <a href={footer.facebook} target="_blank" rel="noopener noreferrer" title="Facebook"
+                    className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#1877F2] hover:text-white transition-all duration-300 group">
+                    <Facebook className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
+                  </a>
+                )}
                 {footer.email && (
                   <a href={`mailto:${footer.email}`} title={t.common.emailAction} className="p-4 rounded-2xl bg-[#2E5E99]/5 hover:bg-[#2E5E99] hover:text-white transition-all duration-300 group">
                     <Mail className="h-5 w-5 text-[#2E5E99] group-hover:text-white" />
