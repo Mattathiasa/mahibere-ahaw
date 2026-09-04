@@ -19,6 +19,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
+                // An anonymous session is not an app identity. The public
+                // suggestion box signs a visitor in anonymously for the length
+                // of one submission, so firestore.rules can pin `authorUid` to
+                // a real uid instead of accepting writes from nobody at all.
+                //
+                // Returning HERE, above the read, is what makes that work. The
+                // branch below signs out any account with no users/{uid}
+                // document — which an anonymous visitor never has — so falling
+                // through would cancel the very session the submission is about
+                // to be written under, and every suggestion would be denied.
+                // Skipping the getDoc also saves a read that is certain to come
+                // back empty.
+                //
+                // `user` stays null and `isAuthenticated` stays false, so
+                // ProtectedRoute and AdminRoute keep sending these visitors to
+                // /login exactly as they do today.
+                if (firebaseUser.isAnonymous) {
+                    setUser(null);
+                    localStorage.removeItem('user');
+                    setLoading(false);
+                    return;
+                }
+
                 try {
                     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                     const userData = userDoc.exists() ? userDoc.data() : {};

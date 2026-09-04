@@ -91,6 +91,20 @@ export const statusEn = {
   genderMale: 'Male',
   genderFemale: 'Female',
   genderOther: 'Other',
+
+  // ── Suggestion category — services/suggestions.ts ──────────────────────────
+  // Worded as the visitor's own intent, because these are the choices they pick
+  // from on the homepage, not just badges an administrator reads afterwards.
+  suggestionCategoryAppreciation: 'Something I appreciate',
+  suggestionCategoryChange: 'Something to change',
+  suggestionCategoryFeature: 'Something to add',
+  suggestionCategoryProblem: 'Something is not working',
+
+  // ── Suggestion triage status ──────────────────────────────────────────────
+  suggestionStatusNew: 'New',
+  suggestionStatusReviewed: 'Reviewed',
+  suggestionStatusActioned: 'Acted on',
+  suggestionStatusArchived: 'Archived',
 };
 
 /**
@@ -171,6 +185,17 @@ export const statusAm: Record<keyof typeof statusEn, string> = {
   genderMale: 'ወንድ',
   genderFemale: 'ሴት',
   genderOther: 'ሌላ',
+
+  // The four choices a visitor picks from on the homepage suggestion box.
+  suggestionCategoryAppreciation: 'የወደድኩት ነገር',
+  suggestionCategoryChange: 'እንዲቀየር የምፈልገው',
+  suggestionCategoryFeature: 'እንዲጨመር የምፈልገው',
+  suggestionCategoryProblem: 'የማይሠራ ነገር',
+
+  suggestionStatusNew: 'አዲስ',
+  suggestionStatusReviewed: 'የተገመገመ',
+  suggestionStatusActioned: 'የተሠራበት',
+  suggestionStatusArchived: 'የተቀመጠ',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

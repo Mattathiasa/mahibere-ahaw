@@ -117,6 +117,20 @@ export function regionLabel(t: Translations, value: string): string {
 /** `Member.gender` */
 export const GENDERS = ['Male', 'Female', 'Other'] as const;
 
+/**
+ * `Suggestion.category` — src/services/suggestions.ts. What the visitor is
+ * telling us: something they liked, something they want altered, something they
+ * want built, or something that is broken.
+ */
+export const SUGGESTION_CATEGORIES = ['Appreciation', 'Change', 'Feature', 'Problem'] as const;
+
+/**
+ * `Suggestion.status` — the reviewer's triage state. `New` is the only value a
+ * submission may be created with; firestore.rules enforces that, so a visitor
+ * cannot file something pre-approved.
+ */
+export const SUGGESTION_STATUSES = ['New', 'Reviewed', 'Actioned', 'Archived'] as const;
+
 // ─── Resolution ───────────────────────────────────────────────────────────────
 
 /**
@@ -148,6 +162,10 @@ export const timeframeLabel = (t: Translations, v: string) => label(t, 'timefram
 export const reportOptionLabel = (t: Translations, v: string) => label(t, 'reportOption', v);
 export const maritalStatusLabel = (t: Translations, v: string) => label(t, 'maritalStatus', v);
 export const genderLabel = (t: Translations, v: string) => label(t, 'gender', v);
+export const suggestionCategoryLabel = (t: Translations, v: string) =>
+  label(t, 'suggestionCategory', v);
+export const suggestionStatusLabel = (t: Translations, v: string) =>
+  label(t, 'suggestionStatus', v);
 
 /**
  * Every (prefix, values) pair, so the i18n test can assert that each persisted
@@ -168,4 +186,6 @@ export const ENUM_REGISTRY: ReadonlyArray<{ prefix: string; values: readonly str
   { prefix: 'reportOption', values: REPORT_OPTIONS },
   { prefix: 'maritalStatus', values: MARITAL_STATUSES },
   { prefix: 'gender', values: GENDERS },
+  { prefix: 'suggestionCategory', values: SUGGESTION_CATEGORIES },
+  { prefix: 'suggestionStatus', values: SUGGESTION_STATUSES },
 ];

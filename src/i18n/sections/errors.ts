@@ -86,6 +86,21 @@ export const errorsEn = {
   reportBackNotFound: 'That feedback no longer exists.',
   teachingNotFound: 'That teaching no longer exists.',
   cloudinaryNotConfigured: 'Image uploads are not set up yet. An administrator needs to add the Cloudinary cloud name and upload preset first.',
+
+  // ── Homepage suggestion box ───────────────────────────────────────────────
+  suggestionFailed: 'Your suggestion could not be sent. Please try again.',
+  /**
+   * Anonymous sign-in is a per-project console setting, and the suggestion box
+   * cannot write without it. Named separately from `suggestionFailed` because
+   * this one is a configuration fault, not a transient one — every submission
+   * fails this way until someone enables it, and "please try again" would send
+   * visitors round in circles.
+   */
+  suggestionAnonDisabled:
+    'The suggestion box is not accepting messages yet. Please tell an administrator, or use the contact details above.',
+  suggestionTooShort: 'Please write a little more so we can understand your suggestion.',
+  suggestionTooLong: 'That message is too long. Please shorten it and try again.',
+  suggestionCooldown: 'You have just sent a suggestion. Please wait a moment before sending another.',
 };
 
 /**
@@ -145,6 +160,13 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
   reportBackNotFound: 'ያ አስተያየት ከእንግዲህ የለም።',
   teachingNotFound: 'ያ ትምህርት ከእንግዲህ የለም።',
   cloudinaryNotConfigured: 'የምስል መጫኛ ገና አልተዘጋጀም። አስተዳዳሪ መጀመሪያ የCloudinary የክላውድ ስምና የመጫኛ ቅድመ ቅንብር መጨመር አለበት።',
+
+  suggestionFailed: 'አስተያየትዎን መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+  suggestionAnonDisabled:
+    'የአስተያየት ሳጥኑ ገና መልእክት አይቀበልም። እባክዎ ለአስተዳዳሪ ያሳውቁ፣ ወይም ከላይ ያለውን አድራሻ ይጠቀሙ።',
+  suggestionTooShort: 'አስተያየትዎን እንድንረዳው እባክዎ ትንሽ ጨማሪ ይጻፉ።',
+  suggestionTooLong: 'መልእክቱ በጣም ረጅም ነው። እባክዎ አሳጥረው እንደገና ይሞክሩ።',
+  suggestionCooldown: 'አሁን አስተያየት ልከዋል። ሌላ ከመላክዎ በፊት እባክዎ ትንሽ ይጠብቁ።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */
