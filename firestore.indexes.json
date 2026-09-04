@@ -162,6 +162,14 @@
         { "fieldPath": "atbiyaId", "order": "ASCENDING" },
         { "fieldPath": "fullNameEnglish", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "suggestions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

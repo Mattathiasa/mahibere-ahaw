@@ -845,6 +845,85 @@ service cloud.firestore {
       allow write: if canUseInventory();
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  Homepage suggestion box
+    //
+    //  THE ONLY COLLECTION IN THIS FILE THAT ACCEPTS A WRITE FROM SOMEONE WHO
+    //  IS NOT AN APPROVED MEMBER. Everything else is gated on isActive() or
+    //  narrower. Read this block before widening anything in it.
+    //
+    //  The point of the section is that a visitor with no account can tell the
+    //  church what they think, so `isActive()` is not available here. What
+    //  stands in for it:
+    //
+    //   - `signedIn()`, satisfied by the throwaway ANONYMOUS session that
+    //     services/suggestions.ts mints for one submission. It buys nothing
+    //     against a determined attacker — anyone can mint one — but it means
+    //     every document carries a uid that `authorUid` is pinned to, so a
+    //     flood is attributable and removable instead of being from nobody.
+    //   - the key whitelist and the size caps below. A submission cannot carry
+    //     a field nobody expected, cannot arrive pre-approved, and cannot be
+    //     megabytes long. Cost, not just content: an unbounded document is an
+    //     unbounded bill.
+    //   - `createdAt == request.time`, so the ordering the reviewer sees is the
+    //     server's and not something the sender chose.
+    //
+    //  None of that is a RATE limit; rules cannot count requests. App Check is
+    //  the only thing that can, and it is wired but dormant in
+    //  src/lib/firebase.ts until a reCAPTCHA site key is configured. Until then
+    //  this collection is the project's largest quota exposure, and on the
+    //  Spark plan an exhausted write quota stops writes to EVERY collection.
+    // ════════════════════════════════════════════════════════════════════════
+    function suggestionShapeOk() {
+      return request.resource.data.keys().hasOnly(['category', 'message', 'name', 'contact',
+               'language', 'status', 'authorUid', 'isMember', 'createdAt'])
+        && request.resource.data.keys().hasAll(['category', 'message', 'status',
+             'authorUid', 'isMember', 'createdAt'])
+        && request.resource.data.category in ['Appreciation', 'Change', 'Feature', 'Problem']
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 10
+        && request.resource.data.message.size() <= 2000
+        && request.resource.data.get('name', '').size() <= 80
+        && request.resource.data.get('contact', '').size() <= 120
+        && request.resource.data.get('language', '') in ['', 'am', 'en', 'om', 'ti'];
+    }
+
+    match /suggestions/{docId} {
+      // Write-only from the public side. A visitor may file one and read none
+      // back — not even their own. This is a private box, not a comment wall,
+      // and the absence of a read rule here is what makes it one: rules cannot
+      // project fields, so any public read would also expose the phone number
+      // or email a person left expecting only the office to see it.
+      allow create: if signedIn()
+        && suggestionShapeOk()
+        && request.resource.data.status == 'New'
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        // Verified, not trusted. Costs one document read per submission and in
+        // exchange the reviewer can believe the flag — a client-set boolean
+        // saying "this came from a member" is worth nothing.
+        && request.resource.data.isMember ==
+             exists(/databases/$(database)/documents/users/$(request.auth.uid));
+
+      // Wider than the UI, which currently lives on the superAdminOnly Software
+      // Control page. Matches the partner_contacts precedent for member-submitted
+      // enquiries, and means moving the inbox to a permission-gated page later
+      // is a UI change rather than a rules change.
+      allow read: if isAdmin();
+
+      // Triage only — never the submission itself. An edited suggestion is a
+      // fabricated one, and the whole value of this collection is that what it
+      // holds is what someone actually wrote.
+      allow update: if isAdmin()
+        && changedOnly(['status', 'reviewedBy', 'reviewedAt', 'adminNote'])
+        && request.resource.data.status in ['New', 'Reviewed', 'Actioned', 'Archived']
+        && request.resource.data.get('adminNote', '').size() <= 2000;
+
+      // Permanent, and the one way a complaint about leadership disappears
+      // without trace. Kept with super admins rather than every admin role.
+      allow delete: if isSuperAdmin();
+    }
+
     // NOTE: the old /members/{docId} block was dead — members ARE users
     // (Members.tsx calls userService), so it only ever misled readers.
   }

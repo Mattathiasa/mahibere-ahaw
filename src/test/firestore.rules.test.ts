@@ -25,7 +25,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc,
-  collection, query, where, getDocs,
+  collection, query, where, getDocs, serverTimestamp,
 } from 'firebase/firestore';
 
 let env: RulesTestEnvironment;
@@ -1606,5 +1606,209 @@ describe('parish map pins', () => {
     await assertSucceeds(updateDoc(doc(as('parish-1'), 'hierarchy/atbiya-bishoftu'), {
       cityEn: 'Bishoftu Town',
     }));
+  });
+});
+
+describe('suggestion box — the one collection open to non-members', () => {
+  /**
+   * A well-formed submission from a visitor with no account.
+   *
+   * `visitor-1` has no users/{uid} document, which is exactly what an anonymous
+   * session looks like: signed in, but nobody. `authenticatedContext` is a
+   * faithful stand-in for `signInAnonymously` here because the rule tests
+   * `signedIn()` and the uid, never the sign-in provider.
+   *
+   * `createdAt` must be `serverTimestamp()` — the rule pins it to
+   * `request.time`, so a client-chosen date is refused and the reviewer's
+   * ordering is the server's.
+   */
+  const filed = (over: Record<string, unknown> = {}) => ({
+    category: 'Change',
+    message: 'The service times on the home page are out of date since last month.',
+    name: 'Almaz',
+    contact: '0911223344',
+    language: 'am',
+    status: 'New',
+    authorUid: 'visitor-1',
+    isMember: false,
+    createdAt: serverTimestamp(),
+    ...over,
+  });
+
+  /** Something already in the box, for the read and triage cases. */
+  async function seedOne(id = 'sug-1', over: Record<string, unknown> = {}) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `suggestions/${id}`), {
+        category: 'Feature', message: 'Please add a calendar of feast days.',
+        name: '', contact: '', language: 'en', status: 'New',
+        authorUid: 'visitor-9', isMember: false,
+        createdAt: new Date('2026-09-01T00:00:00.000Z'),
+        ...over,
+      });
+    });
+  }
+
+  // ── The feature itself ────────────────────────────────────────────────────
+
+  it('a visitor with no account can file one', async () => {
+    await assertSucceeds(setDoc(doc(as('visitor-1'), 'suggestions/s1'), filed()));
+  });
+
+  it('a signed-in member can file one, recorded against their real uid', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'suggestions/s2'), filed({
+      authorUid: 'member-1', isMember: true,
+    })));
+  });
+
+  it('name and contact may be left off entirely', async () => {
+    await assertSucceeds(setDoc(doc(as('visitor-1'), 'suggestions/s3'), {
+      category: 'Appreciation',
+      message: 'Thank you for the new parish map, it helped me find a congregation.',
+      status: 'New', authorUid: 'visitor-1', isMember: false,
+      createdAt: serverTimestamp(),
+    }));
+  });
+
+  // ── Nobody may sign somebody else's name to it ────────────────────────────
+
+  it('a signed-out visitor cannot file one at all', async () => {
+    await assertFails(setDoc(doc(anon(), 'suggestions/s4'), filed()));
+  });
+
+  it('authorUid cannot be pointed at another account', async () => {
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s5'), filed({
+      authorUid: 'admin-1',
+    })));
+  });
+
+  it('a visitor cannot claim to be a member', async () => {
+    // isMember is checked against exists(users/{uid}), not taken on trust.
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s6'), filed({
+      isMember: true,
+    })));
+  });
+
+  it('a member cannot disclaim their own account', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'suggestions/s7'), filed({
+      authorUid: 'member-1', isMember: false,
+    })));
+  });
+
+  // ── Shape and size: the cost controls ─────────────────────────────────────
+
+  it('a submission cannot arrive already triaged', async () => {
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s8'), filed({
+      status: 'Actioned',
+    })));
+  });
+
+  it('an invented category is refused', async () => {
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s9'), filed({
+      category: 'Complaint',
+    })));
+  });
+
+  it('a message too short to act on is refused', async () => {
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s10'), filed({
+      message: 'fix it',
+    })));
+  });
+
+  it('an oversized message is refused — an unbounded document is an unbounded bill', async () => {
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s11'), filed({
+      message: 'x'.repeat(2001),
+    })));
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s12'), filed({
+      name: 'n'.repeat(81),
+    })));
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s13'), filed({
+      contact: 'c'.repeat(121),
+    })));
+  });
+
+  it('an unexpected field is refused', async () => {
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s14'), filed({
+      attachmentUrl: 'https://example.com/payload',
+    })));
+  });
+
+  it('the timestamp cannot be chosen by the sender', async () => {
+    await assertFails(setDoc(doc(as('visitor-1'), 'suggestions/s15'), filed({
+      createdAt: new Date('2020-01-01T00:00:00.000Z'),
+    })));
+  });
+
+  // ── Private box, not a comment wall ───────────────────────────────────────
+
+  it('nobody reads these back from the public side — not even their own', async () => {
+    await seedOne('sug-own', { authorUid: 'visitor-1' });
+    await assertFails(getDoc(doc(as('visitor-1'), 'suggestions/sug-own')));
+    await assertFails(getDocs(collection(as('visitor-1'), 'suggestions')));
+    await assertFails(getDoc(doc(anon(), 'suggestions/sug-own')));
+    await assertFails(getDocs(
+      query(collection(anon(), 'suggestions'), where('status', '==', 'New'))
+    ));
+  });
+
+  it('an approved member is not a reviewer', async () => {
+    await seedOne();
+    await assertFails(getDoc(doc(as('member-1'), 'suggestions/sug-1')));
+    await assertFails(getDocs(collection(as('active-1'), 'suggestions')));
+  });
+
+  it('an admin reads the inbox', async () => {
+    await seedOne();
+    await assertSucceeds(getDoc(doc(as('admin-1'), 'suggestions/sug-1')));
+    await assertSucceeds(getDocs(collection(as('admin-1'), 'suggestions')));
+  });
+
+  // ── Triage, and only triage ───────────────────────────────────────────────
+
+  it('an admin may set a status and leave a note', async () => {
+    await seedOne();
+    await assertSucceeds(updateDoc(doc(as('admin-1'), 'suggestions/sug-1'), {
+      status: 'Reviewed', reviewedBy: 'admin', reviewedAt: '2026-09-04T00:00:00.000Z',
+      adminNote: 'Passed to the media team.',
+    }));
+  });
+
+  it('an admin cannot rewrite what the person actually said', async () => {
+    await seedOne();
+    await assertFails(updateDoc(doc(as('admin-1'), 'suggestions/sug-1'), {
+      message: 'Something far more flattering.',
+    }));
+    await assertFails(updateDoc(doc(as('admin-1'), 'suggestions/sug-1'), {
+      status: 'Reviewed', category: 'Appreciation',
+    }));
+    await assertFails(updateDoc(doc(as('admin-1'), 'suggestions/sug-1'), {
+      isMember: true,
+    }));
+  });
+
+  it('an invented status is refused', async () => {
+    await seedOne();
+    await assertFails(updateDoc(doc(as('admin-1'), 'suggestions/sug-1'), {
+      status: 'Published',
+    }));
+  });
+
+  it('a member cannot triage, and cannot edit their own submission after sending', async () => {
+    await seedOne('sug-mine', { authorUid: 'member-1', isMember: true });
+    await assertFails(updateDoc(doc(as('member-1'), 'suggestions/sug-mine'), {
+      status: 'Archived',
+    }));
+    await assertFails(updateDoc(doc(as('member-1'), 'suggestions/sug-mine'), {
+      message: 'Actually, never mind.',
+    }));
+  });
+
+  // ── Deletion is the one way a complaint vanishes ──────────────────────────
+
+  it('only a super admin can delete one', async () => {
+    await seedOne();
+    await assertFails(deleteDoc(doc(as('admin-1'), 'suggestions/sug-1')));
+    await assertFails(deleteDoc(doc(as('member-1'), 'suggestions/sug-1')));
+    await assertFails(deleteDoc(doc(as('visitor-1'), 'suggestions/sug-1')));
+    await assertSucceeds(deleteDoc(doc(as('super-1'), 'suggestions/sug-1')));
   });
 });
