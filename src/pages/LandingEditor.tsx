@@ -328,6 +328,9 @@ const LandingEditor: React.FC = () => {
   function setNews(key: keyof LandingContent['news'], value: string | number) {
     patch((c) => ({ ...c, news: { ...c.news, [key]: value } }));
   }
+  function setSuggestions(key: keyof LandingContent['suggestions'], value: string) {
+    patch((c) => ({ ...c, suggestions: { ...c.suggestions, [key]: value } }));
+  }
   /** The two footer link columns share one shape, so one set of updaters. */
   function updateFooterLink(
     list: 'platformLinks' | 'supportLinks', i: number, key: keyof LandingLink, value: string
@@ -632,6 +635,7 @@ const LandingEditor: React.FC = () => {
                 <TabsTrigger value="features">{a.leFeatures}</TabsTrigger>
                 <TabsTrigger value="about">{a.leAboutFaith}</TabsTrigger>
                 <TabsTrigger value="news">{a.leNews}</TabsTrigger>
+                <TabsTrigger value="suggestions">{a.leSuggestions}</TabsTrigger>
                 <TabsTrigger value="support">{a.leSupportBanks}</TabsTrigger>
                 <TabsTrigger value="contact">{a.leContact}</TabsTrigger>
                 <TabsTrigger value="footer">{a.leFooter}</TabsTrigger>
@@ -1276,6 +1280,117 @@ const LandingEditor: React.FC = () => {
                     <Field label={a.lePostsToShow} hint={a.leFeedHint}>
                       <Input type="number" min={1} max={12} value={content.news.maxPosts}
                         onChange={(e) => setNews('maxPosts', Math.max(1, Math.min(12, Number(e.target.value) || 1)))} />
+                    </Field>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* ── Suggestion box ──
+                  What visitors send lands in Software Control, never on this
+                  page, so there is nothing here about display or ordering —
+                  only what the form itself says. */}
+              <TabsContent value="suggestions">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{a.leSuggestionsSection}</CardTitle>
+                    <CardDescription>{a.leSuggestionsHint}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label={a.leBadgeText} hint={a.lePillAboveHeading}>
+                        <Input value={content.suggestions.badge}
+                          onChange={(e) => setSuggestions('badge', e.target.value)} />
+                      </Field>
+                      <Field label={a.leSectionTitle}>
+                        <Input value={content.suggestions.sectionTitle}
+                          onChange={(e) => setSuggestions('sectionTitle', e.target.value)} />
+                      </Field>
+                    </div>
+                    <Field label={a.leSectionDescription}>
+                      <Textarea rows={2} value={content.suggestions.sectionDescription}
+                        onChange={(e) => setSuggestions('sectionDescription', e.target.value)} />
+                    </Field>
+
+                    <SectionDivider label={a.leCategoryLabels} />
+                    <Field label={a.leCategoryQuestion} hint={a.leCategoryLabelsHint}>
+                      <Input value={content.suggestions.categoryFieldLabel}
+                        onChange={(e) => setSuggestions('categoryFieldLabel', e.target.value)} />
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label={a.leCategoryAppreciation}>
+                        <Input value={content.suggestions.categoryAppreciationLabel}
+                          onChange={(e) => setSuggestions('categoryAppreciationLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leCategoryChange}>
+                        <Input value={content.suggestions.categoryChangeLabel}
+                          onChange={(e) => setSuggestions('categoryChangeLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leCategoryFeature}>
+                        <Input value={content.suggestions.categoryFeatureLabel}
+                          onChange={(e) => setSuggestions('categoryFeatureLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leCategoryProblem}>
+                        <Input value={content.suggestions.categoryProblemLabel}
+                          onChange={(e) => setSuggestions('categoryProblemLabel', e.target.value)} />
+                      </Field>
+                    </div>
+
+                    <SectionDivider label={a.leFormFields} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label={a.leMessageField}>
+                        <Input value={content.suggestions.messageFieldLabel}
+                          onChange={(e) => setSuggestions('messageFieldLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leMessagePlaceholder}>
+                        <Input value={content.suggestions.messagePlaceholder}
+                          onChange={(e) => setSuggestions('messagePlaceholder', e.target.value)} />
+                      </Field>
+                      <Field label={a.leNameField}>
+                        <Input value={content.suggestions.nameFieldLabel}
+                          onChange={(e) => setSuggestions('nameFieldLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leNamePlaceholder}>
+                        <Input value={content.suggestions.namePlaceholder}
+                          onChange={(e) => setSuggestions('namePlaceholder', e.target.value)} />
+                      </Field>
+                      <Field label={a.leContactField}>
+                        <Input value={content.suggestions.contactFieldLabel}
+                          onChange={(e) => setSuggestions('contactFieldLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leContactPlaceholder}>
+                        <Input value={content.suggestions.contactPlaceholder}
+                          onChange={(e) => setSuggestions('contactPlaceholder', e.target.value)} />
+                      </Field>
+                    </div>
+                    <Field label={a.lePrivacyNote} hint={a.lePrivacyNoteHint}>
+                      <Textarea rows={2} value={content.suggestions.privacyNote}
+                        onChange={(e) => setSuggestions('privacyNote', e.target.value)} />
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label={a.leSubmitButton}>
+                        <Input value={content.suggestions.submitLabel}
+                          onChange={(e) => setSuggestions('submitLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leSubmittingLabel}>
+                        <Input value={content.suggestions.submittingLabel}
+                          onChange={(e) => setSuggestions('submittingLabel', e.target.value)} />
+                      </Field>
+                    </div>
+
+                    <SectionDivider label={a.leAfterSending} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label={a.leThankYouTitle}>
+                        <Input value={content.suggestions.thankYouTitle}
+                          onChange={(e) => setSuggestions('thankYouTitle', e.target.value)} />
+                      </Field>
+                      <Field label={a.leSendAnotherLabel}>
+                        <Input value={content.suggestions.sendAnotherLabel}
+                          onChange={(e) => setSuggestions('sendAnotherLabel', e.target.value)} />
+                      </Field>
+                    </div>
+                    <Field label={a.leThankYouMessage}>
+                      <Textarea rows={2} value={content.suggestions.thankYouMessage}
+                        onChange={(e) => setSuggestions('thankYouMessage', e.target.value)} />
                     </Field>
                   </CardContent>
                 </Card>

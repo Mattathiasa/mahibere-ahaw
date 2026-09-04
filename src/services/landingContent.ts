@@ -158,6 +158,41 @@ export interface LandingContent {
     /** How many posts the homepage feed shows. */
     maxPosts: number;
   };
+  /**
+   * The homepage suggestion box — the one place a visitor who is not a member
+   * can write to the church. Nothing submitted is ever shown back on the page;
+   * submissions are read only in Software Control. Every string a visitor sees
+   * around the form lives here so it can be reworded without a deploy.
+   */
+  suggestions: {
+    badge: string;
+    sectionTitle: string;
+    sectionDescription: string;
+    /**
+     * The four choices, in the order they appear. These are LABELS only — the
+     * value stored in Firestore is the English token from
+     * `SUGGESTION_CATEGORIES` in src/i18n/enums.ts, and rewording a label here
+     * does not (and must not) change it.
+     */
+    categoryAppreciationLabel: string;
+    categoryChangeLabel: string;
+    categoryFeatureLabel: string;
+    categoryProblemLabel: string;
+    categoryFieldLabel: string;
+    nameFieldLabel: string;
+    namePlaceholder: string;
+    contactFieldLabel: string;
+    contactPlaceholder: string;
+    messageFieldLabel: string;
+    messagePlaceholder: string;
+    /** Sits under the form: says who reads this and that a reply is not promised. */
+    privacyNote: string;
+    submitLabel: string;
+    submittingLabel: string;
+    thankYouTitle: string;
+    thankYouMessage: string;
+    sendAnotherLabel: string;
+  };
   footer: {
     description: string;
     email: string;
@@ -285,6 +320,30 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       emptyTitle: 'News & Updates',
       emptyDescription: 'Stay tuned! News stories and updates from our ministry will appear here soon.',
       maxPosts: 4,
+    },
+    suggestions: {
+      badge: 'Your Voice',
+      sectionTitle: 'Tell Us What You Think',
+      sectionDescription:
+        'Something you appreciated, something you would change, something you would like us to build — write it here. It goes straight to the church office.',
+      categoryAppreciationLabel: 'Something I appreciate',
+      categoryChangeLabel: 'Something to change',
+      categoryFeatureLabel: 'Something to add',
+      categoryProblemLabel: 'Something is not working',
+      categoryFieldLabel: 'What is this about?',
+      nameFieldLabel: 'Your name (optional)',
+      namePlaceholder: 'Leave blank to stay anonymous',
+      contactFieldLabel: 'Phone or email (optional)',
+      contactPlaceholder: 'Only if you would like a reply',
+      messageFieldLabel: 'Your message',
+      messagePlaceholder: 'Write as much or as little as you like.',
+      privacyNote:
+        'Suggestions are read by the church office and are not shown publicly on this page.',
+      submitLabel: 'Send suggestion',
+      submittingLabel: 'Sending…',
+      thankYouTitle: 'Thank you',
+      thankYouMessage: 'Your suggestion has reached the church office. We are grateful you took the time.',
+      sendAnotherLabel: 'Send another',
     },
     support: {
       badge: 'Ministerial Support',
@@ -431,6 +490,29 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       emptyDescription: 'በቅርቡ ከአገልግሎታችን ዜናዎችና መረጃዎች እዚህ ይወጣሉ።',
       maxPosts: 4,
     },
+    suggestions: {
+      badge: 'የእርስዎ ድምፅ',
+      sectionTitle: 'ሃሳብዎን ያካፍሉን',
+      sectionDescription:
+        'የወደዱት ነገር፣ እንዲቀየር የሚፈልጉት ነገር፣ እንዲጨመር የሚፈልጉት ነገር — እዚህ ይጻፉ። በቀጥታ ወደ ቤተክርስቲያኗ ጽሕፈት ቤት ይደርሳል።',
+      categoryAppreciationLabel: 'የወደድኩት ነገር',
+      categoryChangeLabel: 'እንዲቀየር የምፈልገው',
+      categoryFeatureLabel: 'እንዲጨመር የምፈልገው',
+      categoryProblemLabel: 'የማይሠራ ነገር',
+      categoryFieldLabel: 'ስለ ምንድን ነው?',
+      nameFieldLabel: 'ስምዎ (አማራጭ)',
+      namePlaceholder: 'ስም ሳይገልጹ ለመላክ ባዶ ይተዉት',
+      contactFieldLabel: 'ስልክ ወይም ኢሜይል (አማራጭ)',
+      contactPlaceholder: 'መልስ ከፈለጉ ብቻ',
+      messageFieldLabel: 'መልእክትዎ',
+      messagePlaceholder: 'እንደፈለጉ በአጭሩ ወይም በሰፊው ይጻፉ።',
+      privacyNote: 'አስተያየቶች የሚነበቡት በቤተክርስቲያኗ ጽሕፈት ቤት ሲሆን በዚህ ገጽ ላይ ለሕዝብ አይታዩም።',
+      submitLabel: 'አስተያየት ላክ',
+      submittingLabel: 'እየተላከ ነው…',
+      thankYouTitle: 'እናመሰግናለን',
+      thankYouMessage: 'አስተያየትዎ ወደ ቤተክርስቲያኗ ጽሕፈት ቤት ደርሷል። ጊዜ ስለሰጡን እናመሰግናለን።',
+      sendAnotherLabel: 'ሌላ ላክ',
+    },
     support: {
       badge: 'የአገልግሎት ድጋፍ',
       title: 'አገልግሎቱን ይደግፉ',
@@ -562,6 +644,30 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       emptyDescription: 'Oduu fi odeeffannoon tajaajila keenyaa dhiyootti asitti ni mul\'ata.',
       maxPosts: 4,
     },
+    suggestions: {
+      badge: 'Sagalee Kee',
+      sectionTitle: 'Yaada Kee Nuuf Himi',
+      sectionDescription:
+        'Wanti si gammachiise, wanti akka jijjiiramu barbaaddu, wanti akka dabalamu barbaaddu — asitti barreessi. Kallattiin gara waajjira waldaa deema.',
+      categoryAppreciationLabel: 'Wanta ani jaalladhe',
+      categoryChangeLabel: 'Wanta jijjiiramuu qabu',
+      categoryFeatureLabel: 'Wanta dabalamuu qabu',
+      categoryProblemLabel: 'Wanti hin hojjenne jira',
+      categoryFieldLabel: 'Waa\'ee maalii?',
+      nameFieldLabel: 'Maqaa kee (filannoo)',
+      namePlaceholder: 'Maqaa malee erguuf duwwaa dhiisi',
+      contactFieldLabel: 'Bilbila yookaan imeelii (filannoo)',
+      contactPlaceholder: 'Yoo deebii barbaadde qofa',
+      messageFieldLabel: 'Ergaa kee',
+      messagePlaceholder: 'Akka feete gabaabsitee yookaan bal\'isitee barreessi.',
+      privacyNote:
+        'Yaadonni kan dubbifaman waajjira waldaatiin yoo ta\'u, fuula kana irratti ummataaf hin mul\'atan.',
+      submitLabel: 'Yaada ergi',
+      submittingLabel: 'Ergamaa jira…',
+      thankYouTitle: 'Galatoomi',
+      thankYouMessage: 'Yaadni kee waajjira waldaa gaheera. Yeroo kee waan nuuf kennitteef galatoomi.',
+      sendAnotherLabel: 'Kan biraa ergi',
+    },
     support: {
       badge: 'Deggersa Tajaajilaa',
       title: 'Tajaajila Deeggari',
@@ -692,6 +798,29 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       emptyTitle: 'ዜናን ሓበሬታን',
       emptyDescription: 'ኣብ ቀረባ እዋን ዜናታትን ሓበሬታን ናይ ኣገልግሎትና ኣብዚ ክወጽእ እዩ።',
       maxPosts: 4,
+    },
+    suggestions: {
+      badge: 'ድምጽኻ',
+      sectionTitle: 'ሓሳብካ ንገረና',
+      sectionDescription:
+        'ዝፈተኻዮ ነገር፣ ክቕየር እትደሊ ነገር፣ ክውሰኽ እትደሊ ነገር — ኣብዚ ጽሓፍ። ብቐጥታ ናብ ቤት ጽሕፈት ቤተክርስቲያን ይበጽሕ።',
+      categoryAppreciationLabel: 'ዝፈተኹዎ ነገር',
+      categoryChangeLabel: 'ክቕየር ዘለዎ',
+      categoryFeatureLabel: 'ክውሰኽ ዘለዎ',
+      categoryProblemLabel: 'ዘይሰርሕ ነገር',
+      categoryFieldLabel: 'ብዛዕባ እንታይ እዩ?',
+      nameFieldLabel: 'ስምካ (ኣማራጺ)',
+      namePlaceholder: 'ብዘይ ስም ንምስዳድ ባዶ ግደፎ',
+      contactFieldLabel: 'ስልኪ ወይ ኢመይል (ኣማራጺ)',
+      contactPlaceholder: 'መልሲ እንተደሊኻ ጥራይ',
+      messageFieldLabel: 'መልእኽትኻ',
+      messagePlaceholder: 'ከምዝደለኻ ብሓጺር ወይ ብሰፊሑ ጽሓፍ።',
+      privacyNote: 'ርእይቶታት ብቤት ጽሕፈት ቤተክርስቲያን ይንበቡ፣ ኣብዚ ገጽ ንህዝቢ ኣይረኣዩን።',
+      submitLabel: 'ርእይቶ ስደድ',
+      submittingLabel: 'ይለኣኽ ኣሎ…',
+      thankYouTitle: 'የቐንየልና',
+      thankYouMessage: 'ርእይቶኻ ናብ ቤት ጽሕፈት ቤተክርስቲያን በጺሑ። ግዜኻ ስለዝሃብካና የቐንየልና።',
+      sendAnotherLabel: 'ካልእ ስደድ',
     },
     support: {
       badge: 'ደገፍ ኣገልግሎት',

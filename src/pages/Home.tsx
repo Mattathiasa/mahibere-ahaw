@@ -27,6 +27,7 @@ import { useGallery } from '@/hooks/useGallery';
 import { captionFor } from '@/services/gallery';
 import { optimized } from '@/services/cloudinary';
 import { NewsSection } from '@/components/home/NewsSection';
+import { SuggestionSection } from '@/components/home/SuggestionSection';
 
 // Map icon name strings (stored in Firestore) to Lucide components
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -55,7 +56,10 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
 // Order matches the page. `about` sits directly under the hero: who the
 // church is answers the first question a visitor actually has, and the
 // feature tour means nothing before it.
-const SECTIONS = ['home', 'about', 'services', 'support', 'news', 'contact'] as const;
+// `suggestions` sits last on purpose: it asks the visitor for something, and
+// asking before the page has said who the church is and how to reach it gets a
+// worse answer than asking after.
+const SECTIONS = ['home', 'about', 'services', 'support', 'news', 'contact', 'suggestions'] as const;
 
 /**
  * Keeps a section's heading clear of the fixed navigation when it is scrolled
@@ -807,6 +811,12 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ── Suggestion box ──
+          The only place on this site where a visitor with no account writes to
+          Firestore. See services/suggestions.ts and the `suggestions` block in
+          firestore.rules. */}
+      <SuggestionSection />
 
       {/* ── Footer ── */}
       <footer id="footer" className={`pt-32 pb-12 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440]/90 border-t border-white/5' : 'bg-white border-t border-[#2E5E99]/10'}`}>

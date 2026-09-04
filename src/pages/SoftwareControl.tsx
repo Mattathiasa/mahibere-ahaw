@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Save, Loader2, CheckCircle2, AlertCircle, MonitorCog,
   LayoutPanelLeft, MousePointerClick, ExternalLink, ScrollText, RefreshCw,
+  MessageSquarePlus,
   LogIn, LogOut, FilePlus2, FilePen, FileX2, Smartphone, Monitor,
   ShieldCheck, Plus, Pencil, Trash2, Lock, Users as UsersIcon, UserPlus,
   CalendarClock, Search, Server, Database, Key, Activity,
@@ -26,6 +27,7 @@ import { userService } from '@/services/users';
 import { PermissionMatrix } from '@/components/PermissionMatrix';
 import { RoleEditorDialog } from '@/components/RoleEditorDialog';
 import { MembershipRequests } from '@/components/MembershipRequests';
+import { SuggestionInbox } from '@/components/SuggestionInbox';
 import { MeetingPresetsEditor } from '@/components/MeetingPresetsEditor';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -473,6 +475,9 @@ const SoftwareControl: React.FC = () => {
             <TabsTrigger value="requests" className="flex-1 gap-2">
               <UserPlus className="h-4 w-4" /> {a.scRequests}
             </TabsTrigger>
+            <TabsTrigger value="suggestions" className="flex-1 gap-2">
+              <MessageSquarePlus className="h-4 w-4" /> {a.scSuggestions}
+            </TabsTrigger>
             <TabsTrigger value="meetings" className="flex-1 gap-2">
               <CalendarClock className="h-4 w-4" /> {a.scMeetings}
             </TabsTrigger>
@@ -688,6 +693,11 @@ const SoftwareControl: React.FC = () => {
 
           <TabsContent value="requests">
             <MembershipRequests />
+          </TabsContent>
+
+          {/* ════════ SUGGESTIONS FROM VISITORS ════════ */}
+          <TabsContent value="suggestions">
+            <SuggestionInbox />
           </TabsContent>
 
           {/* ════════ ALL USERS ════════ */}
