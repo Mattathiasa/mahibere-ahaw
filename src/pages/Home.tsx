@@ -274,7 +274,7 @@ const Home: React.FC = () => {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
             className={`fixed inset-0 z-[100] ${theme === 'dark' ? 'bg-[#0D2440]' : 'bg-[#E7F0FA]'} p-6 flex flex-col`}>
             <div className="flex items-center justify-between mb-12">
-              <BrandMark size="md" showWordmark />
+              <BrandMark size="md" showWordmark wordmarkClass="flex" />
               <button onClick={() => setMobileMenuOpen(false)} className="p-3 bg-red-500/10 text-red-500 rounded-2xl"><X className="h-6 w-6" /></button>
             </div>
             <div className="flex flex-col gap-6">
@@ -823,7 +823,7 @@ const Home: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-4 gap-12 sm:gap-16 mb-24">
             <div className="col-span-1 lg:col-span-1 space-y-8">
-              <BrandMark size="lg" showWordmark tagline={null} />
+              <BrandMark size="lg" showWordmark tagline={null} wordmarkClass="flex" />
               <p className={`font-ethiopic leading-loose ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70'}`}>{footer.description}</p>
               <div className="flex gap-4 flex-wrap">
                 {footer.youtube && (

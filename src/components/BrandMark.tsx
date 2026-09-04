@@ -40,14 +40,17 @@ interface BrandMarkProps {
   tagline?: string | null;
   /** Brightens the halo on hover — used where the mark sits in a hover group. */
   interactive?: boolean;
+  /** Extra classes on the wordmark text span. Default hides on mobile, shows sm+. */
+  wordmarkClass?: string;
   className?: string;
 }
 
 export const BrandMark: React.FC<BrandMarkProps> = ({
   size = 'md',
   showWordmark = false,
-  tagline = 'Digital Ministry',
+  tagline = null,
   interactive = false,
+  wordmarkClass = 'hidden sm:flex',
   className = '',
 }) => {
   const s = SIZES[size];
@@ -81,7 +84,7 @@ export const BrandMark: React.FC<BrandMarkProps> = ({
   return (
     <span className={`inline-flex items-center gap-3 sm:gap-4 ${className}`}>
       {seal}
-      <span className="flex flex-col">
+      <span className={`${wordmarkClass} flex-col`}>
         <span
           className={`${w.name} font-black tracking-tighter leading-none bg-gradient-to-r
             from-[#2E5E99] to-[#7BA4D0] bg-clip-text text-transparent`}
