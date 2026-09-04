@@ -154,7 +154,7 @@ export const SuggestionSection: React.FC = () => {
 
   return (
     <section id="suggestions" className={SECTION_CLASS}>
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mb-12 space-y-4">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -162,10 +162,10 @@ export const SuggestionSection: React.FC = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20"
           >
-            <MessageSquarePlus className="h-3 w-3" />
+            <MessageSquarePlus className="h-3 w-3 shrink-0" />
             {s.badge}
           </motion.div>
-          <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${headingColor}`}>
+          <h2 className={`text-3xl sm:text-4xl md:text-6xl font-black font-ethiopic break-words ${headingColor}`}>
             {s.sectionTitle}
           </h2>
           <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
@@ -177,7 +177,7 @@ export const SuggestionSection: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className={`max-w-3xl p-8 sm:p-10 rounded-[2rem] border shadow-xl ${cardBg}`}
+          className={`max-w-3xl p-6 sm:p-8 md:p-10 rounded-[2rem] border shadow-xl ${cardBg}`}
         >
           {sent ? (
             <div className="text-center space-y-4 py-6">

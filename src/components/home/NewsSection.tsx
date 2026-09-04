@@ -95,13 +95,13 @@ export const NewsSection: React.FC = () => {
 
   return (
     <section id="news" className={SECTION_CLASS}>
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-14 gap-6">
-          <div className="space-y-4 max-w-2xl">
+          <div className="space-y-4 max-w-2xl min-w-0">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
-              <Newspaper className="h-3 w-3" /> {news.badge}
+              <Newspaper className="h-3 w-3 shrink-0" /> {news.badge}
             </div>
-            <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+            <h2 className={`text-3xl sm:text-4xl md:text-6xl font-black font-ethiopic break-words ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
               {news.sectionTitle}
             </h2>
             <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
@@ -150,7 +150,7 @@ export const NewsSection: React.FC = () => {
                 )}
               </div>
 
-              <h3 className={`text-3xl md:text-4xl font-black font-ethiopic leading-tight ${headingColor}`}>
+              <h3 className={`text-2xl sm:text-3xl md:text-4xl font-black font-ethiopic leading-tight break-words ${headingColor}`}>
                 {pickText(lead.title, language)}
               </h3>
               <p className={`text-lg font-ethiopic leading-relaxed line-clamp-3 ${bodyColor}`}>

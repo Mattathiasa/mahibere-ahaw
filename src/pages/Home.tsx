@@ -218,7 +218,7 @@ const Home: React.FC = () => {
   const { hero, stats, features, about, support, footer, contact } = content;
 
   return (
-    <div className={`min-h-screen selection:bg-[#2E5E99]/30 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440] text-white' : 'bg-[#E7F0FA] text-[#0D2440]'}`}>
+    <div className={`min-h-screen overflow-x-hidden selection:bg-[#2E5E99]/30 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440] text-white' : 'bg-[#E7F0FA] text-[#0D2440]'}`}>
       <ThreeBackground />
 
       {/* ── Navigation ── */}
@@ -298,8 +298,8 @@ const Home: React.FC = () => {
 
       {/* ── Hero ── */}
       <section ref={heroRef} id="home" className={`relative min-h-screen flex items-center justify-center pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 overflow-hidden ${SECTION_ANCHOR}`}>
-        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto relative z-10 grid lg:grid-cols-2 gap-8 sm:gap-16 items-center">
-          <div className="text-left space-y-5 sm:space-y-8">
+        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto relative z-10 grid lg:grid-cols-2 gap-8 sm:gap-16 items-center w-full">
+          <div className="text-left space-y-5 sm:space-y-8 min-w-0">
             {/* The seal leads the page. It carries the church's identity —
                 the rim text, the cross, the dove, the open Bible — none of
                 which is legible at nav size, so it gets one place on the site
@@ -317,7 +317,7 @@ const Home: React.FC = () => {
             </motion.div>
 
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="text-4xl sm:text-5xl md:text-7xl font-black leading-[1.1] font-ethiopic">
+              className="text-3xl sm:text-5xl md:text-7xl font-black leading-[1.1] font-ethiopic break-words">
               {hero.title}
               {hero.titleHighlight && (
                 <><br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2E5E99] via-[#7BA4D0] to-[#2E5E99]">{hero.titleHighlight}</span></>
@@ -341,7 +341,7 @@ const Home: React.FC = () => {
           </div>
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }} className="relative">
+            transition={{ duration: 0.8, delay: 0.2 }} className="relative hidden sm:block">
             {/* interactive 3D Ethiopian Orthodox cross — drag to spin, double-tap to reset */}
             <div className="absolute -inset-10 bg-[#FABB2A]/15 blur-[100px] rounded-full" />
             {/* Optional hero photo (Landing Editor → Hero) sits behind the cross
@@ -367,17 +367,17 @@ const Home: React.FC = () => {
 
       {/* ── Stats ── */}
       <section id="stats" className={`py-12 sm:py-24 relative overflow-hidden bg-white/30 backdrop-blur-sm border-y border-[#2E5E99]/5 ${SECTION_ANCHOR}`}>
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
             {stats.map((s, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="group relative">
                 <div className="absolute -inset-4 bg-[#2E5E99]/5 rounded-[2rem] scale-95 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500" />
-                <div className="relative text-center p-8 space-y-4">
-                  <div className="inline-flex p-4 rounded-2xl bg-[#E7F0FA] border border-[#2E5E99]/10 group-hover:border-[#2E5E99]/50 transition-colors shadow-sm">
-                    <DynamicIcon name={s.icon} className="h-8 w-8 text-[#2E5E99]" />
+                <div className="relative text-center p-4 sm:p-8 space-y-3 sm:space-y-4">
+                  <div className="inline-flex p-3 sm:p-4 rounded-2xl bg-[#E7F0FA] border border-[#2E5E99]/10 group-hover:border-[#2E5E99]/50 transition-colors shadow-sm">
+                    <DynamicIcon name={s.icon} className="h-6 w-6 sm:h-8 sm:w-8 text-[#2E5E99]" />
                   </div>
-                  <div className={`text-5xl font-black ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{s.value}</div>
-                  <div className={`text-xs uppercase tracking-widest font-bold ${theme === 'dark' ? 'text-[#7BA4D0] opacity-80' : 'text-[#2E5E99] opacity-40'}`}>{s.label}</div>
+                  <div className={`text-3xl sm:text-5xl font-black ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{s.value}</div>
+                  <div className={`text-[10px] sm:text-xs uppercase tracking-widest font-bold ${theme === 'dark' ? 'text-[#7BA4D0] opacity-80' : 'text-[#2E5E99] opacity-40'}`}>{s.label}</div>
                 </div>
               </motion.div>
             ))}
@@ -388,7 +388,7 @@ const Home: React.FC = () => {
       {/* ── Photo carousel ── */}
       {carousel.length > 0 && (
         <section id="gallery" className={`py-16 sm:py-24 relative overflow-hidden ${SECTION_ANCHOR}`}>
-          <div className="container mx-auto px-6">
+          <div className="container mx-auto px-4 sm:px-6">
             <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-[#2E5E99]/10 aspect-video max-h-[70vh] mx-auto">
               {carousel.map((url, i) => (
                 <motion.img
@@ -422,7 +422,7 @@ const Home: React.FC = () => {
 
       {/* ── About Us, Faith, Mission & Values ── */}
       <section id="about" className={`py-24 sm:py-32 relative bg-[#2E5E99]/5 backdrop-blur-md ${SECTION_ANCHOR}`}>
-        <div className="container mx-auto px-6 space-y-20">
+        <div className="container mx-auto px-4 sm:px-6 space-y-20">
           
           {/* Section Header */}
           <div className="max-w-3xl space-y-4">
@@ -431,7 +431,7 @@ const Home: React.FC = () => {
               <Church className="h-3.5 w-3.5" />
               {about?.badge ?? 'About Mahibere Ahaw'}
             </motion.div>
-            <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+            <h2 className={`text-3xl sm:text-4xl md:text-6xl font-black font-ethiopic break-words ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
               {about?.sectionTitle ?? 'About Us & Our Faith'}
             </h2>
             <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
@@ -594,14 +594,14 @@ const Home: React.FC = () => {
 
       {/* ── Features ── */}
       <section id="services" className={`py-32 relative ${SECTION_ANCHOR}`}>
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
-            <div className="space-y-4 max-w-2xl">
-              <h2 className="text-4xl md:text-6xl font-black font-ethiopic text-[#0D2440]">{features.sectionTitle}</h2>
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-20 gap-8">
+            <div className="space-y-4 max-w-2xl min-w-0">
+              <h2 className="text-3xl sm:text-4xl md:text-6xl font-black font-ethiopic text-[#0D2440] break-words">{features.sectionTitle}</h2>
               <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">{features.sectionDescription}</p>
             </div>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
             {features.items.map((f, i) => {
               /* An admin-uploaded photo wins; otherwise fall back to the
                  bundled src/assets/pictures photo at this position, and to a
@@ -652,14 +652,14 @@ const Home: React.FC = () => {
           own heading and the bank details visitors come looking for, so it
           needs an anchor the navigation can point at. */}
       <section id="support" className={`py-24 sm:py-32 relative ${SECTION_ANCHOR}`}>
-        <div className="container mx-auto px-6 space-y-8">
+        <div className="container mx-auto px-4 sm:px-6 space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div className="space-y-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
                 <Heart className="h-3 w-3" />
                 {support.badge}
               </div>
-              <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
+              <h2 className={`text-3xl sm:text-4xl md:text-6xl font-black font-ethiopic break-words ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
                 {support.title}
               </h2>
               <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
@@ -689,9 +689,9 @@ const Home: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {support.banks.map((bank, i) => (
-              <motion.div key={i} whileHover={{ scale: 1.03 }} className={`p-4 rounded-2xl border shadow-sm transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
-                <p className="text-[10px] font-black uppercase tracking-wider text-[#2E5E99] mb-1">{bank.name}</p>
-                <p className={`text-sm font-bold font-mono ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{bank.account}</p>
+              <motion.div key={i} whileHover={{ scale: 1.03 }} className={`p-4 rounded-2xl border shadow-sm transition-all min-w-0 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
+                <p className="text-[10px] font-black uppercase tracking-wider text-[#2E5E99] mb-1 truncate">{bank.name}</p>
+                <p className={`text-xs sm:text-sm font-bold font-mono break-all ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{bank.account}</p>
               </motion.div>
             ))}
           </div>
@@ -703,18 +703,18 @@ const Home: React.FC = () => {
 
       {/* ── Contact ── */}
       <section id="contact" className={`py-32 relative ${SECTION_ANCHOR}`}>
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mb-16 space-y-4">
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] text-[10px] font-black uppercase tracking-widest border border-[#2E5E99]/20">
               <Phone className="h-3 w-3" />
               {contact.badge}
             </motion.div>
-            <h2 className={`text-4xl md:text-6xl font-black font-ethiopic ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{contact.sectionTitle}</h2>
+            <h2 className={`text-3xl sm:text-4xl md:text-6xl font-black font-ethiopic break-words ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>{contact.sectionTitle}</h2>
             <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">{contact.sectionDescription}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Address */}
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               className={`p-8 rounded-3xl border shadow-sm space-y-4 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/10'}`}>
@@ -820,8 +820,8 @@ const Home: React.FC = () => {
 
       {/* ── Footer ── */}
       <footer id="footer" className={`pt-32 pb-12 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440]/90 border-t border-white/5' : 'bg-white border-t border-[#2E5E99]/10'}`}>
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-4 gap-16 mb-24">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-4 gap-12 sm:gap-16 mb-24">
             <div className="col-span-1 lg:col-span-1 space-y-8">
               <BrandMark size="lg" showWordmark tagline={null} />
               <p className={`font-ethiopic leading-loose ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70'}`}>{footer.description}</p>
