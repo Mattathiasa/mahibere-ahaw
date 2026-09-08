@@ -3,8 +3,17 @@ import { AppError } from '@/lib/appError';
 import {
     collection, getDocs, getDoc, doc,
     addDoc, updateDoc, deleteDoc,
-    query, orderBy, where, limit as fsLimit, serverTimestamp
+    query, orderBy, where, serverTimestamp
 } from 'firebase/firestore';
+
+/** Sortable millisecond value from a Firestore Timestamp or an ISO date string. */
+function sortableTime(v: any): number {
+    if (!v) return 0;
+    if (typeof v?.toMillis === 'function') return v.toMillis();
+    if (typeof v?.seconds === 'number') return v.seconds * 1000;
+    if (typeof v === 'string') { const t = Date.parse(v); return isNaN(t) ? 0 : t; }
+    return 0;
+}
 
 export interface CreateTeachingData {
     title: string;
@@ -27,18 +36,22 @@ export const teachingService = {
 
     /**
      * Published teachings only, newest first — readable by anonymous visitors
-     * (the public homepage section and archive). Mirrors newsService.listPublished.
-     * Needs the composite index teachings(status, createdAt desc).
+     * (the public homepage section and archive).
+     *
+     * Filters by status ONLY (a single-field equality, so no composite index is
+     * required) and sorts + limits client-side, ordering by createdAt and
+     * falling back to dateDelivered for older records that predate createdAt.
+     * This keeps the homepage working before any index is deployed.
      */
     async listPublished({ max = 4 }: { max?: number } = {}) {
-        const q = query(
-            collection(db, 'teachings'),
-            where('status', '==', 'Published'),
-            orderBy('createdAt', 'desc'),
-            fsLimit(max),
+        const snapshot = await getDocs(
+            query(collection(db, 'teachings'), where('status', '==', 'Published'))
         );
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(d => ({ id: d.id, _id: d.id, ...d.data() }));
+        const rows = snapshot.docs.map(d => ({ id: d.id, _id: d.id, ...d.data() } as any));
+        rows.sort((a, b) =>
+            (sortableTime(b.createdAt) || sortableTime(b.dateDelivered)) -
+            (sortableTime(a.createdAt) || sortableTime(a.dateDelivered)));
+        return rows.slice(0, max);
     },
 
     async getTeachingById(id: string) {
