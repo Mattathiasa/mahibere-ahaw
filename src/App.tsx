@@ -46,6 +46,8 @@ const ChurchMap = lazy(() => import("./pages/ChurchMap"));
 const NewsIndex = lazy(() => import("./pages/NewsIndex"));
 const About = lazy(() => import("./pages/About"));
 const NewsPostPage = lazy(() => import("./pages/NewsPost"));
+const TeachingsPublic = lazy(() => import("./pages/TeachingsPublic"));
+const TeachingPublicPost = lazy(() => import("./pages/TeachingPublicPost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
@@ -103,6 +105,8 @@ const App = () => (
                   {/* Public: the long-form history the homepage summary links to. */}
                   <Route path="/about" element={<Suspense fallback={publicFallback}><About /></Suspense>} />
                   <Route path="/news/:slug" element={<Suspense fallback={publicFallback}><NewsPostPage /></Suspense>} />
+                  <Route path="/teachings/browse" element={<Suspense fallback={publicFallback}><TeachingsPublic /></Suspense>} />
+                  <Route path="/teachings/view/:id" element={<Suspense fallback={publicFallback}><TeachingPublicPost /></Suspense>} />
                   <Route path="/admin/landing-editor" element={<AdminRoute><LandingEditor /></AdminRoute>} />
                   <Route path="/admin/permissions" element={<AdminRoute superAdminOnly><PermissionControl /></AdminRoute>} />
                   <Route path="/admin/mobile-control" element={<AdminRoute><Suspense fallback={appFallback}><MobileControl /></Suspense></AdminRoute>} />
