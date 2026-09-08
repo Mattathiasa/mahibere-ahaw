@@ -28,6 +28,7 @@ export const contentEn = {
 
   // ── Teaching editor: fields ───────────────────────────────────────────────
   createTeaching: 'Create new teaching',
+  editTeaching: 'Edit teaching',
   teachingTitle: 'Teaching title *',
   teachingTitlePlaceholder: 'e.g., Born Again: A Nighttime Encounter',
   speaker: 'Speaker / teacher *',
@@ -81,6 +82,7 @@ export const contentEn = {
 
   // ── Toasts ────────────────────────────────────────────────────────────────
   teachingCreated: 'Teaching created.',
+  teachingUpdated: 'Teaching updated.',
   teachingMissingFields: 'Please fill in the required fields (title, speaker, date).',
 
   // ── News editor ───────────────────────────────────────────────────────────
@@ -103,6 +105,7 @@ export const contentEn = {
   employeesImported: 'Employees imported.',
   employeesImportFailed: 'Could not import the employees file.',
   createTeachingButton: 'Create teaching',
+  updateTeachingButton: 'Save changes',
 };
 
 /**
@@ -125,6 +128,7 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   tabFooterLegal: 'ግርጌና ሕጋዊ',
 
   createTeaching: 'አዲስ ትምህርት ፍጠር',
+  editTeaching: 'ትምህርት አስተካክል',
   teachingTitle: 'የትምህርቱ ርዕስ *',
   teachingTitlePlaceholder: 'ለምሳሌ ዳግም መወለድ፦ የሌሊት ግንኙነት',
   speaker: 'አስተማሪ / ሰባኪ *',
@@ -176,6 +180,7 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   add: 'ጨምር',
 
   teachingCreated: 'ትምህርቱ ተፈጥሯል።',
+  teachingUpdated: 'ትምህርቱ ተስተካክሏል።',
   teachingMissingFields: 'እባክዎ የሚያስፈልጉትን መስኮች ይሙሉ (ርዕስ፣ አስተማሪ፣ ቀን)።',
 
   headOffice: 'ጠቅላይ ጽ/ቤት',
@@ -196,6 +201,7 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   employeesImported: 'ሠራተኞቹ ገብተዋል።',
   employeesImportFailed: 'የሠራተኛ ፋይሉን ማስመጣት አልተቻለም።',
   createTeachingButton: 'ትምህርት ፍጠር',
+  updateTeachingButton: 'ለውጦችን አስቀምጥ',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

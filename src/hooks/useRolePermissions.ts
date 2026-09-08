@@ -43,6 +43,8 @@ export const useRolePermissions = () => {
     canUploadDocuments:    can('canUploadDocuments'),
     canDeleteDocuments:    can('canDeleteDocuments'),
     canCreateTeaching:     can('canCreateTeaching'),
+    canEditTeaching:       can('canEditTeaching'),
+    canDeleteTeaching:     can('canDeleteTeaching'),
     canViewNews:           can('canViewNews'),
     canManageNews:         can('canManageNews'),
     canApproveMembers:     can('canApproveMembers'),

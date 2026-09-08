@@ -1,9 +1,14 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Calendar, User, Mic2, Tag, Plus, ArrowRight, Clock } from 'lucide-react';
+import { BookOpen, Calendar, User, Mic2, Tag, Plus, ArrowRight, Clock, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { teachingService } from '@/services/teachings';
 import { TeachingServiceType, TeachingStatus } from '@/types';
 import { CreateTeachingDialog } from '@/components/CreateTeachingDialog';
@@ -24,12 +29,30 @@ const Teaching = () => {
     const { formatDate } = useFormatters();
     const { showElement } = useSoftwareControl();
     const rolePerms = useRolePermissions();
+    const queryClient = useQueryClient();
     const canCreateTeaching = rolePerms.canCreateTeaching && showElement('teachings.create');
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const canEditTeaching = rolePerms.canEditTeaching && showElement('teachings.edit');
+    const canDeleteTeaching = rolePerms.canDeleteTeaching && showElement('teachings.delete');
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editing, setEditing] = useState<any | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const { data: teachings, isLoading } = useQuery({
         queryKey: ['teachings'],
         queryFn: () => teachingService.getAllTeachings(),
     });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => teachingService.deleteTeaching(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['teachings'] });
+            toast.success(pg.teachingDeleted ?? 'Teaching deleted.');
+            setDeleteTarget(null);
+        },
+        onError: () => toast.error('Failed to delete teaching'),
+    });
+
+    const openCreate = () => { setEditing(null); setDialogOpen(true); };
+    const openEdit = (teaching: any) => { setEditing(teaching); setDialogOpen(true); };
 
     const getStatusColor = (status: TeachingStatus) => {
         switch (status) {
@@ -51,7 +74,7 @@ const Teaching = () => {
                 />
                 {canCreateTeaching && (
                     <Button
-                        onClick={() => setIsCreateDialogOpen(true)}
+                        onClick={openCreate}
                         className="h-14 px-8 rounded-2xl bg-[#2E5E99] hover:bg-[#204a7c] text-white font-black shadow-xl shadow-[#2E5E99]/20 active:scale-95 transition-all gap-2"
                     >
                         <Plus className="h-6 w-6" />
@@ -122,9 +145,33 @@ const Teaching = () => {
                                                     <p className="text-sm font-black text-[#0D2440] dark:text-white">{teaching.speaker}</p>
                                                 </div>
                                             </div>
-                                            <Button variant="ghost" size="icon" className="rounded-full hover:bg-[#2E5E99] hover:text-white transition-all shadow-md group-hover:translate-x-1">
-                                                <ArrowRight className="h-5 w-5" />
-                                            </Button>
+                                            <div className="flex items-center gap-1.5">
+                                                {canEditTeaching && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => openEdit(teaching)}
+                                                        className="rounded-full hover:bg-[#2E5E99] hover:text-white transition-all shadow-md"
+                                                        aria-label={t('edit')}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                {canDeleteTeaching && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setDeleteTarget(teaching)}
+                                                        className="rounded-full hover:bg-red-500 hover:text-white transition-all shadow-md"
+                                                        aria-label={t('delete')}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                <Button variant="ghost" size="icon" className="rounded-full hover:bg-[#2E5E99] hover:text-white transition-all shadow-md group-hover:translate-x-1">
+                                                    <ArrowRight className="h-5 w-5" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -141,7 +188,29 @@ const Teaching = () => {
                     </div>
                 )}
             </div>
-            <CreateTeachingDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+            <CreateTeachingDialog
+                open={dialogOpen}
+                onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}
+                teaching={editing}
+            />
+
+            <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t('delete')}</AlertDialogTitle>
+                        <AlertDialogDescription>{pg.deleteTeachingConfirm}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>{tree.common.cancel}</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id ?? deleteTarget._id)}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {t('delete')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

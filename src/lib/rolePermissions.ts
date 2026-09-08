@@ -49,6 +49,8 @@ export const ALL_PERMISSIONS = [
   'canUploadDocuments',
   'canDeleteDocuments',
   'canCreateTeaching',
+  'canEditTeaching',
+  'canDeleteTeaching',
   'canSubmitMissionaryApplication',
   'canSubmitMissionaryReport',
   'canManageNews',
@@ -128,6 +130,8 @@ export const PERMISSION_META: Record<PermissionKey, PermissionMeta> = {
   canUploadDocuments: { labelKey: 'canUploadDocumentsLabel', descriptionKey: 'canUploadDocumentsDesc', group: 'Documents' },
   canDeleteDocuments: { labelKey: 'canDeleteDocumentsLabel', descriptionKey: 'canDeleteDocumentsDesc', group: 'Documents' },
   canCreateTeaching: { labelKey: 'canCreateTeachingLabel', descriptionKey: 'canCreateTeachingDesc', group: 'Teachings' },
+  canEditTeaching: { labelKey: 'canEditTeachingLabel', descriptionKey: 'canEditTeachingDesc', group: 'Teachings' },
+  canDeleteTeaching: { labelKey: 'canDeleteTeachingLabel', descriptionKey: 'canDeleteTeachingDesc', group: 'Teachings' },
   canSubmitMissionaryApplication: { labelKey: 'canSubmitMissionaryApplicationLabel', descriptionKey: 'canSubmitMissionaryApplicationDesc', group: 'Missionary' },
   canSubmitMissionaryReport: { labelKey: 'canSubmitMissionaryReportLabel', descriptionKey: 'canSubmitMissionaryReportDesc', group: 'Missionary' },
   canManageNews: { labelKey: 'canManageNewsLabel', descriptionKey: 'canManageNewsDesc', group: 'News' },
@@ -176,13 +180,15 @@ export const PERMISSION_GROUPS = [...new Set(ALL_PERMISSIONS.map(p => PERMISSION
  *   2 — added canViewHR / canViewInventory / canEditOwnAtbiya; narrowed
  *       HiyawanMahderat to an ordinary member (no members, meetings,
  *       announcements or canAddMembers)
+ *   3 — added canEditTeaching / canDeleteTeaching (granted to the roles that
+ *       already hold canCreateTeaching)
  *
  * Adding a NEW built-in role does not belong here — that is not a change to an
  * existing role's permissions, and bumping would reset every operator's
  * customisations as a side effect. `withMissingSeeds` in roleRegistry handles
  * it version-independently instead.
  */
-export const PERMISSIONS_VERSION = 2;
+export const PERMISSIONS_VERSION = 3;
 
 // ─── Default role → permissions mapping ──────────────────────────────────────
 // Seed values for the role registry (siteConfig/roles) and the FALLBACK used
@@ -209,7 +215,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     'canScheduleMeeting', 'canDeleteMeeting',
     'canAddTransaction', 'canCreateBudget', 'canGenerateFinancialReport',
     'canUploadDocuments', 'canDeleteDocuments',
-    'canCreateTeaching',
+    'canCreateTeaching', 'canEditTeaching', 'canDeleteTeaching',
     'canSubmitMissionaryApplication', 'canSubmitMissionaryReport',
     'canManageNews', 'canApproveMembers', 'canManageAtbiyas',
     'canViewFullDashboard',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -18,10 +18,13 @@ import type { Translations } from '@/i18n/translations';
 import { TEACHING_STATUSES, teachingStatusLabel } from '@/i18n/enums';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
+import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
 
 interface CreateTeachingDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** When provided, the dialog edits this teaching instead of creating one. */
+    teaching?: Record<string, any> | null;
 }
 
 const SERVICE_TYPES: TeachingServiceType[] = [
@@ -48,50 +51,74 @@ const SERVICE_TYPE_KEYS: Record<string, keyof Translations['content']> = {
     'Other': 'serviceTypeOther',
 };
 
-export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialogProps) {
+const makeBlankTeachingForm = () => ({
+    // 1. Metadata
+    title: '',
+    series: '',
+    seriesPart: '',
+    speaker: '',
+    dateDelivered: new Date().toISOString().split('T')[0],
+    serviceType: 'Sunday Morning' as TeachingServiceType,
+    primaryScripture: '',
+    supportingScriptures: [] as string[],
+    tags: [] as string[],
+    targetAudience: '',
+    status: 'Draft' as TeachingStatus,
+
+    // 2. Public-Facing Header
+    featuredImage: '',
+    shortDescription: '',
+
+    // 3. Main Content
+    mediaUrl: '',
+    mediaType: 'video' as 'video' | 'audio',
+    transcript: '',
+    sermonOutline: [] as string[],
+    keyQuotations: [] as string[],
+
+    // 4. Engagement & Application
+    discussionQuestions: [] as string[],
+    applicationChallenge: '',
+    relatedResources: [] as { title: string; url: string }[],
+    digitalConnectionPoint: '',
+
+    // 5. Footer & Legal
+    copyrightNotice: `© ${new Date().getFullYear()} Church Name`,
+    speakerBio: '',
+    contactEmail: ''
+});
+
+type TeachingForm = ReturnType<typeof makeBlankTeachingForm>;
+
+export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTeachingDialogProps) {
     const queryClient = useQueryClient();
     const moduleCfg = useModuleConfig('teachings');
     const { t } = useLanguage();
     const c = t.content;
+    const isEditing = !!teaching;
     const [activeTab, setActiveTab] = useState('metadata');
 
     // Form State
-    const [formData, setFormData] = useState({
-        // 1. Metadata
-        title: '',
-        series: '',
-        seriesPart: '',
-        speaker: '',
-        dateDelivered: new Date().toISOString().split('T')[0],
-        serviceType: 'Sunday Morning' as TeachingServiceType,
-        primaryScripture: '',
-        supportingScriptures: [] as string[],
-        tags: [] as string[],
-        targetAudience: '',
-        status: 'Draft' as TeachingStatus,
+    const [formData, setFormData] = useState<TeachingForm>(makeBlankTeachingForm);
 
-        // 2. Public-Facing Header
-        featuredImage: '',
-        shortDescription: '',
-
-        // 3. Main Content
-        mediaUrl: '',
-        mediaType: 'video' as 'video' | 'audio',
-        transcript: '',
-        sermonOutline: [] as string[],
-        keyQuotations: [] as string[],
-
-        // 4. Engagement & Application
-        discussionQuestions: [] as string[],
-        applicationChallenge: '',
-        relatedResources: [] as { title: string; url: string }[],
-        digitalConnectionPoint: '',
-
-        // 5. Footer & Legal
-        copyrightNotice: `© ${new Date().getFullYear()} Church Name`,
-        speakerBio: '',
-        contactEmail: ''
-    });
+    // Populate from the record when editing (or reset to blank for create) each
+    // time the dialog opens, so reusing the same dialog for different rows works.
+    useEffect(() => {
+        if (!open) return;
+        const blank = makeBlankTeachingForm();
+        if (!teaching) {
+            setFormData(blank);
+            setActiveTab('metadata');
+            return;
+        }
+        const next: TeachingForm = { ...blank };
+        for (const key of Object.keys(blank) as (keyof TeachingForm)[]) {
+            const v = (teaching as Record<string, unknown>)[key];
+            if (v !== undefined && v !== null) (next as Record<string, unknown>)[key] = v;
+        }
+        setFormData(next);
+        setActiveTab('metadata');
+    }, [open, teaching]);
 
     // Helpers for array fields
     const [tempTag, setTempTag] = useState('');
@@ -122,18 +149,21 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
         }));
     };
 
-    const createMutation = useMutation({
-        mutationFn: async (data: typeof formData) => {
+    const saveMutation = useMutation({
+        mutationFn: async (data: TeachingForm) => {
+            if (isEditing) {
+                const id = (teaching as any).id ?? (teaching as any)._id;
+                return teachingService.updateTeaching(id, data as any);
+            }
             return teachingService.createTeaching(data as any);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['teachings'] });
-            toast.success(c.teachingCreated);
+            toast.success(isEditing ? c.teachingUpdated : c.teachingCreated);
             onOpenChange(false);
-            // Reset form?
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to create teaching');
+            toast.error(error.response?.data?.message || 'Failed to save teaching');
         },
     });
 
@@ -142,14 +172,14 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
             toast.error(c.teachingMissingFields);
             return;
         }
-        createMutation.mutate(formData);
+        saveMutation.mutate(formData);
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
                 <DialogHeader className="px-6 py-4 border-b">
-                    <DialogTitle>{c.createTeaching}</DialogTitle>
+                    <DialogTitle>{isEditing ? c.editTeaching : c.createTeaching}</DialogTitle>
                     <DialogDescription>
                         Fill out the template below to create a new teaching record.
                     </DialogDescription>
@@ -318,16 +348,12 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
                                 <TabsContent value="header" className="mt-0 space-y-4">
                                     <div className="space-y-2">
                                         <Label>{c.featuredImageUrl}</Label>
-                                        <Input
+                                        <CloudinaryImageUpload
                                             value={formData.featuredImage}
-                                            onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
-                                            placeholder="https://..."
+                                            onChange={(url) => setFormData({ ...formData, featuredImage: url })}
+                                            variant="wide"
+                                            folder="mahibere-ahaw/teachings"
                                         />
-                                        {formData.featuredImage && (
-                                            <div className="mt-2 h-40 w-full bg-muted rounded-md overflow-hidden relative">
-                                                <img src={formData.featuredImage} alt={c.preview} className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         <Label>{c.shortDescription}</Label>
@@ -524,8 +550,10 @@ export function CreateTeachingDialog({ open, onOpenChange }: CreateTeachingDialo
 
                 <DialogFooter className="px-6 py-4 border-t">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
-                    <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-                        {createMutation.isPending ? t.admin.busyCreating : t.content.createTeachingButton}
+                    <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
+                        {saveMutation.isPending
+                            ? t.common.saving
+                            : isEditing ? c.updateTeachingButton : c.createTeachingButton}
                     </Button>
                 </DialogFooter>
             </DialogContent>

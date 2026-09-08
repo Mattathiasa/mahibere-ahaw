@@ -57,6 +57,8 @@ export const ELEMENT_KEYS: {
   { key: 'inventory.add', labelKey: 'elInventoryAdd', pageKey: 'inventory' },
   { key: 'inventory.delete', labelKey: 'elInventoryDelete', pageKey: 'inventory' },
   { key: 'teachings.create', labelKey: 'elTeachingsCreate', pageKey: 'teachings' },
+  { key: 'teachings.edit', labelKey: 'elTeachingsEdit', pageKey: 'teachings' },
+  { key: 'teachings.delete', labelKey: 'elTeachingsDelete', pageKey: 'teachings' },
   { key: 'news.create', labelKey: 'elNewsCreate', pageKey: 'news' },
   { key: 'atbiya.add', labelKey: 'elAtbiyaAdd', pageKey: 'atbiyaRegistry' },
   { key: 'atbiya.addAdmin', labelKey: 'elAtbiyaAddAdmin', pageKey: 'atbiyaRegistry' },
