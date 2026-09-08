@@ -790,6 +790,12 @@ service cloud.firestore {
     }
 
     match /teachings/{docId} {
+      // Published teachings are public: the homepage teachings section, the
+      // public archive (/teachings/browse) and the detail page read them while
+      // signed out. A list query must be constrained to status == 'Published'.
+      allow get:  if resource.data.status == 'Published';
+      allow list: if resource.data.status == 'Published';
+      // Signed-in members also see drafts/archived on the dashboard page.
       allow read:  if isActive();
       allow write: if canWriteTeachings();
     }
