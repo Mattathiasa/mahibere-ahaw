@@ -27,6 +27,7 @@ import { useGallery } from '@/hooks/useGallery';
 import { captionFor } from '@/services/gallery';
 import { optimized } from '@/services/cloudinary';
 import { NewsSection } from '@/components/home/NewsSection';
+import { TeachingsSection } from '@/components/home/TeachingsSection';
 import { SuggestionSection } from '@/components/home/SuggestionSection';
 
 // Map icon name strings (stored in Firestore) to Lucide components
@@ -59,7 +60,7 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
 // `suggestions` sits last on purpose: it asks the visitor for something, and
 // asking before the page has said who the church is and how to reach it gets a
 // worse answer than asking after.
-const SECTIONS = ['home', 'about', 'services', 'support', 'news', 'contact', 'suggestions'] as const;
+const SECTIONS = ['home', 'about', 'services', 'support', 'news', 'teachings', 'contact', 'suggestions'] as const;
 
 /**
  * Keeps a section's heading clear of the fixed navigation when it is scrolled
@@ -700,6 +701,9 @@ const Home: React.FC = () => {
 
       {/* ── News ── (shows an editable empty state when nothing is published) */}
       <NewsSection />
+
+      {/* ── Teachings ── (published teachings; editable empty state) */}
+      <TeachingsSection />
 
       {/* ── Contact ── */}
       <section id="contact" className={`py-32 relative ${SECTION_ANCHOR}`}>

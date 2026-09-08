@@ -3,7 +3,7 @@ import { AppError } from '@/lib/appError';
 import {
     collection, getDocs, getDoc, doc,
     addDoc, updateDoc, deleteDoc,
-    query, orderBy, serverTimestamp
+    query, orderBy, where, limit as fsLimit, serverTimestamp
 } from 'firebase/firestore';
 
 export interface CreateTeachingData {
@@ -21,6 +21,22 @@ export interface CreateTeachingData {
 export const teachingService = {
     async getAllTeachings() {
         const q = query(collection(db, 'teachings'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(d => ({ id: d.id, _id: d.id, ...d.data() }));
+    },
+
+    /**
+     * Published teachings only, newest first — readable by anonymous visitors
+     * (the public homepage section and archive). Mirrors newsService.listPublished.
+     * Needs the composite index teachings(status, createdAt desc).
+     */
+    async listPublished({ max = 4 }: { max?: number } = {}) {
+        const q = query(
+            collection(db, 'teachings'),
+            where('status', '==', 'Published'),
+            orderBy('createdAt', 'desc'),
+            fsLimit(max),
+        );
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => ({ id: d.id, _id: d.id, ...d.data() }));
     },

@@ -159,6 +159,22 @@ export interface LandingContent {
     maxPosts: number;
   };
   /**
+   * The homepage teachings feed. The teachings themselves come from the
+   * `teachings` collection (published only); everything the section says around
+   * them lives here. Mirrors `news`.
+   */
+  teachings: {
+    badge: string;
+    sectionTitle: string;
+    sectionDescription: string;
+    seeAllLabel: string;
+    readMoreLabel: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    /** How many teachings the homepage feed shows. */
+    maxPosts: number;
+  };
+  /**
    * The homepage suggestion box — the one place a visitor who is not a member
    * can write to the church. Nothing submitted is ever shown back on the page;
    * submissions are read only in Software Control. Every string a visitor sees
@@ -320,6 +336,16 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       parishLabel: 'Local Congregation',
       emptyTitle: 'News & Updates',
       emptyDescription: 'Stay tuned! News stories and updates from our ministry will appear here soon.',
+      maxPosts: 4,
+    },
+    teachings: {
+      badge: 'Teachings',
+      sectionTitle: 'Teachings & Sermons',
+      sectionDescription: 'Messages and Bible studies from our services.',
+      seeAllLabel: 'See all teachings',
+      readMoreLabel: 'Read more',
+      emptyTitle: 'Teachings & Sermons',
+      emptyDescription: 'Published teachings from our ministry will appear here soon.',
       maxPosts: 4,
     },
     suggestions: {
@@ -493,6 +519,16 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       emptyDescription: 'በቅርቡ ከአገልግሎታችን ዜናዎችና መረጃዎች እዚህ ይወጣሉ።',
       maxPosts: 4,
     },
+    teachings: {
+      badge: 'ትምህርቶች',
+      sectionTitle: 'ትምህርቶችና ስብከቶች',
+      sectionDescription: 'ከአገልግሎቶቻችን የተወሰዱ መልእክቶችና የመጽሐፍ ቅዱስ ጥናቶች።',
+      seeAllLabel: 'ሁሉንም ትምህርቶች ይመልከቱ',
+      readMoreLabel: 'ተጨማሪ ያንብቡ',
+      emptyTitle: 'ትምህርቶችና ስብከቶች',
+      emptyDescription: 'የታተሙ ትምህርቶች በቅርቡ እዚህ ይታያሉ።',
+      maxPosts: 4,
+    },
     suggestions: {
       badge: 'የእርስዎ ድምፅ',
       sectionTitle: 'ሃሳብዎን ያካፍሉን',
@@ -647,6 +683,16 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       parishLabel: 'Waldaa Naannoo',
       emptyTitle: 'Oduu fi Odeeffannoo',
       emptyDescription: 'Oduu fi odeeffannoon tajaajila keenyaa dhiyootti asitti ni mul\'ata.',
+      maxPosts: 4,
+    },
+    teachings: {
+      badge: 'Barnoota',
+      sectionTitle: 'Barnootaa fi Lallaba',
+      sectionDescription: 'Ergaawwanii fi qayyabannaa Macaafa Qulqulluu tajaajila keenya irraa.',
+      seeAllLabel: 'Barnoota hunda ilaali',
+      readMoreLabel: 'Dabalata dubbisi',
+      emptyTitle: 'Barnootaa fi Lallaba',
+      emptyDescription: 'Barnoonni maxxanfaman dhiyootti asitti ni mul\'atu.',
       maxPosts: 4,
     },
     suggestions: {
@@ -804,6 +850,16 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       parishLabel: 'ኣጥቢያ',
       emptyTitle: 'ዜናን ሓበሬታን',
       emptyDescription: 'ኣብ ቀረባ እዋን ዜናታትን ሓበሬታን ናይ ኣገልግሎትና ኣብዚ ክወጽእ እዩ።',
+      maxPosts: 4,
+    },
+    teachings: {
+      badge: 'ትምህርትታት',
+      sectionTitle: 'ትምህርትታትን ስብከታትን',
+      sectionDescription: 'ካብ ኣገልግሎትና ዝወጹ መልእኽትታትን ናይ መጽሓፍ ቅዱስ መጽናዕትታትን።',
+      seeAllLabel: 'ኩሉ ትምህርትታት ርአ',
+      readMoreLabel: 'ተወሳኺ ኣንብብ',
+      emptyTitle: 'ትምህርትታትን ስብከታትን',
+      emptyDescription: 'ዝተሓተሙ ትምህርትታት ኣብ ቀረባ እዋን ኣብዚ ክረኣዩ እዮም።',
       maxPosts: 4,
     },
     suggestions: {

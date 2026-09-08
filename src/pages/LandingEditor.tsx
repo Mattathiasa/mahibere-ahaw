@@ -328,6 +328,9 @@ const LandingEditor: React.FC = () => {
   function setNews(key: keyof LandingContent['news'], value: string | number) {
     patch((c) => ({ ...c, news: { ...c.news, [key]: value } }));
   }
+  function setTeachings(key: keyof LandingContent['teachings'], value: string | number) {
+    patch((c) => ({ ...c, teachings: { ...c.teachings, [key]: value } }));
+  }
   function setSuggestions(key: keyof LandingContent['suggestions'], value: string) {
     patch((c) => ({ ...c, suggestions: { ...c.suggestions, [key]: value } }));
   }
@@ -635,6 +638,7 @@ const LandingEditor: React.FC = () => {
                 <TabsTrigger value="features">{a.leFeatures}</TabsTrigger>
                 <TabsTrigger value="about">{a.leAboutFaith}</TabsTrigger>
                 <TabsTrigger value="news">{a.leNews}</TabsTrigger>
+                <TabsTrigger value="teachings">{a.leTeachings}</TabsTrigger>
                 <TabsTrigger value="suggestions">{a.leSuggestions}</TabsTrigger>
                 <TabsTrigger value="support">{a.leSupportBanks}</TabsTrigger>
                 <TabsTrigger value="contact">{a.leContact}</TabsTrigger>
@@ -1280,6 +1284,52 @@ const LandingEditor: React.FC = () => {
                     <Field label={a.lePostsToShow} hint={a.leFeedHint}>
                       <Input type="number" min={1} max={12} value={content.news.maxPosts}
                         onChange={(e) => setNews('maxPosts', Math.max(1, Math.min(12, Number(e.target.value) || 1)))} />
+                    </Field>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* ── Teachings ── */}
+              <TabsContent value="teachings">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{a.leTeachingsSection}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label={a.leBadgeText} hint={a.lePillAboveHeading}>
+                        <Input value={content.teachings.badge} onChange={(e) => setTeachings('badge', e.target.value)} />
+                      </Field>
+                      <Field label={a.leSectionTitle}>
+                        <Input value={content.teachings.sectionTitle} onChange={(e) => setTeachings('sectionTitle', e.target.value)} />
+                      </Field>
+                    </div>
+                    <Field label={a.leSectionDescription}>
+                      <Textarea rows={2} value={content.teachings.sectionDescription} onChange={(e) => setTeachings('sectionDescription', e.target.value)} />
+                    </Field>
+
+                    <SectionDivider label={a.leLabels} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label={a.leSeeAllButton}>
+                        <Input value={content.teachings.seeAllLabel} onChange={(e) => setTeachings('seeAllLabel', e.target.value)} />
+                      </Field>
+                      <Field label={a.leReadMoreLink}>
+                        <Input value={content.teachings.readMoreLabel} onChange={(e) => setTeachings('readMoreLabel', e.target.value)} />
+                      </Field>
+                    </div>
+
+                    <SectionDivider label={a.leWhenNothingPublished} />
+                    <Field label={a.leEmptyStateTitle}>
+                      <Input value={content.teachings.emptyTitle} onChange={(e) => setTeachings('emptyTitle', e.target.value)} />
+                    </Field>
+                    <Field label={a.leEmptyStateMessage}>
+                      <Textarea rows={2} value={content.teachings.emptyDescription} onChange={(e) => setTeachings('emptyDescription', e.target.value)} />
+                    </Field>
+
+                    <SectionDivider label={a.leFeed} />
+                    <Field label={a.lePostsToShow} hint={a.leFeedHint}>
+                      <Input type="number" min={1} max={12} value={content.teachings.maxPosts}
+                        onChange={(e) => setTeachings('maxPosts', Math.max(1, Math.min(12, Number(e.target.value) || 1)))} />
                     </Field>
                   </CardContent>
                 </Card>
