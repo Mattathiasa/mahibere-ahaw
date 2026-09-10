@@ -10,7 +10,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { teachingService } from '@/services/teachings';
-import { TeachingServiceType, TeachingStatus } from '@/types';
+import { TeachingServiceType } from '@/types';
 import { CreateTeachingDialog } from '@/components/CreateTeachingDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
@@ -53,15 +53,6 @@ const Teaching = () => {
 
     const openCreate = () => { setEditing(null); setDialogOpen(true); };
     const openEdit = (teaching: any) => { setEditing(teaching); setDialogOpen(true); };
-
-    const getStatusColor = (status: TeachingStatus) => {
-        switch (status) {
-            case 'Published': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-            case 'Draft': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-            case 'Archived': return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
-            default: return 'bg-[#2E5E99]/10 text-[#2E5E99] border-[#2E5E99]/20';
-        }
-    };
 
     return (
         <div className="space-y-12 animate-in fade-in duration-700 ease-out pb-20">
@@ -109,10 +100,7 @@ const Teaching = () => {
                                     </div>
 
                                     <CardHeader className="relative z-20 -mt-12 mx-6 rounded-[2rem] bg-white/80 dark:bg-slate-800/80 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-xl p-6 group-hover:-translate-y-2 transition-transform duration-500">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <Badge variant="outline" className={`${getStatusColor(teaching.status)} font-black uppercase tracking-tighter text-[10px] px-3 py-1 rounded-full border-2`}>
-                                                {teaching.status}
-                                            </Badge>
+                                        <div className="flex justify-end items-start mb-4">
                                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#2E5E99]/60">
                                                 <Clock className="h-4 w-4" />
                                                 {formatDate(teaching.dateDelivered)}

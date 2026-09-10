@@ -12,10 +12,9 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Info, Video, FileText, MessageCircle, Mic2 } from 'lucide-react';
 import { teachingService } from '@/services/teachings';
-import { TeachingServiceType, TeachingStatus } from '@/types';
+import { TeachingServiceType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Translations } from '@/i18n/translations';
-import { TEACHING_STATUSES, teachingStatusLabel } from '@/i18n/enums';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
@@ -63,7 +62,6 @@ const makeBlankTeachingForm = () => ({
     supportingScriptures: [] as string[],
     tags: [] as string[],
     targetAudience: '',
-    status: 'Draft' as TeachingStatus,
 
     // 2. Public-Facing Header
     featuredImage: '',
@@ -151,11 +149,14 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
 
     const saveMutation = useMutation({
         mutationFn: async (data: TeachingForm) => {
+            // A saved teaching is a published one — there's no separate draft
+            // step, so every save (create or edit) writes status 'Published'.
+            const payload = { ...data, status: 'Published' };
             if (isEditing) {
                 const id = (teaching as any).id ?? (teaching as any)._id;
-                return teachingService.updateTeaching(id, data as any);
+                return teachingService.updateTeaching(id, payload as any);
             }
-            return teachingService.createTeaching(data as any);
+            return teachingService.createTeaching(payload as any);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['teachings'] });
@@ -270,17 +271,6 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                                                             {SERVICE_TYPE_KEYS[v] ? c[SERVICE_TYPE_KEYS[v]] : v}
                                                         </SelectItem>
                                                     ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>{c.status}</Label>
-                                            <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as TeachingStatus })}>
-                                                <SelectTrigger>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {TEACHING_STATUSES.map(v => <SelectItem key={v} value={v}>{teachingStatusLabel(t, v)}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
                                         </div>
