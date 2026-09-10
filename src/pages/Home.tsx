@@ -17,7 +17,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { LANGUAGE_ENDONYM, nextLanguage } from '@/i18n/languages';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import {
-  featureLinkTarget, resolveLink,
+  featureLinkTarget, resolveLink, DEFAULT_LANDING_CONTENT,
   type LandingFeature, type LandingLink,
 } from '@/services/landingContent';
 import { BrandMark } from '@/components/BrandMark';
@@ -212,14 +212,24 @@ const Home: React.FC = () => {
   const upcomingLanguage = nextLanguage(language);
   const toggleLanguage = () => setLanguage(upcomingLanguage);
 
-  // Shown while the Firestore-backed page content resolves. Same palette as
-  // the pre-boot splash in index.html, so the two read as one screen.
-  if (loading) return <BrandedLoader />;
-
   const { hero, stats, features, about, support, footer, contact } = content;
 
   return (
     <div className={`min-h-screen overflow-x-hidden selection:bg-[#2E5E99]/30 transition-colors duration-700 ${theme === 'dark' ? 'bg-[#0D2440] text-white' : 'bg-[#E7F0FA] text-[#0D2440]'}`}>
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            key="welcome-screen"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[200] pointer-events-none"
+          >
+            <BrandedLoader />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <ThreeBackground />
 
       {/* ── Navigation ── */}

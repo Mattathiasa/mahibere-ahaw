@@ -217,6 +217,7 @@ export interface LandingContent {
     youtube?: string;
     telegram?: string;
     phone?: string;
+    facebook?: string;
     platformHeading: string;
     platformLinks: LandingLink[];
     supportHeading: string;
