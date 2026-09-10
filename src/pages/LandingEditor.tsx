@@ -648,7 +648,7 @@ const LandingEditor: React.FC = () => {
                 <TabsTrigger value="features">{a.leFeatures}</TabsTrigger>
                 <TabsTrigger value="about">{a.leAboutFaith}</TabsTrigger>
                 <TabsTrigger value="news">{a.leNews}</TabsTrigger>
-                <TabsTrigger value="teachings">{a.leTeachings}</TabsTrigger>
+                <TabsTrigger value="teachings">{a.leSermons}</TabsTrigger>
                 <TabsTrigger value="suggestions">{a.leSuggestions}</TabsTrigger>
                 <TabsTrigger value="support">{a.leSupportBanks}</TabsTrigger>
                 <TabsTrigger value="contact">{a.leContact}</TabsTrigger>
@@ -1322,11 +1322,11 @@ const LandingEditor: React.FC = () => {
                 </Card>
               </TabsContent>
 
-              {/* ── Teachings ── */}
+              {/* ── Sermons ── */}
               <TabsContent value="teachings">
                 <Card>
                   <CardHeader>
-                    <CardTitle>{a.leTeachingsSection}</CardTitle>
+                    <CardTitle>{a.leSermonsSection}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

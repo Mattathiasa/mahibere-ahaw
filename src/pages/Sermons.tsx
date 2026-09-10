@@ -9,9 +9,9 @@ import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { teachingService, resolveTeachingField } from '@/services/teachings';
-import { TeachingServiceType } from '@/types';
-import { CreateTeachingDialog } from '@/components/CreateTeachingDialog';
+import { sermonService, resolveSermonField } from '@/services/sermons';
+import { SermonServiceType } from '@/types';
+import { CreateSermonDialog } from '@/components/CreateSermonDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { useFormatters } from '@/lib/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
-const Teaching = () => {
+const Sermons = () => {
     const { t } = useTranslation();
     const { t: tree, language } = useLanguage();
     const pg = tree.pages;
@@ -30,37 +30,39 @@ const Teaching = () => {
     const { showElement } = useSoftwareControl();
     const rolePerms = useRolePermissions();
     const queryClient = useQueryClient();
+    // Permission/element keys stay 'Teaching'-named internally — see the
+    // comment at the top of src/services/sermons.ts.
     const canCreateTeaching = rolePerms.canCreateTeaching && showElement('teachings.create');
     const canEditTeaching = rolePerms.canEditTeaching && showElement('teachings.edit');
     const canDeleteTeaching = rolePerms.canDeleteTeaching && showElement('teachings.delete');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
-    const { data: teachings, isLoading } = useQuery({
-        queryKey: ['teachings'],
-        queryFn: () => teachingService.getAllTeachings(),
+    const { data: sermons, isLoading } = useQuery({
+        queryKey: ['sermons'],
+        queryFn: () => sermonService.getAllSermons(),
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id: string) => teachingService.deleteTeaching(id),
+        mutationFn: (id: string) => sermonService.deleteSermon(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teachings'] });
-            toast.success(pg.teachingDeleted ?? 'Teaching deleted.');
+            queryClient.invalidateQueries({ queryKey: ['sermons'] });
+            toast.success(pg.sermonDeleted ?? 'Sermon deleted.');
             setDeleteTarget(null);
         },
-        onError: () => toast.error('Failed to delete teaching'),
+        onError: () => toast.error('Failed to delete sermon'),
     });
 
     const openCreate = () => { setEditing(null); setDialogOpen(true); };
-    const openEdit = (teaching: any) => { setEditing(teaching); setDialogOpen(true); };
+    const openEdit = (sermon: any) => { setEditing(sermon); setDialogOpen(true); };
 
     return (
         <div className="space-y-12 animate-in fade-in duration-700 ease-out pb-20">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <ConfigurablePageHeader
                     module="teachings"
-                    defaultTitle={t('teachings')}
-                    defaultDescription={t('teachingsHeaderDesc')}
+                    defaultTitle={t('sermons')}
+                    defaultDescription={t('sermonsHeaderDesc')}
                     badge="Wisdom & Grace"
                 />
                 {canCreateTeaching && (
@@ -77,11 +79,11 @@ const Teaching = () => {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {isLoading ? (
                     <LoadingSkeleton type="card" count={6} />
-                ) : teachings && teachings.length > 0 ? (
+                ) : sermons && sermons.length > 0 ? (
                     <AnimatePresence>
-                        {teachings.map((teaching: any, i: number) => (
+                        {sermons.map((sermon: any, i: number) => (
                             <motion.div
-                                key={teaching._id}
+                                key={sermon._id}
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1 }}
@@ -90,12 +92,12 @@ const Teaching = () => {
                                     <div className="relative h-64 w-full overflow-hidden">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10 opacity-60" />
                                         <img
-                                            src={teaching.featuredImage || 'https://images.unsplash.com/photo-1544427928-c49cdfb81949?auto=format&fit=crop&q=80'}
-                                            alt={teaching.title}
+                                            src={sermon.featuredImage || 'https://images.unsplash.com/photo-1544427928-c49cdfb81949?auto=format&fit=crop&q=80'}
+                                            alt={sermon.title}
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         />
                                         <Badge className={`absolute top-6 left-6 z-20 h-8 px-4 font-black uppercase tracking-widest bg-white/90 text-[#0D2440] border-none backdrop-blur-md`}>
-                                            {t(teaching.serviceType?.toLowerCase() as any)}
+                                            {t(sermon.serviceType?.toLowerCase() as any)}
                                         </Badge>
                                     </div>
 
@@ -103,20 +105,20 @@ const Teaching = () => {
                                         <div className="flex justify-end items-start mb-4">
                                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#2E5E99]/60">
                                                 <Clock className="h-4 w-4" />
-                                                {formatDate(teaching.dateDelivered)}
+                                                {formatDate(sermon.dateDelivered)}
                                             </div>
                                         </div>
                                         <CardTitle className="text-2xl font-black text-[#0D2440] dark:text-white leading-tight mb-2 tracking-tight group-hover:text-[#2E5E99] transition-colors">
-                                            {resolveTeachingField(teaching, 'title', language)}
+                                            {resolveSermonField(sermon, 'title', language)}
                                         </CardTitle>
                                         <CardDescription className="line-clamp-2 font-semibold text-[#0D2440]/60 dark:text-white/40">
-                                            {resolveTeachingField(teaching, 'shortDescription', language)}
+                                            {resolveSermonField(sermon, 'shortDescription', language)}
                                         </CardDescription>
                                     </CardHeader>
 
                                     <CardContent className="px-8 pb-8 flex-1 flex flex-col justify-between mt-4">
                                         <div className="flex flex-wrap gap-2 mb-6">
-                                            {teaching.tags?.slice(0, 3).map((tag: string) => (
+                                            {sermon.tags?.slice(0, 3).map((tag: string) => (
                                                 <span key={tag} className="text-[10px] font-black uppercase tracking-widest bg-[#2E5E99]/5 text-[#2E5E99] px-3 py-1 rounded-full border border-[#2E5E99]/10">
                                                     #{tag}
                                                 </span>
@@ -130,7 +132,7 @@ const Teaching = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-black uppercase tracking-widest text-[#2E5E99]/60">{t('speaker')}</p>
-                                                    <p className="text-sm font-black text-[#0D2440] dark:text-white">{teaching.speaker}</p>
+                                                    <p className="text-sm font-black text-[#0D2440] dark:text-white">{sermon.speaker}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1.5">
@@ -138,7 +140,7 @@ const Teaching = () => {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => openEdit(teaching)}
+                                                        onClick={() => openEdit(sermon)}
                                                         className="rounded-full hover:bg-[#2E5E99] hover:text-white transition-all shadow-md"
                                                         aria-label={t('edit')}
                                                     >
@@ -149,7 +151,7 @@ const Teaching = () => {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => setDeleteTarget(teaching)}
+                                                        onClick={() => setDeleteTarget(sermon)}
                                                         className="rounded-full hover:bg-red-500 hover:text-white transition-all shadow-md"
                                                         aria-label={t('delete')}
                                                     >
@@ -171,22 +173,22 @@ const Teaching = () => {
                         <div className="p-8 rounded-full bg-[#2E5E99]/10 text-[#2E5E99] mb-8 animate-pulse">
                             <BookOpen className="h-16 w-16" />
                         </div>
-                        <h3 className="text-3xl font-black text-[#0D2440] dark:text-white tracking-tighter mb-4 italic">{pg.noTeachings}</h3>
-                        <p className="text-xl font-bold text-[#2E5E99]/60 max-w-md text-center">{pg.noTeachingsHint}</p>
+                        <h3 className="text-3xl font-black text-[#0D2440] dark:text-white tracking-tighter mb-4 italic">{pg.noSermons}</h3>
+                        <p className="text-xl font-bold text-[#2E5E99]/60 max-w-md text-center">{pg.noSermonsHint}</p>
                     </div>
                 )}
             </div>
-            <CreateTeachingDialog
+            <CreateSermonDialog
                 open={dialogOpen}
                 onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}
-                teaching={editing}
+                sermon={editing}
             />
 
             <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>{t('delete')}</AlertDialogTitle>
-                        <AlertDialogDescription>{pg.deleteTeachingConfirm}</AlertDialogDescription>
+                        <AlertDialogDescription>{pg.deleteSermonConfirm}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>{tree.common.cancel}</AlertDialogCancel>
@@ -203,4 +205,4 @@ const Teaching = () => {
     );
 };
 
-export default Teaching;
+export default Sermons;

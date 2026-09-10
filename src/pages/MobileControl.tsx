@@ -36,7 +36,7 @@ const FEATURE_LABELS: Record<string, string> = {
   hierarchy: 'Hierarchy',
   higeDenb: 'HigeDenb',
   churchRules: 'Church Rules',
-  teachings: 'Teachings',
+  teachings: 'Sermons',
   documents: 'Documents',
   missionary: 'Missionary',
   volunteer: 'Volunteer',

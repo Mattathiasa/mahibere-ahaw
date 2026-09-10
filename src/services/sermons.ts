@@ -16,19 +16,29 @@ function sortableTime(v: any): number {
     return 0;
 }
 
+// The collection is still named `teachings` in Firestore, and every
+// permission/nav/module key tied to this feature still reads `teaching*`
+// internally (siteConfig/roleFlags.teachingWriteRoles, the canViewTeachings
+// family of PermissionKeys, NAV_KEYS/ELEMENT_KEYS, ModuleKey, etc.). This
+// feature — file, routes, every label — is "Sermon" now; the storage layer
+// wasn't renamed with it, since that would mean migrating the one already-
+// published document and risking a silent mismatch with whatever an admin
+// has already configured in Software Control / Module Config / Mobile
+// Control, the same class of bug a Firestore-rules mismatch just caused.
+
 /**
- * Optional per-language overrides for a teaching's reader-facing text. A
+ * Optional per-language overrides for a sermon's reader-facing text. A
  * language with no entry (or an empty string) falls back to the base field
- * below it — so a teaching with no `translations` at all renders exactly as
+ * below it — so a sermon with no `translations` at all renders exactly as
  * it always has, and adding any single language is entirely opt-in.
  */
-export type TeachingTranslations = Partial<Record<Language, {
+export type SermonTranslations = Partial<Record<Language, {
     title?: string;
     shortDescription?: string;
     transcript?: string;
 }>>;
 
-export interface CreateTeachingData {
+export interface CreateSermonData {
     title: string;
     shortDescription: string;
     speaker: string;
@@ -39,32 +49,32 @@ export interface CreateTeachingData {
     featuredImage?: string;
     fullContent?: string;
     transcript?: string;
-    translations?: TeachingTranslations;
+    translations?: SermonTranslations;
 }
 
 /**
- * Resolves one of a teaching's translatable fields for a language: the
+ * Resolves one of a sermon's translatable fields for a language: the
  * per-language override if one exists and isn't blank, else the base field.
  */
-export function resolveTeachingField(
-    teaching: Record<string, any> | null | undefined,
+export function resolveSermonField(
+    sermon: Record<string, any> | null | undefined,
     field: 'title' | 'shortDescription' | 'transcript',
     language: Language,
 ): string {
-    const override = teaching?.translations?.[language]?.[field];
+    const override = sermon?.translations?.[language]?.[field];
     if (typeof override === 'string' && override.trim()) return override;
-    return teaching?.[field] ?? '';
+    return sermon?.[field] ?? '';
 }
 
-export const teachingService = {
-    async getAllTeachings() {
+export const sermonService = {
+    async getAllSermons() {
         const q = query(collection(db, 'teachings'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => ({ id: d.id, _id: d.id, ...d.data() }));
     },
 
     /**
-     * Published teachings only, newest first — readable by anonymous visitors
+     * Published sermons only, newest first — readable by anonymous visitors
      * (the public homepage section and archive).
      *
      * Filters by status ONLY (a single-field equality, so no composite index is
@@ -83,13 +93,13 @@ export const teachingService = {
         return rows.slice(0, max);
     },
 
-    async getTeachingById(id: string) {
+    async getSermonById(id: string) {
         const snap = await getDoc(doc(db, 'teachings', id));
         if (snap.exists()) return { id: snap.id, _id: snap.id, ...snap.data() };
-        throw new AppError('teachingNotFound');
+        throw new AppError('sermonNotFound');
     },
 
-    async createTeaching(data: CreateTeachingData) {
+    async createSermon(data: CreateSermonData) {
         const docRef = await addDoc(collection(db, 'teachings'), {
             ...data,
             createdAt: serverTimestamp(),
@@ -98,14 +108,14 @@ export const teachingService = {
         return { id: docRef.id, _id: docRef.id, ...data };
     },
 
-    async updateTeaching(id: string, data: Partial<CreateTeachingData>) {
+    async updateSermon(id: string, data: Partial<CreateSermonData>) {
         const ref = doc(db, 'teachings', id);
         await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
         const updated = await getDoc(ref);
         return { id: updated.id, _id: updated.id, ...updated.data() };
     },
 
-    async deleteTeaching(id: string) {
+    async deleteSermon(id: string) {
         await deleteDoc(doc(db, 'teachings', id));
     },
 };

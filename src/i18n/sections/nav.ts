@@ -3,7 +3,12 @@ export const navEn = {
   about: 'About',
   services: 'Services',
   news: 'News',
-  teachings: 'Teachings',
+  // Kept as `teachings` — this key name is the persisted NAV_KEYS lookup
+  // token for the admin sidebar (see src/services/sermons.ts). `sermons`
+  // below is the same wording for the public homepage's independent anchor
+  // nav, which isn't tied to that persisted key.
+  teachings: 'Sermons',
+  sermons: 'Sermons',
   support: 'Support',
   contact: 'Contact',
   suggestions: 'Suggestions',
@@ -44,7 +49,8 @@ export const navAm: Record<keyof typeof navEn, string> = {
   about: 'ስለ እኛ',
   services: 'አገልግሎቶች',
   news: 'ዜና',
-  teachings: 'ትምህርቶች',
+  teachings: 'ስብከቶች',
+  sermons: 'ስብከቶች',
   support: 'ድጋፍ',
   contact: 'እውቂያ',
   suggestions: 'አስተያየት',
@@ -81,7 +87,8 @@ export const navOm: Partial<Record<keyof typeof navEn, string>> = {
   about: 'Waa\'ee Keenya',
   services: 'Tajaajila',
   news: 'Oduu',
-  teachings: 'Barnoota',
+  teachings: 'Lallaba',
+  sermons: 'Lallaba',
   support: 'Deggersa',
   contact: 'Quunnamtii',
   suggestions: 'Yaada',
@@ -120,7 +127,8 @@ export const navTi: Partial<Record<keyof typeof navEn, string>> = {
   about: 'ብዛዕባና',
   services: 'ኣገልግሎታት',
   news: 'ዜና',
-  teachings: 'ትምህርትታት',
+  teachings: 'ስብከታት',
+  sermons: 'ስብከታት',
   support: 'ደገፍ',
   contact: 'ርክብ',
   suggestions: 'ርእይቶ',

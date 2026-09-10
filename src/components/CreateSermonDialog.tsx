@@ -11,8 +11,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Info, Video, FileText, MessageCircle, Mic2, Languages as LanguagesIcon } from 'lucide-react';
-import { teachingService } from '@/services/teachings';
-import { TeachingServiceType } from '@/types';
+import { sermonService } from '@/services/sermons';
+import { SermonServiceType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Translations, Language } from '@/i18n/translations';
 import { LANGUAGE_CYCLE, LANGUAGE_ENDONYM } from '@/i18n/languages';
@@ -20,14 +20,14 @@ import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
 
-interface CreateTeachingDialogProps {
+interface CreateSermonDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    /** When provided, the dialog edits this teaching instead of creating one. */
-    teaching?: Record<string, any> | null;
+    /** When provided, the dialog edits this sermon instead of creating one. */
+    sermon?: Record<string, any> | null;
 }
 
-const SERVICE_TYPES: TeachingServiceType[] = [
+const SERVICE_TYPES: SermonServiceType[] = [
     'Sunday Morning',
     'Wednesday Bible Study',
     "Men's Breakfast",
@@ -51,14 +51,17 @@ const SERVICE_TYPE_KEYS: Record<string, keyof Translations['content']> = {
     'Other': 'serviceTypeOther',
 };
 
-const makeBlankTeachingForm = () => ({
+// The module-config lookup key ('teachings') and the Cloudinary upload
+// folder stay as-is on purpose — see the comment at the top of
+// src/services/sermons.ts.
+const makeBlankSermonForm = () => ({
     // 1. Metadata
     title: '',
     series: '',
     seriesPart: '',
     speaker: '',
     dateDelivered: new Date().toISOString().split('T')[0],
-    serviceType: 'Sunday Morning' as TeachingServiceType,
+    serviceType: 'Sunday Morning' as SermonServiceType,
     primaryScripture: '',
     supportingScriptures: [] as string[],
     tags: [] as string[],
@@ -90,37 +93,37 @@ const makeBlankTeachingForm = () => ({
     translations: {} as Partial<Record<Language, { title?: string; shortDescription?: string; transcript?: string }>>,
 });
 
-type TeachingForm = ReturnType<typeof makeBlankTeachingForm>;
+type SermonForm = ReturnType<typeof makeBlankSermonForm>;
 
-export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTeachingDialogProps) {
+export function CreateSermonDialog({ open, onOpenChange, sermon }: CreateSermonDialogProps) {
     const queryClient = useQueryClient();
     const moduleCfg = useModuleConfig('teachings');
     const { t } = useLanguage();
     const c = t.content;
-    const isEditing = !!teaching;
+    const isEditing = !!sermon;
     const [activeTab, setActiveTab] = useState('metadata');
 
     // Form State
-    const [formData, setFormData] = useState<TeachingForm>(makeBlankTeachingForm);
+    const [formData, setFormData] = useState<SermonForm>(makeBlankSermonForm);
 
     // Populate from the record when editing (or reset to blank for create) each
     // time the dialog opens, so reusing the same dialog for different rows works.
     useEffect(() => {
         if (!open) return;
-        const blank = makeBlankTeachingForm();
-        if (!teaching) {
+        const blank = makeBlankSermonForm();
+        if (!sermon) {
             setFormData(blank);
             setActiveTab('metadata');
             return;
         }
-        const next: TeachingForm = { ...blank };
-        for (const key of Object.keys(blank) as (keyof TeachingForm)[]) {
-            const v = (teaching as Record<string, unknown>)[key];
+        const next: SermonForm = { ...blank };
+        for (const key of Object.keys(blank) as (keyof SermonForm)[]) {
+            const v = (sermon as Record<string, unknown>)[key];
             if (v !== undefined && v !== null) (next as Record<string, unknown>)[key] = v;
         }
         setFormData(next);
         setActiveTab('metadata');
-    }, [open, teaching]);
+    }, [open, sermon]);
 
     // Helpers for array fields
     const [tempTag, setTempTag] = useState('');
@@ -171,31 +174,31 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
     };
 
     const saveMutation = useMutation({
-        mutationFn: async (data: TeachingForm) => {
-            // A saved teaching is a published one — there's no separate draft
+        mutationFn: async (data: SermonForm) => {
+            // A saved sermon is a published one — there's no separate draft
             // step, so every save (create or edit) writes status 'Published'.
             const payload = { ...data, status: 'Published' };
             if (isEditing) {
-                const id = (teaching as any).id ?? (teaching as any)._id;
-                return teachingService.updateTeaching(id, payload as any);
+                const id = (sermon as any).id ?? (sermon as any)._id;
+                return sermonService.updateSermon(id, payload as any);
             }
-            return teachingService.createTeaching(payload as any);
+            return sermonService.createSermon(payload as any);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['teachings'] });
-            toast.success(isEditing ? c.teachingUpdated : c.teachingCreated);
+            queryClient.invalidateQueries({ queryKey: ['sermons'] });
+            toast.success(isEditing ? c.sermonUpdated : c.sermonCreated);
             onOpenChange(false);
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to save teaching');
+            toast.error(error.response?.data?.message || 'Failed to save sermon');
         },
     });
 
     const handleSubmit = () => {
-        // Everything but the title is optional — a teaching can be just written
+        // Everything but the title is optional — a sermon can be just written
         // text (no speaker, no service date) as well as a recorded sermon.
         if (!formData.title) {
-            toast.error(c.teachingMissingFields);
+            toast.error(c.sermonMissingFields);
             return;
         }
         saveMutation.mutate(formData);
@@ -205,9 +208,9 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
                 <DialogHeader className="px-6 py-4 border-b">
-                    <DialogTitle>{isEditing ? c.editTeaching : c.createTeaching}</DialogTitle>
+                    <DialogTitle>{isEditing ? c.editSermon : c.createSermon}</DialogTitle>
                     <DialogDescription>
-                        Fill out the template below to create a new teaching record.
+                        Fill out the template below to create a new sermon record.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -250,11 +253,11 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                                 <TabsContent value="metadata" className="mt-0 space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2 col-span-2">
-                                            <Label>{c.teachingTitle}</Label>
+                                            <Label>{c.sermonTitle}</Label>
                                             <Input
                                                 value={formData.title}
                                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                                placeholder={c.teachingTitlePlaceholder}
+                                                placeholder={c.sermonTitlePlaceholder}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -290,7 +293,7 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                                         </div>
                                         <div className="space-y-2">
                                             <Label>{c.serviceType}</Label>
-                                            <Select value={formData.serviceType} onValueChange={(v) => setFormData({ ...formData, serviceType: v as TeachingServiceType })}>
+                                            <Select value={formData.serviceType} onValueChange={(v) => setFormData({ ...formData, serviceType: v as SermonServiceType })}>
                                                 <SelectTrigger>
                                                     <SelectValue />
                                                 </SelectTrigger>
@@ -584,7 +587,7 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                                                     <Input
                                                         value={formData.translations[lang]?.title ?? ''}
                                                         onChange={(e) => setTranslation(lang, 'title', e.target.value)}
-                                                        placeholder={c.teachingTitlePlaceholder}
+                                                        placeholder={c.sermonTitlePlaceholder}
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
@@ -619,7 +622,7 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                     <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
                         {saveMutation.isPending
                             ? t.common.saving
-                            : isEditing ? c.updateTeachingButton : c.createTeachingButton}
+                            : isEditing ? c.updateSermonButton : c.createSermonButton}
                     </Button>
                 </DialogFooter>
             </DialogContent>

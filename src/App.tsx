@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -28,7 +28,7 @@ const HigeDenb = lazy(() => import("./pages/HigeDenb"));
 const Settings = lazy(() => import("./pages/Settings"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const Missionary = lazy(() => import("./pages/Missionary"));
-const Teaching = lazy(() => import("./pages/Teaching"));
+const Sermons = lazy(() => import("./pages/Sermons"));
 const StrategicPlan = lazy(() => import("./pages/StrategicPlan"));
 const PartnerContact = lazy(() => import("./pages/PartnerContact"));
 const Volunteer = lazy(() => import("./pages/Volunteer"));
@@ -46,8 +46,8 @@ const ChurchMap = lazy(() => import("./pages/ChurchMap"));
 const NewsIndex = lazy(() => import("./pages/NewsIndex"));
 const About = lazy(() => import("./pages/About"));
 const NewsPostPage = lazy(() => import("./pages/NewsPost"));
-const TeachingsPublic = lazy(() => import("./pages/TeachingsPublic"));
-const TeachingPublicPost = lazy(() => import("./pages/TeachingPublicPost"));
+const SermonsPublic = lazy(() => import("./pages/SermonsPublic"));
+const SermonPublicPost = lazy(() => import("./pages/SermonPublicPost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
@@ -81,6 +81,12 @@ const queryClient = new QueryClient({
 const appFallback = <BrandedLoader variant="app" />;
 const publicFallback = <BrandedLoader />;
 
+/** Old `/teachings/view/:id` links → the renamed `/sermons/view/:id` route. */
+const RedirectToSermonView = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/sermons/view/${id}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -105,8 +111,11 @@ const App = () => (
                   {/* Public: the long-form history the homepage summary links to. */}
                   <Route path="/about" element={<Suspense fallback={publicFallback}><About /></Suspense>} />
                   <Route path="/news/:slug" element={<Suspense fallback={publicFallback}><NewsPostPage /></Suspense>} />
-                  <Route path="/teachings/browse" element={<Suspense fallback={publicFallback}><TeachingsPublic /></Suspense>} />
-                  <Route path="/teachings/view/:id" element={<Suspense fallback={publicFallback}><TeachingPublicPost /></Suspense>} />
+                  <Route path="/sermons/browse" element={<Suspense fallback={publicFallback}><SermonsPublic /></Suspense>} />
+                  <Route path="/sermons/view/:id" element={<Suspense fallback={publicFallback}><SermonPublicPost /></Suspense>} />
+                  {/* Renamed from Teaching to Sermon — keep old links working. */}
+                  <Route path="/teachings/browse" element={<Navigate to="/sermons/browse" replace />} />
+                  <Route path="/teachings/view/:id" element={<RedirectToSermonView />} />
                   <Route path="/admin/landing-editor" element={<AdminRoute><LandingEditor /></AdminRoute>} />
                   <Route path="/admin/permissions" element={<AdminRoute superAdminOnly><PermissionControl /></AdminRoute>} />
                   <Route path="/admin/mobile-control" element={<AdminRoute><Suspense fallback={appFallback}><MobileControl /></Suspense></AdminRoute>} />
@@ -151,7 +160,9 @@ const App = () => (
                   <Route path="/user-management" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewUserManagement"><Suspense fallback={appFallback}><UserManagement /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/users" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewUserManagement"><Suspense fallback={appFallback}><UserManagement /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/missionary" element={<ProtectedRoute><DashboardLayout><RequirePermission permission={['canViewMissionary', 'canSubmitMissionaryApplication']} module="missionary"><Suspense fallback={appFallback}><Missionary /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
-                  <Route path="/teachings" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewTeachings" module="teachings"><Suspense fallback={appFallback}><Teaching /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  <Route path="/sermons" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewTeachings" module="teachings"><Suspense fallback={appFallback}><Sermons /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
+                  {/* Renamed from Teaching to Sermon — keep the old admin link working. */}
+                  <Route path="/teachings" element={<Navigate to="/sermons" replace />} />
                   <Route path="/strategic-plan" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewStrategicPlan" module="strategicPlan"><Suspense fallback={appFallback}><StrategicPlan /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />
                   <Route path="/partner" element={<ProtectedRoute><DashboardLayout><Suspense fallback={appFallback}><PartnerContact /></Suspense></DashboardLayout></ProtectedRoute>} />
                   <Route path="/volunteer" element={<ProtectedRoute><DashboardLayout><RequirePermission permission="canViewVolunteer" module="volunteer"><Suspense fallback={appFallback}><Volunteer /></Suspense></RequirePermission></DashboardLayout></ProtectedRoute>} />

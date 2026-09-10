@@ -68,7 +68,7 @@ const getNavigationItems = ({
     { name: 'notifications', href: '/notifications', icon: Bell, permission: 'canViewNotifications' },
     { name: 'churchRules', href: '/church-rules', icon: Scale, permission: 'canViewChurchRules' },
     { name: 'higeDenb', href: '/hige-denb', icon: BookOpen, permission: 'canViewHigeDenb' },
-    { name: 'teachings', href: '/teachings', icon: BookOpen, permission: 'canViewTeachings' },
+    { name: 'teachings', href: '/sermons', icon: BookOpen, permission: 'canViewTeachings' },
     { name: 'strategicPlan', href: '/strategic-plan', icon: FileText, permission: 'canViewStrategicPlan' },
     { name: 'documents', href: '/documents', icon: FolderOpen, permission: 'canViewDocuments' },
     { name: 'news', href: '/news-manager', icon: Newspaper, permission: 'canViewNews' },

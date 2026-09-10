@@ -159,9 +159,10 @@ export interface LandingContent {
     maxPosts: number;
   };
   /**
-   * The homepage teachings feed. The teachings themselves come from the
-   * `teachings` collection (published only); everything the section says around
-   * them lives here. Mirrors `news`.
+   * The homepage sermons feed. The sermons themselves come from the
+   * `teachings` Firestore collection (published only — field/collection name
+   * kept as-is, see src/services/sermons.ts); everything the section says
+   * around them lives here. Mirrors `news`.
    */
   teachings: {
     badge: string;
@@ -171,7 +172,7 @@ export interface LandingContent {
     readMoreLabel: string;
     emptyTitle: string;
     emptyDescription: string;
-    /** How many teachings the homepage feed shows. */
+    /** How many sermons the homepage feed shows. */
     maxPosts: number;
   };
   /**
@@ -340,13 +341,13 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       maxPosts: 4,
     },
     teachings: {
-      badge: 'Teachings',
-      sectionTitle: 'Teachings & Sermons',
+      badge: 'Sermons',
+      sectionTitle: 'Sermons',
       sectionDescription: 'Messages and Bible studies from our services.',
-      seeAllLabel: 'See all teachings',
+      seeAllLabel: 'See all sermons',
       readMoreLabel: 'Read more',
-      emptyTitle: 'Teachings & Sermons',
-      emptyDescription: 'Published teachings from our ministry will appear here soon.',
+      emptyTitle: 'Sermons',
+      emptyDescription: 'Published sermons from our ministry will appear here soon.',
       maxPosts: 4,
     },
     suggestions: {
@@ -521,13 +522,13 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       maxPosts: 4,
     },
     teachings: {
-      badge: 'ትምህርቶች',
-      sectionTitle: 'ትምህርቶችና ስብከቶች',
+      badge: 'ስብከቶች',
+      sectionTitle: 'ስብከቶች',
       sectionDescription: 'ከአገልግሎቶቻችን የተወሰዱ መልእክቶችና የመጽሐፍ ቅዱስ ጥናቶች።',
-      seeAllLabel: 'ሁሉንም ትምህርቶች ይመልከቱ',
+      seeAllLabel: 'ሁሉንም ስብከቶች ይመልከቱ',
       readMoreLabel: 'ተጨማሪ ያንብቡ',
-      emptyTitle: 'ትምህርቶችና ስብከቶች',
-      emptyDescription: 'የታተሙ ትምህርቶች በቅርቡ እዚህ ይታያሉ።',
+      emptyTitle: 'ስብከቶች',
+      emptyDescription: 'የታተሙ ስብከቶች በቅርቡ እዚህ ይታያሉ።',
       maxPosts: 4,
     },
     suggestions: {
@@ -687,13 +688,13 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       maxPosts: 4,
     },
     teachings: {
-      badge: 'Barnoota',
-      sectionTitle: 'Barnootaa fi Lallaba',
+      badge: 'Lallaba',
+      sectionTitle: 'Lallaba',
       sectionDescription: 'Ergaawwanii fi qayyabannaa Macaafa Qulqulluu tajaajila keenya irraa.',
-      seeAllLabel: 'Barnoota hunda ilaali',
+      seeAllLabel: 'Lallaba hunda ilaali',
       readMoreLabel: 'Dabalata dubbisi',
-      emptyTitle: 'Barnootaa fi Lallaba',
-      emptyDescription: 'Barnoonni maxxanfaman dhiyootti asitti ni mul\'atu.',
+      emptyTitle: 'Lallaba',
+      emptyDescription: 'Lallabni maxxanfaman dhiyootti asitti ni mul\'atu.',
       maxPosts: 4,
     },
     suggestions: {
@@ -854,13 +855,13 @@ export const DEFAULT_LANDING_CONTENT: Record<Language, LandingContent> = {
       maxPosts: 4,
     },
     teachings: {
-      badge: 'ትምህርትታት',
-      sectionTitle: 'ትምህርትታትን ስብከታትን',
+      badge: 'ስብከታት',
+      sectionTitle: 'ስብከታት',
       sectionDescription: 'ካብ ኣገልግሎትና ዝወጹ መልእኽትታትን ናይ መጽሓፍ ቅዱስ መጽናዕትታትን።',
-      seeAllLabel: 'ኩሉ ትምህርትታት ርአ',
+      seeAllLabel: 'ኩሉ ስብከታት ርአ',
       readMoreLabel: 'ተወሳኺ ኣንብብ',
-      emptyTitle: 'ትምህርትታትን ስብከታትን',
-      emptyDescription: 'ዝተሓተሙ ትምህርትታት ኣብ ቀረባ እዋን ኣብዚ ክረኣዩ እዮም።',
+      emptyTitle: 'ስብከታት',
+      emptyDescription: 'ዝተሓተሙ ስብከታት ኣብ ቀረባ እዋን ኣብዚ ክረኣዩ እዮም።',
       maxPosts: 4,
     },
     suggestions: {

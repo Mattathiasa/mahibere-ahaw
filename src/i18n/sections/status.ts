@@ -1,5 +1,5 @@
 /**
- * Labels for values PERSISTED in Firestore (asset status, teaching status,
+ * Labels for values PERSISTED in Firestore (asset status, sermon status,
  * employment status). The stored value is the key suffix, spelled verbatim —
  * never re-spell it, and never translate a value that is compared, filtered, or
  * written. See src/i18n/enums.ts for the full contract and the resolvers.
@@ -53,13 +53,13 @@ export const statusEn = {
   employeeCategoryPriest: 'Priest',
   employeeCategoryStaff: 'Staff',
 
-  // ── Teaching status — types/index.ts ──────────────────────────────────────
-  teachingStatusDraft: 'Draft',
-  teachingStatusPublished: 'Published',
-  teachingStatusArchived: 'Archived',
-  teachingStatusScheduled: 'Scheduled',
-  teachingStatusCompleted: 'Completed',
-  teachingStatusCancelled: 'Cancelled',
+  // ── Sermon status — types/index.ts ────────────────────────────────────────
+  sermonStatusDraft: 'Draft',
+  sermonStatusPublished: 'Published',
+  sermonStatusArchived: 'Archived',
+  sermonStatusScheduled: 'Scheduled',
+  sermonStatusCompleted: 'Completed',
+  sermonStatusCancelled: 'Cancelled',
 
   // ── Budget status — services/finance.ts ───────────────────────────────────
   budgetStatusActive: 'Active',
@@ -148,12 +148,12 @@ export const statusAm: Record<keyof typeof statusEn, string> = {
   employeeCategoryPriest: 'ካህን',
   employeeCategoryStaff: 'ሠራተኛ',
 
-  teachingStatusDraft: 'ረቂቅ',
-  teachingStatusPublished: 'የታተመ',
-  teachingStatusArchived: 'በማህደር የተቀመጠ',
-  teachingStatusScheduled: 'የተያዘ',
-  teachingStatusCompleted: 'የተጠናቀቀ',
-  teachingStatusCancelled: 'የተሰረዘ',
+  sermonStatusDraft: 'ረቂቅ',
+  sermonStatusPublished: 'የታተመ',
+  sermonStatusArchived: 'በማህደር የተቀመጠ',
+  sermonStatusScheduled: 'የተያዘ',
+  sermonStatusCompleted: 'የተጠናቀቀ',
+  sermonStatusCancelled: 'የተሰረዘ',
 
   budgetStatusActive: 'በሥራ ላይ',
   budgetStatusCompleted: 'የተጠናቀቀ',

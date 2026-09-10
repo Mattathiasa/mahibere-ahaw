@@ -84,7 +84,7 @@ export const errorsEn = {
   planNotFound: 'That plan no longer exists.',
   reportNotFound: 'That report no longer exists.',
   reportBackNotFound: 'That feedback no longer exists.',
-  teachingNotFound: 'That teaching no longer exists.',
+  sermonNotFound: 'That sermon no longer exists.',
   cloudinaryNotConfigured: 'Image uploads are not set up yet. An administrator needs to add the Cloudinary cloud name and upload preset first.',
 
   // ── Homepage suggestion box ───────────────────────────────────────────────
@@ -158,7 +158,7 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
   planNotFound: 'ያ ዕቅድ ከእንግዲህ የለም።',
   reportNotFound: 'ያ ሪፖርት ከእንግዲህ የለም።',
   reportBackNotFound: 'ያ አስተያየት ከእንግዲህ የለም።',
-  teachingNotFound: 'ያ ትምህርት ከእንግዲህ የለም።',
+  sermonNotFound: 'ያ ስብከት ከእንግዲህ የለም።',
   cloudinaryNotConfigured: 'የምስል መጫኛ ገና አልተዘጋጀም። አስተዳዳሪ መጀመሪያ የCloudinary የክላውድ ስምና የመጫኛ ቅድመ ቅንብር መጨመር አለበት።',
 
   suggestionFailed: 'አስተያየትዎን መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።',

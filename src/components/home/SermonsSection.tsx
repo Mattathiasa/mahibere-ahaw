@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, ArrowRight, User, Calendar } from 'lucide-react';
-import { teachingService, resolveTeachingField } from '@/services/teachings';
+import { sermonService, resolveSermonField } from '@/services/sermons';
 import { optimized } from '@/services/cloudinary';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,13 +13,13 @@ import { useFormatters } from '@/lib/formatters';
 const SECTION_CLASS = 'py-24 sm:py-32 relative scroll-mt-24 sm:scroll-mt-28';
 
 /**
- * The homepage teachings feed: the newest published teaching as a large lead
+ * The homepage sermons feed: the newest published sermon as a large lead
  * card, the rest as a compact list. Read-only — everything editable lives in
- * the dashboard Teachings page. Every string it shows comes from
- * `content.teachings` in the Landing Editor, as does how many to show.
- * Mirrors NewsSection.
+ * the dashboard Sermons page. Every string it shows comes from
+ * `content.teachings` in the Landing Editor (field name kept as-is — see
+ * src/services/sermons.ts), as does how many to show. Mirrors NewsSection.
  */
-export const TeachingsSection: React.FC = () => {
+export const SermonsSection: React.FC = () => {
   const navigate = useNavigate();
   const { formatDate } = useFormatters();
   const { theme } = useTheme();
@@ -31,7 +31,7 @@ export const TeachingsSection: React.FC = () => {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    teachingService.listPublished({ max })
+    sermonService.listPublished({ max })
       .then(setItems)
       .catch(() => setItems([]))
       .finally(() => setLoaded(true));
@@ -39,7 +39,7 @@ export const TeachingsSection: React.FC = () => {
 
   if (!loaded) {
     return (
-      <section id="teachings" className={SECTION_CLASS}>
+      <section id="sermons" className={SECTION_CLASS}>
         <div className="container mx-auto px-6">
           <InlineLoader />
         </div>
@@ -49,7 +49,7 @@ export const TeachingsSection: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <section id="teachings" className={SECTION_CLASS}>
+      <section id="sermons" className={SECTION_CLASS}>
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto text-center space-y-4 p-12 rounded-3xl bg-white/40 dark:bg-white/5 border border-[#2E5E99]/10 backdrop-blur-md">
             <div className="inline-flex p-4 rounded-2xl bg-[#2E5E99]/10 text-[#2E5E99] mb-2">
@@ -74,11 +74,11 @@ export const TeachingsSection: React.FC = () => {
 
   const speaker = (t: any) => t.speaker || '';
   const delivered = (t: any) => (t.dateDelivered ? formatDate(t.dateDelivered) : null);
-  const title = (t: any) => resolveTeachingField(t, 'title', language);
-  const shortDescription = (t: any) => resolveTeachingField(t, 'shortDescription', language);
+  const title = (t: any) => resolveSermonField(t, 'title', language);
+  const shortDescription = (t: any) => resolveSermonField(t, 'shortDescription', language);
 
   return (
-    <section id="teachings" className={SECTION_CLASS}>
+    <section id="sermons" className={SECTION_CLASS}>
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-14 gap-6">
           <div className="space-y-4 max-w-2xl min-w-0">
@@ -92,19 +92,19 @@ export const TeachingsSection: React.FC = () => {
               {cfg.sectionDescription}
             </p>
           </div>
-          <button onClick={() => navigate('/teachings/browse')}
+          <button onClick={() => navigate('/sermons/browse')}
             className="flex items-center gap-2 text-[#2E5E99] font-bold hover:gap-3 transition-all shrink-0">
             {cfg.seeAllLabel} <ArrowRight className="h-4 w-4" />
           </button>
         </div>
 
         <div className={`grid gap-8 ${rest.length > 0 ? 'lg:grid-cols-3' : ''}`}>
-          {/* ── Lead teaching ── */}
+          {/* ── Lead sermon ── */}
           <motion.article
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            onClick={() => navigate(`/teachings/view/${lead.id}`)}
+            onClick={() => navigate(`/sermons/view/${lead.id}`)}
             className={`group cursor-pointer rounded-[2rem] overflow-hidden shadow-xl border transition-all hover:-translate-y-1 hover:shadow-2xl ${cardBg} ${
               rest.length > 0 ? 'lg:col-span-2' : ''}`}
           >
@@ -159,7 +159,7 @@ export const TeachingsSection: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: (i + 1) * 0.1 }}
                   viewport={{ once: true }}
-                  onClick={() => navigate(`/teachings/view/${t.id}`)}
+                  onClick={() => navigate(`/sermons/view/${t.id}`)}
                   className={`group cursor-pointer flex gap-4 p-4 rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${cardBg}`}
                 >
                   <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-[#2E5E99]/5">

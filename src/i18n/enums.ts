@@ -61,8 +61,8 @@ export const EMPLOYMENT_TYPES = ['FullTime', 'PartTime', 'Contract', 'Volunteer'
 /** `Employee.category` */
 export const EMPLOYEE_CATEGORIES = ['Priest', 'Staff'] as const;
 
-/** `TeachingRecord.status` — src/types/index.ts */
-export const TEACHING_STATUSES = [
+/** `SermonRecord.status` — src/types/index.ts */
+export const SERMON_STATUSES = [
   'Draft',
   'Published',
   'Archived',
@@ -155,7 +155,7 @@ export const acquisitionTypeLabel = (t: Translations, v: string) => label(t, 'ac
 export const employmentStatusLabel = (t: Translations, v: string) => label(t, 'employmentStatus', v);
 export const employmentTypeLabel = (t: Translations, v: string) => label(t, 'employmentType', v);
 export const employeeCategoryLabel = (t: Translations, v: string) => label(t, 'employeeCategory', v);
-export const teachingStatusLabel = (t: Translations, v: string) => label(t, 'teachingStatus', v);
+export const sermonStatusLabel = (t: Translations, v: string) => label(t, 'sermonStatus', v);
 export const budgetStatusLabel = (t: Translations, v: string) => label(t, 'budgetStatus', v);
 export const voucherStatusLabel = (t: Translations, v: string) => label(t, 'voucherStatus', v);
 export const timeframeLabel = (t: Translations, v: string) => label(t, 'timeframe', v);
@@ -179,7 +179,7 @@ export const ENUM_REGISTRY: ReadonlyArray<{ prefix: string; values: readonly str
   { prefix: 'employmentStatus', values: EMPLOYMENT_STATUSES },
   { prefix: 'employmentType', values: EMPLOYMENT_TYPES },
   { prefix: 'employeeCategory', values: EMPLOYEE_CATEGORIES },
-  { prefix: 'teachingStatus', values: TEACHING_STATUSES },
+  { prefix: 'sermonStatus', values: SERMON_STATUSES },
   { prefix: 'budgetStatus', values: BUDGET_STATUSES },
   { prefix: 'voucherStatus', values: VOUCHER_STATUSES },
   { prefix: 'timeframe', values: TIMEFRAMES },

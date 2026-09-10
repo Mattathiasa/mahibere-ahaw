@@ -232,19 +232,19 @@ export interface FinancialReportInput {
 }
 
 /**
- * The service a teaching belongs to.
+ * The service a sermon belongs to.
  *
  * A union of the exact strings stored in Firestore, not an enum of invented
  * tokens. It used to be an enum with five SCREAMING_SNAKE values
- * (`SUNDAY_SCHOOL`, `BIBLE_STUDY`, …) that matched nothing: `CreateTeachingDialog`
+ * (`SUNDAY_SCHOOL`, `BIBLE_STUDY`, …) that matched nothing: `CreateSermonDialog`
  * has always written these seven human-readable strings, and every one of them
  * was a type error — seven of the twenty-four in the baseline.
  *
  * The stored values are what they are, so the type moved to fit the data rather
- * than the data being migrated to fit the type. `services/teachings.ts` types the
+ * than the data being migrated to fit the type. `services/sermons.ts` types the
  * field as a bare `string`, so nothing was validating it either way.
  */
-export type TeachingServiceType =
+export type SermonServiceType =
   | 'Sunday Morning'
   | 'Wednesday Bible Study'
   | "Men's Breakfast"
@@ -253,7 +253,7 @@ export type TeachingServiceType =
   | 'Special Event'
   | 'Other';
 
-export enum TeachingStatus {
+export enum SermonStatus {
   DRAFT = 'Draft',
   PUBLISHED = 'Published',
   ARCHIVED = 'Archived',

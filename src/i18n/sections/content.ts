@@ -1,10 +1,10 @@
 /**
- * News, teachings, announcements, documents and other publishable content.
+ * News, sermons, announcements, documents and other publishable content.
  *
- * `serviceType*` labels a value PERSISTED on the teaching record. Those tokens
+ * `serviceType*` labels a value PERSISTED on the sermon record. Those tokens
  * contain spaces and apostrophes ("Men's Breakfast"), so they cannot be key
  * suffixes the way the `status` enums are — the token-to-key map lives beside
- * the list in CreateTeachingDialog. The token itself is never translated.
+ * the list in CreateSermonDialog. The token itself is never translated.
  *
  * Two levels only: this file supplies one flat `key -> string` object per
  * language. See src/i18n/translations.ts for why that shape is load-bearing.
@@ -19,7 +19,7 @@ export const contentEn = {
   serviceTypeSpecialEvent: 'Special event',
   serviceTypeOther: 'Other',
 
-  // ── Teaching editor: tabs ─────────────────────────────────────────────────
+  // ── Sermon editor: tabs ────────────────────────────────────────────────────
   tabMetadata: 'Metadata',
   tabPublicHeader: 'Public header',
   tabMainContent: 'Main content',
@@ -27,11 +27,11 @@ export const contentEn = {
   tabFooterLegal: 'Footer & legal',
   tabTranslations: 'Translations',
 
-  // ── Teaching editor: fields ───────────────────────────────────────────────
-  createTeaching: 'Create new teaching',
-  editTeaching: 'Edit teaching',
-  teachingTitle: 'Teaching title *',
-  teachingTitlePlaceholder: 'e.g., Born Again: A Nighttime Encounter',
+  // ── Sermon editor: fields ──────────────────────────────────────────────────
+  createSermon: 'Create new sermon',
+  editSermon: 'Edit sermon',
+  sermonTitle: 'Sermon title *',
+  sermonTitlePlaceholder: 'e.g., Born Again: A Nighttime Encounter',
   speaker: 'Speaker / teacher',
   speakerPlaceholder: 'Pastor name',
   series: 'Series',
@@ -50,14 +50,14 @@ export const contentEn = {
   featuredImageUrl: 'Featured image URL',
   preview: 'Preview',
   shortDescription: 'Short description / blurb',
-  shortDescriptionPlaceholder: "1-2 sentences summarizing the teaching's core message.",
+  shortDescriptionPlaceholder: "1-2 sentences summarizing the sermon's core message.",
   mediaEmbedUrl: 'Media embed URL',
   mediaEmbedPlaceholder: 'YouTube, Vimeo, or audio link',
   mediaType: 'Media type',
   mediaVideo: 'Video',
   mediaAudio: 'Audio',
   fullTranscript: 'Description',
-  fullTranscriptPlaceholder: 'Write the full teaching here — start a new paragraph with a blank line.',
+  fullTranscriptPlaceholder: 'Write the full sermon here — start a new paragraph with a blank line.',
   sermonOutline: 'Sermon outline',
   outlinePlaceholder: 'Add outline point (e.g., I. Introduction)',
   keyQuotations: 'Key quotations',
@@ -76,7 +76,7 @@ export const contentEn = {
   speakerBioPlaceholder: 'Brief bio...',
   contactFollowUp: 'Contact for follow-up',
   contactFollowUpPlaceholder: 'email@church.org',
-  translationsHint: 'Optional — add this teaching in another language. A language left blank shows the text above instead.',
+  translationsHint: 'Optional — add this sermon in another language. A language left blank shows the text above instead.',
   translationTitle: 'Title',
   translationShortDescription: 'Short description',
   translationDescription: 'Description',
@@ -85,9 +85,9 @@ export const contentEn = {
   add: 'Add',
 
   // ── Toasts ────────────────────────────────────────────────────────────────
-  teachingCreated: 'Teaching created.',
-  teachingUpdated: 'Teaching updated.',
-  teachingMissingFields: 'Please give the teaching a title.',
+  sermonCreated: 'Sermon created.',
+  sermonUpdated: 'Sermon updated.',
+  sermonMissingFields: 'Please give the sermon a title.',
 
   // ── News editor ───────────────────────────────────────────────────────────
   headOffice: 'Head office',
@@ -108,8 +108,8 @@ export const contentEn = {
   selectCsvFirst: 'Please select a CSV file.',
   employeesImported: 'Employees imported.',
   employeesImportFailed: 'Could not import the employees file.',
-  createTeachingButton: 'Create teaching',
-  updateTeachingButton: 'Save changes',
+  createSermonButton: 'Create sermon',
+  updateSermonButton: 'Save changes',
 };
 
 /**
@@ -132,10 +132,10 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   tabFooterLegal: 'ግርጌና ሕጋዊ',
   tabTranslations: 'ትርጉሞች',
 
-  createTeaching: 'አዲስ ትምህርት ፍጠር',
-  editTeaching: 'ትምህርት አስተካክል',
-  teachingTitle: 'የትምህርቱ ርዕስ *',
-  teachingTitlePlaceholder: 'ለምሳሌ ዳግም መወለድ፦ የሌሊት ግንኙነት',
+  createSermon: 'አዲስ ስብከት ፍጠር',
+  editSermon: 'ስብከት አስተካክል',
+  sermonTitle: 'የስብከቱ ርዕስ *',
+  sermonTitlePlaceholder: 'ለምሳሌ ዳግም መወለድ፦ የሌሊት ግንኙነት',
   speaker: 'አስተማሪ / ሰባኪ',
   speakerPlaceholder: 'የአገልጋዩ ስም',
   series: 'ተከታታይ',
@@ -154,14 +154,14 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   featuredImageUrl: 'የመሪ ምስል አድራሻ',
   preview: 'ቅድመ ዕይታ',
   shortDescription: 'አጭር መግለጫ',
-  shortDescriptionPlaceholder: 'የትምህርቱን ዋና መልእክት በ1-2 ዓረፍተ ነገር ያጠቃልሉ።',
+  shortDescriptionPlaceholder: 'የስብከቱን ዋና መልእክት በ1-2 ዓረፍተ ነገር ያጠቃልሉ።',
   mediaEmbedUrl: 'የሚዲያ አድራሻ',
   mediaEmbedPlaceholder: 'የዩቲዩብ፣ የቪሜኦ ወይም የድምፅ አገናኝ',
   mediaType: 'የሚዲያ ዓይነት',
   mediaVideo: 'ቪዲዮ',
   mediaAudio: 'ድምፅ',
-  fullTranscript: 'መግለጫ (የትምህርቱ ሙሉ ይዘት)',
-  fullTranscriptPlaceholder: 'ሙሉ ትምህርቱን እዚህ ይጻፉ — አዲስ አንቀጽ ለመጀመር ባዶ መስመር ይተው።',
+  fullTranscript: 'መግለጫ (የስብከቱ ሙሉ ይዘት)',
+  fullTranscriptPlaceholder: 'ሙሉ ስብከቱን እዚህ ይጻፉ — አዲስ አንቀጽ ለመጀመር ባዶ መስመር ይተው።',
   sermonOutline: 'የስብከቱ ዝርዝር',
   outlinePlaceholder: 'የዝርዝር ነጥብ ጨምር (ለምሳሌ ፩. መግቢያ)',
   keyQuotations: 'ቁልፍ ጥቅሶች',
@@ -180,16 +180,16 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   speakerBioPlaceholder: 'አጭር የሕይወት ታሪክ...',
   contactFollowUp: 'ለክትትል የሚያገለግል አድራሻ',
   contactFollowUpPlaceholder: 'email@church.org',
-  translationsHint: 'አማራጭ ነው — ይህን ትምህርት በሌላ ቋንቋ ያክሉ። ያልተሞላ ቋንቋ ከላይ ያለውን ጽሑፍ ይጠቀማል።',
+  translationsHint: 'አማራጭ ነው — ይህን ስብከት በሌላ ቋንቋ ያክሉ። ያልተሞላ ቋንቋ ከላይ ያለውን ጽሑፍ ይጠቀማል።',
   translationTitle: 'ርዕስ',
   translationShortDescription: 'አጭር መግለጫ',
   translationDescription: 'መግለጫ',
 
   add: 'ጨምር',
 
-  teachingCreated: 'ትምህርቱ ተፈጥሯል።',
-  teachingUpdated: 'ትምህርቱ ተስተካክሏል።',
-  teachingMissingFields: 'እባክዎ ለትምህርቱ ርዕስ ይስጡ።',
+  sermonCreated: 'ስብከቱ ተፈጥሯል።',
+  sermonUpdated: 'ስብከቱ ተስተካክሏል።',
+  sermonMissingFields: 'እባክዎ ለስብከቱ ርዕስ ይስጡ።',
 
   headOffice: 'ጠቅላይ ጽ/ቤት',
   coverImageSet: 'የሽፋን ምስሉ ተቀምጧል',
@@ -208,8 +208,8 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   selectCsvFirst: 'እባክዎ የCSV ፋይል ይምረጡ።',
   employeesImported: 'ሠራተኞቹ ገብተዋል።',
   employeesImportFailed: 'የሠራተኛ ፋይሉን ማስመጣት አልተቻለም።',
-  createTeachingButton: 'ትምህርት ፍጠር',
-  updateTeachingButton: 'ለውጦችን አስቀምጥ',
+  createSermonButton: 'ስብከት ፍጠር',
+  updateSermonButton: 'ለውጦችን አስቀምጥ',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */

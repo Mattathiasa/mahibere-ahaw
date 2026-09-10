@@ -105,7 +105,7 @@ const SECTION_LABELS: Record<string, string> = {
   hr: 'Human Resources',
   inventory: 'Inventory',
   people: 'Members & Users',
-  content: 'News & Teachings',
+  content: 'News & Sermons',
   geo: 'Places',
 };
 

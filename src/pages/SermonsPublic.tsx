@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, Calendar, User, ArrowRight, Loader2 } from 'lucide-react';
-import { teachingService, resolveTeachingField } from '@/services/teachings';
+import { sermonService, resolveSermonField } from '@/services/sermons';
 import { optimized } from '@/services/cloudinary';
 import { PublicChrome } from '@/components/home/PublicChrome';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -11,9 +11,10 @@ import { useLandingContent } from '@/hooks/useLandingContent';
 import { Input } from '@/components/ui/input';
 import { useFormatters } from '@/lib/formatters';
 
-/** Public archive of published teachings. Mirrors NewsIndex; the header text
- *  comes from the same landing-content `teachings` block as the homepage. */
-const TeachingsPublic: React.FC = () => {
+/** Public archive of published sermons. Mirrors NewsIndex; the header text
+ *  comes from the same landing-content `teachings` block as the homepage
+ *  (field name kept as-is — see src/services/sermons.ts). */
+const SermonsPublic: React.FC = () => {
   const navigate = useNavigate();
   const { t: tree, language } = useLanguage();
   const pg = tree.pages;
@@ -27,7 +28,7 @@ const TeachingsPublic: React.FC = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    teachingService.listPublished({ max: 60 })
+    sermonService.listPublished({ max: 60 })
       .then(setItems)
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
@@ -37,8 +38,8 @@ const TeachingsPublic: React.FC = () => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
     return [
-      resolveTeachingField(it, 'title', language),
-      resolveTeachingField(it, 'shortDescription', language),
+      resolveSermonField(it, 'title', language),
+      resolveSermonField(it, 'shortDescription', language),
       it.speaker,
     ].join(' ').toLowerCase().includes(q);
   }), [items, search, language]);
@@ -79,7 +80,7 @@ const TeachingsPublic: React.FC = () => {
               <motion.article key={it.id}
                 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i, 8) * 0.06 }}
-                onClick={() => navigate(`/teachings/view/${it.id}`)}
+                onClick={() => navigate(`/sermons/view/${it.id}`)}
                 className={`group cursor-pointer rounded-[1.75rem] overflow-hidden shadow-lg border transition-all hover:-translate-y-1 hover:shadow-2xl ${
                   theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-[#2E5E99]/5'}`}>
                 <div className="aspect-video overflow-hidden bg-[#2E5E99]/5">
@@ -106,10 +107,10 @@ const TeachingsPublic: React.FC = () => {
                     )}
                   </div>
                   <h2 className={`text-xl font-bold font-ethiopic leading-tight ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                    {resolveTeachingField(it, 'title', language)}
+                    {resolveSermonField(it, 'title', language)}
                   </h2>
                   <p className={`text-sm font-ethiopic leading-relaxed line-clamp-3 ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70'}`}>
-                    {resolveTeachingField(it, 'shortDescription', language)}
+                    {resolveSermonField(it, 'shortDescription', language)}
                   </p>
                   <div className="flex items-center gap-2 text-[#2E5E99] font-bold text-sm pt-1">
                     {cfg.readMoreLabel} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1.5" />
@@ -124,4 +125,4 @@ const TeachingsPublic: React.FC = () => {
   );
 };
 
-export default TeachingsPublic;
+export default SermonsPublic;
