@@ -800,18 +800,34 @@ const LandingEditor: React.FC = () => {
                         {gallery.images.map((image, i) => (
                           <div key={`${image.url}-${i}`}
                             className="p-3 rounded-xl border border-border bg-muted/20 flex gap-4 flex-wrap">
-                             <div className="relative h-24 w-36 shrink-0 overflow-hidden rounded-lg bg-black/5 flex items-center justify-center border border-border">
-                               <img
-                                 src={optimized(image.url, 240)}
-                                 alt=""
-                                 className="h-full w-full object-cover transition-transform duration-300"
-                                 style={image.rotation ? { transform: `rotate(${image.rotation}deg) scale(${image.rotation % 180 !== 0 ? 0.65 : 1})` } : undefined}
-                               />
-                               {(image.rotation ?? 0) !== 0 && (
-                                 <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/70 text-white text-[9px] font-mono leading-none backdrop-blur-sm shadow-sm">
-                                   {image.rotation}°
-                                 </span>
-                               )}
+                             <div className="flex flex-col items-center gap-2 shrink-0">
+                               <div className="relative h-24 w-36 overflow-hidden rounded-lg bg-black/5 flex items-center justify-center border border-border shadow-sm">
+                                 <img
+                                   src={optimized(image.url, 240)}
+                                   alt=""
+                                   className="h-full w-full object-cover transition-transform duration-300"
+                                   style={image.rotation ? { transform: `rotate(${image.rotation}deg) scale(${image.rotation % 180 !== 0 ? 0.65 : 1})` } : undefined}
+                                 />
+                                 {(image.rotation ?? 0) !== 0 && (
+                                   <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-[#2E5E99] text-white text-[9px] font-bold leading-none shadow-sm">
+                                     {image.rotation}°
+                                   </span>
+                                 )}
+                               </div>
+                               <Button
+                                 type="button"
+                                 variant="outline"
+                                 size="sm"
+                                 className="w-36 h-7 text-[11px] flex items-center justify-center gap-1.5 border-dashed hover:border-[#2E5E99] hover:text-[#2E5E99]"
+                                 title={a.leRotatePhotoTitle}
+                                 onClick={() => rotateGalleryImage(i)}
+                               >
+                                 <RotateCw className="h-3 w-3" />
+                                 <span>{a.leRotatePhoto}</span>
+                                 {(image.rotation ?? 0) !== 0 && (
+                                   <span className="font-mono text-[10px] text-primary font-bold">({image.rotation}°)</span>
+                                 )}
+                               </Button>
                              </div>
                             <div className="flex-1 min-w-[220px] space-y-2">
                               <Field label={`Caption (${activeLang.toUpperCase()})`} hint={a.leOptionalOverPhoto}>
