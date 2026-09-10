@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 
 export const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -37,7 +37,16 @@ if (appCheckSiteKey) {
 }
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Safari (and other browsers with strict cross-site tracking prevention) can
+// block Firestore's default WebChannel transport outright — "Fetch API cannot
+// load .../Listen/channel ... due to access control checks" in the console,
+// with every read silently failing as a result. Auto-detection of long
+// polling is already the SDK default and isn't enough to avoid that here, so
+// force plain long-polling instead; it's a bit slower but works everywhere,
+// including browsers that were already fine.
+export const db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+});
 // No `storage` export: nothing imported it, uploads go to Cloudinary, and
 // initialising an unused SDK only pulled the bucket into the bundle. Its rules
 // are now deny-by-default in storage.rules.
