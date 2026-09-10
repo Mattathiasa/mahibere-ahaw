@@ -19,6 +19,7 @@ interface HomeGalleryProps {
 
 export const HomeGallery: React.FC<HomeGalleryProps> = ({
   images,
+  galleryItems = [],
   className = '',
 }) => {
   const { theme } = useTheme();
@@ -31,6 +32,18 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
   const isDark = theme === 'dark';
 
   const total = images.length;
+
+  /** Returns the inline style needed to visually rotate a photo when not handled by Cloudinary. */
+  function rotStyle(index: number): React.CSSProperties | undefined {
+    const url = images[index];
+    if (url && url.includes('/upload/')) return undefined;
+    const deg = galleryItems[index]?.rotation ?? 0;
+    if (!deg) return undefined;
+    // For 90/270° we also shrink the image slightly so it stays within its
+    // container when the axes are swapped.
+    const scale = deg === 90 || deg === 270 ? 0.75 : 1;
+    return { transform: `rotate(${deg}deg) scale(${scale})` };
+  }
 
   const nextSlide = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % total);
@@ -128,7 +141,7 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
               <AnimatePresence mode="sync">
                 <motion.img
                   key={`bg-${activeUrl}`}
-                  src={optimized(activeUrl, 300)}
+                  src={optimized(activeUrl, 300, galleryItems[activeIndex]?.rotation)}
                   alt=""
                   aria-hidden
                   initial={{ opacity: 0 }}
@@ -150,8 +163,9 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
                   className="relative z-10 p-6 sm:p-10 flex items-center justify-center w-full h-full"
                 >
                   <img
-                    src={optimized(activeUrl, 1600)}
+                    src={optimized(activeUrl, 1600, galleryItems[activeIndex]?.rotation)}
                     alt=""
+                    style={rotStyle(activeIndex)}
                     className="max-h-[360px] sm:max-h-[460px] lg:max-h-[540px] max-w-full w-auto h-auto object-contain rounded-2xl shadow-2xl select-none cursor-zoom-in ring-1 ring-black/10 dark:ring-white/10 transition-transform duration-300 hover:scale-[1.01]"
                     onClick={() => setLightboxIndex(activeIndex)}
                   />
@@ -224,9 +238,10 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
                 aria-label={`Open photo ${i + 1}`}
               >
                 <img
-                  src={optimized(url, 900)}
+                  src={optimized(url, 900, galleryItems[i]?.rotation)}
                   alt=""
                   loading="lazy"
+                  style={rotStyle(i)}
                   className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 />
                 {/* Subtle dim on hover */}
@@ -289,8 +304,9 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
               <AnimatePresence mode="wait">
                 <motion.img
                   key={`lb-${lightboxUrl}`}
-                  src={optimized(lightboxUrl, 2000)}
+                  src={optimized(lightboxUrl, 2000, lightboxIndex !== null ? galleryItems[lightboxIndex]?.rotation : undefined)}
                   alt=""
+                  style={lightboxIndex !== null ? rotStyle(lightboxIndex) : undefined}
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.97 }}

@@ -56,11 +56,16 @@ export async function uploadToCloudinary(
  */
 export function transform(url: string, transformation: string): string {
   if (!url.includes('/upload/')) return url;
-  // Avoid double-stacking if a transformation is already present.
+  // If an existing transformation segment is already present right after /upload/, replace it.
+  const match = url.match(/\/upload\/([a-z]_[^/]+)\//);
+  if (match) {
+    return url.replace(`/upload/${match[1]}/`, `/upload/${transformation}/`);
+  }
   return url.replace('/upload/', `/upload/${transformation}/`);
 }
 
-/** Optimised, responsive delivery (auto format + quality). */
-export function optimized(url: string, width = 1200): string {
-  return transform(url, `w_${width},f_auto,q_auto,c_limit`);
+/** Optimised, responsive delivery (auto format + quality + optional rotation angle). */
+export function optimized(url: string, width = 1200, rotation?: number): string {
+  const rot = rotation ? `a_${rotation},` : '';
+  return transform(url, `${rot}w_${width},f_auto,q_auto,c_limit`);
 }

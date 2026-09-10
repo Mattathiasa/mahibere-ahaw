@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Save, Plus, Trash2, ArrowLeft, Eye, Loader2,
   CheckCircle2, AlertCircle, Type, Globe,
-  ArrowUp, ArrowDown, Image as ImageIcon,
+  ArrowUp, ArrowDown, Image as ImageIcon, RotateCw,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -319,6 +319,16 @@ const LandingEditor: React.FC = () => {
       if (target < 0 || target >= g.images.length) return g;
       const images = [...g.images];
       [images[i], images[target]] = [images[target], images[i]];
+      return { ...g, images };
+    });
+  }
+  /** Cycles rotation: 0 → 90 → 180 → 270 → 0 */
+  function rotateGalleryImage(i: number) {
+    setGallery((g) => {
+      const images = [...g.images];
+      const current = images[i].rotation ?? 0;
+      const next = ((current + 90) % 360) as 0 | 90 | 180 | 270;
+      images[i] = { ...images[i], rotation: next };
       return { ...g, images };
     });
   }
@@ -790,11 +800,19 @@ const LandingEditor: React.FC = () => {
                         {gallery.images.map((image, i) => (
                           <div key={`${image.url}-${i}`}
                             className="p-3 rounded-xl border border-border bg-muted/20 flex gap-4 flex-wrap">
-                            <img
-                              src={optimized(image.url, 240)}
-                              alt=""
-                              className="h-24 w-36 object-cover rounded-lg border border-border shrink-0"
-                            />
+                             <div className="relative h-24 w-36 shrink-0 overflow-hidden rounded-lg bg-black/5 flex items-center justify-center border border-border">
+                               <img
+                                 src={optimized(image.url, 240)}
+                                 alt=""
+                                 className="h-full w-full object-cover transition-transform duration-300"
+                                 style={image.rotation ? { transform: `rotate(${image.rotation}deg) scale(${image.rotation % 180 !== 0 ? 0.65 : 1})` } : undefined}
+                               />
+                               {(image.rotation ?? 0) !== 0 && (
+                                 <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/70 text-white text-[9px] font-mono leading-none backdrop-blur-sm shadow-sm">
+                                   {image.rotation}°
+                                 </span>
+                               )}
+                             </div>
                             <div className="flex-1 min-w-[220px] space-y-2">
                               <Field label={`Caption (${activeLang.toUpperCase()})`} hint={a.leOptionalOverPhoto}>
                                 <Input
@@ -819,6 +837,11 @@ const LandingEditor: React.FC = () => {
                                 title={a.leMoveLater} disabled={i === gallery.images.length - 1}
                                 onClick={() => moveGalleryImage(i, 1)}>
                                 <ArrowDown className="h-4 w-4" />
+                              </Button>
+                              <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
+                                title={`Rotate 90° (currently ${image.rotation ?? 0}°)`}
+                                onClick={() => rotateGalleryImage(i)}>
+                                <RotateCw className="h-4 w-4" />
                               </Button>
                               <Button type="button" variant="ghost" size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"

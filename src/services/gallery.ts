@@ -25,6 +25,12 @@ export interface GalleryImage {
    */
   publicId: string;
   caption?: Partial<Record<Language, string>>;
+  /**
+   * CSS rotation to apply to this photo in the gallery, in degrees clockwise.
+   * Useful for photos saved in the wrong orientation (e.g. portrait stored as
+   * landscape). 0 is the default (no rotation).
+   */
+  rotation?: 0 | 90 | 180 | 270;
 }
 
 export interface Gallery {
@@ -44,7 +50,12 @@ function normalize(raw: unknown): Gallery {
       // A row with no URL renders as a broken image, so drop it on read rather
       // than trusting whatever is in the document.
       .filter((i): i is GalleryImage => !!i && typeof i.url === 'string' && i.url.length > 0)
-      .map((i) => ({ url: i.url, publicId: i.publicId ?? '', caption: i.caption ?? {} })),
+      .map((i) => ({
+        url: i.url,
+        publicId: i.publicId ?? '',
+        caption: i.caption ?? {},
+        ...(i.rotation ? { rotation: i.rotation } : {}),
+      })),
     meta: data.meta,
   };
 }
