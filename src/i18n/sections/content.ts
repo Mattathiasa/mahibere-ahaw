@@ -25,6 +25,7 @@ export const contentEn = {
   tabMainContent: 'Main content',
   tabEngagement: 'Engagement',
   tabFooterLegal: 'Footer & legal',
+  tabTranslations: 'Translations',
 
   // ── Teaching editor: fields ───────────────────────────────────────────────
   createTeaching: 'Create new teaching',
@@ -75,6 +76,10 @@ export const contentEn = {
   speakerBioPlaceholder: 'Brief bio...',
   contactFollowUp: 'Contact for follow-up',
   contactFollowUpPlaceholder: 'email@church.org',
+  translationsHint: 'Optional — add this teaching in another language. A language left blank shows the text above instead.',
+  translationTitle: 'Title',
+  translationShortDescription: 'Short description',
+  translationDescription: 'Description',
 
   // ── Shared list actions ───────────────────────────────────────────────────
   add: 'Add',
@@ -125,6 +130,7 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   tabMainContent: 'ዋና ይዘት',
   tabEngagement: 'ተሳትፎ',
   tabFooterLegal: 'ግርጌና ሕጋዊ',
+  tabTranslations: 'ትርጉሞች',
 
   createTeaching: 'አዲስ ትምህርት ፍጠር',
   editTeaching: 'ትምህርት አስተካክል',
@@ -174,6 +180,10 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   speakerBioPlaceholder: 'አጭር የሕይወት ታሪክ...',
   contactFollowUp: 'ለክትትል የሚያገለግል አድራሻ',
   contactFollowUpPlaceholder: 'email@church.org',
+  translationsHint: 'አማራጭ ነው — ይህን ትምህርት በሌላ ቋንቋ ያክሉ። ያልተሞላ ቋንቋ ከላይ ያለውን ጽሑፍ ይጠቀማል።',
+  translationTitle: 'ርዕስ',
+  translationShortDescription: 'አጭር መግለጫ',
+  translationDescription: 'መግለጫ',
 
   add: 'ጨምር',
 

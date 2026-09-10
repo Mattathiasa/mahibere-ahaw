@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Loader2, ArrowLeft, User as UserIcon, Mic2 } from 'lucide-react';
-import { teachingService } from '@/services/teachings';
+import { teachingService, resolveTeachingField } from '@/services/teachings';
 import { optimized } from '@/services/cloudinary';
 import { PublicChrome } from '@/components/home/PublicChrome';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -14,7 +14,7 @@ import { useFormatters } from '@/lib/formatters';
 const TeachingPublicPost: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t: tree } = useLanguage();
+  const { t: tree, language } = useLanguage();
   const pg = tree.pages;
   const { formatDateLong } = useFormatters();
   const { theme } = useTheme();
@@ -31,7 +31,10 @@ const TeachingPublicPost: React.FC = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const body: string = teaching?.fullContent || teaching?.transcript || teaching?.shortDescription || '';
+  const title = resolveTeachingField(teaching, 'title', language);
+  const shortDescription = resolveTeachingField(teaching, 'shortDescription', language);
+  const description = resolveTeachingField(teaching, 'transcript', language);
+  const body: string = description || teaching?.fullContent || shortDescription || '';
 
   return (
     <PublicChrome backTo="/teachings/browse">
@@ -70,12 +73,12 @@ const TeachingPublicPost: React.FC = () => {
 
             <h1 className={`text-4xl sm:text-5xl font-black font-ethiopic leading-tight ${
               theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-              {teaching.title}
+              {title}
             </h1>
 
-            {teaching.shortDescription && (
+            {shortDescription && (
               <p className="text-xl text-[#2E5E99] font-ethiopic leading-relaxed">
-                {teaching.shortDescription}
+                {shortDescription}
               </p>
             )}
 

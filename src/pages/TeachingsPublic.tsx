@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, Calendar, User, ArrowRight, Loader2 } from 'lucide-react';
-import { teachingService } from '@/services/teachings';
+import { teachingService, resolveTeachingField } from '@/services/teachings';
 import { optimized } from '@/services/cloudinary';
 import { PublicChrome } from '@/components/home/PublicChrome';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -15,7 +15,7 @@ import { useFormatters } from '@/lib/formatters';
  *  comes from the same landing-content `teachings` block as the homepage. */
 const TeachingsPublic: React.FC = () => {
   const navigate = useNavigate();
-  const { t: tree } = useLanguage();
+  const { t: tree, language } = useLanguage();
   const pg = tree.pages;
   const { formatDate } = useFormatters();
   const { theme } = useTheme();
@@ -36,8 +36,12 @@ const TeachingsPublic: React.FC = () => {
   const visible = useMemo(() => items.filter((it) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
-    return [it.title, it.shortDescription, it.speaker].join(' ').toLowerCase().includes(q);
-  }), [items, search]);
+    return [
+      resolveTeachingField(it, 'title', language),
+      resolveTeachingField(it, 'shortDescription', language),
+      it.speaker,
+    ].join(' ').toLowerCase().includes(q);
+  }), [items, search, language]);
 
   return (
     <PublicChrome>
@@ -102,10 +106,10 @@ const TeachingsPublic: React.FC = () => {
                     )}
                   </div>
                   <h2 className={`text-xl font-bold font-ethiopic leading-tight ${theme === 'dark' ? 'text-white' : 'text-[#0D2440]'}`}>
-                    {it.title}
+                    {resolveTeachingField(it, 'title', language)}
                   </h2>
                   <p className={`text-sm font-ethiopic leading-relaxed line-clamp-3 ${theme === 'dark' ? 'text-white/60' : 'text-[#0D2440]/70'}`}>
-                    {it.shortDescription}
+                    {resolveTeachingField(it, 'shortDescription', language)}
                   </p>
                   <div className="flex items-center gap-2 text-[#2E5E99] font-bold text-sm pt-1">
                     {cfg.readMoreLabel} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1.5" />

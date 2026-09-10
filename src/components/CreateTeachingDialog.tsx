@@ -10,11 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Info, Video, FileText, MessageCircle, Mic2 } from 'lucide-react';
+import { X, Plus, Info, Video, FileText, MessageCircle, Mic2, Languages as LanguagesIcon } from 'lucide-react';
 import { teachingService } from '@/services/teachings';
 import { TeachingServiceType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import type { Translations } from '@/i18n/translations';
+import type { Translations, Language } from '@/i18n/translations';
+import { LANGUAGE_CYCLE, LANGUAGE_ENDONYM } from '@/i18n/languages';
 import { useModuleConfig } from '@/hooks/useModuleConfig';
 import { EthiopianDatePicker } from '@/components/ui/EthiopianDatePicker';
 import { CloudinaryImageUpload } from '@/components/CloudinaryImageUpload';
@@ -83,7 +84,10 @@ const makeBlankTeachingForm = () => ({
     // 5. Footer & Legal
     copyrightNotice: `© ${new Date().getFullYear()} Church Name`,
     speakerBio: '',
-    contactEmail: ''
+    contactEmail: '',
+
+    // 6. Translations — all optional, per language
+    translations: {} as Partial<Record<Language, { title?: string; shortDescription?: string; transcript?: string }>>,
 });
 
 type TeachingForm = ReturnType<typeof makeBlankTeachingForm>;
@@ -145,6 +149,25 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
             ...prev,
             [field]: (prev[field] as any[]).filter((_, i) => i !== index)
         }));
+    };
+
+    const setTranslation = (
+        lang: Language,
+        field: 'title' | 'shortDescription' | 'transcript',
+        value: string,
+    ) => {
+        setFormData(prev => ({
+            ...prev,
+            translations: {
+                ...prev.translations,
+                [lang]: { ...prev.translations[lang], [field]: value },
+            },
+        }));
+    };
+
+    const hasTranslation = (lang: Language) => {
+        const tr = formData.translations[lang];
+        return !!(tr?.title?.trim() || tr?.shortDescription?.trim() || tr?.transcript?.trim());
     };
 
     const saveMutation = useMutation({
@@ -212,6 +235,10 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                                 <TabsTrigger value="footer" className="w-full justify-start px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                     <Mic2 className="w-4 h-4 mr-2" />
                                     {c.tabFooterLegal}
+                                </TabsTrigger>
+                                <TabsTrigger value="translations" className="w-full justify-start px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                    <LanguagesIcon className="w-4 h-4 mr-2" />
+                                    {c.tabTranslations}
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -534,6 +561,53 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                                             placeholder={c.contactFollowUpPlaceholder}
                                         />
                                     </div>
+                                </TabsContent>
+
+                                {/* 6. Translations */}
+                                <TabsContent value="translations" className="mt-0 space-y-4">
+                                    <p className="text-sm text-muted-foreground">{c.translationsHint}</p>
+                                    <Tabs defaultValue={LANGUAGE_CYCLE[0]} className="w-full">
+                                        <TabsList className="flex-wrap h-auto">
+                                            {LANGUAGE_CYCLE.map((lang) => (
+                                                <TabsTrigger key={lang} value={lang} className="gap-1.5">
+                                                    {LANGUAGE_ENDONYM[lang]}
+                                                    {hasTranslation(lang) && (
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                    )}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                        {LANGUAGE_CYCLE.map((lang) => (
+                                            <TabsContent key={lang} value={lang} className="space-y-4 pt-4">
+                                                <div className="space-y-2">
+                                                    <Label>{c.translationTitle} ({LANGUAGE_ENDONYM[lang]})</Label>
+                                                    <Input
+                                                        value={formData.translations[lang]?.title ?? ''}
+                                                        onChange={(e) => setTranslation(lang, 'title', e.target.value)}
+                                                        placeholder={c.teachingTitlePlaceholder}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>{c.translationShortDescription} ({LANGUAGE_ENDONYM[lang]})</Label>
+                                                    <Textarea
+                                                        rows={3}
+                                                        value={formData.translations[lang]?.shortDescription ?? ''}
+                                                        onChange={(e) => setTranslation(lang, 'shortDescription', e.target.value)}
+                                                        placeholder={c.shortDescriptionPlaceholder}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>{c.translationDescription} ({LANGUAGE_ENDONYM[lang]})</Label>
+                                                    <Textarea
+                                                        className="min-h-[160px]"
+                                                        value={formData.translations[lang]?.transcript ?? ''}
+                                                        onChange={(e) => setTranslation(lang, 'transcript', e.target.value)}
+                                                        placeholder={c.fullTranscriptPlaceholder}
+                                                    />
+                                                </div>
+                                            </TabsContent>
+                                        ))}
+                                    </Tabs>
                                 </TabsContent>
                             </div>
                         </ScrollArea>

@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase';
 import { AppError } from '@/lib/appError';
+import type { Language } from '@/i18n/translations';
 import {
     collection, getDocs, getDoc, doc,
     addDoc, updateDoc, deleteDoc,
@@ -15,6 +16,18 @@ function sortableTime(v: any): number {
     return 0;
 }
 
+/**
+ * Optional per-language overrides for a teaching's reader-facing text. A
+ * language with no entry (or an empty string) falls back to the base field
+ * below it — so a teaching with no `translations` at all renders exactly as
+ * it always has, and adding any single language is entirely opt-in.
+ */
+export type TeachingTranslations = Partial<Record<Language, {
+    title?: string;
+    shortDescription?: string;
+    transcript?: string;
+}>>;
+
 export interface CreateTeachingData {
     title: string;
     shortDescription: string;
@@ -25,6 +38,22 @@ export interface CreateTeachingData {
     tags?: string[];
     featuredImage?: string;
     fullContent?: string;
+    transcript?: string;
+    translations?: TeachingTranslations;
+}
+
+/**
+ * Resolves one of a teaching's translatable fields for a language: the
+ * per-language override if one exists and isn't blank, else the base field.
+ */
+export function resolveTeachingField(
+    teaching: Record<string, any> | null | undefined,
+    field: 'title' | 'shortDescription' | 'transcript',
+    language: Language,
+): string {
+    const override = teaching?.translations?.[language]?.[field];
+    if (typeof override === 'string' && override.trim()) return override;
+    return teaching?.[field] ?? '';
 }
 
 export const teachingService = {

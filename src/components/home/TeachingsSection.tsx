@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, ArrowRight, User, Calendar } from 'lucide-react';
-import { teachingService } from '@/services/teachings';
+import { teachingService, resolveTeachingField } from '@/services/teachings';
 import { optimized } from '@/services/cloudinary';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useLandingContent } from '@/hooks/useLandingContent';
 import { InlineLoader } from '@/components/BrandedLoader';
 import { useFormatters } from '@/lib/formatters';
@@ -22,6 +23,7 @@ export const TeachingsSection: React.FC = () => {
   const navigate = useNavigate();
   const { formatDate } = useFormatters();
   const { theme } = useTheme();
+  const { language } = useLanguage();
   const { content } = useLandingContent();
   const cfg = content.teachings;
   const max = cfg?.maxPosts ?? 4;
@@ -72,6 +74,8 @@ export const TeachingsSection: React.FC = () => {
 
   const speaker = (t: any) => t.speaker || '';
   const delivered = (t: any) => (t.dateDelivered ? formatDate(t.dateDelivered) : null);
+  const title = (t: any) => resolveTeachingField(t, 'title', language);
+  const shortDescription = (t: any) => resolveTeachingField(t, 'shortDescription', language);
 
   return (
     <section id="teachings" className={SECTION_CLASS}>
@@ -133,10 +137,10 @@ export const TeachingsSection: React.FC = () => {
               </div>
 
               <h3 className={`text-2xl sm:text-3xl md:text-4xl font-black font-ethiopic leading-tight break-words ${headingColor}`}>
-                {lead.title}
+                {title(lead)}
               </h3>
               <p className={`text-lg font-ethiopic leading-relaxed line-clamp-3 ${bodyColor}`}>
-                {lead.shortDescription}
+                {shortDescription(lead)}
               </p>
               <div className="flex items-center gap-2 text-[#2E5E99] font-bold pt-1">
                 {cfg.readMoreLabel}
@@ -185,7 +189,7 @@ export const TeachingsSection: React.FC = () => {
                       )}
                     </div>
                     <h4 className={`font-bold font-ethiopic leading-snug line-clamp-3 ${headingColor}`}>
-                      {t.title}
+                      {title(t)}
                     </h4>
                   </div>
                 </motion.article>

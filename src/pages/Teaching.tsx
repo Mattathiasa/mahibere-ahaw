@@ -9,7 +9,7 @@ import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { teachingService } from '@/services/teachings';
+import { teachingService, resolveTeachingField } from '@/services/teachings';
 import { TeachingServiceType } from '@/types';
 import { CreateTeachingDialog } from '@/components/CreateTeachingDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -24,7 +24,7 @@ import { useFormatters } from '@/lib/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 const Teaching = () => {
     const { t } = useTranslation();
-    const { t: tree } = useLanguage();
+    const { t: tree, language } = useLanguage();
     const pg = tree.pages;
     const { formatDate } = useFormatters();
     const { showElement } = useSoftwareControl();
@@ -107,10 +107,10 @@ const Teaching = () => {
                                             </div>
                                         </div>
                                         <CardTitle className="text-2xl font-black text-[#0D2440] dark:text-white leading-tight mb-2 tracking-tight group-hover:text-[#2E5E99] transition-colors">
-                                            {teaching.title}
+                                            {resolveTeachingField(teaching, 'title', language)}
                                         </CardTitle>
                                         <CardDescription className="line-clamp-2 font-semibold text-[#0D2440]/60 dark:text-white/40">
-                                            {teaching.shortDescription}
+                                            {resolveTeachingField(teaching, 'shortDescription', language)}
                                         </CardDescription>
                                     </CardHeader>
 
