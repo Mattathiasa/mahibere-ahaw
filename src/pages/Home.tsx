@@ -331,9 +331,6 @@ const Home: React.FC = () => {
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3 sm:gap-4">
-              <Button size="lg" onClick={() => followLink(hero.ctaPrimaryUrl, '/login')} className="rounded-2xl px-6 sm:px-12 py-4 sm:py-8 text-base sm:text-xl bg-[#2E5E99] hover:scale-105 transition-transform">
-                {hero.ctaPrimary}
-              </Button>
               <Button size="lg" variant="ghost" onClick={() => followLink(hero.ctaSecondaryUrl, '#about')}
                 className={`rounded-2xl px-6 sm:px-10 py-4 sm:py-8 text-base sm:text-xl border border-[#2E5E99]/20 hover:bg-[#2E5E99]/5 ${theme === 'dark' ? 'text-white' : 'text-[#2E5E99]'}`}>
                 {hero.ctaSecondary}

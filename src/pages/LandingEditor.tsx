@@ -863,14 +863,8 @@ const LandingEditor: React.FC = () => {
                       <Textarea rows={4} value={content.hero.description} onChange={(e) => setHero('description', e.target.value)} />
                     </Field>
                     <div className="grid grid-cols-2 gap-4">
-                      <Field label={a.lePrimaryButtonLabel}>
-                        <Input value={content.hero.ctaPrimary} onChange={(e) => setHero('ctaPrimary', e.target.value)} />
-                      </Field>
                       <Field label={a.leSecondaryButtonLabel}>
                         <Input value={content.hero.ctaSecondary} onChange={(e) => setHero('ctaSecondary', e.target.value)} />
-                      </Field>
-                      <Field label={a.lePrimaryButtonLink} hint={LINK_HINT}>
-                        <Input value={content.hero.ctaPrimaryUrl ?? ''} onChange={(e) => setHero('ctaPrimaryUrl', e.target.value)} placeholder="/login" />
                       </Field>
                       <Field label={a.leSecondaryButtonLink} hint={LINK_HINT}>
                         <Input value={content.hero.ctaSecondaryUrl ?? ''} onChange={(e) => setHero('ctaSecondaryUrl', e.target.value)} placeholder="#about" />
