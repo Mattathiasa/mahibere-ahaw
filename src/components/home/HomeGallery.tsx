@@ -25,7 +25,7 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
   const { theme } = useTheme();
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<'showcase' | 'grid'>('showcase');
+  const [viewMode, setViewMode] = useState<'showcase' | 'grid'>('grid');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -61,6 +61,19 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
     const timer = setInterval(nextSlide, 5000);
     return () => clearInterval(timer);
   }, [viewMode, total, isPaused, lightboxIndex, nextSlide]);
+
+  // Keyboard navigation for showcase mode when lightbox is closed
+  useEffect(() => {
+    if (viewMode !== 'showcase' || total < 2 || lightboxIndex !== null) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, total, lightboxIndex, nextSlide, prevSlide]);
 
   // Keyboard controls for the Lightbox
   useEffect(() => {
@@ -101,18 +114,6 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
           }`}>
             <button
               type="button"
-              onClick={() => setViewMode('showcase')}
-              aria-label="Showcase view"
-              className={`p-2 rounded-lg transition-all duration-200 ${
-                viewMode === 'showcase'
-                  ? 'bg-[#2E5E99] text-white shadow-md'
-                  : isDark ? 'text-white/50 hover:text-white/80' : 'text-black/40 hover:text-black/70'
-              }`}
-            >
-              <Rows3 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
               onClick={() => setViewMode('grid')}
               aria-label="Grid view"
               className={`p-2 rounded-lg transition-all duration-200 ${
@@ -122,6 +123,18 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
               }`}
             >
               <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('showcase')}
+              aria-label="Showcase view"
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                viewMode === 'showcase'
+                  ? 'bg-[#2E5E99] text-white shadow-md'
+                  : isDark ? 'text-white/50 hover:text-white/80' : 'text-black/40 hover:text-black/70'
+              }`}
+            >
+              <Rows3 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -160,7 +173,7 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.02 }}
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="relative z-10 p-6 sm:p-10 flex items-center justify-center w-full h-full"
+                  className="relative z-10 p-6 sm:p-10 flex items-center justify-center w-full h-full select-none"
                 >
                   <img
                     src={optimized(activeUrl, 1600, galleryItems[activeIndex]?.rotation)}
@@ -171,32 +184,6 @@ export const HomeGallery: React.FC<HomeGalleryProps> = ({
                   />
                 </motion.div>
               </AnimatePresence>
-
-              {/* Prev / Next arrows */}
-              {total > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={prevSlide}
-                    aria-label="Previous"
-                    className={`absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 p-2.5 sm:p-3 rounded-full backdrop-blur-md shadow-lg transition-all hover:scale-110 active:scale-95 ${
-                      isDark ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white/80 hover:bg-white text-[#0D2440]'
-                    }`}
-                  >
-                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextSlide}
-                    aria-label="Next"
-                    className={`absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 p-2.5 sm:p-3 rounded-full backdrop-blur-md shadow-lg transition-all hover:scale-110 active:scale-95 ${
-                      isDark ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white/80 hover:bg-white text-[#0D2440]'
-                    }`}
-                  >
-                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </button>
-                </>
-              )}
             </div>
 
             {/* Dot navigation */}
