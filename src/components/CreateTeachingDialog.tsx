@@ -169,7 +169,9 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
     });
 
     const handleSubmit = () => {
-        if (!formData.title || !formData.speaker || !formData.dateDelivered) {
+        // Everything but the title is optional — a teaching can be just written
+        // text (no speaker, no service date) as well as a recorded sermon.
+        if (!formData.title) {
             toast.error(c.teachingMissingFields);
             return;
         }
@@ -237,7 +239,7 @@ export function CreateTeachingDialog({ open, onOpenChange, teaching }: CreateTea
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>ቀን (Date Delivered) *</Label>
+                                            <Label>ቀን (Date Delivered)</Label>
                                             <EthiopianDatePicker
                                                 value={formData.dateDelivered}
                                                 onChange={(isoDate) => setFormData({ ...formData, dateDelivered: isoDate })}
