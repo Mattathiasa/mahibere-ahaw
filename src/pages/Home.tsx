@@ -24,8 +24,8 @@ import { BrandMark } from '@/components/BrandMark';
 import { BrandedLoader } from '@/components/BrandedLoader';
 import { PICTURES } from '@/assets/pictures';
 import { useGallery } from '@/hooks/useGallery';
-import { captionFor } from '@/services/gallery';
 import { optimized } from '@/services/cloudinary';
+import { HomeGallery } from '@/components/home/HomeGallery';
 import { NewsSection } from '@/components/home/NewsSection';
 import { TeachingsSection } from '@/components/home/TeachingsSection';
 import { SuggestionSection } from '@/components/home/SuggestionSection';
@@ -115,27 +115,15 @@ const Home: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [carouselIndex, setCarouselIndex] = useState(0);
   const { gallery } = useGallery();
   /**
    * The admin-managed gallery (siteConfig/gallery), falling back to the photos
    * bundled with the app until an admin has uploaded any.
-   *
-   * A third source used to sit between them — the per-language `carousel`
-   * field — but it stopped being editable when photos moved to the Gallery
-   * tab, so stale saved data could silently outrank both the gallery and the
-   * bundled photos with no way to correct it. The field is gone.
    */
   const featureCount = content.features?.items?.length ?? 0;
-  const carousel = gallery.images.length > 0
+  const galleryUrls = gallery.images.length > 0
     ? gallery.images.map((i) => i.url)
     : PICTURES.slice(featureCount);
-
-  useEffect(() => {
-    if (carousel.length < 2) return;
-    const id = setInterval(() => setCarouselIndex((i) => (i + 1) % carousel.length), 4000);
-    return () => clearInterval(id);
-  }, [carousel.length]);
 
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -393,39 +381,13 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Photo carousel ── */}
-      {carousel.length > 0 && (
-        <section id="gallery" className={`py-16 sm:py-24 relative overflow-hidden ${SECTION_ANCHOR}`}>
-          <div className="container mx-auto px-4 sm:px-6">
-            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-[#2E5E99]/10 aspect-video max-h-[70vh] mx-auto">
-              {carousel.map((url, i) => (
-                <motion.img
-                  key={url}
-                  src={optimized(url, 1600)}
-                  alt={`Slide ${i + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  initial={false}
-                  animate={{ opacity: i === carouselIndex ? 1 : 0 }}
-                  transition={{ duration: 0.8 }}
-                />
-              ))}
-              {/* Caption of the visible slide, when the gallery supplies one. */}
-              {gallery.images[carouselIndex] && captionFor(gallery.images[carouselIndex], language) && (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0D2440]/80 to-transparent p-6 pb-16">
-                  <p className="text-white text-lg font-ethiopic max-w-3xl">
-                    {captionFor(gallery.images[carouselIndex], language)}
-                  </p>
-                </div>
-              )}
-              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                {carousel.map((_, i) => (
-                  <button key={i} onClick={() => setCarouselIndex(i)} aria-label={`Go to slide ${i + 1}`}
-                    className={`h-2.5 rounded-full transition-all ${i === carouselIndex ? 'w-8 bg-white' : 'w-2.5 bg-white/50'}`} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+      {/* ── Photo Gallery (showcase + masonry grid + lightbox) ── */}
+      {galleryUrls.length > 0 && (
+        <HomeGallery
+          images={galleryUrls}
+          galleryItems={gallery.images.length > 0 ? gallery.images : undefined}
+          className={SECTION_ANCHOR}
+        />
       )}
 
       {/* ── About Us, Faith, Mission & Values ── */}
