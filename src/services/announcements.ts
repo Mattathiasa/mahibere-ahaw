@@ -11,7 +11,10 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp
+  limit,
+  startAfter,
+  serverTimestamp,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { auditLogService } from '@/services/auditLog';
 import { notificationService } from '@/services/notifications';
@@ -40,11 +43,63 @@ export interface CreateAnnouncementData {
   audience?: AnnouncementAudience;
 }
 
+/** How many announcements a page holds. */
+export const ANNOUNCEMENT_PAGE_SIZE = 20;
+
+/**
+ * Whether an announcement has passed its expiry.
+ *
+ * An absent, blank or unparseable `expiresAt` means it never expires — most
+ * announcements have none, and treating those as expired would empty the page.
+ *
+ * This is deliberately NOT a Firestore range filter. `where('expiresAt', '>',
+ * now)` excludes every document that lacks the field, so it would hide exactly
+ * the permanent announcements it should keep. The filter has to be applied
+ * after reading, which is also why it cannot drive pagination.
+ */
+export function isAnnouncementExpired(
+  expiresAt: unknown,
+  now: Date = new Date()
+): boolean {
+  if (typeof expiresAt !== 'string' || expiresAt.trim() === '') return false;
+  const at = new Date(expiresAt);
+  if (Number.isNaN(at.getTime())) return false;
+  return at.getTime() <= now.getTime();
+}
+
 export const announcementService = {
-  async getAnnouncements() {
-    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
+  /**
+   * One page of announcements, newest first.
+   *
+   * Every member used to load the entire collection on every visit, growing
+   * without bound. `cursor` is the last document of the previous page; pass it
+   * back to continue.
+   */
+  async getAnnouncements(options?: {
+    pageSize?: number;
+    cursor?: QueryDocumentSnapshot | null;
+  }) {
+    const pageSize = options?.pageSize ?? ANNOUNCEMENT_PAGE_SIZE;
+    const q = options?.cursor
+      ? query(
+          collection(db, 'announcements'),
+          orderBy('createdAt', 'desc'),
+          startAfter(options.cursor),
+          limit(pageSize)
+        )
+      : query(
+          collection(db, 'announcements'),
+          orderBy('createdAt', 'desc'),
+          limit(pageSize)
+        );
     const snapshot = await getDocs(q);
-    return { announcements: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)) };
+    return {
+      announcements: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)),
+      cursor: snapshot.docs.length ? snapshot.docs[snapshot.docs.length - 1] : null,
+      // A short page means the end. A full one only MIGHT have more, which is
+      // the usual cost of cursor paging without a count.
+      hasMore: snapshot.docs.length === pageSize,
+    };
   },
 
   async getAnnouncementById(id: string) {
@@ -115,17 +170,6 @@ export const announcementService = {
         // sender the caller can prove is theirs.
       }))
     );
-  },
-
-  async getActiveAnnouncements() {
-    const now = new Date().toISOString();
-    const q = query(
-      collection(db, 'announcements'),
-      where('expiresAt', '>', now),
-      orderBy('expiresAt', 'asc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
   async markAsRead(id: string) {

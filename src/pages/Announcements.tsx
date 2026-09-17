@@ -3,8 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { announcementService, type AnnouncementAudience } from '@/services/announcements';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  announcementService,
+  isAnnouncementExpired,
+  type AnnouncementAudience,
+} from '@/services/announcements';
+import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import { usePermissions } from '@/contexts/PermissionContext';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -50,6 +55,7 @@ const Announcements = () => {
     isHeadOffice ? 'everyone' : 'parish'
   );
   const [audienceRoles, setAudienceRoles] = useState<string[]>([]);
+  const [showExpired, setShowExpired] = useState(false);
 
   function buildAudience(): AnnouncementAudience {
     if (audienceKind === 'roles' && audienceRoles.length > 0) {
@@ -63,9 +69,20 @@ const Announcements = () => {
     return { kind: 'everyone' };
   }
 
-  const { data: announcementsData, isLoading } = useQuery({
+  // Paged rather than the whole collection. Every member used to download
+  // every announcement ever posted, on every visit.
+  const {
+    data: announcementPages,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['announcements'],
-    queryFn: () => announcementService.getAnnouncements(),
+    queryFn: ({ pageParam }) =>
+      announcementService.getAnnouncements({ cursor: pageParam ?? null }),
+    initialPageParam: null as QueryDocumentSnapshot | null,
+    getNextPageParam: (last) => (last.hasMore ? last.cursor : undefined),
   });
 
   const createMutation = useMutation({
@@ -136,12 +153,20 @@ const Announcements = () => {
     },
   });
 
-  const announcements = announcementsData?.announcements || [];
-  const filteredAnnouncements = announcements.filter(
-    (announcement: any) =>
-      announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      announcement.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const announcements =
+    announcementPages?.pages.flatMap((p) => p.announcements) ?? [];
+  const filteredAnnouncements = announcements
+    // Expired ones are hidden by default but still reachable, because an
+    // administrator needs to find them in order to delete them.
+    .filter((a: any) => showExpired || !isAnnouncementExpired(a.expiresAt))
+    .filter(
+      (announcement: any) =>
+        announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        announcement.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  const expiredHidden = showExpired
+    ? 0
+    : announcements.filter((a: any) => isAnnouncementExpired(a.expiresAt)).length;
 
   const { user } = useAuth();
 
@@ -373,6 +398,34 @@ const Announcements = () => {
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             {t('noAnnouncementsSearch')}
+          </div>
+        )}
+
+        {/* Expired announcements are hidden rather than dropped: an
+            administrator still has to reach them to delete them. */}
+        {(expiredHidden > 0 || showExpired) && (
+          <div className="text-center pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowExpired((v) => !v)}
+            >
+              {showExpired
+                ? t('hideExpired')
+                : `${t('showExpired')} (${expiredHidden})`}
+            </Button>
+          </div>
+        )}
+
+        {hasNextPage && (
+          <div className="text-center pt-2">
+            <Button
+              variant="outline"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? t('loading') : t('loadMore')}
+            </Button>
           </div>
         )}
       </div>
