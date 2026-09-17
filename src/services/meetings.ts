@@ -155,7 +155,6 @@ export const meetingService = {
         title: meeting.title,
         message: `${whenText}${where}`,
         type: 'info' as const,
-        link: '/meetings',
         // No sender here — see notificationService.mySenderIdentity.
       }))
     );

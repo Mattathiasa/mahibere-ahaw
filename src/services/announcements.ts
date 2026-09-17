@@ -164,7 +164,6 @@ export const announcementService = {
           ? `${announcement.content.slice(0, 300)}…`
           : announcement.content,
         type: 'info' as const,
-        link: '/notifications',
         // No sender here: notificationService stamps senderId/senderName from
         // the signed-in account, because firestore.rules will only accept a
         // sender the caller can prove is theirs.

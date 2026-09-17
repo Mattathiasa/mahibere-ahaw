@@ -21,7 +21,9 @@ export interface NotificationInput {
   title: string;
   message: string;
   type?: 'info' | 'success' | 'warning' | 'error';
-  link?: string;
+  // No `link`. firestore.rules no longer accepts one and nothing ever read it;
+  // an unvalidated destination on a message the app renders as its own is
+  // in-app phishing waiting to be switched on.
 }
 
 /**
@@ -83,12 +85,56 @@ function chunk<T>(items: T[], size = BATCH_LIMIT): T[][] {
 }
 
 /**
- * Firestore rejects `undefined` outright, and the optional fields on
- * NotificationInput are frequently absent — so drop them rather than writing
- * them as null.
+ * The keys firestore.rules accepts on a notification.
+ *
+ *   allow create: if ... && request.resource.data.keys().hasOnly([...]);
+ *
+ * hasOnly() fails the WHOLE write on one unexpected key, and a broadcast is one
+ * write per recipient — so a stray key does not fail once, it reaches nobody.
+ * `link` was removed from both sides; it was accepted here and never read
+ * anywhere, and an unvalidated destination on a message the app renders as its
+ * own is in-app phishing waiting to be switched on.
  */
-function defined(input: NotificationInput): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
+export const NOTIFICATION_KEYS = [
+  'userId', 'senderId', 'senderName', 'title', 'message', 'type',
+  'status', 'createdAt',
+] as const;
+
+/** The bounds firestore.rules puts on the text. */
+export const NOTIFICATION_TITLE_MAX = 200;
+export const NOTIFICATION_MESSAGE_MAX = 2000;
+
+/**
+ * Builds one notification document.
+ *
+ * Pure and exported so a test can check the shape against NOTIFICATION_KEYS
+ * without Firestore — the drift this guards is silent, because the rules live
+ * in a file nothing here compiles against.
+ */
+export function buildNotification(
+  input: NotificationInput,
+  sender: SenderIdentity,
+  createdAt: string
+): Record<string, unknown> {
+  // Picked field by field, NOT spread from the input. Spreading copies
+  // whatever the caller happens to be holding, and one unexpected key fails
+  // hasOnly() — which fails the write for every recipient, not just one. The
+  // type alone does not prevent it: a value widened to `any`, or an object
+  // spread in from elsewhere, carries its extra keys straight through.
+  const doc: Record<string, unknown> = {
+    userId: input.userId,
+    title: input.title,
+    message: input.message,
+    type: input.type ?? 'info',
+    status: 'unread',
+    createdAt,
+    ...sender,
+  };
+  // Firestore rejects `undefined` outright, so an absent optional is dropped
+  // rather than written as null.
+  return Object.fromEntries(
+    Object.entries(doc).filter(([, v]) => v !== undefined)
+  );
 }
 
 export const notificationService = {
@@ -98,13 +144,10 @@ export const notificationService = {
    */
   async create(input: NotificationInput) {
     const sender = await mySenderIdentity();
-    const docRef = await addDoc(collection(db, 'notifications'), {
-      ...defined(input),
-      ...sender,
-      type: input.type ?? 'info',
-      status: 'unread',
-      createdAt: new Date().toISOString(),
-    });
+    const docRef = await addDoc(
+      collection(db, 'notifications'),
+      buildNotification(input, sender, new Date().toISOString())
+    );
     return docRef.id;
   },
 
@@ -129,13 +172,10 @@ export const notificationService = {
     for (const group of chunk(inputs)) {
       const batch = writeBatch(db);
       for (const input of group) {
-        batch.set(doc(collection(db, 'notifications')), {
-          ...defined(input),
-          ...sender,
-          type: input.type ?? 'info',
-          status: 'unread',
-          createdAt,
-        });
+        batch.set(
+          doc(collection(db, 'notifications')),
+          buildNotification(input, sender, createdAt)
+        );
       }
       await batch.commit();
       written += group.length;
