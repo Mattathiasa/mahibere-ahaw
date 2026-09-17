@@ -831,6 +831,39 @@ describe('notifications are private correspondence', () => {
     }));
   });
 
+  it('a `link` is refused — nothing reads it, and it was half a phishing vector', async () => {
+    await assertFails(setDoc(doc(as('admin-1'), 'notifications/n-link'), {
+      userId: 'active-1', title: 'Broadcast', message: 'hello',
+      type: 'info', status: 'unread', createdAt: '2026-08-02T00:00:00.000Z',
+      senderId: 'admin-1', senderName: 'admin',
+      link: 'https://evil.example/harvest',
+    }));
+  });
+
+  it('an enormous notification is refused', async () => {
+    // Not spam prevention — addressing anyone is allowed on purpose. This caps
+    // what a single write costs, because the Spark write quota is per PROJECT
+    // and per DAY, so exhausting it stops every write for the whole church.
+    await assertFails(setDoc(doc(as('admin-1'), 'notifications/n-huge'), {
+      userId: 'active-1', title: 'Broadcast', message: 'x'.repeat(2001),
+      type: 'info', status: 'unread', createdAt: '2026-08-02T00:00:00.000Z',
+      senderId: 'admin-1', senderName: 'admin',
+    }));
+    await assertFails(setDoc(doc(as('admin-1'), 'notifications/n-huge-title'), {
+      userId: 'active-1', title: 'x'.repeat(201), message: 'hello',
+      type: 'info', status: 'unread', createdAt: '2026-08-02T00:00:00.000Z',
+      senderId: 'admin-1', senderName: 'admin',
+    }));
+  });
+
+  it('a notification at the size limit still goes through', async () => {
+    await assertSucceeds(setDoc(doc(as('admin-1'), 'notifications/n-edge'), {
+      userId: 'active-1', title: 'x'.repeat(200), message: 'x'.repeat(2000),
+      type: 'info', status: 'unread', createdAt: '2026-08-02T00:00:00.000Z',
+      senderId: 'admin-1', senderName: 'admin',
+    }));
+  });
+
   it('a pending account cannot create notifications', async () => {
     await assertFails(setDoc(doc(as('pending-1'), 'notifications/n-spam'), {
       userId: 'active-1', title: 'Spam', message: 'hello',

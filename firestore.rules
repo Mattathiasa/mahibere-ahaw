@@ -687,6 +687,15 @@ service cloud.firestore {
     // are things the membership is meant to see. WRITE is what moves: `write`
     // covers delete, and an ordinary member had it on all of them.
     match /announcements/{docId} {
+      // Read is deliberately every approved member, whatever `audience` says.
+      //
+      // `audience` decides who gets NOTIFIED — the sender resolves it to people
+      // and writes one notification each — and it is not access control. An
+      // announcement addressed to "Chosen roles: Sinodos" is still readable by
+      // any member here, and by anyone querying this collection directly.
+      // Do not treat the field as a confidentiality boundary; if that is ever
+      // wanted, it needs a read rule per audience kind and every list query on
+      // both clients constrained to match, or the rule fails closed.
       allow read:  if isActive();
       allow write: if canWriteAnnouncements();
     }
@@ -775,6 +784,19 @@ service cloud.firestore {
       //
       // '' is accepted so a sender whose record carries none of these three
       // fields can still send, attributed to nobody.
+      // `link` is gone from the whitelist. Nothing has ever read it — not the
+      // web, not the app — so removing it loses nothing, and it closes the
+      // other half of the phishing vector described above before anything
+      // starts honouring it. Validating a URL here would be weaker: a rule
+      // cannot tell a safe destination from a hostile one.
+      //
+      // The lengths are a blast-radius limit, not spam prevention. Any approved
+      // account may address anyone, deliberately, so the realistic abuse is
+      // volume: the Spark plan allows 20,000 writes a DAY across the whole
+      // project, and one broadcast is one write per recipient. Rules cannot
+      // rate-limit that — a legitimate broadcast and an abusive loop look
+      // identical without counting prior writes — but they can stop one write
+      // being enormous. Same bound as a suggestion's message.
       allow create: if isActive()
         && request.resource.data.senderId == request.auth.uid
         && request.resource.data.get('senderName', '') in [
@@ -783,9 +805,11 @@ service cloud.firestore {
              userData().get('fullName', ''),
              userData().get('username', '')
            ]
+        && request.resource.data.get('title', '').size() <= 200
+        && request.resource.data.get('message', '').size() <= 2000
         && request.resource.data.keys().hasOnly([
              'userId', 'senderId', 'senderName', 'title', 'message', 'type',
-             'link', 'status', 'createdAt'
+             'status', 'createdAt'
            ]);
     }
 
