@@ -101,6 +101,14 @@ export const errorsEn = {
   suggestionTooShort: 'Please write a little more so we can understand your suggestion.',
   suggestionTooLong: 'That message is too long. Please shorten it and try again.',
   suggestionCooldown: 'You have just sent a suggestion. Please wait a moment before sending another.',
+
+  // ── Comments under sermons and news ───────────────────────────────────────
+  commentFailed: 'Your comment could not be sent. Please try again.',
+  commentNotSignedIn: 'Please sign in to leave a comment.',
+  commentTooShort: 'Your comment is too short. Please write a little more.',
+  commentTooLong: 'That comment is too long. Please shorten it to 1000 characters or fewer.',
+  commentCooldown: 'You have just posted a comment. Please wait a moment before posting another.',
+  commentModerationFailed: 'That could not be done. Please try again.',
 };
 
 /**
@@ -167,6 +175,13 @@ export const errorsAm: Record<keyof typeof errorsEn, string> = {
   suggestionTooShort: 'አስተያየትዎን እንድንረዳው እባክዎ ትንሽ ጨማሪ ይጻፉ።',
   suggestionTooLong: 'መልእክቱ በጣም ረጅም ነው። እባክዎ አሳጥረው እንደገና ይሞክሩ።',
   suggestionCooldown: 'አሁን አስተያየት ልከዋል። ሌላ ከመላክዎ በፊት እባክዎ ትንሽ ይጠብቁ።',
+
+  commentFailed: 'አስተያየትዎን መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
+  commentNotSignedIn: 'አስተያየት ለመስጠት እባክዎ መጀመሪያ ይግቡ።',
+  commentTooShort: 'አስተያየትዎ በጣም አጭር ነው። እባክዎ ትንሽ ጨምረው ይጻፉ።',
+  commentTooLong: 'አስተያየቱ በጣም ረጅም ነው። እባክዎ ከ1000 ፊደላት ባልበለጠ ያሳጥሩ።',
+  commentCooldown: 'አሁን አስተያየት ሰጥተዋል። ሌላ ከመስጠትዎ በፊት እባክዎ ትንሽ ይጠብቁ።',
+  commentModerationFailed: 'ይህን ማድረግ አልተቻለም። እባክዎ እንደገና ይሞክሩ።',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */
