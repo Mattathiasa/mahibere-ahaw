@@ -8,6 +8,7 @@ import { PublicChrome } from '@/components/home/PublicChrome';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
+import { CommentSection } from '@/components/comments/CommentSection';
 import { useFormatters } from '@/lib/formatters';
 
 /** Public read page for a single published sermon. Mirrors NewsPost. */
@@ -97,6 +98,8 @@ const SermonPublicPost: React.FC = () => {
                   ))
                 : <p className="italic opacity-60">{pg.noSermonsHint}</p>}
             </div>
+
+            <CommentSection targetType="sermon" targetId={id!} />
 
             <div className="pt-8 border-t border-[#2E5E99]/10">
               <Button variant="outline" onClick={() => navigate('/sermons/browse')}>
