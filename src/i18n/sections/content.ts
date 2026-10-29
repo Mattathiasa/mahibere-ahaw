@@ -110,6 +110,31 @@ export const contentEn = {
   employeesImportFailed: 'Could not import the employees file.',
   createSermonButton: 'Create sermon',
   updateSermonButton: 'Save changes',
+
+  // ── Comments under sermons and news ───────────────────────────────────────
+  commentsTitle: 'Comments',
+  commentsEmpty: 'No comments yet. Be the first to share your thoughts.',
+  commentsPlaceholder: 'Write your comment…',
+  commentsSubmit: 'Post comment',
+  commentsSubmitting: 'Sending…',
+  commentsPendingNotice: 'Thank you. Your comment will appear once a moderator approves it.',
+  commentsSignInPrompt: 'Sign in to leave a comment.',
+  commentsSignInButton: 'Sign in',
+  commentsAwaiting: 'Awaiting approval',
+  commentsDelete: 'Delete',
+  commentsConfirmDelete: 'Delete this comment permanently?',
+  commentsDeleted: 'Comment deleted.',
+  // Moderation
+  commentsInboxTitle: 'Comments',
+  commentsInboxEmpty: 'No comments here.',
+  commentsFilterPending: 'Pending',
+  commentsFilterApproved: 'Approved',
+  commentsFilterRejected: 'Rejected',
+  commentsApprove: 'Approve',
+  commentsReject: 'Reject',
+  commentsApproved: 'Comment approved.',
+  commentsRejected: 'Comment rejected.',
+  commentsOpenPost: 'View post',
 };
 
 /**
@@ -210,6 +235,29 @@ export const contentAm: Record<keyof typeof contentEn, string> = {
   employeesImportFailed: 'የሠራተኛ ፋይሉን ማስመጣት አልተቻለም።',
   createSermonButton: 'ስብከት ፍጠር',
   updateSermonButton: 'ለውጦችን አስቀምጥ',
+
+  commentsTitle: 'አስተያየቶች',
+  commentsEmpty: 'እስካሁን አስተያየት የለም። የመጀመሪያውን ይስጡ።',
+  commentsPlaceholder: 'አስተያየትዎን ይጻፉ…',
+  commentsSubmit: 'አስተያየት ላክ',
+  commentsSubmitting: 'በመላክ ላይ…',
+  commentsPendingNotice: 'አመሰግናለሁ። አስተያየትዎ በአስተዳዳሪ ከተፈቀደ በኋላ ይታያል።',
+  commentsSignInPrompt: 'አስተያየት ለመስጠት ይግቡ።',
+  commentsSignInButton: 'ይግቡ',
+  commentsAwaiting: 'ፈቃድ በመጠበቅ ላይ',
+  commentsDelete: 'ሰርዝ',
+  commentsConfirmDelete: 'ይህ አስተያየት ለዘላለም ይሰረዝ?',
+  commentsDeleted: 'አስተያየቱ ተሰርዟል።',
+  commentsInboxTitle: 'አስተያየቶች',
+  commentsInboxEmpty: 'እዚህ ምንም አስተያየት የለም።',
+  commentsFilterPending: 'በመጠባበቅ ላይ',
+  commentsFilterApproved: 'የተፈቀዱ',
+  commentsFilterRejected: 'ውድቅ የተደረጉ',
+  commentsApprove: 'ፍቀድ',
+  commentsReject: 'ውድቅ አድርግ',
+  commentsApproved: 'አስተያየቱ ተፈቅዷል።',
+  commentsRejected: 'አስተያየቱ ውድቅ ተደርጓል።',
+  commentsOpenPost: 'ጽሑፉን ክፈት',
 };
 
 /** Afaan Oromoo and Tigrinya fall through to English until translated. */
