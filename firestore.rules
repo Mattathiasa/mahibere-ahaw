@@ -954,6 +954,73 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  Comments under sermons and news
+    //
+    //  The opposite trade to the suggestion box above: this IS a comment wall,
+    //  so approved comments are public, and for that reason only approved
+    //  members may write one. No anonymous sessions here.
+    //
+    //   - Nothing is public until a moderator approves it: create is pinned to
+    //     status 'pending', and only moderators can change `status`.
+    //   - `authorName` is checked against the member's own users/{uid} record,
+    //     because the public reads it and rules cannot project fields. Without
+    //     that a member could post under a bishop's name.
+    //   - Moderators are whoever manages the thing commented on:
+    //     canManageNews() for news, canWriteTeachings() for sermons. No new role
+    //     list to keep in step with siteConfig/roleFlags.
+    //   - `targetId` is not checked against the news/teachings collections. That
+    //     would cost a document read per comment, and a comment aimed at a
+    //     nonexistent post is simply never shown and never approved.
+    // ════════════════════════════════════════════════════════════════════════
+    function commentShapeOk() {
+      return request.resource.data.keys().hasOnly(['targetType', 'targetId', 'text',
+               'authorUid', 'authorName', 'status', 'createdAt'])
+        && request.resource.data.keys().hasAll(['targetType', 'targetId', 'text',
+             'authorUid', 'authorName', 'status', 'createdAt'])
+        && request.resource.data.targetType in ['news', 'sermon']
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId.size() > 0
+        && request.resource.data.targetId.size() <= 200
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 2
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.authorName is string
+        && request.resource.data.authorName in [
+             userData().get('fullNameEnglish', ''),
+             userData().get('fullNameAmharic', ''),
+             userData().get('fullName', ''),
+             userData().get('username', '')];
+    }
+
+    function commentModerator(targetType) {
+      return targetType == 'news' ? canManageNews() : canWriteTeachings();
+    }
+
+    match /comments/{commentId} {
+      allow create: if isActive()
+        && commentShapeOk()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      // Approved ones are public. An author also sees their own pending and
+      // rejected ones, so a member is not left wondering whether theirs went
+      // through; moderators see everything on their side of the fence.
+      allow read: if resource.data.status == 'approved'
+        || (signedIn() && resource.data.authorUid == request.auth.uid)
+        || commentModerator(resource.data.targetType);
+
+      // Moderation only — never the words. An edited comment is a fabricated
+      // one, same reasoning as the suggestion box.
+      allow update: if commentModerator(resource.data.targetType)
+        && changedOnly(['status', 'reviewedBy', 'reviewedAt'])
+        && request.resource.data.status in ['pending', 'approved', 'rejected'];
+
+      allow delete: if commentModerator(resource.data.targetType)
+        || (signedIn() && resource.data.authorUid == request.auth.uid);
+    }
+
     // NOTE: the old /members/{docId} block was dead — members ARE users
     // (Members.tsx calls userService), so it only ever misled readers.
   }

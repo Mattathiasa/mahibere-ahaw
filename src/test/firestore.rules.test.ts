@@ -1845,3 +1845,144 @@ describe('suggestion box — the one collection open to non-members', () => {
     await assertSucceeds(deleteDoc(doc(as('super-1'), 'suggestions/sug-1')));
   });
 });
+
+describe('comments under sermons and news', () => {
+  /**
+   * A well-formed comment from `member-1`, whose users/{uid} record carries
+   * `username: 'member'` — that is the name the rules will accept for them.
+   */
+  const written = (over: Record<string, unknown> = {}) => ({
+    targetType: 'news',
+    targetId: 'published-post',
+    text: 'May God bless this work.',
+    authorUid: 'member-1',
+    authorName: 'member',
+    status: 'pending',
+    createdAt: serverTimestamp(),
+    ...over,
+  });
+
+  async function seedComment(id: string, over: Record<string, unknown> = {}) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `comments/${id}`), {
+        targetType: 'news', targetId: 'published-post', text: 'Amen.',
+        authorUid: 'member-1', authorName: 'member', status: 'approved',
+        createdAt: new Date('2026-09-01T00:00:00.000Z'),
+        ...over,
+      });
+    });
+  }
+
+  // ── Writing ───────────────────────────────────────────────────────────────
+
+  it('an approved member can comment on news and on a sermon', async () => {
+    await assertSucceeds(setDoc(doc(as('member-1'), 'comments/c1'), written()));
+    await assertSucceeds(setDoc(doc(as('member-1'), 'comments/c2'), written({
+      targetType: 'sermon', targetId: 'sermon-1',
+    })));
+  });
+
+  it('a legacy account with no status field can comment', async () => {
+    await assertSucceeds(setDoc(doc(as('legacy-1'), 'comments/c3'), written({
+      authorUid: 'legacy-1', authorName: 'legacy',
+    })));
+  });
+
+  it('a visitor, an anonymous session and a pending sign-up cannot', async () => {
+    await assertFails(setDoc(doc(anon(), 'comments/c4'), written()));
+    await assertFails(setDoc(doc(as('visitor-1'), 'comments/c5'), written({
+      authorUid: 'visitor-1', authorName: 'visitor',
+    })));
+    await assertFails(setDoc(doc(as('pending-1'), 'comments/c6'), written({
+      authorUid: 'pending-1', authorName: 'pending',
+    })));
+  });
+
+  it('cannot arrive pre-approved, or under someone else\'s uid or name', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c7'), written({ status: 'approved' })));
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c8'), written({ authorUid: 'admin-1' })));
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c9'), written({ authorName: 'Abune Matthias' })));
+  });
+
+  it('refuses extra fields, a client-chosen date, a bad target and bad lengths', async () => {
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c10'), written({ pinned: true })));
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c11'), written({
+      createdAt: new Date('2020-01-01T00:00:00.000Z'),
+    })));
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c12'), written({ targetType: 'budget' })));
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c13'), written({ targetId: '' })));
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c14'), written({ text: 'x' })));
+    await assertFails(setDoc(doc(as('member-1'), 'comments/c15'), written({ text: 'a'.repeat(1001) })));
+  });
+
+  // ── Reading ───────────────────────────────────────────────────────────────
+
+  it('anyone, signed in or not, reads approved comments for a post', async () => {
+    await seedComment('ok-1');
+    await assertSucceeds(getDoc(doc(anon(), 'comments/ok-1')));
+    await assertSucceeds(getDocs(query(
+      collection(anon(), 'comments'),
+      where('targetType', '==', 'news'),
+      where('targetId', '==', 'published-post'),
+      where('status', '==', 'approved'),
+    )));
+  });
+
+  it('pending and rejected stay hidden from the public and from other members', async () => {
+    await seedComment('wait-1', { status: 'pending' });
+    await seedComment('no-1', { status: 'rejected' });
+    await assertFails(getDoc(doc(anon(), 'comments/wait-1')));
+    await assertFails(getDoc(doc(as('active-1'), 'comments/wait-1')));
+    await assertFails(getDoc(doc(as('active-1'), 'comments/no-1')));
+    await assertFails(getDocs(collection(anon(), 'comments')));
+  });
+
+  it('an author sees their own pending comment', async () => {
+    await seedComment('wait-2', { status: 'pending' });
+    await assertSucceeds(getDoc(doc(as('member-1'), 'comments/wait-2')));
+    await assertSucceeds(getDocs(query(
+      collection(as('member-1'), 'comments'), where('authorUid', '==', 'member-1'),
+    )));
+  });
+
+  // ── Moderation ────────────────────────────────────────────────────────────
+
+  it('whoever manages news moderates news comments, and only those', async () => {
+    await seedComment('n-1', { status: 'pending' });
+    await seedComment('s-1', { status: 'pending', targetType: 'sermon', targetId: 'sermon-1' });
+    // parish-1 is in newsRoles but not teachingWriteRoles in the fixture.
+    await assertSucceeds(getDoc(doc(as('parish-1'), 'comments/n-1')));
+    await assertSucceeds(updateDoc(doc(as('parish-1'), 'comments/n-1'), { status: 'approved' }));
+    await assertFails(getDoc(doc(as('parish-1'), 'comments/s-1')));
+    await assertFails(updateDoc(doc(as('parish-1'), 'comments/s-1'), { status: 'approved' }));
+  });
+
+  it('whoever writes teachings moderates sermon comments', async () => {
+    await seedComment('s-2', { status: 'pending', targetType: 'sermon', targetId: 'sermon-1' });
+    await assertSucceeds(updateDoc(doc(as('memriya-1'), 'comments/s-2'), {
+      status: 'approved', reviewedBy: 'memriya', reviewedAt: '2026-09-04T00:00:00.000Z',
+    }));
+    await assertSucceeds(getDocs(query(
+      collection(as('memriya-1'), 'comments'), where('targetType', '==', 'sermon'),
+    )));
+  });
+
+  it('a moderator cannot rewrite the words, and nobody else moderates', async () => {
+    await seedComment('n-2', { status: 'pending' });
+    await assertFails(updateDoc(doc(as('admin-1'), 'comments/n-2'), { text: 'Much nicer.' }));
+    await assertFails(updateDoc(doc(as('admin-1'), 'comments/n-2'), { status: 'featured' }));
+    await assertFails(updateDoc(doc(as('admin-1'), 'comments/n-2'), { targetId: 'other-post' }));
+    await assertFails(updateDoc(doc(as('member-1'), 'comments/n-2'), { status: 'approved' }));
+    await assertFails(updateDoc(doc(as('active-1'), 'comments/n-2'), { status: 'approved' }));
+  });
+
+  it('an author can delete their own comment; others cannot, moderators can', async () => {
+    await seedComment('d-1');
+    await seedComment('d-2');
+    await seedComment('d-3');
+    await assertFails(deleteDoc(doc(as('active-1'), 'comments/d-1')));
+    await assertSucceeds(deleteDoc(doc(as('member-1'), 'comments/d-1')));
+    await assertSucceeds(deleteDoc(doc(as('admin-1'), 'comments/d-2')));
+    await assertFails(deleteDoc(doc(anon(), 'comments/d-3')));
+  });
+});
