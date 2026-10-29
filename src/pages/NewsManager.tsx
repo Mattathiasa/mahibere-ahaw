@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { newsService, pickText, type NewsPost } from '@/services/news';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { CommentInbox } from '@/components/comments/CommentInbox';
 import { useSoftwareControl } from '@/hooks/useSoftwareControl';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { NewsEditorDialog } from '@/components/NewsEditorDialog';
@@ -235,6 +236,8 @@ const NewsManager: React.FC = () => {
           </AnimatePresence>
         </div>
       )}
+
+      <CommentInbox targetType="news" />
 
       <NewsEditorDialog
         open={dialogOpen}

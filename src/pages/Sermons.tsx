@@ -12,6 +12,7 @@ import {
 import { sermonService, resolveSermonField } from '@/services/sermons';
 import { SermonServiceType } from '@/types';
 import { CreateSermonDialog } from '@/components/CreateSermonDialog';
+import { CommentInbox } from '@/components/comments/CommentInbox';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ConfigurablePageHeader } from '@/components/ConfigurablePageHeader';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -183,6 +184,8 @@ const Sermons = () => {
                 onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}
                 sermon={editing}
             />
+
+            {(canCreateTeaching || canEditTeaching) && <CommentInbox targetType="sermon" />}
 
             <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
                 <AlertDialogContent>
